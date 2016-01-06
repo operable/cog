@@ -6,3 +6,4 @@ erl_crash.dump
 /creds
 Mnesia.*
 /bundles
+/audit_logs

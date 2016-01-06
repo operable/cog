@@ -17,6 +17,7 @@ defmodule Cog.Mixfile do
 
   def application do
     [applications: [:logger,
+                    :probe,
                     :ibrowse,
                     :httpotion,
                     :gproc,
@@ -65,6 +66,7 @@ defmodule Cog.Mixfile do
      {:gproc, "~> 0.5.0", override: true},
      {:html_entities, "~> 0.2"},
      {:spanner, git: "git@github.com:operable/spanner", ref: "b633eadba692fd6d8c26d79d74c8649f9a3b0175"},
+     {:probe, git: "git@github.com:operable/probe", ref: "02c3df4beb0332c4cab47646cfbcdf1cace1da36"},
      {:exml, github: "paulgray/exml", tag: "2.2.1"},
      {:erlcloud, github: "gleber/erlcloud", branch: "master"},
      {:fumanchu, github: "operable/fumanchu", ref: "210bd6294d7fce3e9b651cc481496bf6d0cd4f1f"},

@@ -116,7 +116,7 @@ defmodule Cog.Command.Pipeline.Executor do
                             scope: Bind.Scope.empty_scope(),
                             input: [], output: [],
                             started: :os.timestamp()}
-    log_initialization(loop_data)
+    initialization_event(loop_data)
 
     {:ok, :parse, loop_data, 0}
   end
@@ -254,7 +254,7 @@ defmodule Cog.Command.Pipeline.Executor do
         cog_env = maybe_add_env(current_bound, state)
         req = request_for_invocation(current_bound, request["sender"], request["room"], reply_to_topic, cog_env)
 
-        log_dispatch(state, relay)
+        dispatch_event(state, relay)
 
         Connection.publish(state.mq_conn, Spanner.Command.Request.encode!(req), routed_by: topic)
         {:next_state, :wait_for_command, state, @command_timeout}
@@ -313,9 +313,9 @@ defmodule Cog.Command.Pipeline.Executor do
   end
 
   def terminate(_reason, _state_name, %__MODULE__{error_type: nil}=state),
-    do: log_success(state)
+    do: success_event(state)
   def terminate(_reason, _state_name, state),
-    do: log_failure(state)
+    do: failure_event(state)
 
   ########################################################################
   # Private functions
@@ -493,28 +493,25 @@ defmodule Cog.Command.Pipeline.Executor do
   defp fail_pipeline(state, error, message),
     do: {:stop, :shutdown, %{state | error_type: error, error_message: message}}
 
-  defp log_initialization(%__MODULE__{id: id, request: request}) do
+  defp initialization_event(%__MODULE__{id: id, request: request}) do
     PipelineEvent.initialized(id, request["text"], request["adapter"], request["sender"]["handle"])
-    |> log_as_json
+    |> Probe.notify
   end
 
-  defp log_dispatch(%__MODULE__{id: id, current_bound: current_bound}=state, relay) do
+  defp dispatch_event(%__MODULE__{id: id, current_bound: current_bound}=state, relay) do
     PipelineEvent.dispatched(id, elapsed(state), to_string(current_bound), relay)
-    |> log_as_json
+    |> Probe.notify
   end
 
-  defp log_success(%__MODULE__{id: id, output: output}=state) do
+  defp success_event(%__MODULE__{id: id, output: output}=state) do
     PipelineEvent.succeeded(id, elapsed(state), output)
-    |> log_as_json
+    |> Probe.notify
   end
 
-  defp log_failure(%__MODULE__{id: id}=state) do
+  defp failure_event(%__MODULE__{id: id}=state) do
     PipelineEvent.failed(id, elapsed(state), state.error_type, state.error_message)
-    |> log_as_json
+    |> Probe.notify
   end
-
-  defp log_as_json(event),
-    do: Logger.info(Poison.encode!(event))
 
   # Return elapsed microseconds from when the pipeline started
   defp elapsed(%__MODULE__{started: started}),
