@@ -195,7 +195,7 @@ defmodule Cog.Command.OptionInterpreter do
         :ok
       false ->
         missing = MapSet.difference(required_set, existing_set) |> MapSet.to_list
-        {:error, "Looks like you forgot to include some required options: '#{Enum.join(missing, ",")}'"}
+        {:error, "Looks like you forgot to include some required options: '#{Enum.join(missing, ", ")}'"}
     end
   end
 
