@@ -12,8 +12,13 @@ defmodule Cog.Command.OptionInterpreter do
       {:ok, defs} ->
         case interpret(defs, raw, [], %{}) do
           {:ok, options, args} ->
-            options = set_defaults(command, options)
-            {:ok, options, args}
+            case check_required_options(defs, options) do
+              :ok ->
+                options = set_defaults(command, options)
+                {:ok, options, args}
+              error ->
+                error
+            end
           error ->
             error
         end
@@ -176,6 +181,22 @@ defmodule Cog.Command.OptionInterpreter do
   do: {:ok, value}
   defp interpret_kv_option(type, value) do
     {:error, {type, value.__struct__}}
+  end
+
+  defp check_required_options(defs, opts) do
+    required_set = Enum.filter_map(defs,
+                                   fn({_,o_def}) -> o_def.required end,
+                                   fn({o_name,_}) -> o_name end) |> MapSet.new
+
+    existing_set = Enum.map(opts, fn({o_name, _}) -> o_name end) |> MapSet.new
+
+    case MapSet.subset?(required_set, existing_set) do
+      true ->
+        :ok
+      false ->
+        missing = MapSet.difference(required_set, existing_set) |> MapSet.to_list
+        {:error, "Looks like you forgot to include some required options: '#{Enum.join(missing, ",")}'"}
+    end
   end
 
 end
