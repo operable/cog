@@ -47,7 +47,6 @@ defmodule Cog.Bundle.Embedded do
     Logger.info("Announcing embedded bundle")
     {:ok, %Credentials{id: relay_id}} = CredentialManager.get()
     bundle = embedded_bundle
-    bundle = include_template_sources(bundle)
     message = %{"data" => %{"announce" => %{"relay" => relay_id,
                                             "online" => true,
                                             "snapshot" => true,
@@ -61,7 +60,7 @@ defmodule Cog.Bundle.Embedded do
 
   defp embedded_bundle do
     Cog.embedded_bundle
-    |> Config.gen_config(cog_modules, relative_template_paths)
+    |> Config.gen_config(cog_modules, @embedded_bundle_root)
     |> update_in(["permissions"],
                  &(&1 ++ @remaining_embedded_bundle_permissions))
   end
@@ -73,22 +72,5 @@ defmodule Cog.Bundle.Embedded do
     app_file = Application.app_dir(:cog, "ebin/cog.app")
     {:ok, [{:application, :cog, app}]} = :file.consult(app_file)
     app
-  end
-
-  defp relative_template_paths do
-    paths = Path.wildcard("#{@embedded_bundle_root}/templates/*/*.mustache")
-    for path <- paths, do: Path.relative_to(path, @embedded_bundle_root)
-  end
-
-  defp include_template_sources(config) do
-    templates = Map.get(config, "templates", [])
-
-    templates = for template <- templates do
-      %{"path" => relative_path} = template
-      template_path = Path.join(@embedded_bundle_root, relative_path)
-      Map.put(template, "source", File.read!(template_path))
-    end
-
-    Map.put(config, "templates", templates)
   end
 end
