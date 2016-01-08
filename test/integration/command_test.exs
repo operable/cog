@@ -67,7 +67,7 @@ defmodule Integration.CommandTest do
   end
 
   test "running a command with an 'incr' option", %{user: user} do
-    send_message user, "@bot: operable:type-test --incr=1"
+    send_message user, "@bot: operable:type-test --incr"
     assert_response "type-test response"
   end
 
