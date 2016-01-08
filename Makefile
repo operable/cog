@@ -35,7 +35,7 @@ ci-cleanup:
 # you're actively using. If this is your first time, run `make
 # reset-db` before executing this recipe.
 run:
-	iex --sname loop_dev@localhost -S mix phoenix.server
+	iex --sname cog_dev@localhost -S mix phoenix.server
 
 reset-db:
 	mix ecto.reset
