@@ -1,0 +1,8 @@
+/_build
+/deps
+erl_crash.dump
+*.ez
+*.swp
+/creds
+Mnesia.*
+/bundles

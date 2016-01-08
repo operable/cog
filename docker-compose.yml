@@ -1,0 +1,5 @@
+bot:
+  build: .
+  ports:
+    - 80:4000
+  command: MIX_ENV=staging mix Phoenix.server

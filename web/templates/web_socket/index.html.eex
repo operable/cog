@@ -1,0 +1,45 @@
+<div class="messages"></div>
+
+<form>
+  <input type="text">
+  <input type="submit" value="Send">
+</form>
+
+<script>
+  var sender = { handle: "vanstee" };
+  var room = { name: "general" };
+
+  var socket = new WebSocket("ws://localhost:4000/sockets/websocket");
+
+  var form     = document.getElementsByTagName("form")[0];
+  var input    = document.getElementsByTagName("input")[0];
+  var messages = document.getElementsByClassName("messages")[0];
+
+  function appendMessage(message) {
+    console.log(message);
+    var messageNode = document.createElement("div");
+    messageNode.innerHTML = message;
+    var newLineElement = document.createElement("br");
+
+    messages.appendChild(messageNode);
+    messages.appendChild(newLineElement);
+  }
+
+  function sendMessage(message) {
+    appendMessage(sender.handle + ": " + message);
+    socket.send(JSON.stringify({ sender: sender, room: room, text: message }));
+  }
+
+  socket.onmessage = function(event) {
+    appendMessage(event.data);
+  };
+
+  form.onsubmit = function(event) {
+    event.preventDefault();
+
+    var message = input.value;
+    input.value = "";
+
+    sendMessage(message);
+  }
+</script>
