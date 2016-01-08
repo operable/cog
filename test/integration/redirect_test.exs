@@ -43,7 +43,7 @@ defmodule Integration.RedirectTest do
 
     response = %{"adapter" => "Test",
                  "response" => "test_me",
-                 "room" => %{"id" => 1, "name" => "direct"}}
+                 "room" => %{"id" => "channel1"}}
 
     assert_payload response
   end
