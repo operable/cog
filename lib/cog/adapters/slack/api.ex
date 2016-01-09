@@ -149,7 +149,7 @@ defmodule Cog.Adapters.Slack.API do
       cache_direct_chat(user_id, response, state.ttl)
       {:reply, {:ok, response}, state}
     else
-      {:reply, {:error, result["error"]}, state}
+      {:reply, {:error, translate_slack_error("im.open", result["error"])}, state}
     end
   end
   def handle_call({:send_message, [room: room, text: text, as_user: as_user]}, _from, state) do
@@ -317,5 +317,16 @@ defmodule Cog.Adapters.Slack.API do
   defp extract_key([id: id]), do: id
   defp extract_key([name: name]), do: name
   defp extract_key([handle: handle]), do: handle
+
+
+  # Translate Slack error strings to Elixir atoms
+  #
+  # im.open can also raise "not_authed", "invalid_auth", and
+  # "account_inactive" errors, per the docs
+  # (https://api.slack.com/methods/im.open), but there's no way the
+  # application would get this far to have those show up here.
+  defp translate_slack_error("im.open", "user_not_found"), do: :user_not_found
+  defp translate_slack_error("im.open", "user_not_visible"), do: :user_not_visible
+  defp translate_slack_error("im.open", "user_disabled"), do: :user_disabled
 
 end
