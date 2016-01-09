@@ -7,7 +7,7 @@ defmodule Cog.Services.GitHub do
       nil ->
         Logger.error("GitHub API token [config entry :cog/:github_service/:api_token] is missing or empty.")
         Logger.error("Aborting GitHub service startup.")
-        {:stop, {:shutdown, :missing_api_token}}
+        :ignore
       token ->
         Logger.info("Using API token #{inspect token}")
         client = Tentacat.Client.new(%{access_token: token})
