@@ -49,12 +49,12 @@ defmodule Cog.Adapters.Slack.API do
         case GenServer.call(@server_name, {:lookup_room, [name: other]}, :infinity) do
           {:ok, room} ->
             {:ok, room}
-          :not_found ->
+          {:error, _} ->
             case GenServer.call(@server_name, {:lookup_user, [handle: other]}, :infinity) do
               {:ok, user} ->
                 lookup_direct_room(user_id: user.id, as_user: as_user)
-              :not_found ->
-                :not_found
+              {:error, _}=error ->
+                error
             end
         end
     end
@@ -184,7 +184,7 @@ defmodule Cog.Adapters.Slack.API do
                 :ets.insert(@room_cache, {room["name"], {room["id"], expiry}})
                 maybe_return_room(query, room_record, acc) end) do
           nil ->
-            :not_found
+            {:error, :not_found}
           value ->
             {:ok, value}
         end
@@ -208,7 +208,7 @@ defmodule Cog.Adapters.Slack.API do
                            :ets.insert(@user_cache, {user["name"], {user["id"], expiry}})
                            maybe_return_user(query, user_record, acc) end) do
           nil ->
-            :not_found
+            {:error, :not_found}
           value ->
             {:ok, value}
         end
