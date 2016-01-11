@@ -323,22 +323,8 @@ defmodule Cog.Command.Pipeline.Executor do
   def terminate(_reason, _state_name, state),
     do: log_failure(state)
 
+  ########################################################################
   # Private functions
-
-  defp send_user_resp(%Spanner.Command.Response{}=resp, %__MODULE__{}=state) do
-    send_user_resp(resp, state.redirects, state)
-  end
-
-  defp send_user_resp(%Spanner.Command.Response{}=resp, [redir|[]], state) do
-    publish_response(resp, redir, state)
-  end
-  defp send_user_resp(%Spanner.Command.Response{}=resp, [redir|rest], state) do
-    publish_response(resp, redir, state)
-    send_user_resp(resp, rest, state)
-  end
-  defp send_user_resp(%Spanner.Command.Response{}=resp, [], state) do
-    publish_response(resp, state.request["room"], state)
-  end
 
   defp lookup_room("me", state) do
     user_id = state.request["sender"]["id"]
@@ -353,18 +339,41 @@ defmodule Cog.Command.Pipeline.Executor do
     adapter.lookup_room(redir, as_user: state.request["sender"]["id"])
   end
 
-  defp publish_response(%Spanner.Command.Response{body: body, template: template, bundle: bundle}, room, state) do
-    adapter = state.request["adapter"]
-    bundle_id = case bundle do
-      nil -> nil
-      _ -> Cog.Queries.Bundles.bundle_id_from_name(bundle) |> Cog.Repo.one!
+  # Render a templated response and send it out to all pipeline
+  # destinations. Renders template only once.
+  defp send_user_resp(%Spanner.Command.Response{}=resp, %__MODULE__{redirects: redirects}=state) do
+    response_fn = response_fn(resp, state.request["adapter"])
+    case redirects do
+      [] ->
+        publish_response(response_fn, state.request["room"], state)
+      _ ->
+        Enum.each(redirects, fn(destination) ->
+          publish_response(response_fn, destination, state)
+        end)
     end
-    text = render_template(bundle_id, adapter, template, body)
-    response = %{response: text,
-                 room: room,
-                 adapter: adapter}
-    Connection.publish(state.mq_conn, response, routed_by: state.request["reply"])
   end
+
+  # Create a function that accepts a room and generates an appropriate
+  # response map. The template is rendered for the response once and
+  # the result is embedded in the returned function.
+  #
+  # This enables us to render a template only once, regardless of how
+  # many destinations we ultimately forward the response to.
+  defp response_fn(%Spanner.Command.Response{body: body, template: template, bundle: bundle}, adapter) do
+    bundle_id = case bundle do
+                  nil -> nil
+                  _ -> Cog.Queries.Bundles.bundle_id_from_name(bundle) |> Cog.Repo.one!
+                end
+    text = render_template(bundle_id, adapter, template, body)
+    fn(room) ->
+      %{response: text,
+        room: room,
+        adapter: adapter}
+    end
+  end
+
+  defp publish_response(response_fn, room, state),
+    do: Connection.publish(state.mq_conn, response_fn.(room), routed_by: state.request["reply"])
 
   defp default_template(%{"body" => _}),
     do: "text"
