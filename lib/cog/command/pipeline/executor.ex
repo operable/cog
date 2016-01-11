@@ -150,21 +150,12 @@ defmodule Cog.Command.Pipeline.Executor do
     redirs = List.last(invocations)
     |> Map.get(:redirs)
 
-    resolved_redirs = Enum.map(redirs, fn(redir) ->
-      case lookup_room(redir, state) do
-        {:ok, room} ->
-          room
-        {:error, _reason} ->
-          Helpers.send_error("Invalid redirect `#{redir}`", state.request, state.mq_conn)
-          :not_found
-      end
-    end)
-
-    case Enum.member?(resolved_redirs, :not_found) do
-      false ->
-        prepare(%{state | redirects: resolved_redirs})
-      true ->
-        fail_pipeline(state, :redirect_error, "Invalid redirects were specified")
+    case resolve_redirects(redirs, state) do
+      {:ok, resolved} ->
+        prepare(%{state | redirects: resolved})
+      {:error, invalid} ->
+        Helpers.send_error("Invalid redirects: #{Enum.join(invalid, ", ")}", state.request, state.mq_conn)
+        fail_pipeline(state, :redirect_error, "Invalid redirects were specified: #{inspect invalid}")
     end
   end
 
@@ -326,18 +317,48 @@ defmodule Cog.Command.Pipeline.Executor do
   ########################################################################
   # Private functions
 
+  # Convert all redirects to adapter-specific rooms. If any redirects
+  # are invalid for any reason, returns an error with the list of
+  # invalid redirects.
+  defp resolve_redirects(redirects, state) do
+    case redirects
+    |> Enum.map(&lookup_room(&1, state))
+    |> Enum.partition(&is_ok/1) do
+      {found, []} ->
+        {:ok, Enum.map(found, &unwrap_tuple/1)}
+      {_, invalid} ->
+        {:error, Enum.map(invalid, &unwrap_tuple/1)}
+    end
+  end
+
+  # Returns {:ok, room} or {:error, invalid_redirect}
   defp lookup_room("me", state) do
     user_id = state.request["sender"]["id"]
     adapter = get_adapter_api(state.request["adapter"])
-    adapter.lookup_direct_room(user_id: user_id, as_user: user_id)
+    case adapter.lookup_direct_room(user_id: user_id, as_user: user_id) do
+      {:ok, direct_chat} -> {:ok, direct_chat}
+      error ->
+        Logger.error("Error resolving redirect 'me' with adapter #{adapter}: #{inspect error}")
+        {:error, "me"}
+    end
   end
-  defp lookup_room("here", state) do
-    {:ok, state.request["room"]}
-  end
+  defp lookup_room("here", state),
+    do: {:ok, state.request["room"]}
   defp lookup_room(redir, state) do
     adapter = get_adapter_api(state.request["adapter"])
-    adapter.lookup_room(redir, as_user: state.request["sender"]["id"])
+    case adapter.lookup_room(redir, as_user: state.request["sender"]["id"]) do
+      {:ok, room} -> {:ok, room}
+      error ->
+        Logger.error("Error resolving redirect '#{redir}' with adapter #{adapter}: #{inspect error}")
+        {:error, redir}
+    end
   end
+
+  defp is_ok({:ok, _}), do: true
+  defp is_ok(_), do: false
+
+  defp unwrap_tuple({:ok, value}), do: value
+  defp unwrap_tuple({:error, value}), do: value
 
   # Render a templated response and send it out to all pipeline
   # destinations. Renders template only once.
