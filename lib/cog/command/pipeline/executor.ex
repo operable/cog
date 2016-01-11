@@ -140,7 +140,7 @@ defmodule Cog.Command.Pipeline.Executor do
       case lookup_room(redir, state) do
         {:ok, room} ->
           room
-        :not_found ->
+        {:error, _reason} ->
           Helpers.send_error("Invalid redirect `#{redir}`", state.request, state.mq_conn)
           :not_found
       end

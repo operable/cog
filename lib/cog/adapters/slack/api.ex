@@ -9,7 +9,7 @@ defmodule Cog.Adapters.Slack.API do
   @server_name :slack_api
   @user_cache :slack_api_users
   @room_cache :slack_api_rooms
-  @im_cache :slack_im
+  @direct_chat_channel_cache :slack_im
 
   def start_link(token, ttl) do
     GenServer.start_link(__MODULE__, [token, ttl], name: @server_name)
@@ -49,21 +49,21 @@ defmodule Cog.Adapters.Slack.API do
         case GenServer.call(@server_name, {:lookup_room, [name: other]}, :infinity) do
           {:ok, room} ->
             {:ok, room}
-          :not_found ->
+          {:error, _} ->
             case GenServer.call(@server_name, {:lookup_user, [handle: other]}, :infinity) do
               {:ok, user} ->
                 lookup_direct_room(user_id: user.id, as_user: as_user)
-              :not_found ->
-                :not_found
+              {:error, _}=error ->
+                error
             end
         end
     end
   end
 
-  def lookup_direct_room(user_id: id, as_user: as_id) do
-    case query_cache(@im_cache, [id: id]) do
+  def lookup_direct_room(user_id: id, as_user: _old_unused_arg_pending_refactoring) do
+    case query_cache(@direct_chat_channel_cache, [id: id]) do
       nil ->
-        GenServer.call(@server_name, {:lookup_direct_room, [user_id: id, as_user: as_id]}, :infinity)
+        GenServer.call(@server_name, {:open_direct_chat, id}, :infinity)
       entry ->
         {:ok, entry}
     end
@@ -85,7 +85,7 @@ defmodule Cog.Adapters.Slack.API do
       true ->
         :ets.new(@user_cache, [:named_table, {:read_concurrency, true}])
         :ets.new(@room_cache, [:named_table, {:read_concurrency, true}])
-        :ets.new(@im_cache, [:named_table, {:read_concurrency, true}])
+        :ets.new(@direct_chat_channel_cache, [:named_table, {:read_concurrency, true}])
         state = case ttl do
                   nil ->
                     %__MODULE__{token: token, ttl: @default_ttl}
@@ -136,13 +136,20 @@ defmodule Cog.Adapters.Slack.API do
         {:reply, error, state}
     end
   end
-  def handle_call({:lookup_direct_room, [user_id: user_id, as_user: as_id]}, _from, state) do
-    case call_api!("im.list", state.token, [body: %{as_user: as_id}, parser: &parse_ims(&1, state)]) do
-      {:ok, ims} ->
-        im = Enum.find(ims, &(&1["user"] == user_id))
-        {:reply, lookup_room([id: im["id"]]), state}
-      {:error, _error} ->
-        {:reply, :error, state}
+  def handle_call({:open_direct_chat, user_id}, _from, state) do
+    # In order for the bot to chat directly with a user, we need to
+    # first open a chat channel with that user. This API method is
+    # idempotent, so if a channel already exists with the given user,
+    # we'll get the same channel reference back.
+    #
+    # See https://api.slack.com/methods/im.open
+    result = call_api!("im.open", state.token, [body: %{user: user_id}])
+    if result["ok"] do
+      %{"id" => _channel_id} = response = result["channel"]
+      cache_direct_chat(user_id, response, state.ttl)
+      {:reply, {:ok, response}, state}
+    else
+      {:reply, {:error, translate_slack_error("im.open", result["error"])}, state}
     end
   end
   def handle_call({:send_message, [room: room, text: text, as_user: as_user]}, _from, state) do
@@ -177,7 +184,7 @@ defmodule Cog.Adapters.Slack.API do
                 :ets.insert(@room_cache, {room["name"], {room["id"], expiry}})
                 maybe_return_room(query, room_record, acc) end) do
           nil ->
-            :not_found
+            {:error, :not_found}
           value ->
             {:ok, value}
         end
@@ -201,7 +208,7 @@ defmodule Cog.Adapters.Slack.API do
                            :ets.insert(@user_cache, {user["name"], {user["id"], expiry}})
                            maybe_return_user(query, user_record, acc) end) do
           nil ->
-            :not_found
+            {:error, :not_found}
           value ->
             {:ok, value}
         end
@@ -254,21 +261,15 @@ defmodule Cog.Adapters.Slack.API do
     end
   end
 
-  defp parse_ims(result, state) do
-    case result["ok"] do
-      false ->
-        {:error, result["error"]}
-      true ->
-        case result["ims"] do
-          [] ->
-            {:ok, nil}
-          ims ->
-            expiry = Cog.Time.now() + state.ttl
-            Enum.map(ims, &(:ets.insert(@im_cache, {&1["user"], {&1, expiry}})))
-            {:ok, ims}
-        end
-    end
-  end
+  # Caches the channel identifier under the user ID for future
+  # retrievals. Although Slack does not document the details of direct
+  # channel identifiers (how long they're valid, etc.), so far
+  # they seem stable.
+  defp cache_direct_chat(user_id, %{"id" => channel_id}=value, ttl) when is_binary(channel_id),
+    do: :ets.insert(@direct_chat_channel_cache, {user_id, {value, expiration(ttl)}})
+
+  defp expiration(ttl),
+    do: Cog.Time.now + ttl
 
   defp verify_token(token) do
     call_api!("auth.test", token, parser: &Map.get(&1, "ok"))
@@ -316,5 +317,16 @@ defmodule Cog.Adapters.Slack.API do
   defp extract_key([id: id]), do: id
   defp extract_key([name: name]), do: name
   defp extract_key([handle: handle]), do: handle
+
+
+  # Translate Slack error strings to Elixir atoms
+  #
+  # im.open can also raise "not_authed", "invalid_auth", and
+  # "account_inactive" errors, per the docs
+  # (https://api.slack.com/methods/im.open), but there's no way the
+  # application would get this far to have those show up here.
+  defp translate_slack_error("im.open", "user_not_found"), do: :user_not_found
+  defp translate_slack_error("im.open", "user_not_visible"), do: :user_not_visible
+  defp translate_slack_error("im.open", "user_disabled"), do: :user_disabled
 
 end
