@@ -32,21 +32,28 @@ defmodule Cog.Command.Pipeline.Executor do
   * `:scope` - The current scope for variable interpretation.
   * `:pipeline` - The parsed pipeline
   * `:redirects` - The resolved redirects, if any exist
-  * `:current` - The current command invocation in the pipeline executor.
-  * `:current_bound` - The current command invocation after binding to the scope.
+  * `:current` - The current command invocation in the pipeline
+    executor.
+  * `:current_bound` - The current command invocation after binding to
+    the scope.
   * `:remaining` - The remaining invocations in the pipeline.
-  * `:input` - When commands return a list of results those results are added to
-              an input buffer and the next command is executed once per item in
-              the input buffer. Kind of an xargs style behavior by default.
-  * `:output` - The accumulated output of commands executed with a list of results.
-
+  * `:input` - When commands return a list of results those results
+    are added to an input buffer and the next command is executed once
+    per item in the input buffer. Kind of an xargs style behavior by
+    default.
+  * `:output` - The accumulated output of commands executed with a
+    list of results.
+  * `:error_type` - an atom indicating what kind of error has
+    occurred. Will be `nil` in the case of a successfully-executed
+    pipeline.
+  * `:error_message` - additional information about the error that has
+    occurred. Only set if `:error_type` is non-nil.
   """
-
   @type state :: %__MODULE__{
     id: String.t,
     topic: String.t,
-    started: String.t,
-    mq_conn: pid(),
+    started: :erlang.timestamp(),
+    mq_conn: Carrier.Messaging.Connection.connection(),
     request: Spanner.Command.Request,
     scope: Piper.Bind.Scope,
     pipeline: Piper.Ast.Pipeline,
@@ -55,20 +62,21 @@ defmodule Cog.Command.Pipeline.Executor do
     current_bound: Piper.Ast.Invocation,
     remaining: List.t,
     input: List.t,
-    output: List.t
+    output: List.t,
+    error_type: atom(),
+    error_message: String.t
   }
 
   defstruct [id: nil, topic: nil, mq_conn: nil, request: nil,
              scope: nil, pipeline: nil, redirects: [], current: nil,
              current_bound: nil, remaining: [], input: [], output: [],
-             started: nil]
+             started: nil, error_type: nil, error_message: nil]
 
   @behaviour :gen_fsm
 
   # Timeout for commands once they are in the `run_command` state
   @command_timeout 60000
 
-  require Logger
   alias Cog.Command.Pipeline.Executor.Helpers
   alias Cog.Command.OptionInterpreter
   alias Cog.Command.PermissionInterpreter
@@ -81,6 +89,11 @@ defmodule Cog.Command.Pipeline.Executor do
   alias Piper.Command.Bindable
   alias Piper.Command.Bind
 
+  alias Carrier.Messaging.Connection
+  alias Cog.Events.PipelineEvent
+
+  use Adz
+
   def start_link(request) do
     :gen_fsm.start_link(__MODULE__, [request], [])
   end
@@ -92,18 +105,20 @@ defmodule Cog.Command.Pipeline.Executor do
   """
   def init([request]) when is_map(request) do
     request = sanitize_request(request)
-    {:ok, conn} = Carrier.Messaging.Connection.connect()
+    {:ok, conn} = Connection.connect()
     id = UUID.uuid4(:hex)
     topic = "/bot/pipelines/#{id}"
 
-    Carrier.Messaging.Connection.subscribe(conn, topic <> "/+")
+    Connection.subscribe(conn, topic <> "/+")
 
-    Logger.info("Command pipeline #{id} initialized")
-    {:ok, :parse, %__MODULE__{id: id, topic: topic, request: request,
-                              mq_conn: conn,
-                              scope: Bind.Scope.empty_scope(),
-                              input: [], output: [],
-                              started: :os.timestamp()}, 0}
+    loop_data = %__MODULE__{id: id, topic: topic, request: request,
+                            mq_conn: conn,
+                            scope: Bind.Scope.empty_scope(),
+                            input: [], output: [],
+                            started: :os.timestamp()}
+    log_initialization(loop_data)
+
+    {:ok, :parse, loop_data, 0}
   end
 
   @doc """
@@ -120,9 +135,8 @@ defmodule Cog.Command.Pipeline.Executor do
       {:ok, %Ast.Pipeline{}=pipeline} ->
         {:next_state, :lookup_redirects, %{state | pipeline: pipeline}, 0}
       {:error, msg}->
-        Logger.error("Error parsing command pipeline '#{state.request["text"]}': #{msg}")
         Helpers.send_reply(msg, state.request, state.mq_conn)
-        {:stop, :shutdown, state}
+        fail_pipeline(state, :parse_error, "Error parsing command pipeline '#{state.request["text"]}': #{msg}")
     end
   end
 
@@ -150,7 +164,7 @@ defmodule Cog.Command.Pipeline.Executor do
       false ->
         prepare(%{state | redirects: resolved_redirs})
       true ->
-        {:stop, :shutdown, state}
+        fail_pipeline(state, :redirect_error, "Invalid redirects were specified")
     end
   end
 
@@ -163,9 +177,8 @@ defmodule Cog.Command.Pipeline.Executor do
     {:ok, resolved_scope} = Bindable.resolve(current, scope)
     case Bindable.bind(current, resolved_scope) do
       {:error, msg} ->
-        Logger.error("Error preparing to execute command pipeline '#{state.request["text"]}': #{msg}")
         Helpers.send_reply(msg, state.request, state.mq_conn)
-        {:stop, :shutdown, state}
+        fail_pipeline(state, :binding_error, "Error preparing to execute command pipeline '#{state.request["text"]}': #{msg}")
       {:ok, current_bound, bound_scope} ->
         {:next_state, :get_options, %{state | current_bound: current_bound, scope: bound_scope}, 0}
     end
@@ -182,13 +195,10 @@ defmodule Cog.Command.Pipeline.Executor do
         current_bound = %{current_bound | options: options, args: args}
         {:next_state, :check_primitive, %{state | current_bound: current_bound}, 0}
       :not_found ->
-        Logger.error("#{state.id} Command '#{current_bound.command}' not found")
         Helpers.send_idk(state.request, current_bound.command, state.mq_conn)
-        {:stop, :shutdown, state}
-      {:error, msg} ->
-        Logger.error("#{state.id} Error parsing options: #{msg}")
-        Helpers.send_error(msg, state.request, state.mq_conn)
-        {:stop, :shutdown, state}
+        fail_pipeline(state, :option_interpreter_error, "Command '#{current_bound.command}' not found")
+      error ->
+        fail_pipeline(state, :option_interpreter_error, "Error parsing options: #{inspect error}")
     end
   end
 
@@ -218,20 +228,17 @@ defmodule Cog.Command.Pipeline.Executor do
     case PermissionInterpreter.check(state.request["sender"]["handle"],
                                      state.request["adapter"], current_bound) do
       :ignore ->
-        Logger.debug("Ignoring message from unknown user #{state.request["sender"]["handle"]}")
-        {:stop, :shutdown, state}
+        fail_pipeline(state, :user_not_found, "Ignoring message from unknown user #{state.request["sender"]["handle"]}")
       :allowed ->
         {:next_state, :run_command, state, 0}
       {:no_rule, _invoke} ->
-        Logger.info("No rule matching '#{current}'")
         why = "No rules match the supplied invocation of '#{current}'. Check your args and options, then confirm that the proper rules are in place."
         Helpers.send_denied(current, why, state.request, state.mq_conn)
-        {:stop, :shutdown, state}
+        fail_pipeline(state, :missing_rules, "No rule matching '#{current}'")
       {:denied, _invoke, rule} ->
-        Logger.info("User #{state.request["sender"]["handle"]} denied access to '#{current}'")
         why = "You will need the '#{rule.permission_selector.perms.value}' permission to run this command."
         Helpers.send_denied(current, why, state.request, state.mq_conn)
-        {:stop, :shutdown, state}
+        fail_pipeline(state, :permission_denied, "User #{state.request["sender"]["handle"]} denied access to '#{current}'")
     end
   end
 
@@ -240,11 +247,22 @@ defmodule Cog.Command.Pipeline.Executor do
 
   Runs the command.
   """
-  def run_command(:timeout, %__MODULE__{current_bound: current_bound}=state) do
-    case send_to_command(%{state | current_bound: current_bound}) do
-      :stop ->
-        {:stop, :shutdown, state}
-      _ ->
+  def run_command(:timeout, %__MODULE__{current_bound: current_bound,
+                                        request: request}=state) do
+    {bundle, name} = Models.Command.split_name(current_bound.command)
+    case Cog.Relay.Relays.pick_one(bundle) do
+      nil ->
+        msg = "No Cog Relays supporting the `#{bundle}` bundle are currently online"
+        Helpers.send_error(msg, state.request, state.mq_conn)
+        fail_pipeline(state, :no_relays, msg)
+      relay ->
+        topic = "/bot/commands/#{relay}/#{bundle}/#{name}"
+        reply_to_topic = "#{state.topic}/reply"
+        req = request_for_invocation(current_bound, request["sender"], request["room"], reply_to_topic)
+
+        log_dispatch(state, relay)
+
+        Connection.publish(state.mq_conn, Spanner.Command.Request.encode!(req), routed_by: topic)
         {:next_state, :wait_for_command, state, @command_timeout}
     end
   end
@@ -259,9 +277,8 @@ defmodule Cog.Command.Pipeline.Executor do
   note: Check `handle_info({:publish, topic, message}, :wait_for_command, state)`
   """
   def wait_for_command(:timeout, state) do
-    Logger.error("Command pipeline #{state.id} timed out waiting on #{state.current.command} to reply")
     Helpers.send_timeout(state.current.command, state.request, state.mq_conn)
-    {:stop, :shutdown, state}
+    fail_pipeline(state, :timeout, "Timed out waiting on #{state.current.command} to reply")
   end
 
   def handle_info({:publish, topic, message}, :wait_for_command, state) do
@@ -274,13 +291,12 @@ defmodule Cog.Command.Pipeline.Executor do
             case resp.status do
               "error" ->
                 Helpers.send_error(resp.status_message, state.request, state.mq_conn)
-                {:stop, :shutdown, state}
+                fail_pipeline(state, :command_error, resp.status_message)
               "ok" ->
                 prepare_or_finish(state, resp)
             end
           false ->
-            Logger.error("Message signature not verified! #{inspect message}")
-            {:stop, :shutdown, state}
+            fail_pipeline(state, :message_authenticity, "Message signature not verified! #{inspect message}")
         end
       _ ->
         {:next_state, :wait_for_command, state}
@@ -302,10 +318,10 @@ defmodule Cog.Command.Pipeline.Executor do
     {:ok, state_name, state}
   end
 
-  def terminate(_reason, _state_name, state) do
-    now = :os.timestamp()
-    Logger.info("Command pipeline #{state.id} finished in #{:timer.now_diff(now, state.started)}\u00b5s")
-  end
+  def terminate(_reason, _state_name, %__MODULE__{error_type: nil}=state),
+    do: log_success(state)
+  def terminate(_reason, _state_name, state),
+    do: log_failure(state)
 
   # Private functions
 
@@ -347,7 +363,7 @@ defmodule Cog.Command.Pipeline.Executor do
     response = %{response: text,
                  room: room,
                  adapter: adapter}
-    Carrier.Messaging.Connection.publish(state.mq_conn, response, routed_by: state.request["reply"])
+    Connection.publish(state.mq_conn, response, routed_by: state.request["reply"])
   end
 
   defp default_template(%{"body" => _}),
@@ -380,52 +396,27 @@ defmodule Cog.Command.Pipeline.Executor do
 
   defp prepare_or_finish(%__MODULE__{input: [], output: [], remaining: []}=state, resp) do
     send_user_resp(resp, state)
-    {:stop, :shutdown, state}
+    {:stop, :shutdown, %{state | output: resp.body}}
   end
   defp prepare_or_finish(%__MODULE__{input: [], output: output, remaining: []}=state, resp) do
-    send_user_resp(%{resp | body: output ++ [resp.body]}, state)
-    {:stop, :shutdown, state}
+    final_result = output ++ [resp.body]
+    send_user_resp(%{resp | body: final_result}, state)
+    {:stop, :shutdown, %{state | output: final_result}}
   end
+
   defp prepare_or_finish(%__MODULE__{input: [h|t], output: output}=state, resp) do
-    case resp.status do
-      "ok" ->
-        scope = Bind.Scope.from_map(h)
-        {:next_state, :bind, %{state | input: t, output: output ++ [resp.body], scope: scope}, 0}
-      "error" ->
-        Helpers.send_error(resp.status_message, state.request, state.mq_conn)
-        {:stop, :shutdown, state}
-    end
+    scope = Bind.Scope.from_map(h)
+    {:next_state, :bind, %{state | input: t, output: output ++ [resp.body], scope: scope}, 0}
   end
   defp prepare_or_finish(%__MODULE__{input: [], remaining: [h|t], output: output}=state, resp) do
-    case resp.status do
-      "ok" ->
-        [oh|ot] = List.flatten(output ++ [resp.body])
-        scope = Bind.Scope.from_map(oh)
-        {:next_state, :bind, %{state | current: h, remaining: t, input: ot, output: [], scope: scope}, 0}
-      "error" ->
-        Helpers.send_error(resp.status_message, state.request, state.mq_conn)
-        {:stop, :shutdown, state}
-    end
+    [oh|ot] = List.flatten(output ++ [resp.body])
+    scope = Bind.Scope.from_map(oh)
+    {:next_state, :bind, %{state | current: h, remaining: t, input: ot, output: [], scope: scope}, 0}
   end
 
   defp prepare(%__MODULE__{pipeline: %Ast.Pipeline{invocations: invocations}}=state) do
     [current|remaining] = invocations
     {:next_state, :bind, %{state | current: current, remaining: remaining}, 0}
-  end
-
-  defp send_to_command(%__MODULE__{current_bound: current_bound, request: request}=state) do
-    {bundle, name} = Models.Command.split_name(current_bound.command)
-    case Cog.Relay.Relays.pick_one(bundle) do
-      nil ->
-        Helpers.send_error("No Cog Relays supporting the `#{bundle}` bundle are currently online", request, state.mq_conn)
-        :stop
-      relay ->
-        topic = "/bot/commands/#{relay}/#{bundle}/#{name}"
-        reply_to_topic = "#{state.topic}/reply"
-        req = request_for_invocation(current_bound, request["sender"], request["room"], reply_to_topic)
-        Logger.debug("Dispatched invocation for command #{current_bound.command} on topic #{topic}")
-        Carrier.Messaging.Connection.publish(state.mq_conn, Spanner.Command.Request.encode!(req), routed_by: topic)
-    end
   end
 
   defp request_for_invocation(invoke, requestor, room, reply_to) do
@@ -450,5 +441,40 @@ defmodule Cog.Command.Pipeline.Executor do
     text = HtmlEntities.decode(text)
     # Update request with sanitized input
     Map.put(request, "text", text)
+    end
+
+  # Shorthand for ending a pipeline with the appropriate error message
+  #
+  # There isn't a corresponding `succeed_pipeline` because all it
+  # would return is `{:stop, :shutdown, state}`
+  defp fail_pipeline(state, error, message),
+    do: {:stop, :shutdown, %{state | error_type: error, error_message: message}}
+
+  defp log_initialization(%__MODULE__{id: id, request: request}) do
+    PipelineEvent.initialized(id, request["text"], request["adapter"], request["sender"]["handle"])
+    |> log_as_json
   end
+
+  defp log_dispatch(%__MODULE__{id: id, current_bound: current_bound}=state, relay) do
+    PipelineEvent.dispatched(id, elapsed(state), to_string(current_bound), relay)
+    |> log_as_json
+  end
+
+  defp log_success(%__MODULE__{id: id, output: output}=state) do
+    PipelineEvent.succeeded(id, elapsed(state), output)
+    |> log_as_json
+  end
+
+  defp log_failure(%__MODULE__{id: id}=state) do
+    PipelineEvent.failed(id, elapsed(state), state.error_type, state.error_message)
+    |> log_as_json
+  end
+
+  defp log_as_json(event),
+    do: Logger.info(Poison.encode!(event))
+
+  # Return elapsed microseconds from when the pipeline started
+  defp elapsed(%__MODULE__{started: started}),
+    do: :timer.now_diff(:os.timestamp(), started)
+
 end

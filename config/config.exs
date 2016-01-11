@@ -4,9 +4,6 @@ config :logger, :console,
   metadata: [:module, :line],
   format: {Adz, :text}
 
-config :cog, Cog.Auditor,
-  log_file: "/tmp/cog_audit.log"
-
 config :cog, Cog.Repo,
   adapter: Ecto.Adapters.Postgres,
   url: (case System.get_env("DATABASE_URL") do
