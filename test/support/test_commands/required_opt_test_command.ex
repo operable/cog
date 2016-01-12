@@ -1,5 +1,5 @@
-defmodule Loop.Support.TestCommands.RequiredOptTestCommand do
-  use Spanner.GenCommand.Base, bundle: Loop.embedded_bundle, primitive: true, name: "req-opt"
+defmodule Cog.Support.TestCommands.RequiredOptTestCommand do
+  use Spanner.GenCommand.Base, bundle: Cog.embedded_bundle, primitive: true, name: "req-opt"
 
   option "req", type: "string", required: true
 
