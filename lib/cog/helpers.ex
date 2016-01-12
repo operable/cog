@@ -22,4 +22,19 @@ defmodule Cog.Helpers do
   def publish_reply(reply, routed_by, mq_conn) do
     Carrier.Messaging.Connection.publish(mq_conn, reply, routed_by: routed_by)
   end
+
+  # This allows us to convert to negative numbers instead of the "-" being mistaken for a flag or a string
+  def get_number(num) do
+    case is_number(num) do
+      true -> num
+      false -> convert_num(num)
+    end
+  end
+
+  def convert_num(num) do
+    case Float.parse(num) do
+      {val, _} -> val
+      :error -> "#{num} is not a number"
+    end
+  end
 end
