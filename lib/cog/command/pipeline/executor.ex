@@ -258,7 +258,7 @@ defmodule Cog.Command.Pipeline.Executor do
       relay ->
         topic = "/bot/commands/#{relay}/#{bundle}/#{name}"
         reply_to_topic = "#{state.topic}/reply"
-        req = request_for_invocation(current_bound, request["sender"], request["room"], reply_to_topic)
+        req = request_for_invocation(current_bound, state.scope, request["sender"], request["room"], reply_to_topic)
 
         log_dispatch(state, relay)
 
@@ -428,10 +428,20 @@ defmodule Cog.Command.Pipeline.Executor do
     {:next_state, :bind, %{state | current: current, remaining: remaining}, 0}
   end
 
-  defp request_for_invocation(invoke, requestor, room, reply_to) do
+  defp request_for_invocation(invoke, scope, requestor, room, reply_to) do
     %Spanner.Command.Request{command: invoke.command, options: invoke.options,
                              args: invoke.args, requestor: requestor,
-                             room: room, reply_to: reply_to}
+                             room: room, reply_to: reply_to,
+                             scope: special_scope(invoke, scope)}
+  end
+
+  defp special_scope(invocation, scope) do
+    {:ok, command} = CommandCache.fetch(invocation)
+    if command.primitive do
+      scope.values
+    else
+      nil
+    end
   end
 
   defp get_adapter_api(adapter) when is_binary(adapter),
