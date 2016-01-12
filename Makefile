@@ -14,14 +14,9 @@ ci: export DATABASE_URL = $(TEST_DATABASE_URL)
 ci: export MIX_ENV = test
 ci: ci-setup test-all ci-cleanup
 
-ifdef RESET_BUILD
 ci-reset:
 	@echo "Resetting build environment"
-	@rm -rf deps _build
-else
-ci-reset:
-	@echo "ok"
-endif
+	@rm -rf _build
 
 ci-setup: ci-reset
 # Nuke mnesia dirs so we don't get borked on emqttd upgrades
