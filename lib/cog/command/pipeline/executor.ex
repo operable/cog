@@ -432,7 +432,7 @@ defmodule Cog.Command.Pipeline.Executor do
     %Spanner.Command.Request{command: invoke.command, options: invoke.options,
                              args: invoke.args, requestor: requestor,
                              room: room, reply_to: reply_to,
-                             scope: special_scope(invoke, scope)}
+                             cog_env: special_scope(invoke, scope)}
   end
 
   defp special_scope(invocation, scope) do
