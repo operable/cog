@@ -145,14 +145,14 @@ defmodule Cog.Command.OptionInterpreter do
     {:ok, value}
   end
   defp interpret_kv_option("int", value) when is_float(value) do
-    {:error, "Type Error: '#{value}' is not of type 'int'"}
+    {:error, error_msg(:type_error, value, "int")}
   end
   defp interpret_kv_option("int", value) when is_binary(value) do
     case Integer.parse(value) do
       {int, ""} ->
         {:ok, int}
       _error ->
-        {:error, "Type Error: '#{value} is not of type 'int'"}
+        {:error, error_msg(:type_error, value, "int")}
     end
   end
   defp interpret_kv_option("float", value) when is_float(value) do
@@ -166,7 +166,7 @@ defmodule Cog.Command.OptionInterpreter do
       {float, _rem} ->
         {:ok, float}
       :error ->
-        {:error, "Type Error: '#{value}' is not of type 'float'"}
+        {:error, error_msg(:type_error, value, "float")}
     end
   end
   defp interpret_kv_option("bool", value) when is_integer(value) do
@@ -198,5 +198,8 @@ defmodule Cog.Command.OptionInterpreter do
         {:error, "Looks like you forgot to include some required options: '#{Enum.join(missing, ", ")}'"}
     end
   end
+
+  defp error_msg(:type_error, value, req_type),
+    do: "Type Error: '#{value}' is not of type '#{req_type}'"
 
 end

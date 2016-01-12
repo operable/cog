@@ -53,7 +53,7 @@ defmodule Integration.CommandTest do
 
   test "running a command with an invalid 'int' option", %{user: user} do
     send_message user, "@bot: operable:type-test --int=\"this is a string\""
-    assert_response "@vanstee Whoops! An error occurred. \"Type Error: 'this is a string is not of type 'int'\""
+    assert_response "@vanstee Whoops! An error occurred. \"Type Error: 'this is a string' is not of type 'int'\""
   end
 
   test "running a command with a 'float' option", %{user: user} do
