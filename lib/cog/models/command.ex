@@ -8,7 +8,7 @@ defmodule Cog.Models.Command do
     field :name, :string
     field :version, :string
     field :documentation, :string
-    field :primitive, :boolean
+    field :enforcing, :boolean, default: true
 
     belongs_to :bundle, Bundle
 
@@ -17,7 +17,7 @@ defmodule Cog.Models.Command do
   end
 
   @required_fields ~w(name version bundle_id)
-  @optional_fields ~w(documentation primitive)
+  @optional_fields ~w(documentation enforcing)
 
   summary_fields [:id, :name, :version]
   detail_fields [:id, :name, :version, :documentation]

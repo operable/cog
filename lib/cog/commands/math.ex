@@ -16,11 +16,8 @@ defmodule Cog.Commands.Math do
   > @bot operable:math divide 1 6
   > @bot operable:math factorial 59
   """
-  use Spanner.GenCommand.Base, bundle: Cog.embedded_bundle
+  use Spanner.GenCommand.Base, bundle: Cog.embedded_bundle, enforcing: false
   import Cog.Helpers, only: [get_number: 1]
-
-  permission "math"
-  rule "when command is #{Cog.embedded_bundle}:math must have #{Cog.embedded_bundle}:math"
 
   require Logger
 

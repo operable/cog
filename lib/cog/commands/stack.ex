@@ -1,5 +1,5 @@
 defmodule Cog.Commands.Stack do
-  use Spanner.GenCommand.Base, bundle: Cog.embedded_bundle, primitive: true
+  use Spanner.GenCommand.Base, bundle: Cog.embedded_bundle, enforcing: false
   defstruct [:store]
 
   @moduledoc """

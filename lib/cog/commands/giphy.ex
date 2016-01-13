@@ -1,8 +1,5 @@
 defmodule Cog.Commands.Giphy do
-  use Spanner.GenCommand.Base, bundle: Cog.embedded_bundle
-
-  permission "giphy"
-  rule "when command is #{Cog.embedded_bundle}:giphy must have #{Cog.embedded_bundle}:giphy"
+  use Spanner.GenCommand.Base, bundle: Cog.embedded_bundle, enforcing: false
 
   @giphy_url "http://api.giphy.com/v1/gifs/search"
   @limit "1"

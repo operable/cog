@@ -62,14 +62,14 @@ defmodule Integration.PermissionTest do
     send_message user, "@bot: operable:permissions --grant --user=vanstee --permission=operable:st-echo"
     assert_response "Granted permission `operable:st-echo` to user `vanstee`"
 
-    send_message user, "@bot: operable:st-echo test"
-    assert_response "test"
+    send_message user, "@bot: operable:st-echo good_test"
+    assert_response "good_test"
 
     send_message user, "@bot: operable:permissions --revoke --user=vanstee --permission=operable:st-echo"
     assert_response "Revoked permission `operable:st-echo` from user `vanstee`"
 
-    send_message user, "@bot: operable:st-echo test"
-    assert_response "@vanstee Sorry, you aren't allowed to execute 'operable:st-echo test' :(\n You will need the 'operable:st-echo' permission to run this command."
+    send_message user, "@bot: operable:st-echo fail_test"
+    assert_response "@vanstee Sorry, you aren't allowed to execute 'operable:st-echo fail_test' :(\n You will need the 'operable:st-echo' permission to run this command."
   end
 
   test "revoking a permission from a group", %{user: user} do

@@ -1,5 +1,5 @@
 defmodule Cog.Commands.Table do
-  use Spanner.GenCommand.Base, bundle: Cog.embedded_bundle
+  use Spanner.GenCommand.Base, bundle: Cog.embedded_bundle, enforcing: false
   alias Cog.Formatters
 
   @moduledoc """
@@ -16,9 +16,6 @@ defmodule Cog.Commands.Table do
   """
 
   option "fields", type: "string", required: false
-
-  permission "table"
-  rule "when command is #{Cog.embedded_bundle}:table must have #{Cog.embedded_bundle}:table"
 
   def handle_message(req, state) do
     fields = req.options["fields"]

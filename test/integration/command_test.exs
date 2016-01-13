@@ -83,7 +83,7 @@ defmodule Integration.CommandTest do
     assert_response "@vanstee Sorry, you aren't allowed to execute 'operable:st-echo test' :(\n You will need the 'operable:st-echo' permission to run this command."
   end
 
-  test "running the primitive t-echo command without permission", %{user: user} do
+  test "running the un-enforced t-echo command without permission", %{user: user} do
     send_message user, "@bot: operable:t-echo test"
     assert_response "test"
   end
@@ -98,10 +98,10 @@ defmodule Integration.CommandTest do
   end
 
   test "running commands in a pipeline without permission", %{user: user} do
-    user |> with_permission("operable:echo")
+    user |> with_permission("operable:st-echo")
 
-    send_message user, ~s(@bot: operable:echo "this is a test" | operable:thorn $body)
-    assert_response "@vanstee Sorry, you aren't allowed to execute 'operable:thorn $body' :(\n You will need the 'operable:thorn' permission to run this command."
+    send_message user, ~s(@bot: operable:st-echo "this is a test" | operable:st-thorn $body)
+    assert_response "@vanstee Sorry, you aren't allowed to execute 'operable:st-thorn $body' :(\n You will need the 'operable:st-thorn' permission to run this command."
   end
 
   test "running unknown commands", %{user: user} do

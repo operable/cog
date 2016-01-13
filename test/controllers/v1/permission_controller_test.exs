@@ -32,11 +32,10 @@ defmodule Cog.V1.PermissionControllerTest do
 
     # Everything currently in the embedded bundle, which is present on
     # system startup
-    assert names == ["builds", "giphy",
-                     "greet", "help", "manage_commands",
+    assert names == ["builds", "help", "manage_commands",
                      "manage_groups", "manage_permissions",
-                     "manage_roles", "manage_users", "math", "st-echo",
-                     "stackoverflow", "table", "thorn"]
+                     "manage_roles", "manage_users", "st-echo",
+                     "st-thorn", "stackoverflow"]
   end
 
   test "creates and renders resource when data is valid", %{user: user} do
