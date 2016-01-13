@@ -32,9 +32,9 @@ defmodule Integration.SlackTest do
   end
 
   test "running commands in a pipeline without permission", %{user: user} do
-    user |> with_permission("operable:echo")
+    user |> with_permission("operable:st-echo")
 
-    message = send_message user, ~s(@deckard: operable:echo "this is a test" | operable:thorn $body)
-    assert_response "@botci Sorry, you aren't allowed to execute 'operable:thorn $body' :(\n You will need the 'operable:thorn' permission to run this command.", after: message
+    message = send_message user, ~s(@deckard: operable:st-echo "this is a test" | operable:st-thorn $body)
+    assert_response "@botci Sorry, you aren't allowed to execute 'operable:st-thorn $body' :(\n You will need the 'operable:st-thorn' permission to run this command.", after: message
   end
 end
