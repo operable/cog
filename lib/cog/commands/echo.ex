@@ -1,5 +1,5 @@
 defmodule Cog.Commands.Echo do
-  use Spanner.GenCommand.Base, bundle: Cog.embedded_bundle, primitive: true
+  use Spanner.GenCommand.Base, bundle: Cog.embedded_bundle, enforcing: false
 
   @moduledoc """
   Repeats whatever it is passed.

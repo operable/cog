@@ -9,7 +9,7 @@ defmodule Cog.Commands.Wc do
   The clouds give rest
   To the moon-beholders."
   """
-  use Spanner.GenCommand.Base, bundle: Cog.embedded_bundle, primitive: true
+  use Spanner.GenCommand.Base, bundle: Cog.embedded_bundle, enforcing: false
 
   option "words", type: "bool", required: false
   option "lines", type: "bool", required: false

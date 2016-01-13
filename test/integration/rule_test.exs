@@ -16,28 +16,28 @@ defmodule Integration.RuleTest do
   end
 
   test "error when unknown options for rules command", %{user: user} do
-    send_message user, "@bot: operable:rules --doit 'when command is operable:greet must have operable:greet'"
+    send_message user, "@bot: operable:rules --doit 'when command is operable:st-echo must have operable:st-echo'"
     assert_response "I am not sure what action you want me to take using `rules`"
   end
 
   test "adding a rule for a command", %{user: user} do
-    send_message user, "@bot: operable:rules --add 'when command is operable:greet must have operable:greet'"
+    send_message user, "@bot: operable:rules --add 'when command is operable:st-echo must have operable:st-echo'"
     assert_response "Encountered the following errors:\n\n* Rule already exists\n\n"
 
     # Drop the rule, then add it back
-    send_message user, "@bot: operable:rules --drop --for-command=\"operable:greet\""
-    assert_response "Dropped all rules for command `operable:greet`:\n* when command is operable:greet must have operable:greet\n"
+    send_message user, "@bot: operable:rules --drop --for-command=\"operable:st-echo\""
+    assert_response "Dropped all rules for command `operable:st-echo`:\n* when command is operable:st-echo must have operable:st-echo\n"
 
-    send_message user, "@bot: operable:rules --add --for-command=operable:greet --permission=operable:greet"
-    assert_response "Success! Added new rule \"when command is operable:greet must have operable:greet\""
+    send_message user, "@bot: operable:rules --add --for-command=operable:st-echo --permission=operable:st-echo"
+    assert_response "Success! Added new rule \"when command is operable:st-echo must have operable:st-echo\""
   end
 
   test "dropping a rule via the command name", %{user: user} do
-    send_message user, "@bot: operable:rules --drop --for-command=\"operable:greet\""
-    assert_response "Dropped all rules for command `operable:greet`:\n* when command is operable:greet must have operable:greet\n"
+    send_message user, "@bot: operable:rules --drop --for-command=\"operable:st-echo\""
+    assert_response "Dropped all rules for command `operable:st-echo`:\n* when command is operable:st-echo must have operable:st-echo\n"
 
-    send_message user, "@bot: operable:rules --drop --for-command=\"operable:greet\""
-    assert_response "There are no rules for command operable:greet"
+    send_message user, "@bot: operable:rules --drop --for-command=\"operable:st-echo\""
+    assert_response "There are no rules for command operable:st-echo"
   end
 
   test "error when dropping unknown id for rules command", %{user: user} do
@@ -54,16 +54,16 @@ defmodule Integration.RuleTest do
     send_message user, "@bot: operable:rules --list"
     assert_response "ERROR! You must specify a command using the --for-command option."
 
-    send_message user, "@bot: operable:rules --list --for-command=\"operable:greet\""
-    assert_response_in "```{\n\tcommand: operable:greet,\n\tid: "
+    send_message user, "@bot: operable:rules --list --for-command=\"operable:st-echo\""
+    assert_response_in "```{\n\tcommand: operable:st-echo,\n\tid: "
   end
 
   test "dropping a rule via a rule id", %{user: user} do
-    send_message user, "@bot: operable:rules --list --for-command=\"operable:greet\""
+    send_message user, "@bot: operable:rules --list --for-command=\"operable:st-echo\""
     response = get_response
     resp = Regex.named_captures(~r/id": "(?<id>.*)"/, response)
     assert resp["id"] != nil
     send_message user, "@bot: operable:rules --drop --id=\"#{resp["id"]}\""
-    assert_response "Dropped rule with id `#{resp["id"]}`:\n* when command is operable:greet must have operable:greet\n"
+    assert_response "Dropped rule with id `#{resp["id"]}`:\n* when command is operable:st-echo must have operable:st-echo\n"
   end
 end

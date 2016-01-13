@@ -39,7 +39,7 @@ defmodule Integration.RedirectTest do
   end
 
   test "redirection to 'me'", %{user: user} do
-    send_message user, "@bot: operable:echo test_me > me"
+    send_message user, "@bot: operable:t-echo test_me > me"
 
     response = %{"adapter" => "Test",
                  "response" => "test_me",
