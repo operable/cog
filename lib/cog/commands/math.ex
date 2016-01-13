@@ -17,6 +17,7 @@ defmodule Cog.Commands.Math do
   > @bot operable:math factorial 59
   """
   use Spanner.GenCommand.Base, bundle: Cog.embedded_bundle
+  import Cog.Helpers, only: [get_number: 1]
 
   permission "math"
   rule "when command is #{Cog.embedded_bundle}:math must have #{Cog.embedded_bundle}:math"
@@ -25,7 +26,7 @@ defmodule Cog.Commands.Math do
 
   def handle_message(req, state) do
     [op | remaining] = req.args
-    {:reply, req.reply_to, do_math(op, remaining), state}
+    {:reply, req.reply_to, %{result: do_math(op, remaining)}, state}
   end
 
   defp do_math(operator, nums) do
@@ -44,13 +45,14 @@ defmodule Cog.Commands.Math do
     err_msg
   end
   defp accumulate_args({acc, func}, [first|rest]) do
-    case Float.parse(first) do
-      {num, _} -> accumulate_args({func.(num, acc), func}, rest)
-      :error -> "#{first} is not a number"
+    num = get_number(first)
+    case is_number(num) do
+      true -> accumulate_args({func.(num, acc), func}, rest)
+      false -> num
     end
   end
   defp accumulate_args({acc, _}, []) do
-    Float.to_string(acc, [decimals: 4, compact: true])
+    Float.to_string(acc/1, [decimals: 4, compact: true])
   end
 
   defp multi(num, acc) do
