@@ -12,7 +12,7 @@ defmodule Cog.Command.Pipeline.Executor do
   * :lookup_redirects
   * :bind
   * :get_options
-  * :enforcing
+  * :maybe_enforce
   * :check_permissions
   * :run_command
   * :waiting_for_command
@@ -193,7 +193,7 @@ defmodule Cog.Command.Pipeline.Executor do
     case OptionInterpreter.initialize(current_bound, current_bound.args) do
       {:ok, options, args} ->
         current_bound = %{current_bound | options: options, args: args}
-        {:next_state, :enforcing, %{state | current_bound: current_bound}, 0}
+        {:next_state, :maybe_enforce, %{state | current_bound: current_bound}, 0}
       :not_found ->
         Helpers.send_idk(state.request, current_bound.command, state.mq_conn)
         fail_pipeline(state, :option_interpreter_error, "Command '#{current_bound.command}' not found")
@@ -205,12 +205,12 @@ defmodule Cog.Command.Pipeline.Executor do
   end
 
   @doc """
-  `enforcing` -> {:next_state, :run_command} | {:next_state, :check_permission}
+  `maybe_enforce` -> {:next_state, :run_command} | {:next_state, :check_permission}
 
   If the command is enforced then the permission check is skipped and the command
   is executed.
   """
-  def enforcing(:timeout, %__MODULE__{current_bound: current_bound}=state) do
+  def maybe_enforce(:timeout, %__MODULE__{current_bound: current_bound}=state) do
     {:ok, command} = CommandCache.fetch(current_bound)
     if command.enforcing do
       {:next_state, :check_permission, state, 0}
