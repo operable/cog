@@ -12,8 +12,13 @@ defmodule Cog.Command.OptionInterpreter do
       {:ok, defs} ->
         case interpret(defs, raw, [], %{}) do
           {:ok, options, args} ->
-            options = set_defaults(command, options)
-            {:ok, options, args}
+            case check_required_options(defs, options) do
+              :ok ->
+                options = set_defaults(command, options)
+                {:ok, options, args}
+              error ->
+                error
+            end
           error ->
             error
         end
@@ -140,14 +145,14 @@ defmodule Cog.Command.OptionInterpreter do
     {:ok, value}
   end
   defp interpret_kv_option("int", value) when is_float(value) do
-    {:error, "Type Error: '#{value}' is not of type 'int'"}
+    {:error, error_msg(:type_error, value, "int")}
   end
   defp interpret_kv_option("int", value) when is_binary(value) do
     case Integer.parse(value) do
       {int, ""} ->
         {:ok, int}
       _error ->
-        {:error, "Type Error: '#{value} is not of type 'int'"}
+        {:error, error_msg(:type_error, value, "int")}
     end
   end
   defp interpret_kv_option("float", value) when is_float(value) do
@@ -161,7 +166,7 @@ defmodule Cog.Command.OptionInterpreter do
       {float, _rem} ->
         {:ok, float}
       :error ->
-        {:error, "Type Error: '#{value}' is not of type 'float'"}
+        {:error, error_msg(:type_error, value, "float")}
     end
   end
   defp interpret_kv_option("bool", value) when is_integer(value) do
@@ -177,5 +182,24 @@ defmodule Cog.Command.OptionInterpreter do
   defp interpret_kv_option(type, value) do
     {:error, {type, value.__struct__}}
   end
+
+  defp check_required_options(defs, opts) do
+    required_set = Enum.filter_map(defs,
+                                   fn({_,o_def}) -> o_def.required end,
+                                   fn({o_name,_}) -> o_name end) |> MapSet.new
+
+    existing_set = Enum.map(opts, fn({o_name, _}) -> o_name end) |> MapSet.new
+
+    case MapSet.subset?(required_set, existing_set) do
+      true ->
+        :ok
+      false ->
+        missing = MapSet.difference(required_set, existing_set) |> MapSet.to_list
+        {:error, "Looks like you forgot to include some required options: '#{Enum.join(missing, ", ")}'"}
+    end
+  end
+
+  defp error_msg(:type_error, value, req_type),
+    do: "Type Error: '#{value}' is not of type '#{req_type}'"
 
 end

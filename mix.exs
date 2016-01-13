@@ -4,7 +4,7 @@ defmodule Cog.Mixfile do
   def project do
     [app: :cog,
      version: "0.0.1",
-     elixir: "~> 1.1",
+     elixir: "~> 1.2",
      leex_options: [:warnings_as_errors],
      elixirc_options: [warnings_as_errors: System.get_env("ALLOW_WARNINGS") == nil],
      build_embedded: Mix.env == :prod,

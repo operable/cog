@@ -198,6 +198,8 @@ defmodule Cog.Command.Pipeline.Executor do
         Helpers.send_idk(state.request, current_bound.command, state.mq_conn)
         fail_pipeline(state, :option_interpreter_error, "Command '#{current_bound.command}' not found")
       error ->
+        {:error, msg} = error
+        Helpers.send_error(msg, state.request, state.mq_conn)
         fail_pipeline(state, :option_interpreter_error, "Error parsing options: #{inspect error}")
     end
   end

@@ -8,6 +8,16 @@ defmodule Integration.CommandTest do
     {:ok, %{user: user}}
   end
 
+  test "running a command with a required option", %{user: user} do
+    send_message user, "@bot: operable:req-opt --req=\"foo\""
+    assert_response "req-opt response"
+  end
+
+  test "running a command with a required option missing", %{user: user} do
+    send_message user, "@bot: operable:req-opt"
+    assert_response "@vanstee Whoops! An error occurred. \"Looks like you forgot to include some required options: 'req'\""
+  end
+
   test "running a command with a 'string' option", %{user: user} do
     send_message user, "@bot: operable:type-test --string=\"a string\""
     assert_response "type-test response"
@@ -41,13 +51,23 @@ defmodule Integration.CommandTest do
     assert_response "type-test response"
   end
 
+  test "running a command with an invalid 'int' option", %{user: user} do
+    send_message user, "@bot: operable:type-test --int=\"this is a string\""
+    assert_response "@vanstee Whoops! An error occurred. \"Type Error: 'this is a string' is not of type 'int'\""
+  end
+
   test "running a command with a 'float' option", %{user: user} do
     send_message user, "@bot: operable:type-test --float=1.0"
     assert_response "type-test response"
   end
 
+  test "running a command with an invalid 'float' option", %{user: user} do
+    send_message user, "@bot: operable:type-test --float=\"This is a string\""
+    assert_response "@vanstee Whoops! An error occurred. \"Type Error: 'This is a string' is not of type 'float'\""
+  end
+
   test "running a command with an 'incr' option", %{user: user} do
-    send_message user, "@bot: operable:type-test --incr=1"
+    send_message user, "@bot: operable:type-test --incr"
     assert_response "type-test response"
   end
 
