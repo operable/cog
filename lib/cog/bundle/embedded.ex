@@ -11,6 +11,7 @@ defmodule Cog.Bundle.Embedded do
   alias Cog.Models.Bundle
   alias Cog.Repo
   alias Spanner.Bundle.Config
+  alias Spanner.GenCommand
 
   @embedded_bundle_root "lib/cog"
 
@@ -30,9 +31,14 @@ defmodule Cog.Bundle.Embedded do
 
     %Bundle{} = bundle = Repo.get_by!(Bundle, name: Cog.embedded_bundle)
     Logger.info("Loading embedded `#{Cog.embedded_bundle}` bundle")
-    commands = bundle.config_file |> Config.commands
-    children = for {module, opts} <- commands,
-      do: worker(module, opts)
+    bundle_name = bundle.config_file["bundle"]["name"]
+    commands = bundle.config_file["commands"]
+    children = for command <- commands do
+      module_name = command["module"]
+      cmd_name = command["name"]
+      module = Module.concat([module_name])
+      worker(GenCommand, [bundle_name, cmd_name, module, []], id: module)
+    end
     supervise(children, strategy: :rest_for_one, max_restarts: 5, max_seconds: 60)
   end
 
