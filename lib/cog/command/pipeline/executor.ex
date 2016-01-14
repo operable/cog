@@ -251,7 +251,8 @@ defmodule Cog.Command.Pipeline.Executor do
       relay ->
         topic = "/bot/commands/#{relay}/#{bundle}/#{name}"
         reply_to_topic = "#{state.topic}/reply"
-        req = request_for_invocation(current_bound, request["sender"], request["room"], reply_to_topic)
+        cog_env = maybe_add_env(current_bound, state)
+        req = request_for_invocation(current_bound, request["sender"], request["room"], reply_to_topic, cog_env)
 
         log_dispatch(state, relay)
 
@@ -451,10 +452,20 @@ defmodule Cog.Command.Pipeline.Executor do
     {:next_state, :bind, %{state | current: current, remaining: remaining}, 0}
   end
 
-  defp request_for_invocation(invoke, requestor, room, reply_to) do
+  defp request_for_invocation(invoke, requestor, room, reply_to, cog_env) do
     %Spanner.Command.Request{command: invoke.command, options: invoke.options,
                              args: invoke.args, requestor: requestor,
-                             room: room, reply_to: reply_to}
+                             cog_env: cog_env, room: room, reply_to: reply_to}
+  end
+
+  defp maybe_add_env(invocation, state) do
+    {:ok, command} = CommandCache.fetch(invocation)
+    cond do
+      !command.enforcing && command.calling_convention == "all" ->
+        state.scope.values
+      true ->
+        nil
+    end
   end
 
   defp get_adapter_api(adapter) when is_binary(adapter),
