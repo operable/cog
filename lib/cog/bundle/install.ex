@@ -194,6 +194,7 @@ defmodule Cog.Bundle.Install do
   #
   #     create_command(bundle, %{"name" => "ec2-tag",
   #                              "enforcing" => true,
+  #                              "calling_convention" => "bound",
   #                              "version" => "0.0.1",
   #                              "options": [%{"name" => "instance-id", "type" => "string", "required" => true}],
   #                              "module" => "Cog.Commands.EC2Tag"})
@@ -202,10 +203,12 @@ defmodule Cog.Bundle.Install do
       "version" => version,
       "options" => options,
       "enforcing" => enforcing,
+      "calling_convention" => calling_convention,
       "documentation" => documentation} = command_spec
 
     command = Command.build_new(bundle, %{name: name, version: version,
                                           documentation: documentation,
+                                          calling_convention: calling_convention,
                                           enforcing: enforcing})
     |> Repo.insert!
 
