@@ -28,11 +28,14 @@ defmodule Cog.Bundle.Embedded do
     announce_embedded_bundle
     Logger.info("Embedded bundle announced; starting bundle supervision tree")
 
-    %Bundle{} = bundle = Repo.get_by!(Bundle, name: Cog.embedded_bundle)
+    bundle = Repo.get_by!(Bundle, name: Cog.embedded_bundle)
     Logger.info("Loading embedded `#{Cog.embedded_bundle}` bundle")
-    commands = bundle.config_file |> Config.commands
-    children = for {module, opts} <- commands,
-      do: worker(module, opts)
+    config = bundle.config_file
+    children = for command <- config["commands"] do
+      name = command["name"]
+      module = Module.concat([command["module"]])
+      worker(Spanner.GenCommand, [bundle.name, name, module, []], id: module)
+    end
     supervise(children, strategy: :rest_for_one, max_restarts: 5, max_seconds: 60)
   end
 
