@@ -46,7 +46,7 @@
   "postgrex": {:hex, :postgrex, "0.9.1"},
   "ranch": {:hex, :ranch, "1.1.0"},
   "slack": {:git, "https://github.com/BlakeWilliams/Elixir-Slack.git", "e348e12551e8f6361d9c666ed52c83eeccce86b8", [ref: "e348e12551e8f6361d9c666ed52c83eeccce86b8"]},
-  "spanner": {:git, "git@github.com:operable/spanner", "d33117066f79386e2b50484bab9db79d647ecb86", [branch: "peck/calling_convention"]},
+  "spanner": {:git, "git@github.com:operable/spanner", "d33117066f79386e2b50484bab9db79d647ecb86", [ref: "d46caf8adf48252aa2de734b602758c3acbc545d"]},
   "ssl_verify_hostname": {:hex, :ssl_verify_hostname, "1.0.5"},
   "tentacat": {:hex, :tentacat, "0.2.1"},
   "uuid": {:hex, :uuid, "1.0.1"},
