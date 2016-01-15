@@ -3,8 +3,7 @@ defmodule Cog.Events.PipelineEvent do
   Provides functions for generating command pipeline execution events.
   """
 
-  # ISO-8601 UTC
-  @date_format "~.4.0w-~.2.0w-~.2.0wT~.2.0w:~.2.0w:~.2.0wZ"
+  import Cog.Events.Util
 
   @typedoc """
   One of the valid kinds of events that can be emitted by a pipeline
@@ -125,13 +124,6 @@ defmodule Cog.Events.PipelineEvent do
                 elapsed_microseconds: elapsed,
                 timestamp: now_iso8601_utc,
                 data: data}
-  end
-
-  # Current time, as an ISO-8601 formatted string
-  defp now_iso8601_utc do
-    {{year, month, day}, {hour, min, sec}} = :calendar.universal_time
-    :io_lib.format(@date_format, [year, month, day, hour, min, sec])
-    |> IO.iodata_to_binary
   end
 
 end

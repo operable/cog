@@ -2,9 +2,12 @@ defmodule Cog.Plug.Authentication do
   @behaviour Plug
 
   import Plug.Conn
+  import Cog.Plug.Util, only: [set_user: 2]
+
   alias Cog.Models.User
   alias Cog.Repo
   alias Cog.Config
+  alias Cog.Events.ApiEvent
 
   def init(_opts),
     do: Config.token_lifetime
@@ -13,7 +16,8 @@ defmodule Cog.Plug.Authentication do
     case conn |> extract_token |> user_from_token(ttl_in_seconds) do
       %User{}=user ->
         conn
-        |> assign(:user, user)
+        |> set_user(user)
+        |> authenticated_event
       :expired_token ->
         conn
         |> resp(401, Poison.encode!(%{"error" => "token expired"}))
@@ -56,6 +60,12 @@ defmodule Cog.Plug.Authentication do
       {%User{}, false} -> :expired_token
       nil -> nil
     end
+  end
+
+  # Emit an authenticated event. Returns `conn` for pipelines
+  defp authenticated_event(conn) do
+    conn |> ApiEvent.authenticated |> Probe.notify
+    conn
   end
 
 end
