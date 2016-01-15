@@ -23,7 +23,7 @@ config :cog, Cog.Adapters.HipChat,
   mention_name: System.get_env("HIPCHAT_MENTION_NAME")
 
 config :cog, Cog.Repo,
-  pool: Ecto.Adapters.SQL.Sandbox,
+  pool: Ecto.Adapters.SQL.Sandbox
 
 config :carrier, Carrier.Messaging.Connection,
   host: "127.0.0.1",
