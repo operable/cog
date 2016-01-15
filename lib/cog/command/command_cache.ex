@@ -74,14 +74,14 @@ defmodule Cog.Command.CommandCache do
 
   def init(_) do
     :ets.new(@ets_table, [:ordered_set, :protected, :named_table, {:read_concurrency, true}])
-    ttl = Cog.Config.convert(Application.get_env(:cog, :command_cache_ttl, {60, :sec}), :ms)
+    ttl = Cog.Config.convert(Application.get_env(:cog, :command_cache_ttl, {60, :sec}), :sec)
     {:ok, tref} = if ttl > 0 do
       :timer.send_interval((ttl * 3000), :expire_cache)
     else
       {:ok, nil}
     end
     Logger.info("#{__MODULE__} intialized. Command cache TTL is #{ttl} seconds.")
-    {:ok, %__MODULE__{ttl: ttl, tref: tref}}
+    {:ok, %__MODULE__{ttl: ttl * 1000, tref: tref}}
   end
 
   def handle_call({:fetch, command_name}, _caller, state) do
