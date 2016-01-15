@@ -46,7 +46,7 @@
   "postgrex": {:hex, :postgrex, "0.9.1"},
   "ranch": {:hex, :ranch, "1.1.0"},
   "slack": {:git, "https://github.com/BlakeWilliams/Elixir-Slack.git", "e348e12551e8f6361d9c666ed52c83eeccce86b8", [ref: "e348e12551e8f6361d9c666ed52c83eeccce86b8"]},
-  "spanner": {:git, "git@github.com:operable/spanner", "fc353c7969f7d8b1190949fd724e2810349fc1d6", [branch: "kevsmith/simplify-encode-decode"]},
+  "spanner": {:git, "git@github.com:operable/spanner", "b633eadba692fd6d8c26d79d74c8649f9a3b0175", [ref: "b633eadba692fd6d8c26d79d74c8649f9a3b0175"]},
   "ssl_verify_hostname": {:hex, :ssl_verify_hostname, "1.0.5"},
   "tentacat": {:hex, :tentacat, "0.2.1"},
   "uuid": {:hex, :uuid, "1.0.1"},
