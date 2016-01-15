@@ -156,7 +156,20 @@ defmodule Cog.Command.Pipeline.Executor do
       {:ok, resolved} ->
         prepare(%{state | redirects: resolved})
       {:error, invalid} ->
-        Helpers.send_error("Invalid redirects: #{Enum.join(invalid, ", ")}", state.request, state.mq_conn)
+        # TODO: having a really good error message for this would
+        # entail better differentiating the reasons for specific
+        # failures: room not found, not a member of a room, etc. (You
+        # could even extend this to things like "inactive user",
+        # "archived room", and so on.) Something multi-line would be
+        # best, but formatting ends up being weird with our current
+        # helpers.
+        #
+        # A long-term solution probably involves some sort of error
+        # templating, which we've discussed. The current
+        # implementation at least gives the user some actionable (if
+        # not pretty) feedback.
+        not_a_member = Keyword.get_values(invalid, :not_a_member)
+        Helpers.send_error("Invalid redirects: #{invalid |> Keyword.values |> Enum.join(", ")}#{unless Enum.empty?(not_a_member), do: ". Additionally, the bot must be invited to these rooms before it can redirect to them: #{Enum.join(not_a_member, ", ")}"}", state.request, state.mq_conn)
         fail_pipeline(state, :redirect_error, "Invalid redirects were specified: #{inspect invalid}")
     end
   end
@@ -353,10 +366,11 @@ defmodule Cog.Command.Pipeline.Executor do
   defp lookup_room(redir, state) do
     adapter = get_adapter_api(state.request["adapter"])
     case adapter.lookup_room(redir, as_user: state.request["sender"]["id"]) do
-      {:ok, room} -> {:ok, room}
-      error ->
-        Logger.error("Error resolving redirect '#{redir}' with adapter #{adapter}: #{inspect error}")
-        {:error, redir}
+      {:ok, room} ->
+        {:ok, room}
+      {:error, reason} ->
+        Logger.error("Error resolving redirect '#{redir}' with adapter #{adapter}: #{inspect reason}")
+        {:error, {reason, redir}}
     end
   end
 
