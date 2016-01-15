@@ -3,6 +3,9 @@ defmodule Cog.Plug.Authentication.Test do
   use Plug.Test
   alias Cog.Plug.Authentication
 
+  import Cog.Plug.Util, only: [get_user: 1,
+                               stamp_start_time: 1]
+
   @default_token_lifetime 42 # seconds, just because
 
   setup do
@@ -15,12 +18,13 @@ defmodule Cog.Plug.Authentication.Test do
 
   test "saves authenticated user in conn", %{user: user, token: token} do
     conn = conn(:get, "/")
+    |> stamp_start_time
     |> put_req_header("authorization", "token #{token}")
     |> Authentication.call(@default_token_lifetime)
 
     refute conn.halted
     refute conn.status
-    assert conn.assigns[:user] == user
+    assert get_user(conn) == user
   end
 
   test "halts if no authorization header is set" do
@@ -29,7 +33,7 @@ defmodule Cog.Plug.Authentication.Test do
 
     assert conn.halted
     assert conn.status == 401 # unauthorized
-    refute conn.assigns[:user]
+    refute get_user(conn)
   end
 
   test "halts if authorization header value is malformed", %{token: token} do
@@ -39,7 +43,7 @@ defmodule Cog.Plug.Authentication.Test do
 
     assert conn.halted
     assert conn.status == 401 # unauthorized
-    refute conn.assigns[:user]
+    refute get_user(conn)
   end
 
   test "halts if token is not found" do
@@ -49,7 +53,7 @@ defmodule Cog.Plug.Authentication.Test do
 
     assert conn.halted
     assert conn.status == 401 # unauthorized
-    refute conn.assigns[:user]
+    refute get_user(conn)
   end
 
   test "halts if token is older than the configured token time-out", %{token: token} do
@@ -64,7 +68,7 @@ defmodule Cog.Plug.Authentication.Test do
 
     assert conn.halted
     assert conn.status == 401
-    refute conn.assigns[:user]
+    refute get_user(conn)
     assert conn.resp_body == Poison.encode!(%{"error" => "token expired"})
   end
 end

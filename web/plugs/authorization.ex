@@ -3,6 +3,8 @@ defmodule Cog.Plug.Authorization do
 
   import Plug.Conn
   import Phoenix.Controller, only: [json: 2]
+  import Cog.Plug.Util, only: [get_user: 1]
+
   alias Cog.Models.User
   alias Cog.Models.Permission
   alias Cog.Repo
@@ -22,7 +24,7 @@ defmodule Cog.Plug.Authorization do
 
   # Expects to be called after the `Cog.Plug.Authentication` plug
   def call(conn, permission_name) do
-    authenticated_user = conn.assigns[:user]
+    authenticated_user = get_user(conn)
     permission = name_to_permission(permission_name)
     case User.has_permission(authenticated_user, permission) do
       true ->

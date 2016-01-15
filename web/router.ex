@@ -10,6 +10,7 @@ defmodule Cog.Router do
   end
 
   pipeline :api do
+    plug Cog.Plug.Event
     plug :accepts, ["json"]
   end
 
