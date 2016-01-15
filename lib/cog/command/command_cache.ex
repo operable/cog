@@ -74,7 +74,7 @@ defmodule Cog.Command.CommandCache do
 
   def init(_) do
     :ets.new(@ets_table, [:ordered_set, :protected, :named_table, {:read_concurrency, true}])
-    ttl = Cog.Config.convert(Application.get_env(:cog, :command_cache_ttl, {60, :sec}), :ms)
+    ttl = Cog.Config.convert(Application.get_env(:cog, :command_cache_ttl, {60, :sec}), :sec)
     {:ok, tref} = if ttl > 0 do
       :timer.send_interval((ttl * 3000), :expire_cache)
     else
