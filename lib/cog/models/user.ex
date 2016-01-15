@@ -33,7 +33,7 @@ defmodule Cog.Models.User do
   @required_fields ~w(username first_name last_name email_address)
   @optional_fields ~w(password)
 
-  summary_fields [:id, :first_name, :last_name, :email_address]
+  summary_fields [:id, :first_name, :last_name, :email_address, :username]
   detail_fields [:id, :first_name, :last_name, :email_address, :username]
 
   @doc """
