@@ -24,7 +24,6 @@ config :cog, Cog.Adapters.HipChat,
 
 config :cog, Cog.Repo,
   pool: Ecto.Adapters.SQL.Sandbox,
-  pool_timeout: 30000
 
 config :carrier, Carrier.Messaging.Connection,
   host: "127.0.0.1",
