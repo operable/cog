@@ -81,7 +81,7 @@ defmodule Cog.Command.CommandCache do
       {:ok, nil}
     end
     Logger.info("#{__MODULE__} intialized. Command cache TTL is #{ttl} seconds.")
-    {:ok, %__MODULE__{ttl: ttl * 1000, tref: tref}}
+    {:ok, %__MODULE__{ttl: ttl, tref: tref}}
   end
 
   def handle_call({:fetch, command_name}, _caller, state) do
