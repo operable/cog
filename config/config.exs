@@ -10,6 +10,8 @@ config :cog, Cog.Repo,
           nil -> "ecto://#{System.get_env("USER")}@localhost/cog_#{Mix.env}"
           url -> url
         end),
+  pool_timeout: String.to_integer(System.get_env("COG_DB_POOL_TIMEOUT") || "15000"),
+  timeout: String.to_integer(System.get_env("COG_DB_TIMEOUT") || "15000"),
   parameters: [timezone: 'UTC']
 
 config :carrier, :credentials_dir, "creds"
