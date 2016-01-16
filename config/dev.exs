@@ -28,15 +28,6 @@ config :carrier, Carrier.Messaging.Connection,
   host: "127.0.0.1",
   port: 1883
 
-config :cog, Cog.Adapters.SSH,
-  host_key_dir: System.get_env("SSH_HOST_KEY_DIR"),
-  port: System.get_env("SSH_PORT"),
-  bot_username: System.get_env("SSH_USERNAME") || "cog"
-
-config :cog, Cog.Adapters.WebSocket,
-  websocket_uri: "ws://localhost:4000/sockets/websocket",
-  bot_username: System.get_env("SSH_USERNAME") || "cog"
-
 config :cog,
   :template_cache_ttl, {1, :sec}
 
