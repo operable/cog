@@ -49,7 +49,7 @@ defmodule Cog.Mixfile do
      {:jsx, "~> 2.8.0", override: true},
      {:earmark, "~> 0.1", only: :dev},
      {:ex_doc, "~> 0.10", only: :dev},
-     {:mix_test_watch, "~> 0.1.1", only: :test},
+     {:mix_test_watch, "~> 0.1.1", only: :dev},
      {:postgrex, "~> 0.9.1"},
      {:ecto, "~> 1.0.0"},
      {:lager_logger, github: "PSPDFKit-labs/lager_logger", branch: "master"},
