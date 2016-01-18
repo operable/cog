@@ -184,6 +184,7 @@ defmodule Cog.Command.Pipeline.Executor do
     case OptionInterpreter.initialize(current_bound, current_bound.args) do
       {:ok, options, args} ->
         current_bound = %{current_bound | options: options, args: args}
+        |> maybe_fixup_current
         {:next_state, :maybe_enforce, %{state | current_bound: current_bound}, 0}
       :not_found ->
         Helpers.send_idk(state.request, current_bound.command, state.mq_conn)
@@ -497,6 +498,20 @@ defmodule Cog.Command.Pipeline.Executor do
         state.scope.values
       true ->
         nil
+    end
+  end
+
+  defp maybe_fixup_current(current) do
+    {:ok, command} = CommandCache.fetch(current)
+    case command.execution do
+      "once" ->
+        options = Enum.reduce(current.options, %{}, fn({k,v}, acc) ->
+          Map.put_new(acc, k, List.wrap(v))
+        end)
+        args = List.flatten(current.args)
+        %{current | options: options, args: args}
+      "multiple" ->
+        current
     end
   end
 
