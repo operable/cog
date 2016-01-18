@@ -439,15 +439,44 @@ defmodule Cog.Command.Pipeline.Executor do
     send_user_resp(%{resp | body: final_result}, state)
     {:stop, :shutdown, %{state | output: final_result}}
   end
-
   defp prepare_or_finish(%__MODULE__{input: [h|t], output: output}=state, resp) do
     scope = Bind.Scope.from_map(h)
     {:next_state, :bind, %{state | input: t, output: output ++ [resp.body], scope: scope}, 0}
   end
-  defp prepare_or_finish(%__MODULE__{input: [], remaining: [h|t], output: output}=state, resp) do
-    [oh|ot] = List.flatten(output ++ [resp.body])
-    scope = Bind.Scope.from_map(oh)
-    {:next_state, :bind, %{state | current: h, remaining: t, input: ot, output: [], scope: scope}, 0}
+  defp prepare_or_finish(%__MODULE__{input: [], output: output, remaining: [h|t]}=state, resp) do
+    # Fetch the next command
+    {:ok, command} = CommandCache.fetch(h)
+    new_output = List.flatten(output ++ [resp.body])
+    case command.execution do
+      "once" ->
+        scope = collect_output(new_output)
+        |> Bind.Scope.from_map
+        {:next_state, :bind, %{state | current: h, remaining: t, input: [], output: [], scope: scope}, 0}
+      "multiple" ->
+        [oh|ot] = new_output
+        scope = Bind.Scope.from_map(oh)
+        {:next_state, :bind, %{state | current: h, remaining: t, input: ot, output: [], scope: scope}, 0}
+    end
+  end
+
+  # Takes a list of maps and returns a map of lists.
+  # For example
+  # input: [%{"foo" => "bar"}, %{"foo" => "baz"}]
+  # output: %{"foo" => ["bar", "baz"]}
+  defp collect_output(output) when is_list(output) do
+    blank_map = initialize_output_map(output)
+    Enum.reduce(output, blank_map, &(Map.merge(&2, &1, fn
+      (_k, v1, v2) ->
+        v1 ++ [v2]
+      end)))
+  end
+
+  # Takes a list of maps and returns a new map with all keys set to '[]'.
+  # This makes collecting the output easier.
+  defp initialize_output_map(output) do
+    Enum.map(output, &Map.keys/1)
+    |> List.flatten
+    |> Map.new(&({&1,[]}))
   end
 
   defp prepare(%__MODULE__{pipeline: %Ast.Pipeline{invocations: invocations}}=state) do

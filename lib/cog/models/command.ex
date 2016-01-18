@@ -10,6 +10,7 @@ defmodule Cog.Models.Command do
     field :documentation, :string
     field :enforcing, :boolean, default: true
     field :calling_convention, :string, default: "bound"
+    field :execution, :string, default: "multiple"
 
     belongs_to :bundle, Bundle
 
@@ -18,7 +19,7 @@ defmodule Cog.Models.Command do
   end
 
   @required_fields ~w(name version bundle_id)
-  @optional_fields ~w(documentation enforcing calling_convention)
+  @optional_fields ~w(documentation enforcing calling_convention execution)
 
   summary_fields [:id, :name, :version]
   detail_fields [:id, :name, :version, :documentation]
