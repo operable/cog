@@ -366,7 +366,10 @@ defmodule Cog.Command.Pipeline.Executor do
   # Render a templated response and send it out to all pipeline
   # destinations. Renders template only once.
   defp send_user_resp(%Spanner.Command.Response{}=resp, %__MODULE__{redirects: redirects}=state) do
-    response_fn = response_fn(resp, state.request["adapter"])
+    # TODO: remove bundle and room from command resp so commands can't excape their bundle.
+    {bundle, _} = Models.Command.split_name(state.current_bound.command)
+
+    response_fn = response_fn(%{resp | bundle: bundle}, state.request["adapter"])
     case redirects do
       [] ->
         publish_response(response_fn, state.request["room"], state)
