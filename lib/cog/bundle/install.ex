@@ -215,13 +215,6 @@ defmodule Cog.Bundle.Install do
                                           enforcing: enforcing})
     |> Repo.insert!
 
-    executable = command_spec["executable"]
-    if executable do
-      executable_path = Path.join([bundle_root, bundle.name, executable])
-      Logger.debug("Making #{executable_path} executable")
-      File.chmod!(executable_path, 0o744)
-    end
-
     for option <- options do
       create_option(command, option)
     end
