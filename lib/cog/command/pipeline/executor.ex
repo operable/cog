@@ -30,6 +30,7 @@ defmodule Cog.Command.Pipeline.Executor do
   * `:mq_conn` - The mqtt connection.
   * `:request` - The original request from the adapter.
   * `:scope` - The current scope for variable interpretation.
+  * `:context` - The execution context of the command.
   * `:pipeline` - The parsed pipeline
   * `:redirects` - The resolved redirects, if any exist
   * `:current` - The current command invocation in the pipeline
@@ -56,6 +57,7 @@ defmodule Cog.Command.Pipeline.Executor do
     mq_conn: Carrier.Messaging.Connection.connection(),
     request: Spanner.Command.Request,
     scope: Piper.Bind.Scope,
+    context: List.t | Map.t,
     pipeline: Piper.Ast.Pipeline,
     redirects: List.t,
     current: Piper.Ast.Invocation,
@@ -68,9 +70,9 @@ defmodule Cog.Command.Pipeline.Executor do
   }
 
   defstruct [id: nil, topic: nil, mq_conn: nil, request: nil,
-             scope: nil, pipeline: nil, redirects: [], current: nil,
-             current_bound: nil, remaining: [], input: [], output: [],
-             started: nil, error_type: nil, error_message: nil]
+             scope: nil, context: nil, pipeline: nil, redirects: [],
+             current: nil, current_bound: nil, remaining: [], input: [],
+             output: [], started: nil, error_type: nil, error_message: nil]
 
   @behaviour :gen_fsm
 
@@ -442,7 +444,7 @@ defmodule Cog.Command.Pipeline.Executor do
   end
   defp prepare_or_finish(%__MODULE__{input: [h|t], output: output}=state, resp) do
     scope = Bind.Scope.from_map(h)
-    {:next_state, :bind, %{state | input: t, output: output ++ [resp.body], scope: scope}, 0}
+    {:next_state, :bind, %{state | input: t, output: output ++ [resp.body], scope: scope, context: h}, 0}
   end
   defp prepare_or_finish(%__MODULE__{input: [], output: output, remaining: [h|t]}=state, resp) do
     # Fetch the next command
@@ -452,11 +454,11 @@ defmodule Cog.Command.Pipeline.Executor do
       "once" ->
         scope = multi_to_single_inputs(new_output)
         |> Bind.Scope.from_map
-        {:next_state, :bind, %{state | current: h, remaining: t, input: [], output: [], scope: scope}, 0}
+        {:next_state, :bind, %{state | current: h, remaining: t, input: [], output: [], scope: scope, context: new_output}, 0}
       "multiple" ->
         [oh|ot] = new_output
         scope = Bind.Scope.from_map(oh)
-        {:next_state, :bind, %{state | current: h, remaining: t, input: ot, output: [], scope: scope}, 0}
+        {:next_state, :bind, %{state | current: h, remaining: t, input: ot, output: [], scope: scope, context: oh}, 0}
     end
   end
 
@@ -494,7 +496,7 @@ defmodule Cog.Command.Pipeline.Executor do
     {:ok, command} = CommandCache.fetch(invocation)
     cond do
       !command.enforcing && command.calling_convention == "all" ->
-        state.scope.values
+        state.context
       true ->
         nil
     end
