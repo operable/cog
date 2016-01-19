@@ -450,7 +450,7 @@ defmodule Cog.Command.Pipeline.Executor do
     new_output = List.flatten(output ++ [resp.body])
     case command.execution do
       "once" ->
-        scope = collect_output(new_output)
+        scope = collect_outputs(new_output)
         |> Bind.Scope.from_map
         {:next_state, :bind, %{state | current: h, remaining: t, input: [], output: [], scope: scope}, 0}
       "multiple" ->
@@ -464,20 +464,15 @@ defmodule Cog.Command.Pipeline.Executor do
   # For example
   # input: [%{"foo" => "bar"}, %{"foo" => "baz"}]
   # output: %{"foo" => ["bar", "baz"]}
-  defp collect_output(output) when is_list(output) do
-    blank_map = initialize_output_map(output)
-    Enum.reduce(output, blank_map, &(Map.merge(&2, &1, fn
-      (_k, v1, v2) ->
-        v1 ++ [v2]
-      end)))
-  end
+  defp collect_outputs(outputs) when is_list(outputs) do
+    append_output = fn({key, value}, acc) ->
+      Map.update(acc, key, [value], &(&1 ++ [value]))
+    end
+    collect_output = fn(output, acc) ->
+      Enum.reduce(output, acc, append_output)
+    end
 
-  # Takes a list of maps and returns a new map with all keys set to '[]'.
-  # This makes collecting the output easier.
-  defp initialize_output_map(output) do
-    Enum.map(output, &Map.keys/1)
-    |> List.flatten
-    |> Map.new(&({&1,[]}))
+    Enum.reduce(outputs, %{}, collect_output)
   end
 
   defp prepare(%__MODULE__{pipeline: %Ast.Pipeline{invocations: invocations}}=state) do
