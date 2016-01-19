@@ -12,6 +12,6 @@ defmodule Cog.Repo.Migrations.CreateTemplates do
       timestamps
     end
 
-    create unique_index(:templates, [:bundle_id, :name])
+    create unique_index(:templates, [:bundle_id, :adapter, :name])
   end
 end

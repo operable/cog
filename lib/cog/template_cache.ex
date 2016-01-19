@@ -58,13 +58,6 @@ defmodule Cog.TemplateCache do
     end
   end
 
-  def lookup(_bundle, "websocket", "json") do
-    fn context ->
-      text = Poison.encode!(context, pretty: true)
-      "<pre>#{text}</pre>"
-    end
-  end
-
   def lookup(_bundle, _adapter, "json") do
     fn context ->
       Poison.encode!(context, pretty: true)
