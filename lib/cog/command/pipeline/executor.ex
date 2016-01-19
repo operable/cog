@@ -450,7 +450,7 @@ defmodule Cog.Command.Pipeline.Executor do
     new_output = List.flatten(output ++ [resp.body])
     case command.execution do
       "once" ->
-        scope = collect_outputs(new_output)
+        scope = multi_to_single_inputs(new_output)
         |> Bind.Scope.from_map
         {:next_state, :bind, %{state | current: h, remaining: t, input: [], output: [], scope: scope}, 0}
       "multiple" ->
@@ -460,11 +460,15 @@ defmodule Cog.Command.Pipeline.Executor do
     end
   end
 
-  # Takes a list of maps and returns a map of lists.
+  # Takes a list of output maps from a command and returns a single map with the
+  # outputs collected. The returned map will always be a map of lists, even if
+  # a list of only one output map is passed to it.
   # For example
   # input: [%{"foo" => "bar"}, %{"foo" => "baz"}]
   # output: %{"foo" => ["bar", "baz"]}
-  defp collect_outputs(outputs) when is_list(outputs) do
+  # input: [%{"foo" => "bar"}]
+  # output: ${"foo" => ["bar"]}
+  defp multi_to_single_inputs(outputs) when is_list(outputs) do
     append_output = fn({key, value}, acc) ->
       Map.update(acc, key, [value], &(&1 ++ [value]))
     end
