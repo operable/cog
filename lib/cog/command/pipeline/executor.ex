@@ -184,6 +184,7 @@ defmodule Cog.Command.Pipeline.Executor do
     case OptionInterpreter.initialize(current_bound, current_bound.args) do
       {:ok, options, args} ->
         current_bound = %{current_bound | options: options, args: args}
+        |> maybe_fixup_current
         {:next_state, :maybe_enforce, %{state | current_bound: current_bound}, 0}
       :not_found ->
         Helpers.send_idk(state.request, current_bound.command, state.mq_conn)
@@ -439,15 +440,43 @@ defmodule Cog.Command.Pipeline.Executor do
     send_user_resp(%{resp | body: final_result}, state)
     {:stop, :shutdown, %{state | output: final_result}}
   end
-
   defp prepare_or_finish(%__MODULE__{input: [h|t], output: output}=state, resp) do
     scope = Bind.Scope.from_map(h)
     {:next_state, :bind, %{state | input: t, output: output ++ [resp.body], scope: scope}, 0}
   end
-  defp prepare_or_finish(%__MODULE__{input: [], remaining: [h|t], output: output}=state, resp) do
-    [oh|ot] = List.flatten(output ++ [resp.body])
-    scope = Bind.Scope.from_map(oh)
-    {:next_state, :bind, %{state | current: h, remaining: t, input: ot, output: [], scope: scope}, 0}
+  defp prepare_or_finish(%__MODULE__{input: [], output: output, remaining: [h|t]}=state, resp) do
+    # Fetch the next command
+    {:ok, command} = CommandCache.fetch(h)
+    new_output = List.flatten(output ++ [resp.body])
+    case command.execution do
+      "once" ->
+        scope = multi_to_single_inputs(new_output)
+        |> Bind.Scope.from_map
+        {:next_state, :bind, %{state | current: h, remaining: t, input: [], output: [], scope: scope}, 0}
+      "multiple" ->
+        [oh|ot] = new_output
+        scope = Bind.Scope.from_map(oh)
+        {:next_state, :bind, %{state | current: h, remaining: t, input: ot, output: [], scope: scope}, 0}
+    end
+  end
+
+  # Takes a list of output maps from a command and returns a single map with the
+  # outputs collected. The returned map will always be a map of lists, even if
+  # a list of only one output map is passed to it.
+  # For example
+  # input: [%{"foo" => "bar"}, %{"foo" => "baz"}]
+  # output: %{"foo" => ["bar", "baz"]}
+  # input: [%{"foo" => "bar"}]
+  # output: ${"foo" => ["bar"]}
+  defp multi_to_single_inputs(outputs) when is_list(outputs) do
+    append_output = fn({key, value}, acc) ->
+      Map.update(acc, key, [value], &(&1 ++ [value]))
+    end
+    collect_output = fn(output, acc) ->
+      Enum.reduce(output, acc, append_output)
+    end
+
+    Enum.reduce(outputs, %{}, collect_output)
   end
 
   defp prepare(%__MODULE__{pipeline: %Ast.Pipeline{invocations: invocations}}=state) do
@@ -468,6 +497,20 @@ defmodule Cog.Command.Pipeline.Executor do
         state.scope.values
       true ->
         nil
+    end
+  end
+
+  defp maybe_fixup_current(current) do
+    {:ok, command} = CommandCache.fetch(current)
+    case command.execution do
+      "once" ->
+        options = Enum.reduce(current.options, %{}, fn({k,v}, acc) ->
+          Map.put_new(acc, k, List.wrap(v))
+        end)
+        args = List.flatten(current.args)
+        %{current | options: options, args: args}
+      "multiple" ->
+        current
     end
   end
 
