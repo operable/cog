@@ -177,7 +177,9 @@ defmodule Cog.Command.Pipeline.Executor do
   @doc """
   `bind` -> {:next_state, :get_options}
 
-  Binds the current invocation to the scope.
+  Binds the current invocation to the scope. The scope is created based on the
+  context. nil context: blank scope, map context: singular scope, list context:
+  multiple scopes
   """
   def bind(:timeout, %__MODULE__{current: current, context: context}=state) do
     scope = get_scope(context)
@@ -186,7 +188,7 @@ defmodule Cog.Command.Pipeline.Executor do
       {:error, msg} ->
         Helpers.send_reply(msg, state.request, state.mq_conn)
         fail_pipeline(state, :binding_error, "Error preparing to execute command pipeline '#{state.request["text"]}': #{msg}")
-      {:ok, bound} ->
+      bound ->
         {current_bound, bound_scope} = collect_bound(bound)
         {:next_state, :get_options, %{state | current_bound: current_bound, scope: bound_scope}, 0}
     end
@@ -220,11 +222,11 @@ defmodule Cog.Command.Pipeline.Executor do
     end
   end
   defp bind_scope([], _, acc),
-    do: {:ok, Enum.revers(acc)}
+    do: Enum.reverse(acc)
 
   defp collect_bound(binding) when is_list(binding),
     do: collect_bound(binding, {[], []})
-  defp collect_bound({current_bound, bound_scope}),
+  defp collect_bound({:ok, current_bound, bound_scope}),
     do: {current_bound, bound_scope}
 
   defp collect_bound([bound|rest], acc) do
