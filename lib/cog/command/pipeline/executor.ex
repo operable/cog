@@ -169,7 +169,7 @@ defmodule Cog.Command.Pipeline.Executor do
         # implementation at least gives the user some actionable (if
         # not pretty) feedback.
         not_a_member = Keyword.get_values(invalid, :not_a_member)
-        Helpers.send_error("Invalid redirects: #{invalid |> Keyword.values |> Enum.join(", ")}#{unless Enum.empty?(not_a_member), do: ". Additionally, the bot must be invited to these rooms before it can redirect to them: #{Enum.join(not_a_member, ", ")}"}", state.request, state.mq_conn)
+        Helpers.send_error("No commands were executed because the following redirects are invalid: #{invalid |> Keyword.values |> Enum.join(", ")}#{unless Enum.empty?(not_a_member), do: ". Additionally, the bot must be invited to these rooms before it can redirect to them: #{Enum.join(not_a_member, ", ")}"}", state.request, state.mq_conn)
         fail_pipeline(state, :redirect_error, "Invalid redirects were specified: #{inspect invalid}")
     end
   end
