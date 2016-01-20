@@ -14,6 +14,7 @@ defmodule Cog.Command.Pipeline.Executor do
   * :get_options
   * :maybe_enforce
   * :check_permissions
+  * :maybe_collect_command
   * :run_command
   * :waiting_for_command
   * end | :bind
@@ -115,7 +116,6 @@ defmodule Cog.Command.Pipeline.Executor do
 
     loop_data = %__MODULE__{id: id, topic: topic, request: request,
                             mq_conn: conn,
-                            scope: Bind.Scope.empty_scope(),
                             input: [], output: [],
                             started: :os.timestamp()}
     initialization_event(loop_data)
@@ -179,16 +179,71 @@ defmodule Cog.Command.Pipeline.Executor do
 
   Binds the current invocation to the scope.
   """
-  def bind(:timeout, %__MODULE__{current: current, scope: scope}=state) do
-    {:ok, resolved_scope} = Bindable.resolve(current, scope)
-    case Bindable.bind(current, resolved_scope) do
+  def bind(:timeout, %__MODULE__{current: current, context: context}=state) do
+    scope = get_scope(context)
+    |> resolve_scope(current)
+    case bind_scope(scope, current) do
       {:error, msg} ->
         Helpers.send_reply(msg, state.request, state.mq_conn)
         fail_pipeline(state, :binding_error, "Error preparing to execute command pipeline '#{state.request["text"]}': #{msg}")
-      {:ok, current_bound, bound_scope} ->
+      ok ->
+        {current_bound, bound_scope} = collect_bound(ok)
         {:next_state, :get_options, %{state | current_bound: current_bound, scope: bound_scope}, 0}
     end
   end
+
+  defp get_scope(context) when is_nil(context),
+    do: Bind.Scope.empty_scope()
+  defp get_scope(context) when is_list(context),
+    do: get_scope(context, [])
+  defp get_scope(context),
+    do: Bind.Scope.from_map(context)
+
+  defp get_scope([con|rest], acc),
+    do: get_scope(rest, [get_scope(con)|acc])
+  defp get_scope([], acc),
+    do: acc
+
+  defp resolve_scope(scope, current) when is_list(scope),
+    do: resolve_scope(scope, current, [])
+  defp resolve_scope(scope, current) do
+    {:ok, resolved_scope} = Bindable.resolve(current, scope)
+    resolved_scope
+  end
+
+  defp resolve_scope([scope|rest], current, acc),
+    do: resolve_scope(rest, current, [resolve_scope(scope, current)|acc])
+  defp resolve_scope([], _, acc),
+    do: acc
+
+  defp bind_scope(resolved_scope, current) when is_list(resolved_scope),
+    do: bind_scope(resolved_scope, current, [])
+  defp bind_scope(resolved_scope, current),
+    do: Bindable.bind(current, resolved_scope)
+
+  defp bind_scope([r_scope|rest], current, acc) do
+    case bind_scope(r_scope, current) do
+      {:error, msg} ->
+        {:error, msg}
+      ok ->
+        bind_scope(rest, current, [ok|acc])
+    end
+  end
+  defp bind_scope([], _, acc),
+    do: acc
+
+  defp collect_bound(binding) when is_list(binding),
+    do: collect_bound(binding, {[], []})
+  defp collect_bound({:ok, current_bound, bound_scope}),
+    do: {current_bound, bound_scope}
+
+  defp collect_bound([bound|rest], acc) do
+    {:ok, current_bound, bound_scope} = bound
+    {current_bound_list, bound_scope_list} = acc
+    collect_bound(rest, {[current_bound|current_bound_list], [bound_scope|bound_scope_list]})
+  end
+  defp collect_bound([], acc),
+    do: acc
 
   @doc """
   `get_options` -> {:stop, :shutdown} | {:next_state, :check_permission}
@@ -196,12 +251,10 @@ defmodule Cog.Command.Pipeline.Executor do
   Runs the option interpreter on the current bound invocation.
   """
   def get_options(:timeout, %__MODULE__{current_bound: current_bound}=state) do
-    case OptionInterpreter.initialize(current_bound, current_bound.args) do
-      {:ok, options, args} ->
-        current_bound = %{current_bound | options: options, args: args}
-        |> maybe_fixup_current
+    case interpret_options(current_bound) do
+      {:ok, current_bound} ->
         {:next_state, :maybe_enforce, %{state | current_bound: current_bound}, 0}
-      :not_found ->
+      {:not_found, current_bound} ->
         Helpers.send_idk(state.request, current_bound.command, state.mq_conn)
         fail_pipeline(state, :option_interpreter_error, "Command '#{current_bound.command}' not found")
       error ->
@@ -211,35 +264,68 @@ defmodule Cog.Command.Pipeline.Executor do
     end
   end
 
+  defp interpret_options(current_bound) when is_list(current_bound),
+    do: interpret_options(current_bound, [])
+  defp interpret_options(current_bound) do
+    case OptionInterpreter.initialize(current_bound, current_bound.args) do
+      {:ok, options, args} ->
+        current_bound = %{current_bound | options: options, args: args}
+        {:ok, current_bound}
+      :not_found ->
+        {:not_found, current_bound}
+      error ->
+        error
+    end
+  end
+
+  defp interpret_options([current_bound|rest], acc) do
+    case interpret_options(current_bound) do
+      {:ok, current_bound} ->
+        interpret_options(rest, [current_bound|acc])
+      {:not_found, current_bound} ->
+        {:not_found, current_bound}
+      error ->
+        error
+    end
+  end
+  defp interpret_options([], acc),
+    do: {:ok, acc}
+
   @doc """
-  `maybe_enforce` -> {:next_state, :run_command} | {:next_state, :check_permission}
+  `maybe_enforce` -> {:next_state, :maybe_collect_command} | {:next_state, :check_permission}
 
   If the command is enforced then the permission check is skipped and the command
   is executed.
   """
   def maybe_enforce(:timeout, %__MODULE__{current_bound: current_bound}=state) do
-    {:ok, command} = CommandCache.fetch(current_bound)
-    if command.enforcing do
+    if enforce?(current_bound) do
       {:next_state, :check_permission, state, 0}
     else
-      {:next_state, :run_command, state, 0}
+      {:next_state, :maybe_collect_command, state, 0}
     end
   end
 
+  defp enforce?([current_bound|_]),
+    do: enforce?(current_bound)
+  defp enforce?(current_bound) do
+    {:ok, command} = CommandCache.fetch(current_bound)
+    command.enforcing
+  end
+
   @doc """
-  `check_permission` -> {:stop, :shutdown} | {:next_state, :run_command}
+  `check_permission` -> {:stop, :shutdown} | {:next_state, :maybe_collect_command}
 
   Checks to see if the user has permission to execute the current command. We
   run check permissions here because this is the first time we have all the
   information available to determine if the user has the proper perms.
   """
   def check_permission(:timeout, %__MODULE__{current: current, current_bound: current_bound}=state) do
-    case PermissionInterpreter.check(state.request["sender"]["handle"],
-                                     state.request["adapter"], current_bound) do
+    case interpret_permissions(state.request["sender"]["handle"],
+                               state.request["adapter"], current_bound) do
       :ignore ->
         fail_pipeline(state, :user_not_found, "Ignoring message from unknown user #{state.request["sender"]["handle"]}")
       :allowed ->
-        {:next_state, :run_command, state, 0}
+        {:next_state, :maybe_collect_command, state, 0}
       {:no_rule, _invoke} ->
         why = "No rules match the supplied invocation of '#{current}'. Check your args and options, then confirm that the proper rules are in place."
         Helpers.send_denied(current, why, state.request, state.mq_conn)
@@ -250,6 +336,41 @@ defmodule Cog.Command.Pipeline.Executor do
         fail_pipeline(state, :permission_denied, "User #{state.request["sender"]["handle"]} denied access to '#{current}'")
     end
   end
+
+  defp interpret_permissions(sender, adapter, [current_bound|rest]) do
+    case interpret_permissions(sender, adapter, current_bound) do
+      :ignore ->
+        :ignore
+      :allowed ->
+        interpret_permissions(sender, adapter, rest)
+      {:no_rule, invoke} ->
+        {:no_rule, invoke}
+      {:denied, invoke, rule} ->
+        {:denied, invoke, rule}
+    end
+  end
+  defp interpret_permissions(_, _, []),
+    do: :allowed
+  defp interpret_permissions(sender, adapter, current_bound),
+    do: PermissionInterpreter.check(sender, adapter, current_bound)
+
+  @doc """
+  `maybe_collect_command` -> {:next_state, :run_command}
+
+  If the command is of the `once` execution type current_bound will be a list
+  of the same command with potentially different options and args. At this point
+  we combine everything in preperation of execution.
+  """
+  def maybe_collect_command(:timeout, %__MODULE__{current_bound: current_bound}=state) when is_list(current_bound) do
+    options = Enum.map(current_bound, &(&1.options))
+    args = Enum.map(current_bound, &(&1.args))
+    |> List.flatten
+    [first_current_bound|_] = current_bound
+    current_bound = %{first_current_bound | options: options, args: args}
+    {:next_state, :run_command, %{state | current_bound: current_bound}, 0}
+  end
+  def maybe_collect_command(:timeout, state),
+    do: {:next_state, :run_command, state, 0}
 
   @doc """
   `run_command` -> {:next_state, :wait_for_command}
@@ -466,33 +587,11 @@ defmodule Cog.Command.Pipeline.Executor do
     new_output = List.flatten(output ++ [resp.body])
     case command.execution do
       "once" ->
-        scope = multi_to_single_inputs(new_output)
-        |> Bind.Scope.from_map
-        {:next_state, :bind, %{state | current: h, remaining: t, input: [], output: [], scope: scope, context: new_output}, 0}
+        {:next_state, :bind, %{state | current: h, remaining: t, input: [], output: [], context: new_output}, 0}
       "multiple" ->
         [oh|ot] = new_output
-        scope = Bind.Scope.from_map(oh)
-        {:next_state, :bind, %{state | current: h, remaining: t, input: ot, output: [], scope: scope, context: oh}, 0}
+        {:next_state, :bind, %{state | current: h, remaining: t, input: ot, output: [], context: oh}, 0}
     end
-  end
-
-  # Takes a list of output maps from a command and returns a single map with the
-  # outputs collected. The returned map will always be a map of lists, even if
-  # a list of only one output map is passed to it.
-  # For example
-  # input: [%{"foo" => "bar"}, %{"foo" => "baz"}]
-  # output: %{"foo" => ["bar", "baz"]}
-  # input: [%{"foo" => "bar"}]
-  # output: ${"foo" => ["bar"]}
-  defp multi_to_single_inputs(outputs) when is_list(outputs) do
-    append_output = fn({key, value}, acc) ->
-      Map.update(acc, key, [value], &(&1 ++ [value]))
-    end
-    collect_output = fn(output, acc) ->
-      Enum.reduce(output, acc, append_output)
-    end
-
-    Enum.reduce(outputs, %{}, collect_output)
   end
 
   defp prepare(%__MODULE__{pipeline: %Ast.Pipeline{invocations: invocations}}=state) do
@@ -513,20 +612,6 @@ defmodule Cog.Command.Pipeline.Executor do
         state.context
       true ->
         nil
-    end
-  end
-
-  defp maybe_fixup_current(current) do
-    {:ok, command} = CommandCache.fetch(current)
-    case command.execution do
-      "once" ->
-        options = Enum.reduce(current.options, %{}, fn({k,v}, acc) ->
-          Map.put_new(acc, k, List.wrap(v))
-        end)
-        args = List.flatten(current.args)
-        %{current | options: options, args: args}
-      "multiple" ->
-        current
     end
   end
 
