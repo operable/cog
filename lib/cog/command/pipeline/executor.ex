@@ -510,8 +510,7 @@ defmodule Cog.Command.Pipeline.Executor do
           Map.put_new(acc, k, List.wrap(v))
         end)
         args = List.flatten(current.args)
-        #%{current | options: options, args: args}
-        %{current | args: args}
+        %{current | options: options, args: args}
       "multiple" ->
         current
     end
