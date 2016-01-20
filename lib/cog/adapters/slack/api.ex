@@ -8,7 +8,7 @@ defmodule Cog.Adapters.Slack.API do
   @slack_api "https://slack.com/api/"
   @server_name :slack_api
   @user_cache :slack_api_users
-  @room_cache :slack_api_rooms
+  @channel_cache :slack_api_channels
   @direct_chat_channel_cache :slack_im
 
   def start_link(token, ttl) do
@@ -31,7 +31,7 @@ defmodule Cog.Adapters.Slack.API do
     {:ok, %{id: id, name: "direct"}}
   end
   def lookup_room(key) when is_tuple(hd(key)) do
-    case query_cache(@room_cache, key) do
+    case query_cache(@channel_cache, key) do
       nil ->
         GenServer.call(@server_name, {:lookup_room, key}, :infinity)
       entry ->
@@ -39,20 +39,43 @@ defmodule Cog.Adapters.Slack.API do
     end
   end
 
-  def lookup_room(id, as_user: as_user) do
-    case String.replace(id, ~r/<([^>]*)>/, "\\1") do
+  @doc """
+  Resolve redirect destinations.
+
+  NOTE: Only called (in this form) from the executor for finding redirects.
+  """
+  def lookup_room(id, as_user: _unused_pending_refactor) do
+    case remove_brackets_if_present_from(id) do
       "@" <> user_id ->
-        lookup_direct_room(user_id: user_id, as_user: as_user)
+        # If the user really exists, `user_id` will be an internal
+        # Slack identifier. If not, `user_id` will be the whatever
+        # name the end-user typed.
+        lookup_direct_room(user_id: user_id, as_user: :unused_pending_refactor)
       "#" <> room_id ->
+        # Similarly, if the room really exists, `room_id` will be an
+        # internal Slack identifier.
         lookup_room(id: room_id)
       other ->
+        # We do some snazzy recovery by not actually requiring the
+        # end-user to preface user or room names with "@" or "#",
+        # respectively (we can do this because we only accept room or
+        # user names in specific places in pipeline invocations). In
+        # this case, Slack of course won't have translated to internal
+        # IDs, so we'll need to do that ourselves.
+        #
+        # First, we try the string as a room name, and if that fails,
+        # fall back to treating it as a user name. If neither works,
+        # we fail.
         case GenServer.call(@server_name, {:lookup_room, [name: other]}, :infinity) do
           {:ok, room} ->
             {:ok, room}
-          {:error, _} ->
+          {:error, :not_a_member} ->
+            # We know the room exists, but we're not a member, so bail now
+            {:error, :not_a_member}
+          {:error, :not_found} ->
             case GenServer.call(@server_name, {:lookup_user, [handle: other]}, :infinity) do
               {:ok, user} ->
-                lookup_direct_room(user_id: user.id, as_user: as_user)
+                lookup_direct_room(user_id: user.id, as_user: :unused_pending_refactor)
               {:error, _}=error ->
                 error
             end
@@ -84,7 +107,7 @@ defmodule Cog.Adapters.Slack.API do
         {:error, :bad_slack_token}
       true ->
         :ets.new(@user_cache, [:named_table, {:read_concurrency, true}])
-        :ets.new(@room_cache, [:named_table, {:read_concurrency, true}])
+        :ets.new(@channel_cache, [:named_table, {:read_concurrency, true}])
         :ets.new(@direct_chat_channel_cache, [:named_table, {:read_concurrency, true}])
         state = case ttl do
                   nil ->
@@ -118,23 +141,42 @@ defmodule Cog.Adapters.Slack.API do
     end
   end
   def handle_call({:lookup_room, [id: id]}, _from, state) do
-    case call_api!("channels.info", state.token, body: %{channel: id},
-                   parser: &parse_channel_result/1) do
-      {:ok, room} ->
-        expiry = Cog.Time.now() + state.ttl
-        :ets.insert(@room_cache, {id, {room, expiry}})
-        {:reply, {:ok, room}, state}
-      error ->
-        {:reply, error, state}
+    result = call_api!("channels.info", state.token, body: %{channel: id})
+    reply = if result["ok"] do
+      channel = result["channel"]
+      true = maybe_cache_channel(channel, state.ttl)
+      if is_member?(channel) do
+        {:ok, channel_cache_item(channel)}
+      else
+        {:error, :not_a_member}
+      end
+    else
+      {:error, result["error"]}
     end
+    {:reply, reply, state}
   end
   def handle_call({:lookup_room, [name: name]}, _from, state) do
-    case call_api!("channels.list", state.token, parser: &(parse_rooms_result(&1, name, state))) do
-      {:ok, room} ->
-        {:reply, {:ok, room}, state}
-      error ->
-        {:reply, error, state}
+    result = call_api!("channels.list", state.token, body: %{exclude_archived: 1})
+    reply = if result["ok"] do
+      channels = result["channels"]
+      Enum.each(channels, &maybe_cache_channel(&1, state.ttl))
+
+      case Enum.find(channels, &is_channel_named?(&1, name)) do
+        channel when is_map(channel) ->
+          if is_member?(channel) do
+            # Return what would come out of the cache if
+            # we'd found it there in the first place
+            {:ok, channel_cache_item(channel)}
+          else
+            {:error, :not_a_member}
+          end
+        nil ->
+          {:error, :not_found}
+      end
+    else
+      {:error, result["error"]}
     end
+    {:reply, reply, state}
   end
   def handle_call({:open_direct_chat, user_id}, _from, state) do
     # In order for the bot to chat directly with a user, we need to
@@ -169,31 +211,6 @@ defmodule Cog.Adapters.Slack.API do
     end
   end
 
-  defp parse_rooms_result(result, query, state) do
-    case result["ok"] do
-      false ->
-        {:error, result["error"]}
-      true ->
-        expiry = Cog.Time.now() + state.ttl
-        case Enum.reduce(result["channels"], nil,
-              fn(room, acc) ->
-                room_record = %{id: room["id"],
-                                name: room["name"],
-                                topic: room["topic"]}
-                :ets.insert(@room_cache, {room["id"], {room_record, expiry}})
-                :ets.insert(@room_cache, {room["name"], {room["id"], expiry}})
-                maybe_return_room(query, room_record, acc) end) do
-          nil ->
-            {:error, :not_found}
-          value ->
-            {:ok, value}
-        end
-    end
-  end
-
-  defp maybe_return_room(query, %{name: query}=room, nil), do: room
-  defp maybe_return_room(_query, _room, acc), do: acc
-
   defp parse_users_result(result, query, state) do
     case result["ok"] do
       false ->
@@ -218,16 +235,18 @@ defmodule Cog.Adapters.Slack.API do
   defp maybe_return_user(query, %{handle: query}=user, nil), do: user
   defp maybe_return_user(_query, _user, acc), do: acc
 
-  defp parse_channel_result(result) do
-    case result["ok"] do
-      false ->
-        {:error, result["error"]}
-      true ->
-        {:ok, %{id: result["channel"]["id"],
-                name: result["channel"]["name"],
-                topic: result["channel"]["topic"]}}
-    end
-  end
+  defp is_channel_named?(%{"name" => name}, name),
+    do: true
+  defp is_channel_named?(_, _),
+    do: false
+
+  # Given a Slack channel object, return whether the API user (i.e.,
+  # the bot) is a member.
+  #
+  # We can currently only redirect to channels that the bot is a
+  # member of.
+  defp is_member?(%{"is_member" => is_member}),
+    do: is_member
 
   defp parse_user_result(result) do
     case result["ok"] do
@@ -267,6 +286,32 @@ defmodule Cog.Adapters.Slack.API do
   # they seem stable.
   defp cache_direct_chat(user_id, %{"id" => channel_id}=value, ttl) when is_binary(channel_id),
     do: :ets.insert(@direct_chat_channel_cache, {user_id, {value, expiration(ttl)}})
+
+  # Only cache a channel if the bot is present in the channel
+  #
+  # May be a "channel object" (https://api.slack.com/types/channel)
+  # from, e.g., "channels.info", or a limited channel object, from,
+  # e.g., "channels.list"
+  #(https://api.slack.com/methods/channels.list)
+  #
+  # In either case, they'll have the id, name, and membership information
+  defp maybe_cache_channel(%{"is_member" => false}, _ttl),
+    do: true
+  defp maybe_cache_channel(%{"id" => id, "name" => name}=channel, ttl) do
+    expiry = expiration(ttl)
+    cache_item = channel_cache_item(channel)
+    :ets.insert(@channel_cache, {id, {cache_item, expiry}})
+    # TODO: do we want to cache the cache_item itself under name, too?
+    :ets.insert(@channel_cache, {name, {id, expiry}})
+  end
+
+  # Given a Slack channel object
+  # (https://api.slack.com/types/channel), pull out the data we care
+  # about for our caching purposes.
+  defp channel_cache_item(channel) when is_map(channel) do
+    %{id: channel["id"],
+      name: channel["name"]}
+  end
 
   defp expiration(ttl),
     do: Cog.Time.now + ttl
@@ -328,5 +373,20 @@ defmodule Cog.Adapters.Slack.API do
   defp translate_slack_error("im.open", "user_not_found"), do: :user_not_found
   defp translate_slack_error("im.open", "user_not_visible"), do: :user_not_visible
   defp translate_slack_error("im.open", "user_disabled"), do: :user_disabled
+
+  # If a user mentions a real Slack room or user by name
+  # (e.g. "#general", "@a_user_that_exists"), the message text that we
+  # receive has these names converted into internal Slack identifiers,
+  # rather than the names. Additionally, they are wrapped in brackets.
+  #
+  # Thus a mention of "#general" will come to us like "<#C00ABCDEF>",
+  # and "@a_user_that_exists" like "<@U0A12ABCD>". If a user mentions
+  # a room or user that doesn't exist, we'll just get the raw text:
+  # "#not_a_real_room", "@easter_bunny", etc.
+  #
+  # In order to normalize things, we strip off any enclosing brackets
+  # we may find.
+  defp remove_brackets_if_present_from(id),
+    do: String.replace(id, ~r/<([^>]*)>/, "\\1")
 
 end
