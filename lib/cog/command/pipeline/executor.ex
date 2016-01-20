@@ -195,26 +195,16 @@ defmodule Cog.Command.Pipeline.Executor do
   defp get_scope(context) when is_nil(context),
     do: Bind.Scope.empty_scope()
   defp get_scope(context) when is_list(context),
-    do: get_scope(context, [])
+    do: Enum.map(context, &get_scope/1)
   defp get_scope(context),
     do: Bind.Scope.from_map(context)
 
-  defp get_scope([con|rest], acc),
-    do: get_scope(rest, [get_scope(con)|acc])
-  defp get_scope([], acc),
-    do: Enum.reverse(acc)
-
   defp resolve_scope(scope, current) when is_list(scope),
-    do: resolve_scope(scope, current, [])
+    do: Enum.map(scope, &(resolve_scope(&1, current)))
   defp resolve_scope(scope, current) do
     {:ok, resolved_scope} = Bindable.resolve(current, scope)
     resolved_scope
   end
-
-  defp resolve_scope([scope|rest], current, acc),
-    do: resolve_scope(rest, current, [resolve_scope(scope, current)|acc])
-  defp resolve_scope([], _, acc),
-    do: Enum.reverse(acc)
 
   defp bind_scope(resolved_scope, current) when is_list(resolved_scope),
     do: bind_scope(resolved_scope, current, [])
