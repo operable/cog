@@ -186,8 +186,8 @@ defmodule Cog.Command.Pipeline.Executor do
       {:error, msg} ->
         Helpers.send_reply(msg, state.request, state.mq_conn)
         fail_pipeline(state, :binding_error, "Error preparing to execute command pipeline '#{state.request["text"]}': #{msg}")
-      ok ->
-        {current_bound, bound_scope} = collect_bound(ok)
+      {:ok, bound} ->
+        {current_bound, bound_scope} = collect_bound(bound)
         {:next_state, :get_options, %{state | current_bound: current_bound, scope: bound_scope}, 0}
     end
   end
@@ -202,7 +202,7 @@ defmodule Cog.Command.Pipeline.Executor do
   defp get_scope([con|rest], acc),
     do: get_scope(rest, [get_scope(con)|acc])
   defp get_scope([], acc),
-    do: acc
+    do: Enum.reverse(acc)
 
   defp resolve_scope(scope, current) when is_list(scope),
     do: resolve_scope(scope, current, [])
@@ -214,27 +214,27 @@ defmodule Cog.Command.Pipeline.Executor do
   defp resolve_scope([scope|rest], current, acc),
     do: resolve_scope(rest, current, [resolve_scope(scope, current)|acc])
   defp resolve_scope([], _, acc),
-    do: acc
+    do: Enum.reverse(acc)
 
   defp bind_scope(resolved_scope, current) when is_list(resolved_scope),
     do: bind_scope(resolved_scope, current, [])
   defp bind_scope(resolved_scope, current),
     do: Bindable.bind(current, resolved_scope)
 
-  defp bind_scope([r_scope|rest], current, acc) do
-    case bind_scope(r_scope, current) do
+  defp bind_scope([resolved_scope|rest], current, acc) do
+    case bind_scope(resolved_scope, current) do
       {:error, msg} ->
         {:error, msg}
-      ok ->
-        bind_scope(rest, current, [ok|acc])
+      {:ok, current_bound, bound_scope} ->
+        bind_scope(rest, current, [{current_bound, bound_scope}|acc])
     end
   end
   defp bind_scope([], _, acc),
-    do: acc
+    do: {:ok, Enum.revers(acc)}
 
   defp collect_bound(binding) when is_list(binding),
     do: collect_bound(binding, {[], []})
-  defp collect_bound({:ok, current_bound, bound_scope}),
+  defp collect_bound({current_bound, bound_scope}),
     do: {current_bound, bound_scope}
 
   defp collect_bound([bound|rest], acc) do
@@ -242,8 +242,10 @@ defmodule Cog.Command.Pipeline.Executor do
     {current_bound_list, bound_scope_list} = acc
     collect_bound(rest, {[current_bound|current_bound_list], [bound_scope|bound_scope_list]})
   end
-  defp collect_bound([], acc),
-    do: acc
+  defp collect_bound([], acc) do
+    {current_bound_list, bound_scope_list} = acc
+    {Enum.reverse(current_bound_list), Enum.reverse(bound_scope_list)}
+  end
 
   @doc """
   `get_options` -> {:stop, :shutdown} | {:next_state, :check_permission}
