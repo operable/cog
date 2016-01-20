@@ -194,51 +194,6 @@ defmodule Cog.Command.Pipeline.Executor do
     end
   end
 
-  defp get_scope(context) when is_nil(context),
-    do: Bind.Scope.empty_scope()
-  defp get_scope(context) when is_list(context),
-    do: Enum.map(context, &get_scope/1)
-  defp get_scope(context),
-    do: Bind.Scope.from_map(context)
-
-  defp resolve_scope(scope, current) when is_list(scope),
-    do: Enum.map(scope, &(resolve_scope(&1, current)))
-  defp resolve_scope(scope, current) do
-    {:ok, resolved_scope} = Bindable.resolve(current, scope)
-    resolved_scope
-  end
-
-  defp bind_scope(resolved_scope, current) when is_list(resolved_scope),
-    do: bind_scope(resolved_scope, current, [])
-  defp bind_scope(resolved_scope, current),
-    do: Bindable.bind(current, resolved_scope)
-
-  defp bind_scope([resolved_scope|rest], current, acc) do
-    case bind_scope(resolved_scope, current) do
-      {:error, msg} ->
-        {:error, msg}
-      {:ok, current_bound, bound_scope} ->
-        bind_scope(rest, current, [{current_bound, bound_scope}|acc])
-    end
-  end
-  defp bind_scope([], _, acc),
-    do: Enum.reverse(acc)
-
-  defp collect_bound(binding) when is_list(binding),
-    do: collect_bound(binding, {[], []})
-  defp collect_bound({:ok, current_bound, bound_scope}),
-    do: {current_bound, bound_scope}
-
-  defp collect_bound([bound|rest], acc) do
-    {:ok, current_bound, bound_scope} = bound
-    {current_bound_list, bound_scope_list} = acc
-    collect_bound(rest, {[current_bound|current_bound_list], [bound_scope|bound_scope_list]})
-  end
-  defp collect_bound([], acc) do
-    {current_bound_list, bound_scope_list} = acc
-    {Enum.reverse(current_bound_list), Enum.reverse(bound_scope_list)}
-  end
-
   @doc """
   `get_options` -> {:stop, :shutdown} | {:next_state, :check_permission}
 
@@ -258,33 +213,6 @@ defmodule Cog.Command.Pipeline.Executor do
     end
   end
 
-  defp interpret_options(current_bound) when is_list(current_bound),
-    do: interpret_options(current_bound, [])
-  defp interpret_options(current_bound) do
-    case OptionInterpreter.initialize(current_bound, current_bound.args) do
-      {:ok, options, args} ->
-        current_bound = %{current_bound | options: options, args: args}
-        {:ok, current_bound}
-      :not_found ->
-        {:not_found, current_bound}
-      error ->
-        error
-    end
-  end
-
-  defp interpret_options([current_bound|rest], acc) do
-    case interpret_options(current_bound) do
-      {:ok, current_bound} ->
-        interpret_options(rest, [current_bound|acc])
-      {:not_found, current_bound} ->
-        {:not_found, current_bound}
-      error ->
-        error
-    end
-  end
-  defp interpret_options([], acc),
-    do: {:ok, acc}
-
   @doc """
   `maybe_enforce` -> {:next_state, :maybe_collect_command} | {:next_state, :check_permission}
 
@@ -297,13 +225,6 @@ defmodule Cog.Command.Pipeline.Executor do
     else
       {:next_state, :maybe_collect_command, state, 0}
     end
-  end
-
-  defp enforce?([current_bound|_]),
-    do: enforce?(current_bound)
-  defp enforce?(current_bound) do
-    {:ok, command} = CommandCache.fetch(current_bound)
-    command.enforcing
   end
 
   @doc """
@@ -330,23 +251,6 @@ defmodule Cog.Command.Pipeline.Executor do
         fail_pipeline(state, :permission_denied, "User #{state.request["sender"]["handle"]} denied access to '#{current}'")
     end
   end
-
-  defp interpret_permissions(sender, adapter, [current_bound|rest]) do
-    case interpret_permissions(sender, adapter, current_bound) do
-      :ignore ->
-        :ignore
-      :allowed ->
-        interpret_permissions(sender, adapter, rest)
-      {:no_rule, invoke} ->
-        {:no_rule, invoke}
-      {:denied, invoke, rule} ->
-        {:denied, invoke, rule}
-    end
-  end
-  defp interpret_permissions(_, _, []),
-    do: :allowed
-  defp interpret_permissions(sender, adapter, current_bound),
-    do: PermissionInterpreter.check(sender, adapter, current_bound)
 
   @doc """
   `maybe_collect_command` -> {:next_state, :run_command}
@@ -657,5 +561,105 @@ defmodule Cog.Command.Pipeline.Executor do
   # Return elapsed microseconds from when the pipeline started
   defp elapsed(%__MODULE__{started: started}),
     do: :timer.now_diff(:os.timestamp(), started)
+
+  # Helper functions for bind
+  defp get_scope(context) when is_nil(context),
+    do: Bind.Scope.empty_scope()
+  defp get_scope(context) when is_list(context),
+    do: Enum.map(context, &get_scope/1)
+  defp get_scope(context),
+    do: Bind.Scope.from_map(context)
+
+  defp resolve_scope(scope, current) when is_list(scope),
+    do: Enum.map(scope, &(resolve_scope(&1, current)))
+  defp resolve_scope(scope, current) do
+    {:ok, resolved_scope} = Bindable.resolve(current, scope)
+    resolved_scope
+  end
+
+  defp bind_scope(resolved_scope, current) when is_list(resolved_scope),
+    do: bind_scope(resolved_scope, current, [])
+  defp bind_scope(resolved_scope, current),
+    do: Bindable.bind(current, resolved_scope)
+
+  defp bind_scope([resolved_scope|rest], current, acc) do
+    case bind_scope(resolved_scope, current) do
+      {:error, msg} ->
+        {:error, msg}
+      {:ok, current_bound, bound_scope} ->
+        bind_scope(rest, current, [{current_bound, bound_scope}|acc])
+    end
+  end
+  defp bind_scope([], _, acc),
+    do: Enum.reverse(acc)
+
+  defp collect_bound(binding) when is_list(binding),
+    do: collect_bound(binding, {[], []})
+  defp collect_bound({:ok, current_bound, bound_scope}),
+    do: {current_bound, bound_scope}
+
+  defp collect_bound([bound|rest], acc) do
+    {:ok, current_bound, bound_scope} = bound
+    {current_bound_list, bound_scope_list} = acc
+    collect_bound(rest, {[current_bound|current_bound_list], [bound_scope|bound_scope_list]})
+  end
+  defp collect_bound([], acc) do
+    {current_bound_list, bound_scope_list} = acc
+    {Enum.reverse(current_bound_list), Enum.reverse(bound_scope_list)}
+  end
+
+  # Helper functions for get_options
+  defp interpret_options(current_bound) when is_list(current_bound),
+    do: interpret_options(current_bound, [])
+  defp interpret_options(current_bound) do
+    case OptionInterpreter.initialize(current_bound, current_bound.args) do
+      {:ok, options, args} ->
+        current_bound = %{current_bound | options: options, args: args}
+        {:ok, current_bound}
+      :not_found ->
+        {:not_found, current_bound}
+      error ->
+        error
+    end
+  end
+
+  defp interpret_options([current_bound|rest], acc) do
+    case interpret_options(current_bound) do
+      {:ok, current_bound} ->
+        interpret_options(rest, [current_bound|acc])
+      {:not_found, current_bound} ->
+        {:not_found, current_bound}
+      error ->
+        error
+    end
+  end
+  defp interpret_options([], acc),
+    do: {:ok, acc}
+
+  # Helper functions for may_enforce
+  defp enforce?([current_bound|_]),
+    do: enforce?(current_bound)
+  defp enforce?(current_bound) do
+    {:ok, command} = CommandCache.fetch(current_bound)
+    command.enforcing
+  end
+
+  # Helper functions for check_permissions
+  defp interpret_permissions(sender, adapter, [current_bound|rest]) do
+    case interpret_permissions(sender, adapter, current_bound) do
+      :ignore ->
+        :ignore
+      :allowed ->
+        interpret_permissions(sender, adapter, rest)
+      {:no_rule, invoke} ->
+        {:no_rule, invoke}
+      {:denied, invoke, rule} ->
+        {:denied, invoke, rule}
+    end
+  end
+  defp interpret_permissions(_, _, []),
+    do: :allowed
+  defp interpret_permissions(sender, adapter, current_bound),
+    do: PermissionInterpreter.check(sender, adapter, current_bound)
 
 end
