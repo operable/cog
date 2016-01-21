@@ -206,6 +206,9 @@ defmodule Cog.Command.Pipeline.Executor do
     scope = get_scope(context)
     |> resolve_scope(current)
     case bind_scope(scope, current) do
+      {:error, {:not_found, var}} ->
+        Helpers.send_reply("I can't find the variable '$#{var}'.", state.request, state.mq_conn)
+        fail_pipeline(state, :binding_error, "Error preparing to execute command pipeline '#{state.request["text"]}': Unknown variable '#{var}'")
       {:error, msg} ->
         Helpers.send_reply(msg, state.request, state.mq_conn)
         fail_pipeline(state, :binding_error, "Error preparing to execute command pipeline '#{state.request["text"]}': #{msg}")
@@ -592,15 +595,15 @@ defmodule Cog.Command.Pipeline.Executor do
 
   defp resolve_scope(scope, current) when is_list(scope),
     do: Enum.map(scope, &(resolve_scope(&1, current)))
-  defp resolve_scope(scope, current) do
-    {:ok, resolved_scope} = Bindable.resolve(current, scope)
-    resolved_scope
-  end
+  defp resolve_scope(scope, current),
+    do: Bindable.resolve(current, scope)
 
   defp bind_scope(resolved_scope, current) when is_list(resolved_scope),
     do: bind_scope(resolved_scope, current, [])
-  defp bind_scope(resolved_scope, current),
+  defp bind_scope({:ok, resolved_scope}, current),
     do: Bindable.bind(current, resolved_scope)
+  defp bind_scope({:error, msg}, _),
+    do: {:error, msg}
 
   defp bind_scope([resolved_scope|rest], current, acc) do
     case bind_scope(resolved_scope, current) do
