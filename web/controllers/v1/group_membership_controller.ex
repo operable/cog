@@ -8,6 +8,17 @@ defmodule Cog.V1.GroupMembershipController do
   plug Cog.Plug.Authentication
   plug Cog.Plug.Authorization, permission: "#{Cog.embedded_bundle}:manage_groups"
 
+  def index(conn, %{"id" => id}) do
+    group = Group
+    |> Repo.get!(id)
+    |> Repo.preload([:direct_user_members, :direct_group_members])
+
+    users  = EctoJson.render(group.direct_user_members, policy: :detail)
+    groups = EctoJson.render(group.direct_group_members, policy: :detail)
+
+    json(conn, %{members: %{users: users, groups: groups}})
+  end
+
   # Manage the membership of a group. Users and groups can be added
   # and removed (multiples of each, all at the same time!) using this
   # function. Everything is governed by the request body, which we'll
