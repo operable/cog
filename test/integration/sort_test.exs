@@ -29,7 +29,6 @@ defmodule Integration.SortTest do
     assert_response "10\n90\n%\nLife\nand\nhappens\nhow\nis\nit\npercent\nreact\nto\nto\nus\nwe\nwhat"
   end
 
-  #@tag :skip
   test "sorting in a pipeline", %{user: user} do
     rule("when command is operable:rules with option[user] == /.*/ must have operable:manage_users")
     rule("when command is operable:rules with option[role] == /.*/ must have operable:manage_roles")
@@ -37,12 +36,33 @@ defmodule Integration.SortTest do
 
     send_message user, "@bot: operable:rules --list --for-command=operable:rules | sort --field=rule"
     response = get_response
-    assert length(response) == 3
-    [first | remaining] = response
-    assert first["rule"] == "when command is operable:rules with option[user] == /.*/ must have operable:manage_users"
-    [second | [third]] = remaining
-    assert second["rule"] == "when command is operable:rules with option[role] == /.*/ must have operable:manage_roles"
-    assert third["rule"] == "when command is operable:rules with option[group] == /.*/ must have operable:manage_groups"
+    assert String.at(response, 44) == "m"
+    assert String.at(response, 205) == "w"
+    assert String.at(response, 217) == "g"
+    assert String.at(response, 403) == "r"
+    assert String.at(response, 587) == "u"
+    expected = """
+    {
+        \"rule\": \"when command is operable:rules must have operable:manage_commands\",
+        \"id\": \".*\",
+        \"command\": \"operable:rules\"
+    }
+    {
+        \"rule\": \"when command is operable:rules with option[group] == \.*\ must have operable:manage_groups\",
+        \"id\": \".*\",
+        \"command\": \"operable:rules\"
+    }
+    {
+        \"rule\": \"when command is operable:rules with option[role] == \.*\ must have operable:manage_roles\",
+        \"id\": \".*\",
+        \"command\": \"operable:rules\"
+    }
+    {
+          \"rule\": \"when command is operable:rules with option[user] == \.*\ must have operable:manage_users\",
+        \"id\": \".*\",
+        \"command\": \"operable:rules\"
+    }
+    """
+    assert response <> "\n" =~ expected
   end
-
 end
