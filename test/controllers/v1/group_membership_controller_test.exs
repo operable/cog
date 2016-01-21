@@ -401,4 +401,37 @@ defmodule Cog.V1.GroupMembershipController.Test do
                             "groups" => []}} == json_response(conn, 200)
   end
 
+  test "retrieving user and group memberships for a group", %{authed: requestor} do
+    robots = group("robots")
+    hal = user("hal")
+    bender = user("bender")
+    Groupable.add_to(hal, robots)
+    Groupable.add_to(bender, robots)
+
+    user = user("deckard")
+    androids = group("andriods")
+    Groupable.add_to(user, androids)
+
+    Groupable.add_to(androids, robots)
+
+    conn = api_request(requestor, :get, "/v1/groups/#{robots.id}/memberships")
+
+    assert %{"members" => %{"users" => [user1, user2],
+                            "groups" => [group]}} = json_response(conn, 200)
+
+    assert user1 == %{"id" => hal.id,
+                      "username" => hal.username,
+                      "first_name" => hal.first_name,
+                      "last_name" => hal.last_name,
+                      "email_address" => hal.email_address}
+
+    assert user2 == %{"id" => bender.id,
+                      "username" => bender.username,
+                      "first_name" => bender.first_name,
+                      "last_name" => bender.last_name,
+                      "email_address" => bender.email_address}
+
+    assert group == %{"id" => androids.id,
+                      "name" => androids.name}
+  end
 end

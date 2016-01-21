@@ -22,6 +22,7 @@ defmodule Cog.Router do
     resources "/v1/roles", V1.RoleController
 
     resources "/v1/groups", V1.GroupController
+    get "/v1/groups/:id/memberships", V1.GroupMembershipController, :index
     post "/v1/groups/:id/membership", V1.GroupMembershipController, :manage_membership
 
     resources "/v1/permissions", V1.PermissionController, except: [:update]
