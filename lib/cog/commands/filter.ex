@@ -35,8 +35,7 @@ defmodule Cog.Commands.Filter do
   defp maybe_pluck(item, nil),
     do: item
   defp maybe_pluck(item, field_string) when is_map(item) do
-    return_fields = String.split(field_string, ",")
-    |> Enum.map(&String.strip/1)
+    return_fields = String.split(field_string, ~r/[\,\s]/, trim: true)
     {new_item, _} = Map.split(item, return_fields)
     new_item
   end
