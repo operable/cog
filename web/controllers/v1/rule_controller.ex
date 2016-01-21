@@ -27,6 +27,18 @@ defmodule Cog.V1.RuleController do
 
   end
 
+  def show(conn, %{"id" => command}) do
+    rules = Repo.all(Cog.Queries.Command.rules_for_cmd(command))
+    case format_response(rules) do
+      err when is_bitstring(err) ->
+        conn
+        |> put_status(:unprocessable_entity)
+        |> json(%{"errors" => err})
+      result ->
+        json(conn, %{"rules" => result})
+    end
+  end
+
   def delete(conn, %{"id" => id}) do
     Rule |> Repo.get!(id) |> Repo.delete!
     send_resp(conn, :no_content, "")
@@ -56,5 +68,27 @@ defmodule Cog.V1.RuleController do
       Map.put(acc, Atom.to_string(k), Keyword.get_values(kw_list, k))
     end)
   end
+
+  defp build_permission_expressions(rules) do
+    build_permission_expressions(rules, [])
+  end
+
+  defp build_permission_expressions([rule | rest], strings) do
+    new_strings = [build_permission_expr(rule)] ++ strings
+    build_permission_expressions(rest, new_strings)
+  end
+  defp build_permission_expressions([], strings) do
+    strings
+  end
+
+  defp build_permission_expr(%Cog.Models.Rule{}=rule) do
+    ast = Piper.Permissions.Parser.json_to_rule!(rule.parse_tree)
+    %{id: rule.id,
+      command: ast.command,
+      rule: "#{ast}"}
+  end
+
+  defp format_response([]), do: "No rules for command found"
+  defp format_response(response), do: build_permission_expressions(response)
 
 end
