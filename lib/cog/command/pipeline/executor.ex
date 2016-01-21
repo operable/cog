@@ -610,7 +610,7 @@ defmodule Cog.Command.Pipeline.Executor do
       {:error, msg} ->
         {:error, msg}
       {:ok, current_bound, bound_scope} ->
-        bind_scope(rest, current, [{current_bound, bound_scope}|acc])
+        bind_scope(rest, current, [{:ok, current_bound, bound_scope}|acc])
     end
   end
   defp bind_scope([], _, acc),
