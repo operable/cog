@@ -16,6 +16,8 @@ defmodule Cog.Commands.Table do
 
   option "fields", type: "string", required: true
 
+  @cell_padding 2
+
   def handle_message(req, state) do
     headers = hd(req.options)
     |> Map.get("fields")
@@ -23,13 +25,9 @@ defmodule Cog.Commands.Table do
     |> String.split(~r/[\,\s]/, trim: true)
 
     rows = Enum.map(req.cog_env, &(pluck(&1, headers)))
+    aligned_rows = align_rows([headers|rows])
 
-    rows = [headers|rows]
-    padded_rows = cell_lengths(rows)
-    |> Enum.reduce([], &biggest/2)
-    |> pad_rows(padding, rows)
-
-    {:reply, req.reply_to, "table", %{"rows" => padded_rows}, state}
+    {:reply, req.reply_to, "table", %{"rows" => aligned_rows}, state}
   end
 
   defp pluck(item, fields) do
@@ -37,41 +35,26 @@ defmodule Cog.Commands.Table do
     Enum.map(fields, &(Map.get(new_item, &1)))
   end
 
-  defp pad_rows(padding, rows) do
+  defp align_rows(rows) do
+    # Spacings contains the longest items in the column
+    spacings = Enum.reduce(rows, hd(rows), fn(row, acc) ->
+      Enum.zip(row, acc)
+      |> Enum.map(&max_cell/1)
+    end)
+
     Enum.map(rows, fn(row) ->
-      pad(row, padding)
+      Enum.zip(row, spacings)
+      |> Enum.map(&align(&1, @cell_padding))
     end)
   end
 
-  defp pad(row, padding) do
-    pad(row, padding, [])
-  end
+  # Left aligns the cell
+  defp align({cell, spacing}, padding),
+    do: String.ljust(cell, String.length(spacing) + padding)
 
-  defp pad([cell | r], [p1 | prest], acc) do
-    pad(r, prest, [String.ljust(cell, p1 + 3) | acc])
-  end
-  defp pad([], [], acc) do
-    Enum.reverse(acc)
-  end
-
-  defp cell_lengths(rows) do
-    Enum.map(rows, fn(row) ->
-      Enum.map(row, &String.length/1)
-    end)
-  end
-
-  defp biggest(row, []) do
-    row
-  end
-  defp biggest(row1, row2) do
-    biggest(row1, row2, [])
-  end
-
-  defp biggest([l1 | r1], [l2 | r2], acc) do
-    biggest(r1, r2, [Enum.max([l1, l2]) | acc])
-  end
-  defp biggest([], [], acc) do
-    Enum.reverse(acc)
+  # Returns the longest cell
+  defp max_cell({cell1, cell2}) do
+    Enum.max_by([cell1, cell2], &String.length/1)
   end
 
 end
