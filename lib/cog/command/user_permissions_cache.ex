@@ -14,12 +14,12 @@ defmodule Cog.Command.UserPermissionsCache do
 
   def fetch(username: username, adapter: adapter) do
     expires_before = Cog.Time.now()
-    key = {username, adapter}
+    key = {adapter, username}
     case :ets.lookup(@ets_table, key) do
-      [{^key, perms, expiry}] when expiry > expires_before ->
-        {:ok, perms}
+      [{^key, {user, perms}, expiry}] when expiry > expires_before ->
+        {:ok, {user, perms}}
       _ ->
-        GenServer.call(__MODULE__, {:fetch_username, username, adapter}, :infinity)
+        GenServer.call(__MODULE__, {:fetch, key}, :infinity)
     end
   end
 
@@ -39,9 +39,8 @@ defmodule Cog.Command.UserPermissionsCache do
     {:ok, %__MODULE__{ttl: ttl, tref: tref}}
   end
 
-  def handle_call({:fetch_username, username, adapter}, _caller, state) do
+  def handle_call({:fetch, key}, _caller, state) do
     expires_before = Cog.Time.now()
-    key = {username, adapter}
     reply = case :ets.lookup(@ets_table, key) do
               [] ->
                 fetch_and_cache(key, state)
@@ -82,8 +81,8 @@ defmodule Cog.Command.UserPermissionsCache do
     drop_old_entries(:ets.next(@ets_table, key), time)
   end
 
-  defp fetch_and_cache({username, adapter}=key, state) do
-    Logger.info("Cache miss for {#{username}, #{adapter}}")
+  defp fetch_and_cache({adapter, username}=key, state) do
+    Logger.info("Cache miss for #{inspect key}")
     case Repo.one(Queries.User.for_handle(username, adapter)) do
       nil ->
         :not_found

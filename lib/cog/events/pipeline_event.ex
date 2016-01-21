@@ -49,6 +49,8 @@ defmodule Cog.Events.PipelineEvent do
   * `adapter`: (String) the chat adapter being used
   * `handle`: (String) the adapter-specific chat handle of the user issuing the
     command.
+  * `cog_user`: The Cog-specific username of the invoker of issuer of
+    the command. May be different than the adapter-specific handle.
 
   ## `command_dispatched`
 
@@ -89,8 +91,9 @@ defmodule Cog.Events.PipelineEvent do
   @doc """
   Create a `pipeline_initialized` event
   """
-  def initialized(pipeline_id, text, adapter, handle) do
+  def initialized(pipeline_id, text, adapter, cog_user, handle) do
     new(pipeline_id, :pipeline_initialized, 0, %{command_text: text,
+                                                 cog_user: cog_user,
                                                  adapter: adapter,
                                                  chat_handle: handle})
   end

@@ -7,16 +7,7 @@ defmodule Cog.Command.PermissionInterpreter do
   alias Cog.Command
   alias Cog.Permissions
 
-  def check(handle, adapter, %Ast.Invocation{}=invocation) do
-    case Command.UserPermissionsCache.fetch(username: handle, adapter: adapter) do
-      :not_found ->
-        :ignore
-      {:ok, {user, perms}} ->
-        check_permissions(invocation, user, perms)
-    end
-  end
-
-  defp check_permissions(invoke, user, perms) do
+  def check(%Ast.Invocation{}=invoke, user, perms) do
     context = Permissions.Context.new(user: user, permissions: perms, command: invoke.command,
                                       options: invoke.options, args: invoke.args)
     {:ok, rules} = Command.RuleCache.fetch(invoke.command)

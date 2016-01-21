@@ -45,6 +45,11 @@ defmodule Cog.Command.Pipeline.Executor do
     default.
   * `:output` - The accumulated output of commands executed with a
     list of results.
+  * `:user` - the Cog User model for the invoker of the pipeline
+  * `:user_permissions` - a list of the fully-qualified names of all
+    permissions that `user` has (recursively). Used for permission
+    checking against the invocation rules of the commands in the
+    pipeline.
   * `:error_type` - an atom indicating what kind of error has
     occurred. Will be `nil` in the case of a successfully-executed
     pipeline.
@@ -66,6 +71,8 @@ defmodule Cog.Command.Pipeline.Executor do
     remaining: List.t,
     input: List.t,
     output: List.t,
+    user: %Cog.Models.User{},
+    user_permissions: [String.t],
     error_type: atom(),
     error_message: String.t
   }
@@ -73,7 +80,8 @@ defmodule Cog.Command.Pipeline.Executor do
   defstruct [id: nil, topic: nil, mq_conn: nil, request: nil,
              scope: nil, context: nil, pipeline: nil, redirects: [],
              current: nil, current_bound: nil, remaining: [], input: [],
-             output: [], started: nil, error_type: nil, error_message: nil]
+             output: [], started: nil, user: nil, user_permissions: [],
+             error_type: nil, error_message: nil]
 
   @behaviour :gen_fsm
 
@@ -114,13 +122,26 @@ defmodule Cog.Command.Pipeline.Executor do
 
     Connection.subscribe(conn, topic <> "/+")
 
-    loop_data = %__MODULE__{id: id, topic: topic, request: request,
-                            mq_conn: conn,
-                            input: [], output: [],
-                            started: :os.timestamp()}
-    initialization_event(loop_data)
-
-    {:ok, :parse, loop_data, 0}
+    adapter = request["adapter"]
+    handle = request["sender"]["handle"]
+    # We resolve users and permissions at this stage so that we can
+    # include the Cog user (and not just their adapter-specific
+    # handle) in event logs (and also to prevent us doing unnecessary
+    # work for users that don't have Cog accounts)
+    case resolve_user_and_permissions(adapter, handle) do
+      {:ok, {user, perms}} ->
+        loop_data = %__MODULE__{id: id, topic: topic, request: request,
+                                mq_conn: conn,
+                                user: user,
+                                user_permissions: perms,
+                                input: [], output: [],
+                                started: :os.timestamp()}
+        initialization_event(loop_data)
+        {:ok, :parse, loop_data, 0}
+      :ignore ->
+        Logger.warn("Ignoring message from unknown user #{adapter}/#{handle}")
+        :ignore
+    end
   end
 
   @doc """
@@ -235,10 +256,7 @@ defmodule Cog.Command.Pipeline.Executor do
   information available to determine if the user has the proper perms.
   """
   def check_permission(:timeout, %__MODULE__{current: current, current_bound: current_bound}=state) do
-    case interpret_permissions(state.request["sender"]["handle"],
-                               state.request["adapter"], current_bound) do
-      :ignore ->
-        fail_pipeline(state, :user_not_found, "Ignoring message from unknown user #{state.request["sender"]["handle"]}")
+    case interpret_permissions(current_bound, state.user, state.user_permissions) do
       :allowed ->
         {:next_state, :maybe_collect_command, state, 0}
       {:no_rule, _invoke} ->
@@ -538,8 +556,10 @@ defmodule Cog.Command.Pipeline.Executor do
   defp fail_pipeline(state, error, message),
     do: {:stop, :shutdown, %{state | error_type: error, error_message: message}}
 
-  defp initialization_event(%__MODULE__{id: id, request: request}) do
-    PipelineEvent.initialized(id, request["text"], request["adapter"], request["sender"]["handle"])
+  defp initialization_event(%__MODULE__{id: id, request: request,
+                                        user: user}) do
+    PipelineEvent.initialized(id, request["text"], request["adapter"],
+                              user.username, request["sender"]["handle"])
     |> Probe.notify
   end
 
@@ -645,21 +665,27 @@ defmodule Cog.Command.Pipeline.Executor do
   end
 
   # Helper functions for check_permissions
-  defp interpret_permissions(sender, adapter, [current_bound|rest]) do
-    case interpret_permissions(sender, adapter, current_bound) do
+  defp interpret_permissions([current_bound|rest], user, permissions) do
+    case interpret_permissions(current_bound, user, permissions) do
       :ignore ->
         :ignore
       :allowed ->
-        interpret_permissions(sender, adapter, rest)
+        interpret_permissions(rest, user, permissions)
       {:no_rule, invoke} ->
         {:no_rule, invoke}
       {:denied, invoke, rule} ->
         {:denied, invoke, rule}
     end
   end
-  defp interpret_permissions(_, _, []),
+  defp interpret_permissions([], _, _),
     do: :allowed
-  defp interpret_permissions(sender, adapter, current_bound),
-    do: PermissionInterpreter.check(sender, adapter, current_bound)
+  defp interpret_permissions(current_bound, user, permissions),
+    do: PermissionInterpreter.check(current_bound, user, permissions)
+
+  # We need to resolve the Cog user from their adapter-specific handle
+  # for event logging purposes early on. We also grab their
+  # permissions, since we'll need them later anyway
+  defp resolve_user_and_permissions(adapter, handle),
+    do: Cog.Command.UserPermissionsCache.fetch(username: handle, adapter: adapter)
 
 end
