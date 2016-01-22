@@ -59,18 +59,20 @@ defmodule Cog.V1.PermissionControllerTest do
     # random namespace
     rand_perm = permission("joe:test_perm")
     conn = api_request(user, :get, "/v1/permissions/#{rand_perm.id}")
-    assert json_response(conn, 200)["permission"] == %{"id" => rand_perm.id,
-                                                       "name" => rand_perm.name}
+    %{id: id, name: name} = rand_perm
+    assert %{"permission" => %{"id" => ^id, "name" => ^name}} = json_response(conn, 200)
+
     # site namespace
     site_perm = permission("site:test_perm")
     conn = api_request(user, :get, "/v1/permissions/#{site_perm.id}")
-    assert json_response(conn, 200)["permission"] == %{"id" => site_perm.id,
-                                                       "name" => site_perm.name}
+    %{id: id, name: name} = site_perm
+    assert %{"permission" => %{"id" => ^id, "name" => ^name}} = json_response(conn, 200)
+
     # embedded bundle namespace
     embedded_ns_perm = permission("#{Cog.embedded_bundle}:test_perm")
     conn = api_request(user, :get, "/v1/permissions/#{embedded_ns_perm.id}")
-    assert json_response(conn, 200)["permission"] == %{"id" => embedded_ns_perm.id,
-                                                       "name" => embedded_ns_perm.name}
+    %{id: id, name: name} = embedded_ns_perm
+    assert %{"permission" => %{"id" => ^id, "name" => ^name}} = json_response(conn, 200)
   end
 
   test "does not show resource and instead throw error when id is nonexistent", %{user: user} do

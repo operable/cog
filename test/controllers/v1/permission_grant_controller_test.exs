@@ -83,8 +83,8 @@ defmodule Cog.V1.PermissionGrantController.Test do
         conn = api_request(requestor, :post, path,
                            body: %{"permissions" => %{"grant" => ["site:do_stuff"]}})
 
-        assert %{"permissions" => [%{"id" => permission.id,
-                                     "name" => permission.name}]} == json_response(conn, 200)
+        %{id: id, name: name} = permission
+        assert %{"permissions" => [%{"id" => ^id, "name" => ^name}]} = json_response(conn, 200)
 
         assert_permission_is_granted(target, permission)
       end
@@ -101,16 +101,16 @@ defmodule Cog.V1.PermissionGrantController.Test do
         # Grant the permissions
         conn = api_request(requestor, :post, path,
                            body: %{"permissions" => %{"grant" => permission_names}})
-        granted_permissions = json_response(conn, 200)["permissions"]
+        granted_permissions = json_response(conn, 200)["permissions"] |> sort_by("name")
 
         # Verify the response body
         [first, second, third] = permissions
-        assert [%{"id" => first.id,
-                  "name" => first.name},
-                %{"id" => second.id,
-                  "name" => second.name},
-                %{"id" => third.id,
-                  "name" => third.name}] == granted_permissions |> sort_by("name")
+        assert first.id == Enum.at(granted_permissions, 0)["id"]
+        assert first.name == Enum.at(granted_permissions, 0)["name"]
+        assert second.id == Enum.at(granted_permissions, 1)["id"]
+        assert second.name == Enum.at(granted_permissions, 1)["name"]
+        assert third.id == Enum.at(granted_permissions, 2)["id"]
+        assert third.name == Enum.at(granted_permissions, 2)["name"]
 
         # Ensure grants are persisted in the database
         assert_permission_is_granted(target, permissions)
@@ -128,13 +128,13 @@ defmodule Cog.V1.PermissionGrantController.Test do
         new_permission = permission("site:second")
         conn = api_request(requestor, :post, path,
                            body: %{"permissions" => %{"grant" => ["site:second"]}})
-        granted_permissions = json_response(conn, 200)["permissions"]
+        granted_permissions = json_response(conn, 200)["permissions"] |> sort_by("name")
 
         # You should see both permissions in the response body
-        assert [%{"id" => pre_existing.id,
-                  "name" => pre_existing.name},
-                %{"id" => new_permission.id,
-                  "name" => new_permission.name}] == granted_permissions |> sort_by("name")
+        assert pre_existing.id == Enum.at(granted_permissions, 0)["id"]
+        assert pre_existing.name == Enum.at(granted_permissions, 0)["name"]
+        assert new_permission.id == Enum.at(granted_permissions, 1)["id"]
+        assert new_permission.name == Enum.at(granted_permissions, 1)["name"]
 
         # Verify they're both in the database
         assert_permission_is_granted(target, pre_existing)
@@ -166,8 +166,8 @@ defmodule Cog.V1.PermissionGrantController.Test do
         conn = api_request(requestor, :post, path,
                            body: %{"permissions" => %{"grant" => ["site:do_stuff"]}})
 
-        assert %{"permissions" => [%{"id" => permission.id,
-                                     "name" => permission.name}]} == json_response(conn, 200)
+        %{id: id, name: name} = permission
+        assert %{"permissions" => [%{"id" => ^id, "name" => ^name}]} = json_response(conn, 200)
 
         # Still got it!
         assert_permission_is_granted(target, permission)
@@ -240,9 +240,10 @@ defmodule Cog.V1.PermissionGrantController.Test do
         conn = api_request(requestor, :post, path,
                            body: %{"permissions" => %{"revoke" => ["site:second"]}})
 
+        %{id: id, name: name} = remaining_permission
+
         # only the revoked permission is, um, revoked
-        assert %{"permissions" => [%{"id" => remaining_permission.id,
-                                     "name" => remaining_permission.name}]} == json_response(conn, 200)
+        assert %{"permissions" => [%{"id" => ^id, "name" => ^name}]} = json_response(conn, 200)
 
         assert_permission_is_granted(target, remaining_permission)
         refute_permission_is_granted(target, to_be_revoked_permission)
