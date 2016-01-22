@@ -11,9 +11,7 @@ defmodule Cog.V1.BundlesController do
 
   def index(conn, _params) do
     installed = Repo.all(Bundles.bundle_summaries())
-    content = Poison.encode!(EctoJson.render(installed, envelope: :bundles, policy: :summary))
-    conn
-    |> send_resp(200, content)
+    json(conn, EctoJson.render(installed, envelope: :bundles, policy: :summary))
   end
 
   def show(conn, %{"id" => id}) do
