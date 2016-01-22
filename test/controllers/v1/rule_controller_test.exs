@@ -147,8 +147,8 @@ defmodule Cog.V1.RuleController.Test do
     conn = api_request(requestor, :get, "/v1/rules/cog:hola")
 
     assert %{"rules" => [%{"id" => rule.id,
-                            "command" => "cog:hola",
-                            "rule" => rule_text}]} == json_response(conn, 200)
+                           "command" => "cog:hola",
+                           "rule" => rule_text}]} == json_response(conn, 200)
   end
 
   test "show error message for a non-existant command", %{authed: requestor} do
