@@ -138,7 +138,7 @@ defmodule Cog.Command.Pipeline.Executor do
                                 started: :os.timestamp()}
         initialization_event(loop_data)
         {:ok, :parse, loop_data, 0}
-      :ignore ->
+      {:error, :not_found} ->
         Logger.warn("Ignoring message from unknown user #{adapter}/#{handle}")
         :ignore
     end
