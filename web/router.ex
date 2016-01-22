@@ -36,7 +36,7 @@ defmodule Cog.Router do
     post "/v1/users/:id/roles", V1.RoleGrantController, :manage_user_roles
     post "/v1/groups/:id/roles", V1.RoleGrantController, :manage_group_roles
 
-    resources "/v1/rules", V1.RuleController, except: [:index, :update]
+    resources "/v1/rules", V1.RuleController, only: [:create, :show, :delete]
 
     resources "/v1/bootstrap", V1.BootstrapController, only: [:index, :create]
     resources "/v1/bundles", V1.BundlesController, only: [:index, :show, :delete]
