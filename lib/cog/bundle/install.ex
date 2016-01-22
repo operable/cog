@@ -11,50 +11,13 @@ defmodule Cog.Bundle.Install do
   """
   use Cog.Models
 
-  alias Cog.Bundle.BundleCatalog
   alias Cog.Repo
 
   require Logger
 
-  @work_dir "cog_bundle_install_working_directory"
-
-  def install(uri) do
-    dir = unbundle(uri)
-
-    Logger.info("Copied bundle: #{dir}")
-
-    bundle = install_from_path(dir)
-
-    Logger.info("Created bundle: #{bundle.name}")
-
-    # TODO: should this be down in install_bundle? To make sure all
-    # paths get it?
-    {:ok, _} = BundleCatalog.load_bundle(bundle)
-
-    Logger.info("Started bundle: #{bundle.name}")
-  end
-
-  @doc """
-  Given the `path` to a single bundle on the filesystem, creates and
-  inserts all the relevant database records for it.
-
-  This includes:
-  * the bundle record itself
-  * records for any commands the bundle brings
-  * records for any command options those commands have
-
-  Returns the bundle struct.
-  """
-  def install_from_path(path) do
-    config = read_config(path)
-    manifest = read_manifest(path)
-
-    %{"bundle" => %{"name" => name}} = config
-
-    install_bundle(%{name: name,
-                     manifest_file: manifest,
-                     config_file: config})
-  end
+  @command_attrs ["name", "version", "options", "enforcing",
+                  "calling_convention", "execution",
+                  "documentation"]
 
   @doc """
   Given a map of bundle parameters, fully installs the bundle into the
@@ -110,82 +73,6 @@ defmodule Cog.Bundle.Install do
     bundle
   end
 
-  defp unbundle(uri) do
-    if File.exists?(uri) do
-      unbundle_local(uri)
-    else
-      path = download(uri)
-      bundle_path = unbundle_local(path)
-      File.rm_rf!(path)
-      bundle_path
-    end
-  end
-
-  defp unbundle_local(path) do
-    tmp_dir = Path.join(System.tmp_dir!, @work_dir)
-    File.mkdir_p!(tmp_dir)
-
-    Logger.info("Writing to #{tmp_dir}")
-
-    unzip(path, tmp_dir)
-
-    root = bundle_root
-    Logger.info("Copying #{tmp_dir} -> #{root}")
-
-    File.mkdir_p!(root)
-    File.cp_r!(tmp_dir, root)
-
-    [name] = File.ls!(tmp_dir)
-    bundle_path = Path.join(root, name)
-
-    File.rm_rf!(tmp_dir)
-
-    bundle_path
-  end
-
-  defp download(uri) do
-    case HTTPotion.get(uri) do
-      %{status_code: 200, body: body} ->
-        tmp_dir = Path.join(System.tmp_dir!, @work_dir)
-        File.mkdir_p!(tmp_dir)
-
-        name = name_from_uri(uri)
-        path = Path.join(tmp_dir, name)
-        File.write!(path, body)
-
-        path
-      %{status_code: code} = response when code in [301, 302] ->
-        Keyword.get(response.headers, :Location)
-        download(uri)
-    end
-  end
-
-  defp unzip(src, dest) do
-    src = String.to_char_list(src)
-    {:ok, _} = :zip.unzip(src, [cwd: dest])
-  end
-
-  defp name_from_uri(uri) do
-    %{path: path} = URI.parse(uri)
-    Path.basename(path)
-  end
-
-  # TODO: put this in the config module
-  defp read_config(path) do
-    path
-    |> Path.join("config.json")
-    |> File.read!
-    |> Poison.decode!
-  end
-
-  # TODO: put this in the manifest module
-  defp read_manifest(path) do
-    path
-    |> Path.join("manifest.json")
-    |> File.read!
-    |> Poison.decode!
-  end
-
   # Given the parent `bundle` and the bundle configuration schema for a
   # single command, inserts records into the database for that
   # command. This includes any command options.
@@ -200,33 +87,20 @@ defmodule Cog.Bundle.Install do
   #                              "options": [%{"name" => "instance-id", "type" => "string", "required" => true}],
   #                              "module" => "Cog.Commands.EC2Tag"})
   defp create_command(%Bundle{}=bundle, command_spec) do
-    %{"name" => name,
-      "version" => version,
-      "options" => options,
-      "enforcing" => enforcing,
-      "calling_convention" => calling_convention,
-      "execution" => execution,
-      "documentation" => documentation} = command_spec
+    command_spec = command_spec
+    |> Enum.filter(fn({key, _}) -> key in @command_attrs end)
+    |> Enum.into(%{})
 
-    command = Command.build_new(bundle, %{name: name, version: version,
-                                          documentation: documentation,
-                                          calling_convention: calling_convention,
-                                          execution: execution,
-                                          enforcing: enforcing})
+    command = Command.build_new(bundle, command_spec)
     |> Repo.insert!
 
-    for option <- options do
+    for option <- command_spec["options"] do
       create_option(command, option)
     end
   end
 
   defp create_option(command, params) do
     CommandOption.build_new(command, params) |> Repo.insert!
-  end
-
-  defp bundle_root do
-    Application.get_env(:cog, Cog.Bundle.BundleSup)
-    |> Keyword.fetch!(:bundle_root)
   end
 
   # TODO: want a better API for this; given a NS and bare names,
