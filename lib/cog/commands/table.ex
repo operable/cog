@@ -1,6 +1,5 @@
 defmodule Cog.Commands.Table do
-  use Spanner.GenCommand.Base, bundle: Cog.embedded_bundle, enforcing: false
-  alias Cog.Formatters
+  use Spanner.GenCommand.Base, bundle: Cog.embedded_bundle, enforcing: false, execution: :once, calling_convention: :all
 
   @moduledoc """
   Converts lists of maps into a table of columns specified.
@@ -15,25 +14,25 @@ defmodule Cog.Commands.Table do
 
   """
 
-  option "fields", type: "string", required: false
+  option "fields", type: "string", required: true
+
+  @cell_padding 2
 
   def handle_message(req, state) do
-    fields = req.options["fields"]
+    headers = hd(req.options)
+    |> Map.get("fields")
     |> String.strip(?")
     |> String.split(~r/[\,\s]/, trim: true)
 
-    rows = for row <- hd(req.args) do
-      for field <- fields do
-        row
-        |> Map.get(field, "")
-        |> to_string
-      end
-    end
+    rows = Enum.map(req.cog_env, &(get_row(&1, headers)))
+    aligned_rows = Cog.Formatters.Table.format([headers|rows], @cell_padding)
 
-    response = [fields|rows]
-    |> Formatters.Table.format
-    |> Formatters.Monospace.format
-
-    {:reply, req.reply_to, response, state}
+    {:reply, req.reply_to, "table", %{"rows" => aligned_rows}, state}
   end
+
+  defp get_row(item, fields) do
+    new_item = Map.take(item, fields)
+    Enum.map(fields, &(Map.get(new_item, &1)))
+  end
+
 end

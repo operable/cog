@@ -1,26 +1,29 @@
 defmodule Cog.Formatters.Table do
-  def format(data) do
-    data
-    |> format_columns
-    |> format_rows
-  end
 
-  defp format_columns(data) do
+  @moduledoc """
+  Generates a list of strings formatted to be easily inserted into a table.
+  """
+
+  @doc """
+  format/2
+
+  `data` - a list of rows(lists) that will populate the table.
+  `padding` - the spacing between columns
+  """
+  def format(data, padding) do
     data
     |> transpose
-    |> Enum.map(&pad_column/1)
+    |> Enum.map(&align_column(&1, padding))
     |> transpose
   end
 
-  defp format_rows(data) do
-    data
-    |> Enum.map(&Enum.join(&1, "  "))
-    |> Enum.join("\n")
-  end
-
-  defp pad_column(column) do
-    max = max_length(column)
-    Enum.map(column, &String.ljust(&1, max))
+  defp align_column(column, padding) do
+    # First we convert all values in the column to strings
+    string_column = Enum.map(column, &cell_string/1)
+    # Next we get the longest string from the column and set that to the max width
+    max = max_length(string_column)
+    # Last we align the column
+    Enum.map(string_column, &String.ljust(&1, max + padding))
   end
 
   defp max_length(column) do
@@ -34,4 +37,20 @@ defmodule Cog.Formatters.Table do
     |> List.zip
     |> Enum.map(&Tuple.to_list/1)
   end
+
+  defp cell_string(cell) when is_binary(cell),
+    do: cell
+  defp cell_string(cell) when is_integer(cell),
+    do: Integer.to_string(cell)
+  defp cell_string(cell) when is_float(cell),
+    do: Float.to_string(cell, [decimal: 10, compact: true])
+  defp cell_string(cell) when is_list(cell),
+    do: Enum.join(cell, ", ")
+  defp cell_string(cell) when is_map(cell) do
+    string = Enum.map_join(cell, ", ", fn({k, v}) ->
+      "#{k}: #{cell_string(v)}"
+    end)
+    "{ #{string} }"
+  end
+
 end
