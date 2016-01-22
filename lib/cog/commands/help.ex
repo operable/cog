@@ -1,5 +1,5 @@
 defmodule Cog.Commands.Help do
-  use Spanner.GenCommand.Base, bundle: "#{Cog.embedded_bundle}"
+  use Spanner.GenCommand.Base, bundle: "#{Cog.embedded_bundle}", enforcing: false
 
   @moduledoc """
   Get help on all installed Cog bot commands.
@@ -14,9 +14,6 @@ defmodule Cog.Commands.Help do
   alias Cog.Queries
   alias Cog.Command.BundleResolver
   alias Piper.Command.SemanticError
-
-  permission "help"
-  rule "when command is #{Cog.embedded_bundle}:help must have #{Cog.embedded_bundle}:help"
 
   def handle_message(%{args: [], reply_to: reply_to}, state),
     do: {:reply, reply_to, "help", %{"commands" => commands}, state}
