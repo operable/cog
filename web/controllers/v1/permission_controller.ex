@@ -4,6 +4,7 @@ defmodule Cog.V1.PermissionController do
   alias Cog.Models.EctoJson
   alias Cog.Models.Permission
   alias Cog.Models.Permission.Namespace
+  alias Cog.Queries
 
   plug :scrub_params, "permission" when action in [:create, :update]
 
@@ -12,8 +13,8 @@ defmodule Cog.V1.PermissionController do
 
   @site "site"
 
-  def index(conn, _params) do
-    permissions = Permission
+  def index(conn, params) do
+    permissions = filtered_permissions_query(params)
     |> Repo.all
     |> Repo.preload(:namespace)
 
@@ -93,6 +94,13 @@ defmodule Cog.V1.PermissionController do
         |> json(%{error: "Deleting permissions outside of the #{@site} namespace is forbidden."})
     end
   end
+
+  def filtered_permissions_query(%{"user" => user}),
+    do: Queries.Permission.granted_to_user(user)
+  def filtered_permissions_query(%{"group" => group}),
+    do: Queries.Permission.granted_to_group(group)
+  def filtered_permissions_query(_params),
+    do: Permission
 
   defp update_permission(conn, changeset) do
     case Repo.update(changeset) do
