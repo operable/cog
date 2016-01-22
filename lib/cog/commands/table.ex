@@ -36,11 +36,11 @@ defmodule Cog.Commands.Table do
   end
 
   defp align_rows(rows) do
-    # Spacings contains the longest items in the column
     spacings = Enum.reduce(rows, hd(rows), fn(row, acc) ->
       Enum.zip(row, acc)
       |> Enum.map(&max_cell/1)
     end)
+    |> Enum.map(&String.length/1)
 
     Enum.map(rows, fn(row) ->
       Enum.zip(row, spacings)
@@ -50,7 +50,7 @@ defmodule Cog.Commands.Table do
 
   # Left aligns the cell
   defp align({cell, spacing}, padding),
-    do: String.ljust(cell, String.length(spacing) + padding)
+    do: String.ljust(cell, spacing + padding)
 
   # Returns the longest cell
   defp max_cell({cell1, cell2}) do
