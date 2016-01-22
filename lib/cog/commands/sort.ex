@@ -7,10 +7,10 @@ defmodule Cog.Commands.Sort do
   Examples
       @bot #{Cog.embedded_bundle}:sort 3 2 1 5 4
       > [1, 2, 3, 4, 5]
-      @bot #{Cog.embedded_bundle}:sort --asc 3 2 1 5 4
-      > [1, 2, 3, 4, 5]
-      @bot #{Cog.embedded_bundle}:sort --desc 3 2 1 5 4
-      > [5, 4, 3, 2, 1]
+      @bot #{Cog.embedded_bundle}:sort --asc 4.5 1.8 0.032 0.6 1.5 0.4
+      > [0.032, 0.4, 0.6, 1.5, 1.8, 4.5]
+      @bot #{Cog.embedded_bundle}:sort --desc Life is 10 percent what happens to us and 90% how we react to it
+      > [what, we, us, to, to, react, percent, it, is, how, happens, and, Life, %, 90, 10]
       @bot #{Cog.embedded_bundle}:rules --for-command=rules| sort --field=rule
       > {
   "rule": "when command is operable:permissions with option[user] == /.*/ must have operable:manage_users",
