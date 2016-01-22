@@ -24,37 +24,15 @@ defmodule Cog.Commands.Table do
     |> String.strip(?")
     |> String.split(~r/[\,\s]/, trim: true)
 
-    rows = Enum.map(req.cog_env, &(pluck(&1, headers)))
-    aligned_rows = align_rows([headers|rows])
+    rows = Enum.map(req.cog_env, &(get_row(&1, headers)))
+    aligned_rows = Cog.Formatters.Table.format([headers|rows], @cell_padding)
 
     {:reply, req.reply_to, "table", %{"rows" => aligned_rows}, state}
   end
 
-  defp pluck(item, fields) do
-    {new_item, _} = Map.split(item, fields)
+  defp get_row(item, fields) do
+    new_item = Map.take(item, fields)
     Enum.map(fields, &(Map.get(new_item, &1)))
-  end
-
-  defp align_rows(rows) do
-    spacings = Enum.reduce(rows, hd(rows), fn(row, acc) ->
-      Enum.zip(row, acc)
-      |> Enum.map(&max_cell/1)
-    end)
-    |> Enum.map(&String.length/1)
-
-    Enum.map(rows, fn(row) ->
-      Enum.zip(row, spacings)
-      |> Enum.map(&align(&1, @cell_padding))
-    end)
-  end
-
-  # Left aligns the cell
-  defp align({cell, spacing}, padding),
-    do: String.ljust(cell, spacing + padding)
-
-  # Returns the longest cell
-  defp max_cell({cell1, cell2}) do
-    Enum.max_by([cell1, cell2], &String.length/1)
   end
 
 end
