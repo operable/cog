@@ -46,8 +46,8 @@ defmodule Cog.Command.UserPermissionsCache do
                 fetch_and_cache(key, state)
               [{_, _, expiry}] when expiry < expires_before ->
                 fetch_and_cache(key, state)
-              [{^key, perms, _}] ->
-                {:ok, perms}
+              [{^key, {user, perms}, _}] ->
+                {:ok, {user, perms}}
             end
     {:reply, reply, state}
   end
@@ -85,7 +85,7 @@ defmodule Cog.Command.UserPermissionsCache do
     Logger.info("Cache miss for #{inspect key}")
     case Repo.one(Queries.User.for_handle(username, adapter)) do
       nil ->
-        :not_found
+        {:error, :not_found}
       user ->
         perms = Cog.Models.User.all_permissions(user)
         value = {user, Map.keys(perms)}
