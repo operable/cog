@@ -119,7 +119,7 @@ defmodule Cog.Adapters.Slack.RTMConnector do
   def handle_message(%{channel: channel, type: "message", message: %{edited: _info, text: text, user: user_id}}, slack, state) do
     {:ok, user} = API.lookup_user(id: user_id)
     {message, handler} = case invocation_type(user_id, channel, text, state) do
-                           :ignored ->
+                           :ignore ->
                              {nil, fn() -> {:ok, state} end}
                            {:direct, room} ->
                              {"Executing edited command '#{text}'",
