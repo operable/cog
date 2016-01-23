@@ -144,7 +144,7 @@ defmodule Cog.V1.RuleController.Test do
     rule_text = "when command is cog:hola must have cog:hola"
     rule = rule(rule_text)
 
-    conn = api_request(requestor, :get, "/v1/rules/cog:hola")
+    conn = api_request(requestor, :get, "/v1/rules?for-command=cog:hola")
 
     assert %{"rules" => [%{"id" => rule.id,
                            "command" => "cog:hola",
@@ -155,8 +155,10 @@ defmodule Cog.V1.RuleController.Test do
     command("hola")
     permission("cog:hola")
 
-    conn = api_request(requestor, :get, "/v1/rules/cog:nada")
-
+    conn = api_request(requestor, :get, "/v1/rules?for-command=cog:nada")
     assert %{"errors" => "No rules for command found"} == json_response(conn, 422)
+
+    conn = api_request(requestor, :get, "/v1/rules?command=cog:hola")
+    assert %{"errors" => "Unknown parameters %{\"command\" => \"cog:hola\"}"} == json_response(conn, 422)
   end
 end

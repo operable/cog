@@ -26,7 +26,7 @@ defmodule Cog.V1.RuleController do
     end
   end
 
-  def show(conn, %{"id" => command}) do
+  def show(conn, %{"for-command" => command}) do
     rules = Repo.all(Cog.Queries.Command.rules_for_cmd(command))
     case format_response(rules) do
       {:ok, result} ->
@@ -36,6 +36,11 @@ defmodule Cog.V1.RuleController do
         |> put_status(:unprocessable_entity)
         |> json(%{"errors" => err})
     end
+  end
+  def show(conn, params) do
+    conn
+    |> put_status(:unprocessable_entity)
+    |> json(%{"errors" => "Unknown parameters #{inspect params}"})
   end
 
   def delete(conn, %{"id" => id}) do
