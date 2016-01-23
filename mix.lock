@@ -47,7 +47,7 @@
   "probe": {:git, "git@github.com:operable/probe", "02c3df4beb0332c4cab47646cfbcdf1cace1da36", [ref: "02c3df4beb0332c4cab47646cfbcdf1cace1da36"]},
   "ranch": {:hex, :ranch, "1.1.0"},
   "slack": {:git, "https://github.com/BlakeWilliams/Elixir-Slack.git", "e348e12551e8f6361d9c666ed52c83eeccce86b8", [ref: "e348e12551e8f6361d9c666ed52c83eeccce86b8"]},
-  "spanner": {:git, "git@github.com:operable/spanner", "d3990706b6a67b2720fad8858ef177d9998dadb8", [branch: "kevsmith/foreign-command"]},
+  "spanner": {:git, "git@github.com:operable/spanner", "544aff8a7bdabd6fdb9cbeeaef08fdbfc81e5712", [ref: "544aff8a7bdabd6fdb9cbeeaef08fdbfc81e5712"]},
   "ssl_verify_hostname": {:hex, :ssl_verify_hostname, "1.0.5"},
   "tentacat": {:hex, :tentacat, "0.2.1"},
   "uuid": {:hex, :uuid, "1.0.1"},
