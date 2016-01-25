@@ -96,9 +96,9 @@ defmodule Cog.V1.PermissionController do
   end
 
   def filtered_permissions_query(%{"user" => user}),
-    do: Queries.Permission.granted_to_user(user)
+    do: Queries.Permission.directly_granted_to_user(user)
   def filtered_permissions_query(%{"group" => group}),
-    do: Queries.Permission.granted_to_group(group)
+    do: Queries.Permission.directly_granted_to_group(group)
   def filtered_permissions_query(_params),
     do: Permission
 

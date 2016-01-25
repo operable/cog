@@ -35,14 +35,14 @@ defmodule Cog.Queries.Permission do
     preload: [:user]
   end
 
-  def granted_to_user(username) do
+  def directly_granted_to_user(username) do
     from u in Cog.Models.User,
     join: p in assoc(u, :permissions),
     where: u.username == ^username,
     select: p
   end
 
-  def granted_to_group(name) do
+  def directly_granted_to_group(name) do
     from g in Cog.Models.Group,
     join: p in assoc(g, :permissions),
     where: g.name == ^name,
