@@ -192,7 +192,7 @@ defmodule Cog.Support.ModelUtilities do
     [Bundle, User, Group, Role, Namespace]
     |> Enum.each(&Repo.delete_all/1)
 
-    Supervisor.terminate_child(Cog.Supervisor, Cog.Bundle.Embedded)
+    Supervisor.terminate_child(Cog.Relay.RelaySup, Cog.Bundle.Embedded)
   end
 
 end
