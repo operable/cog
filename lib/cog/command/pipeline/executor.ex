@@ -130,14 +130,14 @@ defmodule Cog.Command.Pipeline.Executor do
     # work for users that don't have Cog accounts)
     case resolve_user_and_permissions(adapter, handle) do
       {:ok, {user, perms}} ->
-        loop_data = %__MODULE__{id: id, topic: topic, request: request,
+        cog_data = %__MODULE__{id: id, topic: topic, request: request,
                                 mq_conn: conn,
                                 user: user,
                                 user_permissions: perms,
                                 input: [], output: [],
                                 started: :os.timestamp()}
-        initialization_event(loop_data)
-        {:ok, :parse, loop_data, 0}
+        initialization_event(cog_data)
+        {:ok, :parse, cog_data, 0}
       {:error, :not_found} ->
         Logger.warn("Ignoring message from unknown user #{adapter}/#{handle}")
         :ignore
