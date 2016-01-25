@@ -70,22 +70,51 @@ defmodule Cog.V1.PermissionControllerTest do
 
   test "shows chosen resource regardless of namespace", %{user: user} do
     # random namespace
-    rand_perm = permission("joe:test_perm")
+    rand_perm = permission("joe:test_perm") |> Repo.preload(:namespace)
+    rand_namespace = rand_perm.namespace
     conn = api_request(user, :get, "/v1/permissions/#{rand_perm.id}")
-    %{id: id, name: name} = rand_perm
-    assert %{"permission" => %{"id" => ^id, "name" => ^name}} = json_response(conn, 200)
+    assert json_response(conn, 200) == %{
+      "permission" => %{
+        "id" => rand_perm.id,
+        "name" => rand_perm.name,
+        "namespace" => %{
+          "id" => rand_namespace.id,
+          "name" => rand_namespace.name
+        }
+      },
+    }
 
     # site namespace
-    site_perm = permission("site:test_perm")
+    site_perm = permission("site:test_perm") |> Repo.preload(:namespace)
+    site_namespace = site_perm.namespace
     conn = api_request(user, :get, "/v1/permissions/#{site_perm.id}")
-    %{id: id, name: name} = site_perm
-    assert %{"permission" => %{"id" => ^id, "name" => ^name}} = json_response(conn, 200)
+    assert json_response(conn, 200) == %{
+      "permission" => %{
+        "id" => site_perm.id,
+        "name" => site_perm.name,
+        "namespace" => %{
+          "id" => site_namespace.id,
+          "name" => site_namespace.name
+        }
+      },
+    }
+
 
     # embedded bundle namespace
-    embedded_ns_perm = permission("#{Cog.embedded_bundle}:test_perm")
-    conn = api_request(user, :get, "/v1/permissions/#{embedded_ns_perm.id}")
-    %{id: id, name: name} = embedded_ns_perm
-    assert %{"permission" => %{"id" => ^id, "name" => ^name}} = json_response(conn, 200)
+    embedded_perm = permission("#{Cog.embedded_bundle}:test_perm") |> Repo.preload(:namespace)
+    embedded_namespace = embedded_perm.namespace
+    conn = api_request(user, :get, "/v1/permissions/#{embedded_perm.id}")
+    assert json_response(conn, 200) == %{
+      "permission" => %{
+        "id" => embedded_perm.id,
+        "name" => embedded_perm.name,
+        "namespace" => %{
+          "id" => embedded_namespace.id,
+          "name" => embedded_namespace.name
+        }
+      },
+    }
+
   end
 
   test "does not show resource and instead throw error when id is nonexistent", %{user: user} do
