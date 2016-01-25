@@ -26,6 +26,8 @@ defmodule Cog.Router do
     post "/v1/groups/:id/membership", V1.GroupMembershipController, :manage_membership
 
     resources "/v1/permissions", V1.PermissionController, except: [:update]
+    get "/v1/users/:user_id/permissions", V1.PermissionController, :index
+    get "/v1/groups/:group_id/permissions", V1.PermissionController, :index
 
     post "/v1/token", V1.TokenController, :create
 

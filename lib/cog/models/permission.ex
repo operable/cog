@@ -33,8 +33,8 @@ defmodule Cog.Models.Permission do
 
   @required_fields ~w(name)
 
-  summary_fields [:id, :name]
-  detail_fields [:id, :name]
+  summary_fields [:id, :name, :namespace]
+  detail_fields [:id, :name, :namespace]
 
   @doc """
   Allows for the inclusion of the namespace model
