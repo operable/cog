@@ -1,6 +1,9 @@
 defmodule Cog.Relay.Relays do
 
-  defstruct [mq_conn: nil, relays: %{}]
+  alias Cog.Relay.Tracker
+
+  defstruct [mq_conn: nil,
+             tracker: Tracker.new]
 
   use Adz
   use GenServer
@@ -17,13 +20,47 @@ defmodule Cog.Relay.Relays do
     GenServer.start_link(__MODULE__, [], name: __MODULE__)
   end
 
-  def pick_one(bundle) do
-    GenServer.call(__MODULE__, {:random_relay, bundle}, :infinity)
-  end
+  @doc """
+  Choses a relay at random that is currently actively running `bundle`.
+
+  Returns the relay's ID, or `nil` if no relay is currently running
+  `bundle`.
+  """
+  @spec pick_one(String.t) :: String.t | nil
+  def pick_one(bundle),
+    do: GenServer.call(__MODULE__, {:random_active_relay, bundle}, :infinity)
 
   def drop_bundle(bundle) do
     GenServer.call(__MODULE__, {:drop_bundle, bundle}, :infinity)
   end
+
+  @doc """
+  Mark `bundle_name` as being disabled.
+  """
+  @spec disable(String.t) :: :ok
+  def disable(bundle_name),
+    do: GenServer.call(__MODULE__, {:disable, bundle_name}, :infinity)
+
+  @doc """
+  Mark `bundle_name` as being enabled.
+  """
+  @spec enable(String.t) :: :ok
+  def enable(bundle_name),
+    do: GenServer.call(__MODULE__, {:enable, bundle_name}, :infinity)
+
+  @doc """
+  Returns the current known information for `bundle_name`, or
+  an error if the tracker does not know about `bundle_name`.
+
+  Example:
+
+      %{status: :enabled,
+        relays: ["44a92066-b1ae-4456-8e6a-4f212ded3180",
+                 "85da0992-cfcf-49b5-bc5b-d9bd53fb23cd"]}
+  """
+  @spec bundle_status(String.t) :: {:ok, map} | {:error, :no_relays_serving_bundle}
+  def bundle_status(bundle_name),
+    do: GenServer.call(__MODULE__, {:bundle_status, bundle_name}, :infinity)
 
   def init(_) do
     case Messaging.Connection.connect() do
@@ -32,7 +69,7 @@ defmodule Cog.Relay.Relays do
         Messaging.Connection.subscribe(conn, @relays_discovery_topic)
         # Seed RNG so picking relays at random works
         :random.seed(:os.timestamp())
-        {:ok, %__MODULE__{relays: %{}, mq_conn: conn}}
+        {:ok, %__MODULE__{tracker: Tracker.new(), mq_conn: conn}}
       error ->
         Logger.error("Error starting: #{inspect error}")
         error
@@ -52,16 +89,23 @@ defmodule Cog.Relay.Relays do
     new_state = process_discovery(message, state)
     {:reply, :ok, new_state}
   end
-  def handle_call({:random_relay, bundle}, _from, %__MODULE__{relays: relays}=state) do
-    relay = case relays_for_bundle(relays, bundle) do
-              [] -> nil
-              choices -> Enum.random(choices)
-            end
-    {:reply, relay, state}
+  def handle_call({:random_active_relay, bundle}, _from, state),
+    do: {:reply, random_active_relay(state.tracker, bundle), state}
+  def handle_call({:drop_bundle, bundle}, _from, state) do
+    tracker = Tracker.drop_bundle(state.tracker, bundle)
+    {:reply, :ok, %{state | tracker: tracker}}
   end
-  def handle_call({:drop_bundle, bundle}, _from, %__MODULE__{relays: relays}=state) do
-    relays = drop_relays_for_bundle(relays, bundle)
-    {:reply, :ok, %{state | relays: relays}}
+  def handle_call({:bundle_status, bundle_name} , _from, state) do
+    status = Tracker.bundle_status(state.tracker, bundle_name)
+    {:reply, status, state}
+  end
+  def handle_call({:disable, bundle_name}, _from, state) do
+    tracker = Tracker.disable_bundle(state.tracker, bundle_name)
+    {:reply, :ok, %{state | tracker: tracker}}
+  end
+  def handle_call({:enable, bundle_name}, _from, state) do
+    tracker =  Tracker.enable_bundle(state.tracker, bundle_name)
+    {:reply, :ok, %{state | tracker: tracker}}
   end
 
   def handle_info({:publish, @relays_discovery_topic, message}, state) do
@@ -78,6 +122,8 @@ defmodule Cog.Relay.Relays do
   def handle_info(_msg, state) do
     {:noreply, state}
   end
+
+  ########################################################################
 
   # Common processing of relay announcements, whether they come from a
   # real Relay instance, or from the bot itself, announcing the
@@ -109,35 +155,36 @@ defmodule Cog.Relay.Relays do
     state
   end
 
-  defp process_announcement(announcement, %__MODULE__{relays: relays}=state) do
-    id = Map.fetch!(announcement, "relay")
+  defp process_announcement(announcement, %__MODULE__{tracker: tracker}=state) do
+    relay_id = Map.fetch!(announcement, "relay")
     online_status = case Map.fetch!(announcement, "online") do
                       true -> :online
                       false -> :offline
                     end
-    bundles = Map.fetch!(announcement, "bundles")
+
     snapshot_status = case Map.fetch!(announcement, "snapshot") do
                         true -> :snapshot
                         false -> :incremental
                       end
 
-    install_new_bundles(bundles)
+    bundles = announcement
+    |> Map.fetch!("bundles")
+    |> Enum.map(&lookup_or_install/1)
 
-    # For now, only track the names of bundles a particular relay
-    # knows about
-    bundle_names = Enum.map(bundles, &bundle_name/1)
+    bundle_names = Enum.map(bundles, &Map.get(&1, :name)) # Just for logging purposes
 
-    updated_relays = case {online_status, snapshot_status, Map.get(relays, id, [])} do
-                       {:offline, _, _} ->
-                         Logger.info("Removing Relay #{id} from active relay list")
-                         Map.delete(relays, id)
-                       {:online, :incremental, existing} ->
-                         Logger.info("Incrementally adding bundles for Relay #{id}: #{inspect bundle_names}")
-                         Map.put(relays, id, (bundle_names |> Enum.concat(existing) |> Enum.uniq))
-                       {:online, :snapshot, _} ->
-                         Logger.info("Setting bundles list for Relay #{id}: #{inspect bundle_names}")
-                         Map.put(relays, id, bundle_names)
-                     end
+    tracker = case {online_status, snapshot_status} do
+                {:offline, _} ->
+                  Logger.info("Removing Relay #{relay_id} from active relay list")
+                  Tracker.remove_relay(tracker, relay_id)
+                {:online, :incremental} ->
+                  Logger.info("Incrementally adding bundles for Relay #{relay_id}: #{inspect bundle_names}")
+                  Tracker.add_bundles_for_relay(tracker, relay_id, bundles)
+                {:online, :snapshot} ->
+                  Logger.info("Setting bundles list for Relay #{relay_id}: #{inspect bundle_names}")
+                  Tracker.set_bundles_for_relay(tracker, relay_id, bundles)
+              end
+
     case Map.fetch(announcement, "reply_to")  do
       :error ->
         :ok # The embedded bundle has no need for a reply
@@ -149,57 +196,36 @@ defmodule Cog.Relay.Relays do
         Logger.debug("Sending receipt to #{reply_to}: #{inspect receipt}")
         Messaging.Connection.publish(state.mq_conn, receipt, routed_by: reply_to)
     end
-    %{state | relays: updated_relays}
+    %{state | tracker: tracker}
   end
 
   defp receipt(announcement_id),
     do: %{"acknowledged" => announcement_id}
 
+  # If `config` exists in the database (by name), retrieves the
+  # database record. If not, installs the bundle and returns the
+  # database record.
+  defp lookup_or_install(%{"bundle" => %{"name" => name}} = config) do
+    case Repo.get_by(Bundle, name: name) do
+      %Bundle{}=bundle ->
+        bundle
+      nil ->
+        Logger.info("Installing bundle: #{name}")
+        # TODO: Eventually the manifest can go away, as it's not really
+        # needed on the bot side of things. Until then, we can fake it
+        # with an empty map
+        Cog.Bundle.Install.install_bundle(%{name: name,
+                                            config_file: config,
+                                            manifest_file: %{}})
 
-  defp install_new_bundles(bundles) do
-    bundles
-    |> Enum.reject(&known_bundle?/1)
-    |> Enum.each(&install/1)
-  end
-
-  defp install(%{"bundle" => %{"name" => bundle_name}}=config) do
-    Logger.info("Installing bundle: #{bundle_name}")
-    # TODO: Eventually the manifest can go away, as it's not really
-    # needed on the bot side of things. Until then, we can fake it
-    # with an empty map
-    Cog.Bundle.Install.install_bundle(%{name: bundle_name,
-                                         config_file: config,
-                                         manifest_file: %{}})
-  end
-
-  # Is the bundle represented by this config in the database yet?
-  defp known_bundle?(config) do
-    case Repo.get_by(Bundle, name: bundle_name(config)) do
-      nil -> false
-      %Bundle{} -> true
     end
   end
 
-  # Extract a bundle name from a configuration map
-  defp bundle_name(%{"bundle" => %{"name" => name}}),
-    do: name
-
-  # Create a list of all relays that know about the given bundle
-  defp relays_for_bundle(relays, bundle_name) do
-    Enum.reduce(relays, [],
-      fn({relay, bundles}, acc) ->
-        case Enum.member?(bundles, bundle_name) do
-          true -> [relay | acc]
-          false -> acc
-        end
-      end)
-  end
-
-  defp drop_relays_for_bundle(relays, bundle_name) do
-    Enum.reduce(relays, %{},
-      fn({relay, bundles}, acc) ->
-        Map.put(acc, relay, bundles -- [bundle_name])
-      end)
+  defp random_active_relay(tracker, bundle) do
+    case Tracker.active_relays(tracker, bundle) do
+      [] -> nil
+      relays -> Enum.random(relays)
+    end
   end
 
 end
