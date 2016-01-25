@@ -135,4 +135,30 @@ defmodule Cog.V1.RuleController.Test do
 
     assert_rule_is_persisted(rule.id, rule_text)
   end
+
+  # Show
+  ########################################################################
+  test "show the rules for a particular command", %{authed: requestor} do
+    command("hola")
+    permission("cog:hola")
+    rule_text = "when command is cog:hola must have cog:hola"
+    rule = rule(rule_text)
+
+    conn = api_request(requestor, :get, "/v1/rules?for-command=cog:hola")
+
+    assert %{"rules" => [%{"id" => rule.id,
+                           "command" => "cog:hola",
+                           "rule" => rule_text}]} == json_response(conn, 200)
+  end
+
+  test "show error message for a non-existant command", %{authed: requestor} do
+    command("hola")
+    permission("cog:hola")
+
+    conn = api_request(requestor, :get, "/v1/rules?for-command=cog:nada")
+    assert %{"errors" => "No rules for command found"} == json_response(conn, 422)
+
+    conn = api_request(requestor, :get, "/v1/rules?command=cog:hola")
+    assert %{"errors" => "Unknown parameters %{\"command\" => \"cog:hola\"}"} == json_response(conn, 422)
+  end
 end
