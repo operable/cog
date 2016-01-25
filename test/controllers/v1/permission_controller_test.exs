@@ -41,7 +41,7 @@ defmodule Cog.V1.PermissionControllerTest do
   test "lists permissions granted to user", %{user: user} do
     :ok = Permittable.grant_to(user, permission("operable:manage_commands"))
 
-    conn = api_request(user, :get, "/v1/permissions?user=#{user.username}")
+    conn = api_request(user, :get, "/v1/users/#{user.id}/permissions")
     permissions_list = json_response(conn, 200)["permissions"]
 
     names = permissions_list
@@ -50,7 +50,6 @@ defmodule Cog.V1.PermissionControllerTest do
 
     assert names == ["manage_commands", "manage_permissions"]
   end
-
 
   test "creates and renders resource when data is valid", %{user: user} do
     conn = api_request(user, :post, "/v1/permissions",
