@@ -17,16 +17,23 @@ defmodule Cog.Services.GitHub do
 
   def handle_message("repo", req, client) do
     repo = String.split(req.parameters["for"], "/")
-    response = get_repos(repo, client)
-    {:reply, response, req, client}
+    results = get_repos(repo, client)
+    {:reply, get_response(results), req, client}
   end
   def handle_message("prs", req, client) do
     repo = String.split(req.parameters["for"], "/")
-    response = get_prs(repo, req.parameters, client)
-    {:reply, response, req, client}
+    results = get_prs(repo, req.parameters, client)
+    {:reply, get_response(results), req, client}
   end
   def handle_message(_, _, client),
     do: {:noreply, client}
+
+  defp get_response(results) when is_list(results),
+    do: results
+  defp get_response({code, message}) do
+    %{"error" => code,
+      "response" => message}
+  end
 
   defp get_repos([org, repo], client),
     do: Tentacat.get("repos/#{org}/#{repo}", client)
@@ -34,8 +41,12 @@ defmodule Cog.Services.GitHub do
     do: Tentacat.Repositories.list_orgs(org, client)
 
   defp get_prs([org, repo], %{"closed" => true}, client) do
-    Tentacat.Pulls.filter(org, repo, %{state: "closed"}, client)
-    |> Enum.take(10)
+    case Tentacat.Pulls.filter(org, repo, %{state: "closed"}, client) do
+      results when is_list(results) ->
+        Enum.take(results, 10)
+      error ->
+        error
+    end
   end
   defp get_prs([org, repo], _, client),
     do: Tentacat.Pulls.filter(org, repo, %{state: "open"}, client)
