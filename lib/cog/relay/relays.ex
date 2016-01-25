@@ -35,18 +35,10 @@ defmodule Cog.Relay.Relays do
   end
 
   @doc """
-  Mark `bundle_name` as being disabled.
+  Mark `bundle_name` as having the specified `status`.
   """
-  @spec disable(String.t) :: :ok
-  def disable(bundle_name),
-    do: GenServer.call(__MODULE__, {:disable, bundle_name}, :infinity)
-
-  @doc """
-  Mark `bundle_name` as being enabled.
-  """
-  @spec enable(String.t) :: :ok
-  def enable(bundle_name),
-    do: GenServer.call(__MODULE__, {:enable, bundle_name}, :infinity)
+  def set_status(bundle_name, status) when status in [:enabled, :disabled],
+    do: GenServer.call(__MODULE__, {:set_status, bundle_name, status}, :infinity)
 
   @doc """
   Returns the current known information for `bundle_name`, or
@@ -99,11 +91,11 @@ defmodule Cog.Relay.Relays do
     status = Tracker.bundle_status(state.tracker, bundle_name)
     {:reply, status, state}
   end
-  def handle_call({:disable, bundle_name}, _from, state) do
+  def handle_call({:set_status, bundle_name, :disabled}, _from, state) do
     tracker = Tracker.disable_bundle(state.tracker, bundle_name)
     {:reply, :ok, %{state | tracker: tracker}}
   end
-  def handle_call({:enable, bundle_name}, _from, state) do
+  def handle_call({:set_status, bundle_name, :enabled}, _from, state) do
     tracker =  Tracker.enable_bundle(state.tracker, bundle_name)
     {:reply, :ok, %{state | tracker: tracker}}
   end
