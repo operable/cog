@@ -28,12 +28,6 @@ defmodule Cog.Models.Bundle do
     |> unique_constraint(:name)
   end
 
-  def enable(%__MODULE__{}=bundle),
-    do: changeset(bundle, %{enabled: true})
-
-  def disable(%__MODULE__{}=bundle),
-    do: changeset(bundle, %{enabled: false})
-
   def embedded?(%__MODULE__{name: name}),
     do: name == Cog.embedded_bundle
   def embedded?(_),
