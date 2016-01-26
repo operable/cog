@@ -5,10 +5,8 @@ defmodule Cog.Models.ChatHandle do
 
   schema "chat_handles" do
     field :handle, :string
-    field :user_id, Ecto.UUID
-    field :provider_id, :integer
-    has_one :user, Cog.Models.User, foreign_key: :id, references: :user_id
-    has_one :chat_provider, Cog.Models.ChatProvider, foreign_key: :id, references: :provider_id
+    belongs_to :user, Cog.Models.User
+    belongs_to :chat_provider, Cog.Models.ChatProvider, foreign_key: :provider_id, type: :integer
 
     timestamps
   end

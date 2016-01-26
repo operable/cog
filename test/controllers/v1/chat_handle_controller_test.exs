@@ -25,7 +25,7 @@ defmodule Cog.V1.ChatHandleControllerTest do
     # Provider
     provider = Repo.get_by(ChatProvider, name: "Slack")
 
-    # Chat handles for out two users
+    # Chat handles for our two users
     authed_handle = ChatHandle.changeset(%ChatHandle{}, %{"handle" => "Cogswell",
                                                           "provider_id" => provider.id,
                                                           "user_id" => authed_user.id})
