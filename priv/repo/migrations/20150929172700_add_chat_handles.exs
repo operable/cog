@@ -19,6 +19,7 @@ defmodule Cog.Repo.Migrations.AddChatHandles do
     """
 
     create table(:chat_handles, primary_key: false) do
+      add :id, :uuid, primary_key: true
       add :user_id, references(:users, type: :uuid, on_delete: :delete_all), null: false
       add :provider_id, references(:chat_providers, type: :serial), null: false
       add :handle, :text, null: false

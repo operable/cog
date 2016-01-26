@@ -10,6 +10,15 @@ defmodule Cog.Queries.User do
   end
 
   @doc """
+  Given a user id, returns the list of chat handles.
+  """
+  def handles(user_id) do
+    from c in ChatHandle,
+    where: c.user_id == ^user_id,
+    preload: [:chat_provider]
+  end
+
+  @doc """
   Given a `username` and `password`, find the User they belong to.
   The `password` is encoded and queried against the `password_digest`
   field along with the `username`.

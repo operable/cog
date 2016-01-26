@@ -47,6 +47,10 @@ defmodule Cog.Router do
     get "/v1/bundles/:id/status", V1.BundleStatusController, :show
     post "/v1/bundles/:id/status", V1.BundleStatusController, :manage_status
 
+    resources "/v1/chat_handles", V1.ChatHandleController, only: [:index, :update, :delete]
+    get "/v1/users/:id/chat_handles", V1.ChatHandleController, :index
+    post "/v1/users/:id/chat_handles", V1.ChatHandleController, :create
+
   end
 
   scope "/", Cog do
