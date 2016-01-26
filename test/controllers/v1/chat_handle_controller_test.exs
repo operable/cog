@@ -2,7 +2,6 @@ defmodule Cog.V1.ChatHandleControllerTest do
   use Cog.ModelCase
   use Cog.ConnCase
 
-  #alias Cog.Models.User
   alias Cog.Models.ChatHandle
   alias Cog.Models.ChatProvider
 
