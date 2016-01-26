@@ -13,11 +13,12 @@ defmodule Cog.V1.ChatHandleController do
   def index(conn, %{"id" => user_id}) do
     chat_handles = Cog.Queries.User.handles(user_id)
     |> Repo.all
+    |> Repo.preload([:chat_provider, :user])
     json(conn, EctoJson.render(chat_handles, envelope: :chat_handles))
   end
   def index(conn, _params) do
     chat_handles = Repo.all(ChatHandle)
-    |> Repo.preload(:chat_provider)
+    |> Repo.preload([:chat_provider, :user])
     json(conn, EctoJson.render(chat_handles, envelope: :chat_handles))
   end
 
@@ -27,7 +28,7 @@ defmodule Cog.V1.ChatHandleController do
 
     case Repo.insert(changeset) do
       {:ok, chat_handle} ->
-        chat_handle = Repo.preload(chat_handle, :chat_provider)
+        chat_handle = Repo.preload(chat_handle, [:chat_provider, :user])
         conn
         |> put_status(:created)
         |> json(EctoJson.render(chat_handle, envelope: :chat_handle, policy: :detail))
@@ -51,7 +52,7 @@ defmodule Cog.V1.ChatHandleController do
 
     case Repo.update(changeset) do
       {:ok, chat_handle} ->
-        chat_handle = Repo.preload(chat_handle, :chat_provider)
+        chat_handle = Repo.preload(chat_handle, [:chat_provider, :user])
         json(conn, EctoJson.render(chat_handle, envelope: :chat_handle, policy: :detail))
       {:error, changeset} ->
         conn

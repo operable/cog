@@ -53,12 +53,24 @@ defmodule Cog.V1.ChatHandleControllerTest do
     chat_handles_json = json_response(conn, 200)["chat_handles"]
     assert [%{"id" => params.authed_handle.id,
               "handle" => "Cogswell",
-              "user_id" => params.authed.id,
+              "user" => %{
+                "id" => params.authed.id,
+                "email_address" => params.authed.email_address,
+                "first_name" => params.authed.first_name,
+                "last_name" => params.authed.last_name,
+                "username" => params.authed.username
+              },
               "chat_provider" => %{"id" => params.provider.id,
                                    "name" => "Slack"}},
             %{"id" => params.unauthed_handle.id,
               "handle" => "supersad",
-              "user_id" => params.unauthed.id,
+              "user" => %{
+                "id" => params.unauthed.id,
+                "email_address" => params.unauthed.email_address,
+                "first_name" => params.unauthed.first_name,
+                "last_name" => params.unauthed.last_name,
+                "username" => params.unauthed.username
+              },
               "chat_provider" => %{"id" => params.provider.id,
                                    "name" => "Slack"}}] == chat_handles_json
   end
@@ -68,7 +80,13 @@ defmodule Cog.V1.ChatHandleControllerTest do
     chat_handles_json = json_response(conn, 200)["chat_handles"]
     assert [%{"id" => params.authed_handle.id,
               "handle" => "Cogswell",
-              "user_id" => params.authed.id,
+              "user" => %{
+                "id" => params.authed.id,
+                "email_address" => params.authed.email_address,
+                "first_name" => params.authed.first_name,
+                "last_name" => params.authed.last_name,
+                "username" => params.authed.username
+              },
               "chat_provider" => %{"id" => params.provider.id,
                                    "name" => "Slack"}}] == chat_handles_json
   end
@@ -97,7 +115,13 @@ defmodule Cog.V1.ChatHandleControllerTest do
                                  "chat_provider" => %{"id" => params.provider.id,
                                                       "name" => "Slack"},
                                  "handle" => "NewUpdateTest",
-                                 "user_id" => params.authed.id}
+                                 "user" => %{
+                                   "id" => params.authed.id,
+                                   "email_address" => params.authed.email_address,
+                                   "first_name" => params.authed.first_name,
+                                   "last_name" => params.authed.last_name,
+                                   "username" => params.authed.username
+                                 }}
   end
 
 

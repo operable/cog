@@ -7,7 +7,7 @@ defmodule Cog.Models.ChatHandle do
     field :handle, :string
     field :user_id, Ecto.UUID
     field :provider_id, :integer
-    has_one :user, Cog.Models.User, foreign_key: :user_id, references: :user_id
+    has_one :user, Cog.Models.User, foreign_key: :id, references: :user_id
     has_one :chat_provider, Cog.Models.ChatProvider, foreign_key: :id, references: :provider_id
 
     timestamps
@@ -17,7 +17,7 @@ defmodule Cog.Models.ChatHandle do
   @optional_fields ~w()
 
   summary_fields [:id, :handle, :user_id, :provider_id]
-  detail_fields [:id, :handle, :user_id, :chat_provider]
+  detail_fields [:id, :handle, :user, :chat_provider]
 
   def changeset(model, params \\ :empty) do
     model
