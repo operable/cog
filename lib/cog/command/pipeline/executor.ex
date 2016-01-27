@@ -340,8 +340,8 @@ defmodule Cog.Command.Pipeline.Executor do
             resp = Spanner.Command.Response.decode!(payload)
             case resp.status do
               "error" ->
-                Helpers.send_error(resp.status_message, state.request, state.mq_conn)
-                fail_pipeline(state, :command_error, resp.status_message)
+                Helpers.send_error(resp.status_message || resp.body["message"], state.request, state.mq_conn)
+                fail_pipeline(state, :command_error, resp.status_message || resp.body["message"])
               "ok" ->
                 prepare_or_finish(state, resp)
             end
