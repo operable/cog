@@ -89,7 +89,4 @@ config :cog, :aws_service,
   aws_access_key_id: System.get_env("AWS_ACCESS_KEY_ID"),
   aws_secret_access_key: System.get_env("AWS_SECRET_ACCESS_KEY")
 
-config :cog, :command_config_root,
-  System.get_env("COG_COMMAND_CONFIG_ROOT")
-
 import_config "#{Mix.env}.exs"
