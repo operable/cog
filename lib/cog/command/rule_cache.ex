@@ -30,7 +30,7 @@ defmodule Cog.Command.RuleCache do
     else
       {:ok, nil}
     end
-    Logger.info("#{__MODULE__} intialized. Command rule cache TTL is #{ttl} seconds.")
+    Logger.info("Ready. Command rule cache TTL is #{ttl} seconds.")
     {:ok, %__MODULE__{ttl: ttl, tref: tref}}
   end
 

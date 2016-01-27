@@ -93,7 +93,7 @@ defmodule Cog.Adapters.Slack.RTMConnector do
                         direct_name: "<@" <> slack.me.id <> ">",
                         bus: bus}
     :erlang.register(__MODULE__, self())
-    Logger.info("#{__MODULE__} initialized")
+    Logger.info("Ready. Slack username: #{slack.me.name}, userid: #{slack.me.id}.")
 
     # TODO: do we want to capture the timer reference for anything?
     {:ok, _timer_ref} = :timer.send_interval(@ping_interval, :send_ping)

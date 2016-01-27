@@ -35,7 +35,7 @@ defmodule Cog.Command.UserPermissionsCache do
     else
       {:ok, nil}
     end
-    Logger.info("#{__MODULE__} intialized. Cache TTL is #{ttl} seconds.")
+    Logger.info("Ready. Cache TTL is #{ttl} seconds.")
     {:ok, %__MODULE__{ttl: ttl, tref: tref}}
   end
 

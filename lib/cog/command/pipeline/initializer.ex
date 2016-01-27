@@ -13,7 +13,7 @@ defmodule Cog.Command.Pipeline.Initializer do
     cp = Application.get_env(:cog, :command_prefix)
     {:ok, conn} = Carrier.Messaging.Connection.connect()
     Carrier.Messaging.Connection.subscribe(conn, "/bot/commands")
-    Logger.info("#{__MODULE__} intialized")
+    Logger.info("Ready.")
     {:ok, %__MODULE__{mq_conn: conn, history_token: "#{cp}#{cp}"}}
   end
 
