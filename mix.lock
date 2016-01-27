@@ -44,7 +44,7 @@
   "poolboy": {:hex, :poolboy, "1.5.1"},
   "porcelain": {:hex, :porcelain, "2.0.1"},
   "postgrex": {:hex, :postgrex, "0.9.1"},
-  "probe": {:git, "git@github.com:operable/probe", "02c3df4beb0332c4cab47646cfbcdf1cace1da36", [ref: "02c3df4beb0332c4cab47646cfbcdf1cace1da36"]},
+  "probe": {:git, "git@github.com:operable/probe", "02c3df4beb0332c4cab47646cfbcdf1cace1da36", [tag: "0.1-rc1"]},
   "ranch": {:hex, :ranch, "1.1.0"},
   "slack": {:git, "https://github.com/BlakeWilliams/Elixir-Slack.git", "e348e12551e8f6361d9c666ed52c83eeccce86b8", [ref: "e348e12551e8f6361d9c666ed52c83eeccce86b8"]},
   "spanner": {:git, "git@github.com:operable/spanner", "2eae6385874bf772503d440c4b4f244acb573a33", [tag: "0.1-rc1"]},
