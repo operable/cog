@@ -44,7 +44,7 @@ defmodule Cog.V1.UserControllerTest do
               "first_name" => "Sadpanda",
               "last_name" => "McSadpanda",
               "email_address" => "sadpanda@operable.io",
-              "username" => "sadpanda"}] == users_json |> sort_by("name")
+              "username" => "sadpanda"}] == users_json |> sort_by("username")
   end
 
   test "shows chosen resource", %{authed: requestor} do
