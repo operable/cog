@@ -1,6 +1,6 @@
 defmodule Cog.Command.Pipeline.Executor.Helpers do
   def send_error(error, payload, mq_conn) do
-    send_reply("Whoops! An error occurred. " <> error, payload, mq_conn)
+    send_reply("Whoops! An error occurred. #{inspect error}", payload, mq_conn)
   end
 
   def send_timeout(command, payload, mq_conn) do
