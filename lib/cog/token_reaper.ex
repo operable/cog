@@ -52,7 +52,7 @@ defmodule Cog.TokenReaper do
   end
 
   defp schedule_next_reaping(period) do
-    Logger.info ("#{__MODULE__}: Scheduling next expired token reaping for approximately #{ms_to_hours(period)} hours from now")
+    Logger.info ("Scheduling next expired token reaping for approximately #{ms_to_hours(period)} hours from now")
     :erlang.send_after(period, self(), :reap)
   end
 
@@ -62,8 +62,8 @@ defmodule Cog.TokenReaper do
     |> Cog.Repo.delete_all
 
     case num do
-      0 -> Logger.info("#{__MODULE__}: No expired tokens to delete")
-      _ -> Logger.info("#{__MODULE__}: Deleted #{num} expired tokens")
+      0 -> Logger.info("No expired tokens to delete")
+      _ -> Logger.info("Deleted #{num} expired tokens")
     end
     :ok
   end

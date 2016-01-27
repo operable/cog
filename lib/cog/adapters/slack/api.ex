@@ -115,7 +115,7 @@ defmodule Cog.Adapters.Slack.API do
                   _ ->
                     %__MODULE__{token: token, ttl: ttl}
                 end
-        Logger.info("#{__MODULE__} initialized. Response cache TTL is #{state.ttl} seconds.")
+        Logger.info("Ready. Response cache TTL is #{state.ttl} seconds.")
         {:ok, state}
     end
   end
