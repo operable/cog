@@ -1,5 +1,5 @@
 %{"adz": {:git, "git@github.com:operable/adz", "07ba970e0bec955f1f3ed1c4771511139924c7fd", [ref: "07ba970e0bec955f1f3ed1c4771511139924c7fd"]},
-  "carrier": {:git, "git@github.com:operable/carrier", "fa21dab921ba699d52005fca51b67cc1fa3b3e54", [ref: "fa21dab921ba699d52005fca51b67cc1fa3b3e54"]},
+  "carrier": {:git, "git@github.com:operable/carrier", "fa21dab921ba699d52005fca51b67cc1fa3b3e54", [tag: "0.1-rc1"]},
   "comeonin": {:hex, :comeonin, "1.1.4"},
   "cowboy": {:hex, :cowboy, "1.0.3"},
   "cowlib": {:hex, :cowlib, "1.0.1"},
