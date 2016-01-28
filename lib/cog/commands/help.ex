@@ -51,6 +51,7 @@ defmodule Cog.Commands.Help do
     Queries.Command.names
     |> Repo.all
     |> Enum.map(&Enum.join(&1, ":"))
+    |> Enum.sort
   end
 
   defp documentation(command_name) do
