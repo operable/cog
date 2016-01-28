@@ -1,5 +1,11 @@
 defmodule Cog.Command.Pipeline.Executor.Helpers do
+  require Logger
+
+  def send_error(error, payload, mq_conn) when is_binary(error) do
+    send_reply("Whoops! An error occurred. #{error}", payload, mq_conn)
+  end
   def send_error(error, payload, mq_conn) do
+    Logger.warn("The error message #{inspect error} should be in string format for displaying to the user")
     send_reply("Whoops! An error occurred. #{inspect error}", payload, mq_conn)
   end
 
