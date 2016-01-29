@@ -20,8 +20,12 @@ defmodule Cog.Commands.Help do
   option "all", type: "bool", required: false
   option "disabled", type: "bool", required: false
 
-  def handle_message(%{args: [], options: options, reply_to: reply_to}, state),
-    do: {:reply, reply_to, "help", %{"commands" => commands(options)}, state}
+  def handle_message(%{args: [], options: options, reply_to: reply_to}, state) do
+    case commands(options) do
+      [] -> {:reply, reply_to, "There are no commands for this option. Use `--all` to see all known commands.", state}
+      commands -> {:reply, reply_to, "help", %{"commands" => commands}, state}
+    end
+  end
   def handle_message(%{args: [command], reply_to: reply_to}, state) do
     case find_command(command) do
       {:ok, command} ->
@@ -63,16 +67,12 @@ defmodule Cog.Commands.Help do
 
   defp determine_inclusion([_, _, enabled], %{"disabled" => true}) do
     true
-    if enabled do
-      false
-    end
+    if enabled, do: false
   end
   defp determine_inclusion([_, _, _], %{"all" => true}), do: true
   defp determine_inclusion([_, _, enabled], _) do
     false
-    if enabled do
-      true
-    end
+    if enabled, do: true
   end
 
   defp documentation(command_name) do
