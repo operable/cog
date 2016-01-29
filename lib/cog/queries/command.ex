@@ -5,7 +5,7 @@ defmodule Cog.Queries.Command do
   def names do
     from c in Command,
     join: b in assoc(c, :bundle),
-    select: [b.name, c.name]
+    select: [b.name, c.name, b.enabled]
   end
 
   def bundle_for(name) do
