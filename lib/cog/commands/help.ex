@@ -22,7 +22,8 @@ defmodule Cog.Commands.Help do
 
   def handle_message(%{args: [], options: options, reply_to: reply_to}, state) do
     case commands(options) do
-      [] -> {:reply, reply_to, "There are no commands for this option. Use `--all` to see all known commands.", state}
+      # We do not allow embedded commands to be disabled, so this would only happen for looking for disabled commands
+      [] -> {:reply, reply_to, "There are no disabled commands.", state}
       commands -> {:reply, reply_to, "help", %{"commands" => commands}, state}
     end
   end
@@ -57,23 +58,15 @@ defmodule Cog.Commands.Help do
   end
 
   defp commands(options) do
-    IO.inspect(options)
-    Queries.Command.names
+    determine_inclusion(options)
     |> Repo.all
-    |> Enum.filter(&determine_inclusion(&1, options))
-    |> Enum.map(fn([bundle, command, _]) -> "#{bundle}:#{command}" end)
+    |> Enum.map(&Enum.join(&1, ":"))
     |> Enum.sort
   end
 
-  defp determine_inclusion([_, _, enabled], %{"disabled" => true}) do
-    true
-    if enabled, do: false
-  end
-  defp determine_inclusion([_, _, _], %{"all" => true}), do: true
-  defp determine_inclusion([_, _, enabled], _) do
-    false
-    if enabled, do: true
-  end
+  defp determine_inclusion(%{"disabled" => true}), do: Queries.Command.names_for(false)
+  defp determine_inclusion(%{"all" => true}), do: Queries.Command.names
+  defp determine_inclusion(_), do: Queries.Command.names_for(true)
 
   defp documentation(command_name) do
     command = command_name
