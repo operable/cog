@@ -4,7 +4,9 @@ defmodule Cog.Commands.Help do
   @moduledoc """
   Get help on all installed Cog bot commands.
 
-    * `@bot #{Cog.embedded_bundle}:help` - list all known commands
+    * `@bot #{Cog.embedded_bundle}:help` - list all enabled commands
+    * `@bot #{Cog.embedded_bundle}:help --disabled` - list all disabled commands
+    * `@bot #{Cog.embedded_bundle}:help --all` - list all known commands, enabled and disabled
     * `@bot #{Cog.embedded_bundle}:help "#{Cog.embedded_bundle}:help"` - list help for a specific command
 
   """
@@ -15,8 +17,16 @@ defmodule Cog.Commands.Help do
   alias Cog.Command.BundleResolver
   alias Piper.Command.SemanticError
 
-  def handle_message(%{args: [], reply_to: reply_to}, state),
-    do: {:reply, reply_to, "help", %{"commands" => commands}, state}
+  option "all", type: "bool", required: false
+  option "disabled", type: "bool", required: false
+
+  def handle_message(%{args: [], options: options, reply_to: reply_to}, state) do
+    case commands(options) do
+      # We do not allow embedded commands to be disabled, so this would only happen for looking for disabled commands
+      [] -> {:reply, reply_to, "There are no disabled commands.", state}
+      commands -> {:reply, reply_to, "help", %{"commands" => commands}, state}
+    end
+  end
   def handle_message(%{args: [command], reply_to: reply_to}, state) do
     case find_command(command) do
       {:ok, command} ->
@@ -47,12 +57,16 @@ defmodule Cog.Commands.Help do
     end
   end
 
-  defp commands do
-    Queries.Command.names
+  defp commands(options) do
+    determine_inclusion(options)
     |> Repo.all
     |> Enum.map(&Enum.join(&1, ":"))
     |> Enum.sort
   end
+
+  defp determine_inclusion(%{"disabled" => true}), do: Queries.Command.names_for(false)
+  defp determine_inclusion(%{"all" => true}), do: Queries.Command.names
+  defp determine_inclusion(_), do: Queries.Command.names_for(true)
 
   defp documentation(command_name) do
     command = command_name
