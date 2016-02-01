@@ -50,7 +50,8 @@ config :cog, Cog.Endpoint,
   code_reloader: true,
   cache_static_lookup: false,
   check_origin: false,
-  render_errors: [view: Cog.ErrorView, accepts: ~w(json)]
+  render_errors: [view: Cog.ErrorView, accepts: ~w(json)],
+  secret_key_base: System.get_env("COG_COOKIE_SECRET")
 
 config :cog, Cog.Endpoint,
   live_reload: [

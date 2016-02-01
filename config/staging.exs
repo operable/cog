@@ -24,7 +24,8 @@ config :cog, Cog.Endpoint,
   http: [port: 4000],
   debug_errors: false,
   cache_static_lookup: false,
-  check_origin: false
+  check_origin: false,
+  secret_key_base: System.get_env("COG_COOKIE_SECRET")
 
 config :comeonin,
   bcrypt_log_rounds: 14

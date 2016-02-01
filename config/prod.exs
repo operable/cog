@@ -23,6 +23,7 @@ config :cog, Cog.Endpoint,
   cache_static_manifest: "priv/static/manifest.json"
 
 config :cog, Cog.Endpoint,
-  secret_key_base: "NhUaByeWuGHgE+lJsuOEKSnv88BLlH2xQcPRG7u9HazAYmenEGjZEyiywSwbKoRc"
+  secret_key_base: System.get_env("COG_COOKIE_SECRET")
+
 config :comeonin,
   bcrypt_log_rounds: 14

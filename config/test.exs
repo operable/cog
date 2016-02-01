@@ -49,7 +49,8 @@ config :cog, Cog.Endpoint,
   http: [port: 4001],
   catch_errors: true,
   cache_static_lookup: false,
-  server: false
+  server: false,
+  secret_key_base: System.get_env("COG_COOKIE_SECRET")
 
 # 4-round hashing for test/dev only
 config :comeonin,
