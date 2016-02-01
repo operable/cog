@@ -45,7 +45,7 @@ config :cog, Cog.Repo,
   pool_size: 10
 
 config :cog, Cog.Endpoint,
-  http: [port: 4000],
+  http: [port: System.get_env("COG_WEB_PORT") || 4000],
   debug_errors: true,
   code_reloader: true,
   cache_static_lookup: false,
