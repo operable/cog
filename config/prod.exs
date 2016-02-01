@@ -24,3 +24,5 @@ config :cog, Cog.Endpoint,
 
 config :cog, Cog.Endpoint,
   secret_key_base: "NhUaByeWuGHgE+lJsuOEKSnv88BLlH2xQcPRG7u9HazAYmenEGjZEyiywSwbKoRc"
+config :comeonin,
+  bcrypt_log_rounds: 14

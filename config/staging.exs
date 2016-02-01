@@ -30,3 +30,5 @@ config :cog, Cog.Endpoint,
 config :cog, Cog.Passwords,
   # 4-round hashing for dev only
   salt: "$2b$04$me8.bWW9urIiJbTLCCDt1."
+config :comeonin,
+  bcrypt_log_rounds: 14
