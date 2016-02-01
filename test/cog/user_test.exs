@@ -67,9 +67,8 @@ defmodule UserTest do
 
   test "password is stored as a digest" do
     password = "sooperseekritdonttellanyoneshhhhhhh"
-    digest = Cog.Passwords.encode(password)
 
-    %User{id: id} = %User{}
+    %User{id: id, password_digest: digest} = %User{}
     |> User.changeset(%{"username" => "operator",
                         "first_name" => "Operator",
                         "last_name" => "McOperator",
@@ -79,15 +78,14 @@ defmodule UserTest do
 
     retrieved = Repo.get_by(User, id: id)
     refute retrieved.password
-    assert ^digest = retrieved.password_digest
+    assert String.starts_with?(retrieved.password_digest, "$2")
   end
 
   test "updating an existing user doesn't require a password" do
     password = "sooperseekritdonttellanyoneshhhhhhh"
-    digest = Cog.Passwords.encode(password)
 
     # Create a new user and grab its ID
-    %User{id: id} = %User{}
+    %User{id: id, password_digest: digest} = %User{}
     |> User.changeset(%{"username" => "operator",
                         "first_name" => "Operator",
                         "last_name" => "McOperator",
@@ -106,9 +104,8 @@ defmodule UserTest do
 
   test "updating a password updates the digest value instead" do
     old_password = "sooperseekritdonttellanyoneshhhhhhh"
-    old_digest = Cog.Passwords.encode(old_password)
 
-    %User{id: id} = %User{}
+    %User{id: id, password_digest: old_digest} = %User{}
     |> User.changeset(%{"username" => "operator",
                         "first_name" => "Operator",
                         "last_name" => "McOperator",
@@ -117,12 +114,10 @@ defmodule UserTest do
     |> Repo.insert!
 
     new_password = "LookUponMyPassword,YeMighty,AndDespair!"
-    new_digest = Cog.Passwords.encode(new_password)
-
     updated = update_user(id, %{"password" => new_password})
 
     assert old_digest != updated.password_digest
-    assert ^new_digest = updated.password_digest
+    assert String.starts_with?(updated.password_digest, "$2")
   end
 
   @doc """
