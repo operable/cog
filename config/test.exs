@@ -52,9 +52,9 @@ config :cog, Cog.Endpoint,
   cache_static_lookup: false,
   server: false
 
-config :cog, Cog.Passwords,
-  # 4-round hashing for test only
-  salt: "$2b$04$vpRaVzxRGVTr6wf6jPQO5O"
+# 4-round hashing for test/dev only
+config :comeonin,
+  bcrypt_log_rounds: 4
 
 config :cog, :ec2_service,
   aws_access_key_id: "not-used",

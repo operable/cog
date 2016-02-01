@@ -3,8 +3,7 @@ defmodule Cog.Passwords do
   alias Comeonin.Bcrypt
 
   def encode(plaintext) do
-    [salt: salt] = Application.get_env(:cog, __MODULE__, :salt)
-    Bcrypt.hashpass(plaintext, salt)
+    Bcrypt.hashpwsalt(plaintext)
   end
 
   def matches?(nil, _) do
