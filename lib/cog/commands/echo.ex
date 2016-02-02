@@ -11,10 +11,7 @@ defmodule Cog.Commands.Echo do
 
   """
 
-  def handle_message(req, state) do
-    {:reply, req.reply_to, echo_string(req.args), state}
-  end
+  def handle_message(req, state),
+    do: {:reply, req.reply_to, Enum.join(req.args, " "), state}
 
-  defp echo_string([]), do: ""
-  defp echo_string(args) when is_list(args), do: hd(args)
 end
