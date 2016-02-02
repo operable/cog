@@ -7,7 +7,6 @@ config :cog,
   adapter: Cog.Adapters.Slack
 
 config :cog, Cog.Adapters.Slack,
-  rtm_token: System.get_env("SLACK_RTM_TOKEN"),
   api_token: System.get_env("SLACK_API_TOKEN"),
   api_cache_ttl: System.get_env("SLACK_API_CACHE_TTL")
 

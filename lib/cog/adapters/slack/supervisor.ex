@@ -10,11 +10,10 @@ defmodule Cog.Adapters.Slack.Sup do
   def init(_) do
     config = Application.get_env(:cog, Cog.Adapters.Slack)
 
-    rtm_token = fetch_required(config, :rtm_token)
     api_token = fetch_required(config, :api_token)
     cache_ttl = ensure_integer(Keyword.get(config, :api_cache_ttl))
 
-    children = [worker(Cog.Adapters.Slack.RTMConnector, [rtm_token]),
+    children = [worker(Cog.Adapters.Slack.RTMConnector, [api_token]),
                 worker(Cog.Adapters.Slack.API, [api_token, cache_ttl])]
     supervise(children, strategy: :one_for_all)
   end
