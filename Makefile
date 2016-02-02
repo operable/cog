@@ -28,6 +28,11 @@ ci-setup: ci-reset
 ci-cleanup:
 	mix ecto.drop
 
+setup: check-for-dirty-schedulers
+	mix deps.get
+	mix ecto.create
+	mix ecto.migrate
+
 check-for-dirty-schedulers:
 ifneq ($(DIRTY_SCHEDULER_SUPPORT), 0)
 	$(error Erlang must be compiled with support for dirty schedulers)
