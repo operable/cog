@@ -10,7 +10,7 @@ ifdef BUILDKITE_BUILD_NUMBER
 TEST_DATABASE_URL := $(TEST_DATABASE_URL).$(BUILDKITE_BUILD_NUMBER)
 endif
 
-DIRTY_SCHEDULER_SUPPORT := $(shell erl -noshell -eval "erlang:system_info(dirty_cpu_schedulers)." -eval "init:stop()" > /dev/null 2>&1; echo $$?)
+DIRTY_SCHEDULER_SUPPORT := $(shell ERL_CRASH_DUMP=/dev/null erl -noshell -eval "erlang:system_info(dirty_cpu_schedulers)." -eval "init:stop()" > /dev/null 2>&1; echo $$?)
 
 ci: export DATABASE_URL = $(TEST_DATABASE_URL)
 ci: export MIX_ENV = test
