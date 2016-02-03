@@ -10,6 +10,8 @@ ifdef BUILDKITE_BUILD_NUMBER
 TEST_DATABASE_URL := $(TEST_DATABASE_URL).$(BUILDKITE_BUILD_NUMBER)
 endif
 
+DIRTY_SCHEDULER_SUPPORT := $(shell ERL_CRASH_DUMP=/dev/null erl -noshell -eval "erlang:system_info(dirty_cpu_schedulers)." -eval "init:stop()" > /dev/null 2>&1; echo $$?)
+
 ci: export DATABASE_URL = $(TEST_DATABASE_URL)
 ci: export MIX_ENV = test
 ci: ci-setup test-all ci-cleanup
@@ -26,11 +28,21 @@ ci-setup: ci-reset
 ci-cleanup:
 	mix ecto.drop
 
+setup: check-for-dirty-schedulers
+	mix deps.get
+	mix ecto.create
+	mix ecto.migrate
+
+check-for-dirty-schedulers:
+ifneq ($(DIRTY_SCHEDULER_SUPPORT), 0)
+	$(error Erlang must be compiled with support for dirty schedulers)
+endif
+
 # Note: 'run' does not reset the database, in case you have data
 # you're actively using. If this is your first time, run `make
 # reset-db` before executing this recipe.
-run:
-	iex --sname cog_dev@localhost -S mix phoenix.server
+run: check-for-dirty-schedulers
+	iex -S mix phoenix.server
 
 reset-db:
 	mix ecto.reset
