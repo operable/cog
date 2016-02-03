@@ -4,6 +4,6 @@ Cog is an open chatops platform that gives you a secure, collaborative command l
 
 ## Private Alpha
 
-Thank you for participating in the private alpha test for Cog! WPlease use (GitHub Issues)[https://github.com/operable/cog/issues] to report problems, make feature requests, or to ask questions that don't need an immediate response.
+Thank you for participating in the private alpha test for Cog! WPlease use [GitHub Issues](https://github.com/operable/cog/issues) to report problems, make feature requests, or to ask questions that don't need an immediate response.
 
-All documentation is currently in the (Cog Wiki)[https://github.com/operable/cog/wiki].
+All documentation is currently in the [Cog Wiki](https://github.com/operable/cog/wiki).
