@@ -42,7 +42,7 @@ endif
 # you're actively using. If this is your first time, run `make
 # reset-db` before executing this recipe.
 run: check-for-dirty-schedulers
-	iex --sname cog_dev@localhost -S mix phoenix.server
+	iex -S mix phoenix.server
 
 reset-db:
 	mix ecto.reset
