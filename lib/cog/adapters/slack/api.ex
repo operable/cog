@@ -92,15 +92,6 @@ defmodule Cog.Adapters.Slack.API do
     end
   end
 
-  def send_message(room: room, text: text, as_user: as_user) do
-    GenServer.call(@server_name, {:send_message, [room: room, text: text, as_user: as_user]}, :infinity)
-  end
-
-  def retrieve_last_message(room: room, oldest: oldest) do
-    {:ok, %{id: room_id}} = lookup_room(name: room)
-    GenServer.call(@server_name, {:retrieve_last_message, [room: room_id, oldest: oldest]}, :infinity)
-  end
-
   def init([token, ttl]) when is_integer(ttl) or ttl == nil do
     case verify_token(token) do
       false ->
@@ -194,22 +185,6 @@ defmodule Cog.Adapters.Slack.API do
       {:reply, {:error, translate_slack_error("im.open", result["error"])}, state}
     end
   end
-  def handle_call({:send_message, [room: room, text: text, as_user: as_user]}, _from, state) do
-    case call_api!("chat.postMessage", state.token, [body: %{channel: room, text: text, as_user: as_user}, parser: &parse_message(&1)]) do
-      {:ok, message} ->
-        {:reply, {:ok, message}, state}
-      {:error, _error} ->
-        {:reply, :error, state}
-    end
-  end
-  def handle_call({:retrieve_last_message, [room: room, oldest: oldest]}, _from, state) do
-    case call_api!("channels.history", state.token, [body: %{channel: room, oldest: oldest, count: 1}, parser: &parse_last_message(&1)]) do
-      {:ok, message} ->
-        {:reply, {:ok, message}, state}
-      error ->
-        {:reply, error, state}
-    end
-  end
 
   defp parse_users_result(result, query, state) do
     case result["ok"] do
@@ -254,29 +229,6 @@ defmodule Cog.Adapters.Slack.API do
         {:error, result["error"]}
       true ->
         {:ok, result["user"]["name"]}
-    end
-  end
-
-  defp parse_message(result) do
-    case result["ok"] do
-      false ->
-        {:error, result["error"]}
-      true ->
-        {:ok, Map.put(result["message"], "ts", result["ts"])}
-    end
-  end
-
-  defp parse_last_message(result) do
-    case result["ok"] do
-      false ->
-        {:error, result["error"]}
-      true ->
-        case result["messages"] do
-          [] ->
-            {:ok, nil}
-          [%{"text" => text}] ->
-            {:ok, text}
-        end
     end
   end
 
