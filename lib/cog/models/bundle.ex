@@ -49,21 +49,4 @@ defmodule Cog.Models.Bundle do
     end
   end
 
-  def bundle_path(%__MODULE__{name: name}) do
-    Path.join(bundle_root!, name)
-  end
-
-  def bundle_ebin_path(bundle) do
-    Path.join(bundle_path(bundle), "ebin")
-  end
-
-  def bundle_root! do
-    Application.get_env(:cog, Cog.Bundle.BundleSup)
-    |> Keyword.fetch!(:bundle_root)
-  end
-
-  def bundle_root do
-    Application.get_env(:cog, Cog.Bundle.BundleSup)
-    |> Keyword.get(:bundle_root, nil)
-  end
 end
