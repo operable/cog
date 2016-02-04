@@ -215,7 +215,7 @@ for repo in ${REPOS}; do
   else
     write_log "Updating previous ${repo} clone."
     cd ${repo}
-    if ! ${git_path} fetch -t && ${git_path} checkout ${RELEASE_TAG} ; then
+    if ! ( ${git_path} fetch -t && ${git_path} checkout ${RELEASE_TAG} ) ; then
       write_err "Error refreshing previous ${repo} clone to release tag ${RELEASE_TAG}"
       abort
     fi
