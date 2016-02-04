@@ -277,3 +277,7 @@ write_log
 
 write_log "To start Cog:\tcd %s/cog && make run" ${install_dir}
 write_log "To start Relay:\tcd %s/relay && scripts/start.sh" ${install_dir}
+write_log
+Write_log "Path to relayctl:\t%s/relayctl" ${install_dir}
+write_log "Path to cogctl:\t%s/cogctl" ${install_dir}
+
