@@ -181,7 +181,10 @@ if [ ! -d cog ]; then
     abort
   fi
 else
-  write_log "Using previous Cog clone."
+  write_log "Updating previous Cog clone."
+  pushd
+  cd cog && ${git_path} pull
+  popd
 fi
 
 if [ ! -d relay ]; then
@@ -190,7 +193,10 @@ if [ ! -d relay ]; then
     abort
   fi
 else
-  write_log "Using previous Relay clone."
+  write_log "Updating previous Relay clone."
+  pushd
+  cd relay && ${git_path} pull
+  popd
 fi
 
 write_log "Building Cog."
