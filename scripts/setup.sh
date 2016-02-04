@@ -182,9 +182,8 @@ if [ ! -d cog ]; then
   fi
 else
   write_log "Updating previous Cog clone."
-  pushd
   cd cog && ${git_path} pull
-  popd
+  cd ..
 fi
 
 if [ ! -d relay ]; then
@@ -194,9 +193,8 @@ if [ ! -d relay ]; then
   fi
 else
   write_log "Updating previous Relay clone."
-  pushd
   cd relay && ${git_path} pull
-  popd
+  cd ..
 fi
 
 write_log "Building Cog."
