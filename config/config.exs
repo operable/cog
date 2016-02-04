@@ -1,4 +1,5 @@
 use Mix.Config
+use Cog.Config.Helpers
 
 config :logger, :console,
   metadata: [:module, :line],
@@ -13,8 +14,6 @@ config :cog, Cog.Repo,
   pool_timeout: String.to_integer(System.get_env("COG_DB_POOL_TIMEOUT") || "15000"),
   timeout: String.to_integer(System.get_env("COG_DB_TIMEOUT") || "15000"),
   parameters: [timezone: 'UTC']
-
-config :carrier, :credentials_dir, "creds"
 
 config :cog, :command_prefix, "!"
 
@@ -54,12 +53,12 @@ config :emqttd, :mqtt,
           queue_qos0: true],
   modules: [presence: [qos: 0]]
 
+config :carrier, :credentials_dir, data_dir("carrier_creds")
+
 config :carrier, Carrier.Messaging.Connection,
   host: "127.0.0.1",
   port: 1883,
   log_level: :info
-
-config :carrier, credentials_dir: "/tmp/cog_#{Mix.env}/credentials"
 
 config :cog, Cog.Endpoint,
   http: [dispatch: [{:_, [{"/sockets/websocket", Cog.Handlers.WebSocketHandler, []},
