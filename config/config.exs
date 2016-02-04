@@ -32,13 +32,6 @@ config :cog, :command_prefix, "!"
 config :cog, Cog.Bundle.BundleSup,
   bundle_root: Path.join([File.cwd!, "bundles"])
 
-config :cog, :github_service,
-  api_token: System.get_env("GITHUB_API_TOKEN")
-
-config :cog, :aws_service,
-  aws_access_key_id: System.get_env("AWS_ACCESS_KEY_ID"),
-  aws_secret_access_key: System.get_env("AWS_SECRET_ACCESS_KEY")
-
 # Set these to zero (0) to disable caching
 config :cog, :command_cache_ttl, {60, :sec}
 config :cog, :command_rule_ttl, {10, :sec}
