@@ -5,6 +5,8 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 NC='\033[0m'
 MYNAME=`basename $0`
+MYCHECKSUM=`shasum $0 | cut -f1 -d' '`
+RELEASE_TAG="alpha"
 
 REPOS="cog relay cogctl relayctl"
 COG_REPO="git@github.com:operable/cog"
@@ -106,6 +108,14 @@ function usage {
   printf "%s [help|--help|-h|-?|--verbose|-v] <install_dir> \n" ${MYNAME}
 }
 
+function restart_on_changes {
+  checksum=`shasum $1 | cut -f1 -d' '`
+  if [ "${checksum}" != "${MYCHECKSUM}" ]; then
+    write_log "Changes to setup.sh detected. Restarting setup process."
+    exec $1
+  fi
+}
+
 while [ "$#" -gt 0 ];
 do
   case "$1" in
@@ -193,12 +203,24 @@ for repo in ${REPOS}; do
     if ! ${git_path} clone ${repo_var} ; then
       write_err "Error cloning ${repo_var} into ${repo}."
       abort
+    else
+      cd ${repo}
+      if ! ${git_path} checkout ${RELEASE_TAG} ; then
+        write_err "Error refreshing ${repo} to release tag ${RELEASE_TAG}"
+        abort
+      fi
     fi
   else
     write_log "Updating previous ${repo} clone."
-    cd ${repo} && ${git_path} pull
+    cd ${repo}
+    if ! ${git_path} fetch --all --prune && ${git_path} checkout ${RELEASE_TAG} ; then
+      write_err "Error refreshing previous ${repo} clone to release tag ${RELEASE_TAG}"
+      abort
+    fi
     cd ..
   fi
+
+  restart_on_changes $0
 
   cd ${repo}
 
