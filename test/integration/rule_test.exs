@@ -17,12 +17,12 @@ defmodule Integration.RuleTest do
 
   test "error when unknown options for rules command", %{user: user} do
     send_message user, "@bot: operable:rules --doit 'when command is operable:st-echo must have operable:st-echo'"
-    assert_response "I am not sure what action you want me to take using `rules`"
+    assert_response "@belf Whoops! An error occurred. I am not sure what action you want me to take using `rules`"
   end
 
   test "adding a rule for a command", %{user: user} do
     send_message user, "@bot: operable:rules --add 'when command is operable:st-echo must have operable:st-echo'"
-    assert_response "Encountered the following errors:\n\n* Rule already exists\n\n"
+    assert_response "@belf Whoops! An error occurred. \n* Rule already exists\n\n"
 
     # Drop the rule, then add it back
     send_message user, "@bot: operable:rules --drop --for-command=\"operable:st-echo\""
@@ -42,17 +42,17 @@ defmodule Integration.RuleTest do
 
   test "error when dropping unknown id for rules command", %{user: user} do
     send_message user, "@bot: operable:rules --drop --id=\"12345678-abcd-90ef-1234-567890abcdef\""
-    assert_response "There are no rules with id 12345678-abcd-90ef-1234-567890abcdef"
+    assert_response "@belf Whoops! An error occurred. There are no rules with id 12345678-abcd-90ef-1234-567890abcdef"
   end
 
   test "error when dropping rule with no options", %{user: user} do
     send_message user, "@bot: operable:rules --drop"
-    assert_response "ERROR! In order to drop rules you must pass either `--id` or `--for-command`"
+    assert_response "@belf Whoops! An error occurred. ERROR! In order to drop rules you must pass either `--id` or `--for-command`"
   end
 
   test "listing rules", %{user: user} do
     send_message user, "@bot: operable:rules --list"
-    assert_response "ERROR! You must specify a command using the --for-command option."
+    assert_response "@belf Whoops! An error occurred. ERROR! You must specify a command using the --for-command option."
 
     send_message user, "@bot: operable:rules --list --for-command=\"operable:st-echo\""
     assert_response_in "```{\n\tcommand: operable:st-echo,\n\tid: "

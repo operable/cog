@@ -36,8 +36,8 @@ defmodule Cog.RuleIngestion do
       |> ingest_rule do
         {:ok, rule} ->
           rule
-        {:error, error} ->
-          Repo.rollback(error)
+        {:error, errors} ->
+          Repo.rollback(errors)
       end
     end)
   end
@@ -118,8 +118,8 @@ defmodule Cog.RuleIngestion do
           :ok = Permittable.grant_to(rule, p)
         end)
         {:ok, rule}
-      {:error, _} = error ->
-        error
+      {:error, %Ecto.Changeset{}=changeset} ->
+        {:error, changeset.errors}
     end
   end
   def ingest_rule(%__MODULE__{errors: errors}),

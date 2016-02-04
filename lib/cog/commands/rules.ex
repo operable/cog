@@ -34,13 +34,19 @@ defmodule Cog.Commands.Rules do
   @built_in_namespaces ["site", Cog.embedded_bundle]
 
   def handle_message(req, state) do
-    response = case req.options do
-      %{"add" => true} -> add_rule(req, req.args)
-      %{"drop" => true} -> drop_rule(req.options)
-      %{"list" => true} -> list_rules(req.options["for-command"])
-      _ -> "I am not sure what action you want me to take using `rules`"
+    result = case req.options do
+               %{"add" => true} -> add_rule(req, req.args)
+               %{"drop" => true} -> drop_rule(req.options)
+               %{"list" => true} -> list_rules(req.options["for-command"])
+               _ -> {:error, "I am not sure what action you want me to take using `rules`"}
+             end
+
+    case result do
+      {:ok, message} ->
+        {:reply, req.reply_to, message, state}
+      {:error, message} ->
+        {:error, req.reply_to, message, state}
     end
-    {:reply, req.reply_to, response, state}
   end
 
   defp add_rule(_, [expr|_]) do
@@ -48,68 +54,84 @@ defmodule Cog.Commands.Rules do
   end
   defp add_rule(req, []) do
     case permission_expr(req.options) do
-      {:error, error} ->
+      {:error, _}=error ->
         error
-      response ->
+      {:ok, _}=response ->
         response
     end
   end
 
   defp add_rule(expr) when is_binary(expr) do
-    expr = String.replace(expr, ~r/"/, "")
-    Logger.debug("expr: #{expr}")
     case Cog.RuleIngestion.ingest(expr) do
       {:ok, rule} ->
         success(rule)
-      {:error, error} ->
-        # TODO: this needs to handle the multiple errors returned by
-        # the ingestion process
-        failure(error.errors)
+      {:error, errors} when is_list(errors) ->
+        # this is a keyword list
+        failure(errors)
       _ ->
         Logger.debug("Uncaught exception in #{__MODULE__}")
-        "Something went wrong, but I don't know what :("
+        {:error, "Something went wrong, but I don't know what :("}
     end
   end
+  defp add_rule(_),
+    do: {:error, "Rule expression must be a string"}
 
   defp list_rules(nil),
-    do: "ERROR! You must specify a command using the --for-command option."
-  defp list_rules(cmd),
-    do: list_rule(cmd) |> format_response
+    do: {:error, "ERROR! You must specify a command using the --for-command option."}
+  defp list_rules(cmd) when is_binary(cmd) do
+    case resolve_command(cmd) do
+      nil ->
+        {:error, "Command `#{cmd}` does not exist!"}
+      %Cog.Models.Command{} ->
+        list_rule(cmd) |> format_response
+    end
+  end
+  defp list_rules(_),
+    do: {:error, "Command must be a string"}
 
   defp list_rule(cmd) do
     Cog.Repo.all(Cog.Queries.Command.rules_for_cmd(cmd))
   end
 
   defp drop_rule(%{"id" => id}) do
-    id = String.replace(id, "\"", "")
-
-    case Cog.Repo.get_by(Cog.Models.Rule, id: id) do
+    if Cog.UUID.is_uuid?(id) do
+      case Cog.Repo.get_by(Cog.Models.Rule, id: id) do
+        nil ->
+          {:error, "There are no rules with id #{id}"}
+        rule ->
+          Cog.Repo.delete!(rule)
+          {:ok, "Dropped rule with id `#{id}`:\n" <> display_rule(rule)}
+      end
+    else
+      {:error, "Rule ID must be a UUID"}
+    end
+  end
+  defp drop_rule(%{"for-command" => command}) when is_binary(command) do
+    case resolve_command(command) do
       nil ->
-        "There are no rules with id #{id}"
-      rule ->
-        Cog.Repo.delete!(rule)
-        "Dropped rule with id `#{id}`:\n" <> display_rule(rule)
-    end
-  end
-  defp drop_rule(%{"for-command" => command}) do
-    query = Cog.Queries.Command.rules_for_cmd(command)
+        {:error, "Command `#{command}` does not exist!"}
+      %Cog.Models.Command{} ->
+        query = Cog.Queries.Command.rules_for_cmd(command)
 
-    case Cog.Repo.all(query) do
-      [] ->
-        "There are no rules for command #{command}"
-      rules ->
-        Cog.Repo.delete_all(query)
-        display_rules = Enum.map(rules, &display_rule/1)
-        Enum.join(["Dropped all rules for command `#{command}`:"|display_rules], "\n")
+        case Cog.Repo.all(query) do
+          [] ->
+            {:ok, "There are no rules for command #{command}"}
+          rules ->
+            Cog.Repo.delete_all(query)
+            display_rules = Enum.map(rules, &display_rule/1)
+            {:ok, Enum.join(["Dropped all rules for command `#{command}`:"|display_rules], "\n")}
+        end
     end
   end
+  defp drop_rule(%{"for-command" => _}),
+    do: {:error, "Command must be a string"}
   defp drop_rule(_) do
-    "ERROR! In order to drop rules you must pass either `--id` or `--for-command`"
+    {:error, "ERROR! In order to drop rules you must pass either `--id` or `--for-command`"}
   end
 
   def success(rule) do
     rule = Parser.json_to_rule!(rule.parse_tree)
-    "Success! Added new rule \"#{rule}\""
+    {:ok, "Success! Added new rule \"#{rule}\""}
   end
 
   def failure(errors) do
@@ -118,11 +140,10 @@ defmodule Cog.Commands.Rules do
     |> Enum.map(&("* #{&1}\n"))
 
     # TODO: Really should template this
-    """
-    Encountered the following errors:
+    {:error, """
 
-    #{error_strings}
-    """
+             #{error_strings}
+             """}
   end
 
   defp display_rule(rule) do
@@ -136,6 +157,8 @@ defmodule Cog.Commands.Rules do
     do: "Could not find permission `#{name}`"
   defp translate_error({:no_dupes, _}),
     do: "Rule already exists"
+  defp translate_error({:invalid_rule_syntax, msg}),
+    do: "Invalid rule: #{msg}"
   defp translate_error(error),
     do: "#{inspect error}"
 
@@ -147,11 +170,11 @@ defmodule Cog.Commands.Rules do
       [ns, perm] ->
         "when command is #{command} must have #{ns}:#{perm}"
         |> add_rule
-      {:error, error} -> error
+      {:error, _}=error -> error
     end
   end
   defp permission_expr(_) do
-    "Error! In order to add rules using options you must use both `--permission` and `--for-command`"
+    {:error, "Error! In order to add rules using options you must use both `--permission` and `--for-command`"}
   end
 
   defp get_namespace_permissions(command, permission) do
@@ -197,10 +220,13 @@ defmodule Cog.Commands.Rules do
       rule: "#{ast}"}
   end
 
-  defp format_response([]), do: "No rules for command found"
+  defp format_response([]), do: {:ok, "No rules for command found"}
   defp format_response(response) do
     # TODO: get some templating back in here when that's wired back up
-    build_permission_expressions(response)
+    {:ok, build_permission_expressions(response)}
   end
+
+  defp resolve_command(given_name),
+    do: given_name |> Cog.Queries.Command.named |> Cog.Repo.one
 
 end
