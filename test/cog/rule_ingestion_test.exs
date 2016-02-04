@@ -32,9 +32,7 @@ defmodule RuleIngestionTest do
     rule_text = "when command is cog:s3 with option[op] == 'delete' must have s3:delete"
 
     {:ok, %Cog.Models.Rule{}} = Cog.RuleIngestion.ingest(rule_text)
-    {:error, %Ecto.Changeset{}=changeset} = Cog.RuleIngestion.ingest(rule_text)
-
-    assert [no_dupes: "has already been taken"] = changeset.errors
+    assert {:error, [no_dupes: "has already been taken"]} = Cog.RuleIngestion.ingest(rule_text)
   end
 
   test "a rule is linked by database references to the required permissions" do

@@ -39,15 +39,21 @@ defmodule Cog.Commands.Group do
   alias Cog.MessageTranslations
 
   def handle_message(req, state) do
-    response = case req.options do
-      %{"create" => true} -> create_group(req.args)
-      %{"drop" => true} -> drop_group(req.args)
-      %{"add" => true} -> modify_group(req)
-      %{"remove" => true} -> modify_group(req)
-      %{"list" => true} -> list_all_groups
-      _ -> "I am not sure what action you want me to take using `group`"
+    result = case req.options do
+               %{"create" => true} -> create_group(req.args)
+               %{"drop" => true} -> drop_group(req.args)
+               %{"add" => true} -> modify_group(req)
+               %{"remove" => true} -> modify_group(req)
+               %{"list" => true} -> list_all_groups
+               _ ->
+                 {:error, "I am not sure what action you want me to take using `group`"}
+             end
+    case result do
+      {:ok, message} ->
+        {:reply, req.reply_to, message, state}
+      {:error, message} ->
+        {:error, req.reply_to, message, state}
     end
-    {:reply, req.reply_to, response, state}
   end
 
   defp create_group([]),
@@ -86,8 +92,8 @@ defmodule Cog.Commands.Group do
   defp list_all_groups do
     result = Repo.all(Group)
     case result do
-      [] -> "Currently, there are no groups in the system."
-      _ -> format_list(result, "")
+      [] -> {:ok, "Currently, there are no groups in the system."}
+      _ -> {:ok, format_list(result, "")}
     end
   end
 
@@ -106,6 +112,10 @@ defmodule Cog.Commands.Group do
   end
 
   defp return_results(:ok, admitter), do: MessageTranslations.translate_success(admitter)
+  defp return_results({:error, :forbidden_group_cycle}, _admitter) do
+    # This is a stop-gap, pending a larger refactoring
+    {:error, "This operation would create a circular group relationship (e.g. A is-a-member-of B, B is-a-member-of A), which is forbidden"}
+  end
   defp return_results(_, admitter) do
     [error | _] = admitter.errors
     MessageTranslations.translate_error("group", error)

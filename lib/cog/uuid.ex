@@ -19,4 +19,30 @@ defmodule Cog.UUID do
     uuid
   end
 
+  @doc """
+
+  Returns `true` if `maybe_uuid` is, in fact, a UUID.
+
+  Examples:
+
+      iex> Cog.UUID.is_uuid?(666)
+      false
+
+      iex> Cog.UUID.is_uuid?("nope")
+      false
+
+      iex> Cog.UUID.is_uuid?("0191f7da-60b2-46cf-83a8-b1169e4b69af")
+      true
+
+  """
+  def is_uuid?(maybe_uuid) do
+    try do
+      UUID.info!(maybe_uuid)
+      true
+    rescue
+      ArgumentError ->
+        false
+    end
+  end
+
 end

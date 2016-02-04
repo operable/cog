@@ -41,20 +41,26 @@ defmodule Cog.Commands.Role do
   use Cog.Models
 
   def handle_message(req, state) do
-    response = case req.options do
-      %{"create" => true} -> create_role(req.args)
-      %{"drop" => true} -> drop_role(req.args)
-      %{"grant" => true} -> modify_role(req)
-      %{"revoke" => true} -> modify_role(req)
-      %{"list" => true} -> list_all_roles
-      _ -> "I am not sure what action you want me to take using `role`"
+    result = case req.options do
+                 %{"create" => true} -> create_role(req.args)
+                 %{"drop" => true} -> drop_role(req.args)
+                 %{"grant" => true} -> modify_role(req)
+                 %{"revoke" => true} -> modify_role(req)
+                 %{"list" => true} -> list_all_roles
+                 _ -> {:error, "I am not sure what action you want me to take using `role`"}
     end
-    {:reply, req.reply_to, response, state}
+
+    case result do
+      {:ok, message} ->
+        {:reply, req.reply_to, message, state}
+      {:error, message} ->
+        {:error, req.reply_to, message, state}
+    end
   end
 
-    defp create_role([]),
-      do: MessageTranslations.translate_error("Missing name", {:fail_creation, ""})
-    defp create_role([name | _]) do
+  defp create_role([]),
+    do: MessageTranslations.translate_error("Missing name", {:fail_creation, ""})
+  defp create_role([name | _]) do
     case Repo.get_by(Role, name: name) do
       nil ->
         case Role.changeset(%Role{}, %{name: name}) |> Repo.insert do
@@ -74,8 +80,8 @@ defmodule Cog.Commands.Role do
             Repo.delete!(role)
             MessageTranslations.translate_success(%{action: :drop, entity: role})
           roles ->
-            MessageTranslations.translate_error("role", {:fail_deletion, name})
-            <> " There are assignments to this role: \n#{roles}"
+            {:error, message} = MessageTranslations.translate_error("role", {:fail_deletion, name})
+            {:error, message <> " There are assignments to this role: \n#{roles}"}
         end
       nil -> MessageTranslations.translate_error("role", {:does_not_exists, name})
     end
@@ -114,8 +120,8 @@ defmodule Cog.Commands.Role do
   defp list_all_roles do
     result = Repo.all(Role)
     case result do
-      [] -> "Currently, there are no roles in the system."
-      _ -> format_list(result, "")
+      [] -> {:ok, "Currently, there are no roles in the system."}
+      _ -> {:ok, format_list(result, "")}
     end
   end
 

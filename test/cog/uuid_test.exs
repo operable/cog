@@ -3,7 +3,9 @@ defmodule Cog.UUIDTest do
   alias Ecto.Adapters.SQL
   alias Cog.Repo
 
-  test "remove Cog.UUID if this test fails" do
+  doctest Cog.UUID
+
+  test "remove Cog.UUID.uuid_to_bin/1 and Cog.UUID.bin_to_uuid/1 if this test fails" do
     # If this test ever fails, then it means that we can pass "uuid
     # strings" as UUID parameters to Postgres queries without having
     # to first turn them into "uuid binaries" via
