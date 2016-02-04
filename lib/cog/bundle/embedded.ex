@@ -57,16 +57,8 @@ defmodule Cog.Bundle.Embedded do
     :ok = GenServer.call(Cog.Relay.Relays, {:announce_embedded_relay, message})
   end
 
-  # These permissions aren't yet being used by any embedded commands,
-  # so we need to add them manually.
-  @remaining_embedded_bundle_permissions ["#{Cog.embedded_bundle}:manage_permissions"]
-
-  defp embedded_bundle do
-    Cog.embedded_bundle
-    |> Config.gen_config(cog_modules, @embedded_bundle_root)
-    |> update_in(["permissions"],
-                 &(&1 ++ @remaining_embedded_bundle_permissions))
-  end
+  defp embedded_bundle,
+    do: Config.gen_config(Cog.embedded_bundle, cog_modules, @embedded_bundle_root)
 
   defp cog_modules,
     do: Keyword.fetch!(cog_app, :modules)
