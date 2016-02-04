@@ -4,10 +4,12 @@ defmodule Cog.Commands.Permissions do
 
   * Create permissions in the `site` namespace
   * Delete permissions in the `site` namespace
+  * List all permissions in the system
   * Grant and revoke permissions on users, roles, and groups.
 
   Format:
 
+      --list
       --create --permission=site:<name>
       --delete --permission=site:<name>
       --grant --permission=<namespace>:<permission> --[user|group|role]=<name>"
@@ -15,6 +17,7 @@ defmodule Cog.Commands.Permissions do
 
   Examples:
 
+  > !#{Cog.embedded_bundle}:permissions --list
   > !#{Cog.embedded_bundle}:permissions --create --permission=site:admin
   > !#{Cog.embedded_bundle}:permissions --delete --permission=site:admin
   > !#{Cog.embedded_bundle}:permissions --grant --user=bob --permission=#{Cog.embedded_bundle}:manage_users
@@ -26,6 +29,7 @@ defmodule Cog.Commands.Permissions do
 
   option "create", type: "bool"
   option "delete", type: "bool"
+  option "list", type: "bool"
   option "grant", type: "bool"
   option "revoke", type: "bool"
   option "user", type: "string"
@@ -40,6 +44,7 @@ defmodule Cog.Commands.Permissions do
 
   rule "when command is #{Cog.embedded_bundle}:permissions with option[create] == true must have #{Cog.embedded_bundle}:manage_permissions"
   rule "when command is #{Cog.embedded_bundle}:permissions with option[delete] == true must have #{Cog.embedded_bundle}:manage_permissions"
+  rule "when command is #{Cog.embedded_bundle}:permissions with option[list] == true must have #{Cog.embedded_bundle}:manage_permissions"
   rule "when command is #{Cog.embedded_bundle}:permissions with option[user] == /.*/ must have #{Cog.embedded_bundle}:manage_users"
   rule "when command is #{Cog.embedded_bundle}:permissions with option[role] == /.*/ must have #{Cog.embedded_bundle}:manage_roles"
   rule "when command is #{Cog.embedded_bundle}:permissions with option[group] == /.*/ must have #{Cog.embedded_bundle}:manage_groups"
@@ -54,6 +59,11 @@ defmodule Cog.Commands.Permissions do
       case validate(req) do
         %__MODULE__{errors: []}=result ->
           case result.action do
+            :list ->
+              names = Cog.Queries.Permission.names
+              |> Repo.all
+              |> Enum.map(&Enum.join(&1, ":"))
+              {:list, names}
             :create ->
               {ns,name} = Permission.split_name(result.permission)
               namespace = Repo.get_by(Namespace, name: ns)
@@ -110,13 +120,14 @@ defmodule Cog.Commands.Permissions do
     case req.options do
       %{"create" => true} -> %{input | action: :create}
       %{"delete" => true} -> %{input | action: :delete}
+      %{"list" => true} -> %{input | action: :list}
       %{"grant" => true} -> %{input | action: :grant}
       %{"revoke" => true} -> %{input | action: :revoke}
       _ -> %{input | errors: errors ++ [:missing_action]}
     end
   end
 
-  defp validate_permittable(%__MODULE__{action: action}=input) when action in [:create, :delete],
+  defp validate_permittable(%__MODULE__{action: action}=input) when action in [:create, :delete, :list],
     do: input # nothing to validate in this case
   defp validate_permittable(%__MODULE__{req: req, errors: errors}=input) do
     case req.options do
@@ -140,6 +151,8 @@ defmodule Cog.Commands.Permissions do
     end
   end
 
+  defp validate_permission(%__MODULE__{action: :list}=input),
+    do: input # nothing to validate here
   defp validate_permission(%__MODULE__{req: req, errors: errors, action: action}=input) when action in [:create, :delete] do
     case req.options do
       %{"permission" => name} when is_binary(name) ->
@@ -188,6 +201,14 @@ defmodule Cog.Commands.Permissions do
 
   # TODO: Really should template these
 
+  defp translate_success({:list, names}) do
+    strings = names |> Enum.map(&("* #{&1}\n"))
+    """
+    The following permissions exist:
+
+    #{strings}
+    """
+  end
   defp translate_success({:create, permission_full_name}),
     do: "Created permission `#{permission_full_name}`"
   defp translate_success({:delete, permission_full_name}),

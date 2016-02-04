@@ -1,6 +1,14 @@
 defmodule Cog.Queries.Permission do
   use Cog.Queries
 
+
+  def names do
+    from p in Cog.Models.Permission,
+    join: n in assoc(p, :namespace),
+    order_by: [n.name, p.name],
+    select: [n.name, p.name]
+  end
+
   def from_full_name(full_name) do
     {namespace, name} = Permission.split_name(full_name)
 
