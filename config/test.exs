@@ -38,10 +38,6 @@ config :cog, Cog.Endpoint,
 config :comeonin,
   bcrypt_log_rounds: 4
 
-config :cog, :ec2_service,
-  aws_access_key_id: "not-used",
-  aws_secret_access_key: "not-used"
-
 config :cog, Cog.Bundle.BundleSup,
   bundle_root: Path.join([File.cwd!, "test", "support", "bundles"])
 

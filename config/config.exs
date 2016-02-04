@@ -38,9 +38,6 @@ config :cog, :command_rule_ttl, {10, :sec}
 config :cog, :template_cache_ttl, {60, :sec}
 config :cog, :user_perms_ttl, {10, :sec}
 
-config :cog, :services,
-  http_cache_ttl: System.get_env("HTTP_SERVICE_CACHE_TTL") || 120
-
 config :cog, :emqttc,
   log_level: :info
 
