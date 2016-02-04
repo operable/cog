@@ -29,7 +29,6 @@ defmodule Cog do
      worker(Cog.TemplateCache, []),
      worker(Carrier.CredentialManager, []),
      supervisor(Cog.Relay.RelaySup, []),
-     supervisor(Cog.Service.ServiceSup, []),
      supervisor(Cog.Command.CommandSup, [])] ++ adapter.describe_tree()
   end
 

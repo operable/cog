@@ -1,3 +1,6 @@
+
+Code.load_file(Path.join([__DIR__, "config", "helpers.exs"]))
+
 defmodule Cog.Mixfile do
   use Mix.Project
 
