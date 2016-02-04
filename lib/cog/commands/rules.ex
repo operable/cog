@@ -20,7 +20,6 @@ defmodule Cog.Commands.Rules do
   option "list", type: "bool"
   option "drop", type: "bool"
   option "id", type: "string"
-  option "arg0", type: "string"
   option "permission", type: "string"
   option "for-command", type: "string"
 
@@ -162,9 +161,6 @@ defmodule Cog.Commands.Rules do
   defp translate_error(error),
     do: "#{inspect error}"
 
-  defp permission_expr(%{"for-command" => command, "arg0" => subcommand, "permission" => permission}) do
-    build_with_subcommand(command, permission, subcommand)
-  end
   defp permission_expr(%{"for-command" => command, "permission" => permission}) do
     case get_namespace_permissions(command, permission) do
       [ns, perm] ->
@@ -189,16 +185,6 @@ defmodule Cog.Commands.Rules do
     else
       [command, permission]
     end
-  end
-
-  defp build_with_subcommand(command, permission, [subcommand|[]]) do
-    "when command is #{command} with arg[0]=='#{subcommand}' must have #{command}:#{permission}"
-    |> add_rule
-  end
-  defp build_with_subcommand(command, permission, [subcommand|remaining]) do
-    "when command is #{command} with arg[0]=='#{subcommand}' must have #{command}:#{permission}"
-    |> add_rule
-    build_with_subcommand(command, permission, remaining)
   end
 
   defp build_permission_expressions(rules) do
