@@ -68,7 +68,7 @@ defmodule UserTest do
   test "password is stored as a digest" do
     password = "sooperseekritdonttellanyoneshhhhhhh"
 
-    %User{id: id, password_digest: digest} = %User{}
+    %User{id: id} = %User{}
     |> User.changeset(%{"username" => "operator",
                         "first_name" => "Operator",
                         "last_name" => "McOperator",
