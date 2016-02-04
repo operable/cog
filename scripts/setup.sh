@@ -5,7 +5,8 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 NC='\033[0m'
 MYNAME=`basename $0`
-MYCHECKSUM=`shasum $0 | cut -f1 -d' '`
+MYFULLNAME=$( cd $(dirname $0) ; pwd -P )/${MYNAME}
+MYCHECKSUM=`shasum ${MYFULLNAME} | cut -f1 -d' '`
 RELEASE_TAG="alpha"
 
 REPOS="cog relay cogctl relayctl"
@@ -220,45 +221,52 @@ for repo in ${REPOS}; do
     cd ..
   fi
 
-  restart_on_changes $0
+  restart_on_changes ${MYFULLNAME}
 
   cd ${repo}
 
   write_log "Building ${repo}."
-  if [ "${repo}" == "cog" ]; then
-    if [ "${verbose}" == "0" ]; then
-      ${make_path} setup >& /dev/null
-    else
-      ${make_path} setup
-    fi
-    if [ "$?" != "0" ]; then
-      write_err "${repo} build failed."
-      abort
-    else
-      write_log "${repo} build completed."
-    fi
-  else
-    if [ "${verbose}" == "0" ]; then
-      ${mix_path} deps.get >& /dev/null
-    else
-      ${mix_path} deps.get
-    fi
-    if [ "$?" != "0" ]; then
-      write_err "Relay build failed."
-      abort
-    fi
-
-    if [ "${verbose}" == "0" ]; then
-      ${mix_path} compile >& /dev/null
-    else
-      ${mix_path} compile
-    fi
-    if [ "$?" != "0" ]; then
-      write_err "${repo} build failed."
-      abort
-    fi
-    write_log "${repo} build completed."
-  fi
+  case "${repo}" in
+    cog)
+      if [ "${verbose}" == "0" ]; then
+        ${make_path} setup >& /dev/null
+      else
+        ${make_path} setup
+      fi
+      if [ "$?" != "0" ]; then
+        write_err "${repo} build failed."
+        abort
+      else
+        write_log "${repo} build completed."
+      fi
+      ;;
+    relay)
+      if [ "${verbose}" == "0" ]; then
+        ${mix_path} deps.get >& /dev/null
+      else
+        ${mix_path} deps.get
+      fi
+      if [ "$?" != "0" ]; then
+        write_err "Relay build failed."
+        abort
+      else
+        write_log "${repo} build completed."
+      fi
+      ;;
+    *)
+      if [ "${verbose}" == "0" ]; then
+        ${mix_path} escript >& /dev/null
+      else
+        ${mix_path} escript
+      fi
+      if [ "$?" != "0" ]; then
+        write_err "${repo} build failed."
+        abort
+      else
+        write_log "${repo} build completed."
+      fi
+      ;;
+  esac
 
   cd ..
 done
