@@ -60,6 +60,5 @@ config :cog, Cog.Endpoint,
     ]
   ]
 
-# 4-round hashing for dev only
 config :comeonin,
-  bcrypt_log_rounds: 4
+  bcrypt_log_rounds: 14

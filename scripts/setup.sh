@@ -6,8 +6,11 @@ GREEN='\033[0;32m'
 NC='\033[0m'
 MYNAME=`basename $0`
 
+REPOS="cog relay cogctl relayctl"
 COG_REPO="git@github.com:operable/cog"
 RELAY_REPO="git@github.com:operable/relay"
+COGCTL_REPO="git@github.com:operable/cogctl"
+RELAYCTL_REPO="git@github.com:operable/relayctl"
 
 # All the executables needed to clone and
 # build Cog & Relay
@@ -19,6 +22,13 @@ git_path=""
 
 install_dir=""
 verbose="0"
+
+if [ -e "${HOME}/cog.vars" ]; then
+  source "${HOME}/cog.vars"
+fi
+
+export MIX_ENV
+export DATABASE_URL
 
 # Clean up when we're done. For now this means
 # restoring the user's working directory.
@@ -173,64 +183,63 @@ fi
 
 cd ${install_dir}
 
-write_log "Cloning Cog and Relay repos."
 
-if [ ! -d cog ]; then
-  if ! ${git_path} clone ${COG_REPO} ; then
-    write_err "Error cloning ${COG_REPO} to ${install_dir}/cog"
-    abort
+write_log "Cloning repositories for the following projects: ${REPOS}\n"
+
+for repo in ${REPOS}; do
+  if [ ! -d $repo ]; then
+    repo_var="$(echo ${repo} | tr '[:lower:]' '[:upper:]')_REPO"
+    eval repo_var=\$${repo_var}
+    if ! ${git_path} clone ${repo_var} ; then
+      write_err "Error cloning ${repo_var} into ${repo}."
+      abort
+    fi
+  else
+    write_log "Updating previous ${repo} clone."
+    cd ${repo} && ${git_path} pull
+    cd ..
   fi
-else
-  write_log "Using previous Cog clone."
-fi
 
-if [ ! -d relay ]; then
-  if ! ${git_path} clone ${RELAY_REPO} ; then
-    write err "Error cloning ${RELAY_REPO} to ${install_dir}/relay"
-    abort
+  cd ${repo}
+
+  write_log "Building ${repo}."
+  if [ "${repo}" == "cog" ]; then
+    if [ "${verbose}" == "0" ]; then
+      ${make_path} setup >& /dev/null
+    else
+      ${make_path} setup
+    fi
+    if [ "$?" != "0" ]; then
+      write_err "${repo} build failed."
+      abort
+    else
+      write_log "${repo} build completed."
+    fi
+  else
+    if [ "${verbose}" == "0" ]; then
+      ${mix_path} deps.get >& /dev/null
+    else
+      ${mix_path} deps.get
+    fi
+    if [ "$?" != "0" ]; then
+      write_err "Relay build failed."
+      abort
+    fi
+
+    if [ "${verbose}" == "0" ]; then
+      ${mix_path} compile >& /dev/null
+    else
+      ${mix_path} compile
+    fi
+    if [ "$?" != "0" ]; then
+      write_err "${repo} build failed."
+      abort
+    fi
+    write_log "${repo} build completed."
   fi
-else
-  write_log "Using previous Relay clone."
-fi
 
-write_log "Building Cog."
-cd cog
-
-if [ "${verbose}" == "0" ]; then
-  ${make_path} setup >& /dev/null
-else
-  ${make_path} setup
-fi
-if [ "$?" != "0" ]; then
-  write_err "Cog build failed."
-  abort
-else
-  write_log "Cog build completed."
-fi
-
-write_log "Building Relay."
-cd ../relay
-
-if [ "${verbose}" == "0" ]; then
-  ${mix_path} deps.get >& /dev/null
-else
-  ${mix_path} deps.get
-fi
-if [ "$?" != "0" ]; then
-  write_err "Relay build failed."
-  abort
-fi
-
-if [ "${verbose}" == "0" ]; then
-  ${mix_path} compile >& /dev/null
-else
-  ${mix_path} compile
-fi
-if [ "$?" != "0" ]; then
-  write_err "Relay build failed."
-  abort
-fi
-write_log "Relay build completed."
+  cd ..
+done
 
 cd ${install_dir}
 
