@@ -10,13 +10,15 @@ defmodule Cog.Commands.Wc do
   To the moon-beholders."
   """
   use Spanner.GenCommand.Base, bundle: Cog.embedded_bundle, enforcing: false
+  alias Spanner.Command.Request
 
   option "words", type: "bool", required: false
   option "lines", type: "bool", required: false
 
-  def handle_message(req, state) do
-    {:reply, req.reply_to, count_items(req.args, req.options), state}
-  end
+  def handle_message(%Request{args: [string]}=req, state) when is_binary(string),
+    do: {:reply, req.reply_to, count_items(req.args, req.options), state}
+  def handle_message(req, state),
+    do: {:error, req.reply_to, "Must supply a single string argument", state}
 
   def count_items([inputStr | _], options) do
     case options do
