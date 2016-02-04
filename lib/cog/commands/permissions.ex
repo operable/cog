@@ -3,17 +3,20 @@ defmodule Cog.Commands.Permissions do
   Manipulate authorization permissions.
 
   * Create permissions in the `site` namespace
+  * Delete permissions in the `site` namespace
   * Grant and revoke permissions on users, roles, and groups.
 
   Format:
 
       --create --permission=site:<name>
+      --delete --permission=site:<name>
       --grant --permission=<namespace>:<permission> --[user|group|role]=<name>"
       --revoke --permission=<namespace>:<permission> --[user|group|role]=<name>"
 
   Examples:
 
   > !#{Cog.embedded_bundle}:permissions --create --permission=site:admin
+  > !#{Cog.embedded_bundle}:permissions --delete --permission=site:admin
   > !#{Cog.embedded_bundle}:permissions --grant --user=bob --permission=#{Cog.embedded_bundle}:manage_users
   > !#{Cog.embedded_bundle}:permissions --grant --role=dev --permission=site:write
   > !#{Cog.embedded_bundle}:permissions --revoke --group=engineering --permission=giphy:giphy
@@ -22,6 +25,7 @@ defmodule Cog.Commands.Permissions do
   use Spanner.GenCommand.Base, bundle: Cog.embedded_bundle
 
   option "create", type: "bool"
+  option "delete", type: "bool"
   option "grant", type: "bool"
   option "revoke", type: "bool"
   option "user", type: "string"
@@ -35,6 +39,7 @@ defmodule Cog.Commands.Permissions do
   permission "manage_groups"
 
   rule "when command is #{Cog.embedded_bundle}:permissions with option[create] == true must have #{Cog.embedded_bundle}:manage_permissions"
+  rule "when command is #{Cog.embedded_bundle}:permissions with option[delete] == true must have #{Cog.embedded_bundle}:manage_permissions"
   rule "when command is #{Cog.embedded_bundle}:permissions with option[user] == /.*/ must have #{Cog.embedded_bundle}:manage_users"
   rule "when command is #{Cog.embedded_bundle}:permissions with option[role] == /.*/ must have #{Cog.embedded_bundle}:manage_roles"
   rule "when command is #{Cog.embedded_bundle}:permissions with option[group] == /.*/ must have #{Cog.embedded_bundle}:manage_groups"
@@ -50,7 +55,7 @@ defmodule Cog.Commands.Permissions do
         %__MODULE__{errors: []}=result ->
           case result.action do
             :create ->
-              {ns,name} = Permission.split_name (result.permission)
+              {ns,name} = Permission.split_name(result.permission)
               namespace = Repo.get_by(Namespace, name: ns)
               permission = Permission.build_new(namespace, %{name: name})
               case Repo.insert(permission) do
@@ -59,6 +64,10 @@ defmodule Cog.Commands.Permissions do
                 {:error, changeset} ->
                   Repo.rollback(changeset.errors)
               end
+            :delete ->
+              permission = Cog.Queries.Permission.from_full_name(result.permission)|> Repo.one!
+              Repo.delete!(permission)
+              {:delete, result.permission}
             :grant ->
               Permittable.grant_to(result.permittable, result.permission)
               Cog.Command.UserPermissionsCache.reset_cache
@@ -100,13 +109,14 @@ defmodule Cog.Commands.Permissions do
   defp validate_action(%__MODULE__{req: req, errors: errors}=input) do
     case req.options do
       %{"create" => true} -> %{input | action: :create}
+      %{"delete" => true} -> %{input | action: :delete}
       %{"grant" => true} -> %{input | action: :grant}
       %{"revoke" => true} -> %{input | action: :revoke}
       _ -> %{input | errors: errors ++ [:missing_action]}
     end
   end
 
-  defp validate_permittable(%__MODULE__{action: :create}=input),
+  defp validate_permittable(%__MODULE__{action: action}=input) when action in [:create, :delete],
     do: input # nothing to validate in this case
   defp validate_permittable(%__MODULE__{req: req, errors: errors}=input) do
     case req.options do
@@ -130,17 +140,26 @@ defmodule Cog.Commands.Permissions do
     end
   end
 
-  defp validate_permission(%__MODULE__{req: req, errors: errors, action: :create}=input) do
+  defp validate_permission(%__MODULE__{req: req, errors: errors, action: action}=input) when action in [:create, :delete] do
     case req.options do
       %{"permission" => name} when is_binary(name) ->
         case String.split(name, ":") do
           ["site", _permission] ->
             case Cog.Queries.Permission.from_full_name(name) |> Repo.one do
               nil ->
-                # Permission must not already exist
-                %{input | permission: name}
+                case action do
+                  :create ->
+                    %{input | permission: name}
+                  :delete ->
+                    %{input | errors: errors ++ [{:unrecognized_permission, name}]}
+                end
               %Permission{} ->
-                %{input | errors: errors ++ [{:permission_exists, name}]}
+                case action do
+                  :create ->
+                    %{input | errors: errors ++ [{:permission_exists, name}]}
+                  :delete ->
+                    %{input | permission: name}
+                end
             end
           _ ->
             %{input | errors: errors ++ [:invalid_creation_permission]}
@@ -170,7 +189,9 @@ defmodule Cog.Commands.Permissions do
   # TODO: Really should template these
 
   defp translate_success({:create, permission_full_name}),
-    do: "Create permission `#{permission_full_name}`"
+    do: "Created permission `#{permission_full_name}`"
+  defp translate_success({:delete, permission_full_name}),
+    do: "Deleted permission `#{permission_full_name}`"
   defp translate_success({:grant, permittable, permission_full_name}),
     do: "Granted permission `#{permission_full_name}` to #{type(permittable)} `#{name(permittable)}`"
   defp translate_success({:revoke, permittable, permission_full_name}),
@@ -201,7 +222,7 @@ defmodule Cog.Commands.Permissions do
   defp translate_error({:permission_exists, name}),
     do: "The permission `#{name}` already exists"
   defp translate_error(:invalid_creation_permission),
-    do: "Only permissions in the `site` namespace can be created; please specify permission as `site:<NAME>`"
+    do: "Only permissions in the `site` namespace can be created or deleted; please specify permission as `site:<NAME>`"
   defp translate_error({:wrong_type, {opt_or_arg, opt_or_arg_name}, desired_type, given_value}),
     do: "The #{opt_or_arg} `#{opt_or_arg_name}` must be a #{desired_type}; you gave `#{inspect given_value}`"
   defp translate_error(other),
