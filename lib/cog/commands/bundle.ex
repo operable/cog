@@ -82,13 +82,12 @@ defmodule Cog.Commands.Bundle do
   rule "when command is #{Cog.embedded_bundle}:bundle must have #{Cog.embedded_bundle}:manage_commands"
 
    def handle_message(req, state) do
-     response = case run(req.args) do
-                  {:ok, response} ->
-                    response
-                  {:error, error} ->
-                    %{error: error_message(error)}
-                end
-     {:reply, req.reply_to, "bundle", response, state}
+     case run(req.args) do
+       {:ok, response} ->
+         {:reply, req.reply_to, "bundle", response, state}
+       {:error, error} ->
+         {:error, req.reply_to, error_message(error), state}
+     end
    end
 
    defp run([action, bundle_name]) when is_binary(bundle_name)
