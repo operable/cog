@@ -55,22 +55,21 @@ defmodule Cog.Commands.Permissions do
       end
     end)
 
-    response = case result do
-                 {:ok, success} ->
-                   translate_success(success)
-                 {:error, errors} ->
-                   error_strings = errors
-                   |> Enum.map(&translate_error/1)
-                   |> Enum.map(&("* #{&1}\n"))
+   case result do
+     {:ok, success} ->
+       {:reply, req.reply_to, translate_success(success), state}
+     {:error, errors} ->
+       error_strings = errors
+       |> Enum.map(&translate_error/1)
+       |> Enum.map(&("* #{&1}\n"))
 
-                   # TODO: Really should template this
-                   """
-                   Encountered the following errors:
+       # TODO: Really should template this
+       response = """
 
-                   #{error_strings}
-                   """
-               end
-    {:reply, req.reply_to, response, state}
+                  #{error_strings}
+                  """
+       {:error, req.reply_to, response, state}
+   end
   end
 
   defp validate(req) do
