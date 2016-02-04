@@ -6,21 +6,6 @@ config :logger, :console,
 config :cog,
   adapter: Cog.Adapters.Null
 
-config :cog, Cog.Adapters.Slack,
-  api_token: System.get_env("SLACK_API_TOKEN"),
-  api_cache_ttl: System.get_env("SLACK_API_CACHE_TTL") || 900
-
-config :cog, Cog.Adapters.HipChat,
-  xmpp_jid: System.get_env("HIPCHAT_XMPP_JID"),
-  xmpp_password: System.get_env("HIPCHAT_XMPP_PASSWORD"),
-  xmpp_nickname: System.get_env("HIPCHAT_XMPP_NICKNAME") || "Cog",
-  xmpp_server: System.get_env("HIPCHAT_XMPP_SERVER"),
-  xmpp_port: System.get_env("HIPCHAT_XMPP_PORT") || 5222,
-  xmpp_resource: "bot",
-  xmpp_rooms: System.get_env("HIPCHAT_XMPP_ROOMS"),
-  api_token: System.get_env("HIPCHAT_API_TOKEN"),
-  mention_name: System.get_env("HIPCHAT_MENTION_NAME")
-
 config :cog, Cog.Repo,
   pool: Ecto.Adapters.SQL.Sandbox
 
@@ -31,9 +16,6 @@ config :carrier, Carrier.Messaging.Connection,
 
 config :cog,
   :template_cache_ttl, {1, :sec}
-
-config :cog, :services,
-  http_cache_ttl: 0
 
 config :emqttd, :listeners,
   [{:mqtt, 1884, [acceptors: 16,
@@ -50,7 +32,7 @@ config :cog, Cog.Endpoint,
   catch_errors: true,
   cache_static_lookup: false,
   server: false,
-  secret_key_base: System.get_env("COG_COOKIE_SECRET")
+  secret_key_base: "test-secret"
 
 # 4-round hashing for test/dev only
 config :comeonin,

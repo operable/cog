@@ -3,7 +3,5 @@
 erl_crash.dump
 *.ez
 *.swp
-/creds
+/data
 Mnesia.*
-/bundles
-/audit_logs

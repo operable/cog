@@ -1,21 +1,43 @@
 use Mix.Config
 use Cog.Config.Helpers
 
-config :logger, :console,
-  metadata: [:module, :line],
-  format: {Adz, :text}
+# ========================================================================
+# Chat Adapters
 
-config :cog, Cog.Repo,
-  adapter: Ecto.Adapters.Postgres,
-  url: (case System.get_env("DATABASE_URL") do
-          nil -> "ecto://#{System.get_env("USER")}@localhost/cog_#{Mix.env}"
-          url -> url
-        end),
-  pool_timeout: String.to_integer(System.get_env("COG_DB_POOL_TIMEOUT") || "15000"),
-  timeout: String.to_integer(System.get_env("COG_DB_TIMEOUT") || "15000"),
-  parameters: [timezone: 'UTC']
+config :cog,
+  adapter: System.get_env("COG_ADAPTER") || Cog.Adapters.Slack
+
+config :cog, :enable_spoken_commands, true
+
+config :cog, Cog.Adapters.Slack,
+  api_token: System.get_env("SLACK_API_TOKEN"),
+  api_cache_ttl: System.get_env("SLACK_API_CACHE_TTL") || 900
+
+config :cog, Cog.Adapters.HipChat,
+  xmpp_jid: System.get_env("HIPCHAT_XMPP_JID"),
+  xmpp_password: System.get_env("HIPCHAT_XMPP_PASSWORD"),
+  xmpp_nickname: System.get_env("HIPCHAT_XMPP_NICKNAME") || "Cog",
+  xmpp_server: System.get_env("HIPCHAT_XMPP_SERVER"),
+  xmpp_port: System.get_env("HIPCHAT_XMPP_PORT") || 5222,
+  xmpp_resource: "bot",
+  xmpp_rooms: System.get_env("HIPCHAT_XMPP_ROOMS"),
+  api_token: System.get_env("HIPCHAT_API_TOKEN"),
+  mention_name: System.get_env("HIPCHAT_MENTION_NAME")
+
+# ========================================================================
+# Commands, Bundles, and Services
 
 config :cog, :command_prefix, "!"
+
+config :cog, Cog.Bundle.BundleSup,
+  bundle_root: Path.join([File.cwd!, "bundles"])
+
+config :cog, :github_service,
+  api_token: System.get_env("GITHUB_API_TOKEN")
+
+config :cog, :aws_service,
+  aws_access_key_id: System.get_env("AWS_ACCESS_KEY_ID"),
+  aws_secret_access_key: System.get_env("AWS_SECRET_ACCESS_KEY")
 
 # Set these to zero (0) to disable caching
 config :cog, :command_cache_ttl, {60, :sec}
@@ -29,10 +51,36 @@ config :cog, :services,
 config :cog, :emqttc,
   log_level: :info
 
+# ========================================================================
+# Logging
+
+config :logger, :console,
+  metadata: [:module, :line],
+  format: {Adz, :text}
+
 config :lager, :error_logger_redirect, false
 config :lager, :error_logger_whitelist, [Logger.ErrorHandler]
 config :lager, :crash_log, false
 config :lager, :handlers, [{LagerLogger, [level: :debug]}]
+
+config :probe, log_directory: data_dir("audit_logs")
+
+# ========================================================================
+# Database Setup
+
+config :cog, Cog.Repo,
+  adapter: Ecto.Adapters.Postgres,
+  url: (case System.get_env("DATABASE_URL") do
+          nil -> "ecto://#{System.get_env("USER")}@localhost/cog_#{Mix.env}"
+          url -> url
+        end),
+  pool_size: ensure_integer(System.get_env("COG_DB_POOL_SIZE")) || 10,
+  pool_timeout: ensure_integer(System.get_env("COG_DB_POOL_TIMEOUT")) || 15000,
+  timeout: ensure_integer(System.get_env("COG_DB_TIMEOUT")) || 15000,
+  parameters: [timezone: 'UTC']
+
+# ========================================================================
+# MQTT Messaging
 
 config :emqttd, :access,
   auth: [anonymous: []],
@@ -53,39 +101,39 @@ config :emqttd, :mqtt,
           queue_qos0: true],
   modules: [presence: [qos: 0]]
 
+config :emqttd, :listeners,
+  [{:mqtt, ensure_integer(System.get_env("COG_MQTT_PORT")) || 1883,
+    [acceptors: 16,
+     max_clients: 64,
+     access: [allow: :all],
+     sockopts: [backlog: 8,
+                ip: System.get_env("COG_MQTT_HOST") || "127.0.0.1",
+                recbuf: 4096,
+                sndbuf: 4096,
+                buffer: 4096]]}]
+
 config :carrier, :credentials_dir, data_dir("carrier_creds")
 
 config :carrier, Carrier.Messaging.Connection,
-  host: "127.0.0.1",
-  port: 1883,
+  host: System.get_env("COG_MQTT_HOST") || "127.0.0.1",
+  port: ensure_integer(System.get_env("COG_MQTT_PORT")) || 1883,
   log_level: :info
 
+# ========================================================================
+# Web Endpoints
+
 config :cog, Cog.Endpoint,
-  http: [dispatch: [{:_, [{"/sockets/websocket", Cog.Handlers.WebSocketHandler, []},
-                          {:_, Plug.Adapters.Cowboy.Handler, {Cog.Endpoint, []}}]}]],
-  url: [host: "localhost"],
+  http: [port: System.get_env("COG_WEB_PORT") || 4000],
   root: Path.dirname(__DIR__),
-  secret_key_base: "fiorJ+GXJ3AvOfVaPw5vShPkdflmguZnaNaPE4/UBog+6j5rtEIRNDtdSv9NykZD",
-  render_errors: [accepts: ~w(html json)],
+  debug_errors: false,
+  cache_static_lookup: false,
+  check_origin: true,
+  render_errors: [accepts: ~w(json)],
   pubsub: [name: Carrier.Messaging.Connection,
-           adapter: Phoenix.PubSub.PG2]
+           adapter: Phoenix.PubSub.PG2],
+  secret_key_base: System.get_env("COG_COOKIE_SECRET")
 
 config :cog, :token_lifetime, {1, :week}
 config :cog, :token_reap_period, {1, :day}
-
-# Configure phoenix generators
-config :phoenix, :generators,
-  migration: true,
-  binary_id: false
-
-config :cog, Cog.Bundle.BundleSup,
-  bundle_root: Path.join([File.cwd!, "bundles"])
-
-config :cog, :github_service,
-  api_token: System.get_env("GITHUB_API_TOKEN")
-
-config :cog, :aws_service,
-  aws_access_key_id: System.get_env("AWS_ACCESS_KEY_ID"),
-  aws_secret_access_key: System.get_env("AWS_SECRET_ACCESS_KEY")
 
 import_config "#{Mix.env}.exs"
