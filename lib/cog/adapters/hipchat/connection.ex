@@ -5,7 +5,7 @@ defmodule Cog.Adapters.HipChat.Connection do
 
   use GenServer
 
-  @adapter_name "HipChat"
+  @adapter_name "hipchat"
 
   defstruct xmpp_conn: nil, mq_conn: nil
 

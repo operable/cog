@@ -37,7 +37,7 @@ defmodule Cog.Adapters.Slack.RTMConnector do
   use Slack
   alias Cog.Adapters.Slack.API
 
-  @adapter_name "Slack"
+  @adapter_name "slack"
 
   ########################################################################
   # Public API
