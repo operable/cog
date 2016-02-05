@@ -23,19 +23,24 @@ defmodule Cog.V1.ChatHandleController do
   end
 
   def create(conn, %{"chat_handle" => chat_handle_params, "id" => user_id}) do
-    params = get_changeset_params(chat_handle_params, user_id)
-    changeset = ChatHandle.changeset(%ChatHandle{}, params)
-
-    case Repo.insert(changeset) do
-      {:ok, chat_handle} ->
-        chat_handle = Repo.preload(chat_handle, [:chat_provider, :user])
-        conn
-        |> put_status(:created)
-        |> json(EctoJson.render(chat_handle, envelope: :chat_handle, policy: :detail))
-      {:error, changeset} ->
+    case get_changeset_params(chat_handle_params, user_id) do
+      {:ok, params} ->
+        changeset = ChatHandle.changeset(%ChatHandle{}, params)
+        case Repo.insert(changeset) do
+          {:ok, chat_handle} ->
+            chat_handle = Repo.preload(chat_handle, [:chat_provider, :user])
+            conn
+            |> put_status(:created)
+            |> json(EctoJson.render(chat_handle, envelope: :chat_handle, policy: :detail))
+          {:error, changeset} ->
+            conn
+            |> put_status(:unprocessable_entity)
+            |> render(Cog.ChangesetView, "error.json", changeset: changeset)
+        end
+      {:error, :invalid_provider} ->
         conn
         |> put_status(:unprocessable_entity)
-        |> render(Cog.ChangesetView, "error.json", changeset: changeset)
+        |> render(Cog.ErrorView, "422.json", %{error: "Provider '#{chat_handle_params["chat_provider"]}' not found"})
     end
   end
 
@@ -47,24 +52,34 @@ defmodule Cog.V1.ChatHandleController do
 
   def update(conn, %{"id" => id, "chat_handle" => chat_handle_params}) do
     chat_handle = Repo.get!(ChatHandle, id)
-    params = get_changeset_params(chat_handle_params, chat_handle.user_id)
-    changeset = ChatHandle.changeset(chat_handle, params)
 
-    case Repo.update(changeset) do
-      {:ok, chat_handle} ->
-        chat_handle = Repo.preload(chat_handle, [:chat_provider, :user])
-        json(conn, EctoJson.render(chat_handle, envelope: :chat_handle, policy: :detail))
-      {:error, changeset} ->
+    case get_changeset_params(chat_handle_params, chat_handle.user_id) do
+      {:ok, params} ->
+        changeset = ChatHandle.changeset(chat_handle, params)
+        case Repo.update(changeset) do
+          {:ok, chat_handle} ->
+            chat_handle = Repo.preload(chat_handle, [:chat_provider, :user])
+            json(conn, EctoJson.render(chat_handle, envelope: :chat_handle, policy: :detail))
+          {:error, changeset} ->
+            conn
+            |> put_status(:unprocessable_entity)
+            |> render(Cog.ChangesetView, "error.json", changeset: changeset)
+        end
+      {:error, :invalid_provider} ->
         conn
         |> put_status(:unprocessable_entity)
-        |> render(Cog.ChangesetView, "error.json", changeset: changeset)
+        |> render(Cog.ErrorView, "422.json", %{error: "Provider '#{chat_handle_params["chat_provider"]}' not found"})
     end
   end
 
   defp get_changeset_params(%{"chat_provider" => provider_name, "handle" => handle}, user_id) do
-    provider = Repo.get_by(ChatProvider, name: provider_name)
-    %{"handle" => handle,
-      "provider_id" => provider.id,
-      "user_id" => user_id}
+    case Repo.get_by(ChatProvider, name: provider_name) do
+      nil ->
+        {:error, :invalid_provider}
+      provider ->
+        {:ok, %{"handle" => handle,
+            "provider_id" => provider.id,
+            "user_id" => user_id}}
+    end
   end
 end
