@@ -41,28 +41,28 @@ defmodule Integration.SortTest do
     assert String.at(response, 217) == "g"
     assert String.at(response, 403) == "r"
     assert String.at(response, 587) == "u"
-    expected = """
+
+    assert response =~ """
     {
-        \"rule\": \"when command is operable:rules must have operable:manage_commands\",
-        \"id\": \".*\",
-        \"command\": \"operable:rules\"
+      \"rule\": \"when command is operable:rules must have operable:manage_commands\",
+      \"id\": \".*\",
+      \"command\": \"operable:rules\"
     }
     {
-        \"rule\": \"when command is operable:rules with option[group] == \.*\ must have operable:manage_groups\",
-        \"id\": \".*\",
-        \"command\": \"operable:rules\"
+      \"rule\": \"when command is operable:rules with option\\[group\\] == /.*/ must have operable:manage_groups\",
+      \"id\": \".*\",
+      \"command\": \"operable:rules\"
     }
     {
-        \"rule\": \"when command is operable:rules with option[role] == \.*\ must have operable:manage_roles\",
-        \"id\": \".*\",
-        \"command\": \"operable:rules\"
+      \"rule\": \"when command is operable:rules with option\\[role\\] == /.*/ must have operable:manage_roles\",
+      \"id\": \".*\",
+      \"command\": \"operable:rules\"
     }
     {
-        \"rule\": \"when command is operable:rules with option[user] == \.*\ must have operable:manage_users\",
-        \"id\": \".*\",
-        \"command\": \"operable:rules\"
+      \"rule\": \"when command is operable:rules with option\\[user\\] == /.*/ must have operable:manage_users\",
+      \"id\": \".*\",
+      \"command\": \"operable:rules\"
     }
-    """
-    #assert response <> "\n" =~ expected
+    """ |> String.rstrip |> Regex.compile!
   end
 end
