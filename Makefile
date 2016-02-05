@@ -57,9 +57,7 @@ test: reset-db
 
 test-all: export MIX_ENV = test
 test-all: reset-db
-	mix test \
-		--include slack \
-		--include hipchat
+	mix test
 
 test-watch: export MIX_ENV = test
 test-watch: reset-db
