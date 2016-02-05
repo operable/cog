@@ -29,8 +29,6 @@
   "jsx": {:hex, :jsx, "2.8.0"},
   "lager": {:hex, :lager, "2.1.1"},
   "lager_logger": {:git, "https://github.com/PSPDFKit-labs/lager_logger.git", "0f6374fe3ced05da980ceaf8758f49a1c6223f5b", [branch: "master"]},
-  "lhttpc": {:git, "git://github.com/talko/lhttpc", "2d01a5f9c7543b77bdd57f44c92e72801f46e423", [tag: "1.4.0"]},
-  "meck": {:git, "https://github.com/eproxus/meck.git", "17b0ea5b7d9c93af3a52b5152c6bee14302b3885", [tag: "0.8.3"]},
   "mix_test_watch": {:hex, :mix_test_watch, "0.1.2"},
   "mochiweb": {:git, "git://github.com/emqtt/mochiweb.git", "f1ce26fe373b2a9b52b0b1a5d2306ebb225af7bd", [branch: "master"]},
   "phoenix": {:hex, :phoenix, "1.0.3"},
