@@ -22,13 +22,15 @@ defmodule Cog.Commands.Filter do
     {:reply, req.reply_to, item, state}
   end
 
-  defp maybe_match(options, item) do
-    regex = compile_regex(options["matches"])
+  defp maybe_match(%{"matches" => matches}=options, item) do
+    regex = compile_regex(matches)
     case matches?(item, regex, options["field"]) do
       true -> item
       false -> nil
     end
   end
+  defp maybe_match(_, item),
+    do: item
 
   defp maybe_pluck([], _),
     do: []
