@@ -27,11 +27,9 @@ install_dir=""
 verbose="0"
 
 if [ -e "${HOME}/cog.vars" ]; then
+  echo "Loading environemnt variables from ${HOME}/cog.vars."
   source "${HOME}/cog.vars"
 fi
-
-export MIX_ENV
-export DATABASE_URL
 
 # Clean up when we're done. For now this means
 # restoring the user's working directory.
@@ -274,6 +272,12 @@ done
 
 cd ${install_dir}
 
+write_log
+write_log "Cog is configured via environment variables. Make sure that"
+write_log "these variables are configured before running the commands below."
+write_log "If you are using the Cog AMI, you can find a default set of these"
+write_log "in ${HOME}/cog.vars. Note that you will have to add configuration"
+write_log "for your chat provider."
 write_log
 
 write_log "To start Cog:\tcd %s/cog && make run" ${install_dir}
