@@ -73,7 +73,7 @@ defmodule Cog.V1.ChatHandleController do
   end
 
   defp get_changeset_params(%{"chat_provider" => provider_name, "handle" => handle}, user_id) do
-    case Repo.get_by(ChatProvider, name: provider_name) do
+    case Repo.get_by(ChatProvider, name: String.downcase(provider_name)) do
       nil ->
         {:error, :invalid_provider}
       provider ->
