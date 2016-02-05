@@ -12,8 +12,8 @@ defmodule UserTest do
 
   test "retrieving user includes chat handles", %{user: user} do
     # with_chat_handle_for registers a handle that is the same as the username
-    user |> with_chat_handle_for("Slack")
-    found_user = Repo.one!(Cog.Queries.User.for_handle(user.username, "Slack"))
+    user |> with_chat_handle_for("slack")
+    found_user = Repo.one!(Cog.Queries.User.for_handle(user.username, "slack"))
 
     assert(found_user.id == user.id)
 

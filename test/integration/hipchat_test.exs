@@ -1,5 +1,5 @@
 defmodule Integration.HipChatTest do
-  use Cog.AdapterCase, adapter: Cog.Adapters.HipChat
+  use Cog.AdapterCase, adapter: Cog.Adapters.Hipchat
   alias Cog.Time
 
   @moduletag :hipchat
@@ -13,8 +13,8 @@ defmodule Integration.HipChatTest do
   def wait_for_xmpp_connection(until) do
     # Catch if we try to talk to the HipChat.Connection before it has started
     has_received_event = try do
-      event_manager = Cog.Adapters.HipChat.Connection.event_manager
-      GenEvent.call(event_manager, Cog.Adapters.HipChat.XMPPHandler, :has_received_event)
+      event_manager = Cog.Adapters.Hipchat.Connection.event_manager
+      GenEvent.call(event_manager, Cog.Adapters.Hipchat.XMPPHandler, :has_received_event)
     catch
       :exit, _ -> false
     end

@@ -6,7 +6,7 @@ defmodule Cog.V1.ChatHandleControllerTest do
   alias Cog.Models.ChatProvider
 
   @valid_attrs %{handle: "vansterminator",
-                 chat_provider: "Slack"}
+                 chat_provider: "slack"}
 
   setup do
     # Requests handled by the role controller require this permission
@@ -22,7 +22,7 @@ defmodule Cog.V1.ChatHandleControllerTest do
     unauthed_user = user("sadpanda") |> with_token
 
     # Provider
-    provider = Repo.get_by(ChatProvider, name: "Slack")
+    provider = Repo.get_by(ChatProvider, name: "slack")
 
     # Chat handles for our two users
     authed_handle = ChatHandle.changeset(%ChatHandle{}, %{"handle" => "Cogswell",
@@ -60,7 +60,7 @@ defmodule Cog.V1.ChatHandleControllerTest do
                 "username" => params.authed.username
               },
               "chat_provider" => %{"id" => params.provider.id,
-                                   "name" => "Slack"}},
+                                   "name" => "slack"}},
             %{"id" => params.unauthed_handle.id,
               "handle" => "supersad",
               "user" => %{
@@ -71,7 +71,7 @@ defmodule Cog.V1.ChatHandleControllerTest do
                 "username" => params.unauthed.username
               },
               "chat_provider" => %{"id" => params.provider.id,
-                                   "name" => "Slack"}}] == chat_handles_json
+                                   "name" => "slack"}}] == chat_handles_json
   end
 
   test "lists all entries for a specified user", params do
@@ -87,7 +87,7 @@ defmodule Cog.V1.ChatHandleControllerTest do
                 "username" => params.authed.username
               },
               "chat_provider" => %{"id" => params.provider.id,
-                                   "name" => "Slack"}}] == chat_handles_json
+                                   "name" => "slack"}}] == chat_handles_json
   end
 
   test "deletes an entry", params do
@@ -107,12 +107,12 @@ defmodule Cog.V1.ChatHandleControllerTest do
                   |> Repo.insert!
     conn = api_request(params.authed, :put, "/v1/chat_handles/#{update_test.id}",
                        body: %{"chat_handle" => %{
-                                 "chat_provider" => "Slack",
+                                 "chat_provider" => "slack",
                                  "handle" => "NewUpdateTest"}})
     chat_handle_json = json_response(conn, 200)["chat_handle"]
     assert chat_handle_json == %{"id" => update_test.id,
                                  "chat_provider" => %{"id" => params.provider.id,
-                                                      "name" => "Slack"},
+                                                      "name" => "slack"},
                                  "handle" => "NewUpdateTest",
                                  "user" => %{
                                    "id" => params.authed.id,
