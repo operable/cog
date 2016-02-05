@@ -3,7 +3,7 @@ defmodule Integration.GroupTest do
 
   setup do
     user = user("belf", first_name: "Buddy", last_name: "Elf")
-    |> with_chat_handle_for("Test")
+    |> with_chat_handle_for("test")
     |> with_permission("operable:manage_users")
     |> with_permission("operable:manage_groups")
 

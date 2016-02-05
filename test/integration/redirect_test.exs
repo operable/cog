@@ -3,7 +3,7 @@ defmodule Integration.RedirectTest do
 
   setup do
     user = user("vanstee", first_name: "Patrick", last_name: "Van Stee")
-    |> with_chat_handle_for("Test")
+    |> with_chat_handle_for("test")
 
     {:ok, %{user: user}}
   end
@@ -11,7 +11,7 @@ defmodule Integration.RedirectTest do
   test "redirecting to 'here'", %{user: user} do
     send_message user, "@bot: operable:echo test_here > here"
 
-    response = %{"adapter" => "Test",
+    response = %{"adapter" => "test",
                  "response" => "test_here",
                  "room" => %{"id" => 1, "name" => "general"}}
 
@@ -21,7 +21,7 @@ defmodule Integration.RedirectTest do
   test "redirection to '#general'", %{user: user} do
     send_message user, "@bot: operable:echo test_general > #general"
 
-    response = %{"adapter" => "Test",
+    response = %{"adapter" => "test",
                  "response" => "test_general",
                  "room" => %{"id" => 1, "name" => "general"}}
 
@@ -31,7 +31,7 @@ defmodule Integration.RedirectTest do
   test "redirection to 'general'", %{user: user} do
     send_message user, "@bot: operable:echo test_general > general"
 
-    response = %{"adapter" => "Test",
+    response = %{"adapter" => "test",
                  "response" => "test_general",
                  "room" => %{"id" => 1, "name" => "general"}}
 
@@ -41,7 +41,7 @@ defmodule Integration.RedirectTest do
   test "redirection to 'me'", %{user: user} do
     send_message user, "@bot: operable:t-echo test_me > me"
 
-    response = %{"adapter" => "Test",
+    response = %{"adapter" => "test",
                  "response" => "test_me",
                  "room" => %{"id" => "channel1"}}
 
@@ -51,7 +51,7 @@ defmodule Integration.RedirectTest do
   test "redirection to 'vanstee'", %{user: user} do
     send_message user, "@bot: operable:echo test_vanstee > vanstee"
 
-    response = %{"adapter" => "Test",
+    response = %{"adapter" => "test",
                  "response" => "test_vanstee",
                  "room" => %{"id" => 1, "name" => "vanstee"}}
 
@@ -61,7 +61,7 @@ defmodule Integration.RedirectTest do
   test "redirection to '@vanstee'", %{user: user} do
     send_message user, "@bot: operable:echo test_vanstee > @vanstee"
 
-    response = %{"adapter" => "Test",
+    response = %{"adapter" => "test",
                  "response" => "test_vanstee",
                  "room" => %{"id" => 1, "name" => "direct"}}
 

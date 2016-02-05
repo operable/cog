@@ -3,7 +3,7 @@ defmodule Integration.PermissionTest do
 
   setup do
     user = user("vanstee", first_name: "Patrick", last_name: "Van Stee")
-    |> with_chat_handle_for("Test")
+    |> with_chat_handle_for("test")
     |> with_permission("operable:manage_users")
     |> with_permission("operable:manage_groups")
     |> with_permission("operable:manage_roles")

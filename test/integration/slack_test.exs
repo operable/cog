@@ -5,7 +5,7 @@ defmodule Integration.SlackTest do
 
   setup do
     user = user("botci")
-    |> with_chat_handle_for("Slack")
+    |> with_chat_handle_for("slack")
 
     {:ok, %{user: user}}
   end
