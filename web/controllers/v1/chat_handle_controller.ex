@@ -38,7 +38,9 @@ defmodule Cog.V1.ChatHandleController do
             |> render(Cog.ChangesetView, "error.json", changeset: changeset)
         end
       {:error, :invalid_provider} ->
-        send_resp(conn, :unprocessable_entity, Poison.encode!(%{error: "Provider '#{chat_handle_params["chat_provider"]}' not found"}))
+        conn
+        |> put_status(:unprocessable_entity)
+        |> render(Cog.ErrorView, "422.json", %{error: "Provider '#{chat_handle_params["chat_provider"]}' not found"})
     end
   end
 
@@ -64,7 +66,9 @@ defmodule Cog.V1.ChatHandleController do
             |> render(Cog.ChangesetView, "error.json", changeset: changeset)
         end
       {:error, :invalid_provider} ->
-        send_resp(conn, :unprocessable_entity, Poison.encode!(%{error: "Provider '#{chat_handle_params["chat_provider"]}' not found"}))
+        conn
+        |> put_status(:unprocessable_entity)
+        |> render(Cog.ErrorView, "422.json", %{error: "Provider '#{chat_handle_params["chat_provider"]}' not found"})
     end
   end
 
