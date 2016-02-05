@@ -41,8 +41,7 @@ defmodule Cog.Mixfile do
 
   defp deps do
     [
-     # Upgrade to whatever's after 0.3.0 when it's released
-     {:slack, github: "BlakeWilliams/Elixir-Slack", ref: "e348e12551e8f6361d9c666ed52c83eeccce86b8"},
+     {:slack, "~> 0.4.0"},
      {:poison, "1.5.0"},
      # Override the dependency specified by slack
      {:websocket_client, github: "kevsmith/websocket_client", override: true},
