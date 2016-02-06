@@ -26,7 +26,7 @@
        languages besides Elixir/Erlang.
 * Extensive logging and auditing
 * Friendly web admin interface
-* Targets: Slack, Hipchat, irc (maybe)
+* Targets: Slack, HipChat, irc (maybe)
 * Proposed tech stack:
     - Language: Elixir/Erlang
     - Messagiing: Modified Phoenix PubSub for single node installs;MQTT or

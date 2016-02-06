@@ -12,6 +12,7 @@ defmodule Cog.Adapters.Test.Helpers do
                 room: %{id: 1, name: "general"},
                 text: message,
                 adapter: "test",
+                module: Cog.Adapters.Test,
                 reply: "/bot/adapters/test/send_message"}
     Connection.publish(mq_conn, payload, routed_by: "/bot/commands")
   end

@@ -142,7 +142,7 @@ defmodule Cog.Adapters.HipChat.API do
     |> Map.get("X-Ratelimit-Remaining")
 
     if ratelimit == "0" do
-      Logger.error("Hipchat ratelimit exceeded")
+      Logger.error("HipChat ratelimit exceeded")
     end
 
     headers
