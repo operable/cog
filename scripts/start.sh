@@ -1,9 +1,7 @@
 #!/bin/bash
 
 MYNAME=`basename $0`
-
 install_dir=""
-verbose="0"
 
 # Clean up when we're done. For now this means
 # restoring the user's working directory.
@@ -20,7 +18,6 @@ pushd >& /dev/null
 function usage {
   printf "%s [help|--help|-h|-?] <install_dir> \n" ${MYNAME}
 }
-
 
 while [ "$#" -gt 0 ];
 do
@@ -101,6 +98,15 @@ function verify_hipchat_vars {
     echo -e "\tERROR! HIPCHAT_MENTION_NAME environment variable is not set."
     verify=$((verify&0))
   fi
+  #Only give warning for these env vars
+  verify_env_vars "HIPCHAT_XMPP_PORT"
+  if [ $? == 0 ] ; then
+    echo -e "\tWarning: HIPCHAT_XMPP_PORT environment variable is not set; using default value '5222'"
+  fi
+  verify_env_vars "HIPCHAT_XMPP_NICKNAME"
+  if [ $? == 0 ] ; then
+    echo -e "\tWarning: HIPCHAT_XMPP_NICKNAME environment variable is not set; using default value 'Cog'"
+  fi
   return ${verify}
 }
 
@@ -145,11 +151,12 @@ function start_cog {
   cd "${install_dir}/cog"
   #elixir --detached -e "File.write! '/var/run/cog.pid', :os.getpid" -S mix phoenix.server
   if [ ! -e "/var/run/operable" ]; then
+    echo -e "\tNeed to setup the '/var/run/operable' directory. (sudo access is required)..."
     sudo -H mkdir /var/run/operable
     username=`/usr/bin/whoami`
-    echo ${username}
     sudo -H chmod 775 /var/run/operable
     sudo -H /usr/sbin/chown -R ${username} /var/run/operable
+    echo -e "\tSetup of the '/var/run/operable' directory is complete with '${username}' ownership."
   fi
   elixir --detached -e "File.write! '/var/run/operable/cog.pid', :os.getpid" -S mix phoenix.server
 }
@@ -160,12 +167,12 @@ if [ -e "${install_dir}/cog" ]; then
   echo "Cog installation detected at ${install_dir}/cog. Verifying required environment variables..."
   verify_cog_env
   if [ $? == 0 ] ; then
-      echo "Please correct the above errors and try starting Cog again..."
-      exit 1
+    echo "Please correct the above errors and try starting Cog again..."
+    exit 1
   else
-      echo "Cog environment variables verified."
-      echo "Starting Cog..."
-      start_cog
-      cog_success=1
+    echo "Cog environment variables verified."
+    echo "Starting Cog..."
+    start_cog
+    echo "Welcome operatives to the World of Cog."
   fi
 fi
