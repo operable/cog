@@ -101,7 +101,7 @@ defmodule Cog.Support.ModelUtilities do
   `user`. Returns the un-modified user for piplines.
   """
   def with_chat_handle_for(%User{}=user, provider) do
-    provider =  ChatProvider |> Repo.get_by!(name: provider)
+    provider =  ChatProvider |> Repo.get_by!(name: String.downcase(provider))
 
     user
     |> Ecto.Model.build(:chat_handles,

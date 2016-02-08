@@ -3,7 +3,7 @@ defmodule Integration.RedirectTest do
 
   setup do
     user = user("vanstee", first_name: "Patrick", last_name: "Van Stee")
-    |> with_chat_handle_for("test")
+    |> with_chat_handle_for("Test")
 
     {:ok, %{user: user}}
   end
