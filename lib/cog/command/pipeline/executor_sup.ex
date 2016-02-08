@@ -6,7 +6,7 @@ defmodule Cog.Command.Pipeline.ExecutorSup do
   end
 
   def init(_) do
-    children = [worker(Cog.Command.Pipeline.Executor, [])]
+    children = [worker(Cog.Command.Pipeline.Executor, [], restart: :temporary)]
     supervise(children, strategy: :simple_one_for_one, max_restarts: 0, max_seconds: 1)
   end
 

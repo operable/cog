@@ -120,6 +120,8 @@ defmodule Cog.Command.Pipeline.Executor do
     id = UUID.uuid4(:hex)
     topic = "/bot/pipelines/#{id}"
 
+    Logger.info("PIPELINE ID #{id}")
+
     Connection.subscribe(conn, topic <> "/+")
 
     adapter = request["adapter"]
@@ -333,6 +335,7 @@ defmodule Cog.Command.Pipeline.Executor do
 
   def handle_info({:publish, topic, message}, :wait_for_command, state) do
     reply_topic = "#{state.topic}/reply"
+    Logger.info("GOT COMMAND RESPONSE FROM #{state.id}")
     case topic do
       ^reply_topic ->
         case Carrier.CredentialManager.verify_signed_message(message) do

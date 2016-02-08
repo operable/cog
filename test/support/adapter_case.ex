@@ -50,6 +50,7 @@ defmodule Cog.AdapterCase do
     CaptureLog.capture_log(fn ->
       Application.stop(:cog)
       Application.start(:cog)
+      IO.puts "\n\n\n\nRESTARING APPP\n\n\n\n\n\n\n\n\n\n"
     end)
   end
 
