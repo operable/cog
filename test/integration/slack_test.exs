@@ -1,5 +1,5 @@
 defmodule Integration.SlackTest do
-  use Cog.AdapterCase, adapter: Cog.Adapters.Slack
+  use Cog.AdapterCase, adapter: "slack"
 
   @moduletag :slack
 

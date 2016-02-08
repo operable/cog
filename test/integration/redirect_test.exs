@@ -1,5 +1,5 @@
 defmodule Integration.RedirectTest do
-  use Cog.AdapterCase, adapter: Cog.Adapters.Test
+  use Cog.AdapterCase, adapter: "test"
 
   setup do
     user = user("vanstee", first_name: "Patrick", last_name: "Van Stee")

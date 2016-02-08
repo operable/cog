@@ -42,9 +42,11 @@ defmodule Cog do
     end
   end
 
-  defp adapter_module("slack"), do: {:ok, Cog.Adapters.Slack}
-  defp adapter_module("hipchat"), do: {:ok, Cog.Adapters.HipChat}
-  defp adapter_module(bad_adapter) do
+  def adapter_module("slack"), do: {:ok, Cog.Adapters.Slack}
+  def adapter_module("hipchat"), do: {:ok, Cog.Adapters.HipChat}
+  def adapter_module("null"), do: {:ok, Cog.Adapters.Null}
+  def adapter_module("test"), do: {:ok, Cog.Adapters.Test}
+  def adapter_module(bad_adapter) do
     {:error, "The adapter is set to '#{bad_adapter}', but I don't know what that is. Try 'slack' or 'hipchat' instead."}
   end
 end

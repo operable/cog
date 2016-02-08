@@ -1,5 +1,5 @@
 defmodule Integration.SortTest do
-  use Cog.AdapterCase, adapter: Cog.Adapters.Test
+  use Cog.AdapterCase, adapter: "test"
   import DatabaseTestSetup
 
   setup do

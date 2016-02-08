@@ -1,5 +1,5 @@
 defmodule Integration.HipChatTest do
-  use Cog.AdapterCase, adapter: Cog.Adapters.HipChat
+  use Cog.AdapterCase, adapter: "hipchat"
   alias Cog.Time
 
   @moduletag :hipchat

@@ -1,5 +1,5 @@
 defmodule Integration.RuleTest do
-  use Cog.AdapterCase, adapter: Cog.Adapters.Test
+  use Cog.AdapterCase, adapter: "test"
 
   setup do
     user = user("belf", first_name: "Buddy", last_name: "Elf")
