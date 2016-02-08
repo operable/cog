@@ -43,8 +43,6 @@ defmodule Cog.Mixfile do
     [
      {:slack, github: "christophermaier/Elixir-Slack", branch: "group-interactions"},
      {:poison, "1.5.0"},
-     # Override the dependency specified by slack
-     {:websocket_client, github: "kevsmith/websocket_client", override: true},
      {:ibrowse, github: "cmullaparthi/ibrowse", tag: "v4.1.2"},
      {:uuid, "1.0.1"},
      {:httpotion, "2.1.0"},
