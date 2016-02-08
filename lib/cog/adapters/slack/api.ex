@@ -131,6 +131,22 @@ defmodule Cog.Adapters.Slack.API do
         {:reply, error, state}
     end
   end
+
+  # Group chat IDs start with "G"
+  def handle_call({:lookup_room, [id: <<"G", _::binary>> = id]}, _from, state) do
+    result = call_api!("groups.info", state.token,
+                       # Yes, the key is 'channel' even though we're
+                       # talking about groups
+                       body: %{channel: id})
+    reply = if result["ok"] do
+      # TODO: if you get a group, you're always a member, right?
+      group = result["group"] |> cache(state.ttl)
+      {:ok, group}
+    else
+      {:error, result["error"]}
+    end
+    {:reply, reply, state}
+  end
   def handle_call({:lookup_room, [id: id]}, _from, state) do
     result = call_api!("channels.info", state.token, body: %{channel: id})
     reply = if result["ok"] do
@@ -264,6 +280,23 @@ defmodule Cog.Adapters.Slack.API do
     %{id: channel["id"],
       name: channel["name"]}
   end
+
+  # This is starting out by just caching groups, but it can be
+  # extended to handle the caching of everything
+  defp cache(%{"id" => id, "name" => name, "is_group" => true}=group, ttl) do
+    expiry = expiration(ttl)
+    cache_item = cache_item(group)
+    :ets.insert(@channel_cache, {id, {cache_item, expiry}})
+    # TODO: do we want to cache the cache_item itself under name, too?
+    :ets.insert(@channel_cache, {name, {id, expiry}})
+    cache_item
+  end
+
+  # Likewise, this is starting out by just creating the cached
+  # representation of a group, but can evolve to create items for
+  # everything we need to cache
+  defp cache_item(%{"is_group" => true, "id" => id, "name" => name}),
+    do: %{id: id, name: name}
 
   defp expiration(ttl),
     do: Cog.Time.now + ttl
