@@ -150,12 +150,8 @@ function verify_cog_env {
 function start_cog {
   cd "${install_dir}/cog"
   if [ ! -e "/var/run/operable" ]; then
-    echo -e "\tNeed to setup the '/var/run/operable' directory. (sudo access is required)..."
-    sudo -H mkdir /var/run/operable
-    username=`/usr/bin/whoami`
-    sudo -H chmod 775 /var/run/operable
-    sudo -H /usr/sbin/chown -R ${username} /var/run/operable
-    echo -e "\tSetup of the '/var/run/operable' directory is complete with '${username}' ownership."
+    # Do not attempt to setup the directory, just error
+    echo -e "\tERROR! '/var/run/operable' does not exist. Please be sure permissions are correct."
   fi
   elixir --detached -e "File.write! '/var/run/operable/cog.pid', :os.getpid" -S mix phoenix.server
 }
