@@ -21,6 +21,7 @@ defmodule Cog.Mixfile do
   def application do
     [applications: [:logger,
                     :probe,
+                    :logger_file_backend,
                     :ibrowse,
                     :httpotion,
                     :gproc,
@@ -53,6 +54,7 @@ defmodule Cog.Mixfile do
      {:postgrex, "~> 0.9.1"},
      {:ecto, "~> 1.0.0"},
      {:lager_logger, github: "PSPDFKit-labs/lager_logger", branch: "master"},
+     {:logger_file_backend, github: "onkel-dirtus/logger_file_backend", tag: "v0.0.6"},
      {:emqttc, github: "emqtt/emqttc", branch: "master"},
      {:emqttd, github: "operable/emqttd", branch: "tweaks-for-upstream"},
      {:lager, ">= 2.1.0", override: true},
