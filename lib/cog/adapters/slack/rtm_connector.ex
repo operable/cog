@@ -243,11 +243,11 @@ defmodule Cog.Adapters.Slack.RTMConnector do
         {:ok, room} = API.lookup_room(id: channel)
         cond do
           room.name == "direct" ->
-               {:direct, room}
+            {:direct, room}
           String.starts_with?(text, state.direct_name) ->
-               {:mention, room}
+            {:mention, room}
           String.starts_with?(text, command_prefix) ->
-               {:prefix, room}
+            {:prefix, room}
           true ->
             :ignore
         end

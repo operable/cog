@@ -131,6 +131,22 @@ defmodule Cog.Adapters.Slack.API do
         {:reply, error, state}
     end
   end
+
+  # Group chat IDs start with "G"
+  def handle_call({:lookup_room, [id: <<"G", _::binary>> = id]}, _from, state) do
+    result = call_api!("groups.info", state.token,
+                       # Yes, the key is 'channel' even though we're
+                       # talking about groups
+                       body: %{channel: id})
+    reply = if result["ok"] do
+      # TODO: if you get a group, you're always a member, right?
+      group = result["group"] |> cache(state.ttl)
+      {:ok, group}
+    else
+      {:error, result["error"]}
+    end
+    {:reply, reply, state}
+  end
   def handle_call({:lookup_room, [id: id]}, _from, state) do
     result = call_api!("channels.info", state.token, body: %{channel: id})
     reply = if result["ok"] do
@@ -232,6 +248,13 @@ defmodule Cog.Adapters.Slack.API do
     end
   end
 
+  ########################################################################
+  # Cache-related Functions
+
+  # handle_call for lookup_user still does some caching, as does
+  # parse_users_result/3. It would be good to ultimately consolidate
+  # all the cache-related operations in these functions below.
+
   # Caches the channel identifier under the user ID for future
   # retrievals. Although Slack does not document the details of direct
   # channel identifiers (how long they're valid, etc.), so far
@@ -265,8 +288,46 @@ defmodule Cog.Adapters.Slack.API do
       name: channel["name"]}
   end
 
+  # This is starting out by just caching groups, but it can be
+  # extended to handle the caching of everything
+  defp cache(%{"id" => id, "name" => name, "is_group" => true}=group, ttl) do
+    expiry = expiration(ttl)
+    cache_item = cache_item(group)
+    :ets.insert(@channel_cache, {id, {cache_item, expiry}})
+    # TODO: do we want to cache the cache_item itself under name, too?
+    :ets.insert(@channel_cache, {name, {id, expiry}})
+    cache_item
+  end
+
+  # Likewise, this is starting out by just creating the cached
+  # representation of a group, but can evolve to create items for
+  # everything we need to cache
+  defp cache_item(%{"is_group" => true, "id" => id, "name" => name}),
+    do: %{id: id, name: name}
+
   defp expiration(ttl),
     do: Cog.Time.now + ttl
+
+  defp query_cache(cache, key) do
+    key = extract_key(key)
+    current_time = Cog.Time.now()
+    case :ets.lookup(cache, key) do
+      [] ->
+        nil
+      [{_, {_, expiry}}] when expiry < current_time ->
+        nil
+      [{_, {id, _}}] when is_binary(id) ->
+        query_cache(cache, [id: id])
+      [{_, {entry, _}}] when is_map(entry) ->
+        entry
+    end
+  end
+
+  defp extract_key([id: id]), do: id
+  defp extract_key([name: name]), do: name
+  defp extract_key([handle: handle]), do: handle
+
+  ########################################################################
 
   defp verify_token(token) do
     call_api!("auth.test", token, parser: &Map.get(&1, "ok"))
@@ -295,26 +356,6 @@ defmodule Cog.Adapters.Slack.API do
 
     "#{@slack_api}#{method}?#{query}"
   end
-
-  defp query_cache(cache, key) do
-    key = extract_key(key)
-    current_time = Cog.Time.now()
-    case :ets.lookup(cache, key) do
-      [] ->
-        nil
-      [{_, {_, expiry}}] when expiry < current_time ->
-        nil
-      [{_, {id, _}}] when is_binary(id) ->
-        query_cache(cache, [id: id])
-      [{_, {entry, _}}] when is_map(entry) ->
-        entry
-    end
-  end
-
-  defp extract_key([id: id]), do: id
-  defp extract_key([name: name]), do: name
-  defp extract_key([handle: handle]), do: handle
-
 
   # Translate Slack error strings to Elixir atoms
   #
