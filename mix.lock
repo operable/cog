@@ -49,4 +49,4 @@
   "spanner": {:git, "git@github.com:operable/spanner", "6fea8a5123257f7c1b9e713a0347c343af17b126", [ref: "6fea8a5123257f7c1b9e713a0347c343af17b126"]},
   "ssl_verify_hostname": {:hex, :ssl_verify_hostname, "1.0.5"},
   "uuid": {:hex, :uuid, "1.0.1"},
-  "websocket_client": {:git, "https://github.com/kevsmith/websocket_client.git", "10712ac0d69ae5f49cfa9575dc7634f8850fd251", []}}
+  "websocket_client": {:git, "https://github.com/jeremyong/websocket_client.git", "10712ac0d69ae5f49cfa9575dc7634f8850fd251", []}}
