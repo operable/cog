@@ -5,7 +5,7 @@ use Cog.Config.Helpers
 # Chat Adapters
 
 config :cog,
-  adapter: System.get_env("COG_ADAPTER") || Cog.Adapters.Slack
+  adapter: System.get_env("COG_ADAPTER") || "slack"
 
 config :cog, :enable_spoken_commands, true
 

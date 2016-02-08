@@ -34,13 +34,17 @@ defmodule Cog do
 
   defp get_adapter! do
     adapter = Application.get_env(:cog, :adapter)
-    if adapter == nil do
-      raise RuntimeError, "Please configure a chat adapter before starting cog."
-    else
-      adapter_module(adapter)
+    case adapter_module(String.downcase(adapter)) do
+      {:ok, module} ->
+        module
+      {:error, msg} ->
+        raise RuntimeError, "Please configure a chat adapter before starting cog. #{msg}"
     end
   end
 
-  defp adapter_module(adapter) when is_binary(adapter), do: String.to_atom("Elixir.#{adapter}")
-  defp adapter_module(adapter) when is_atom(adapter), do: adapter
+  defp adapter_module("slack"), do: {:ok, Cog.Adapters.Slack}
+  defp adapter_module("hipchat"), do: {:ok, Cog.Adapters.HipChat}
+  defp adapter_module(bad_adapter) do
+    {:error, "The adapter is set to '#{bad_adapter}', but I don't know what that is. Try 'slack' or 'hipchat' instead."}
+  end
 end
