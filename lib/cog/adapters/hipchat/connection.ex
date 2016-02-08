@@ -5,7 +5,8 @@ defmodule Cog.Adapters.HipChat.Connection do
 
   use GenServer
 
-  @adapter_name "HipChat"
+  @adapter_name "hipchat"
+  @module_name Cog.Adapters.HipChat
 
   defstruct xmpp_conn: nil, mq_conn: nil
 
@@ -135,6 +136,7 @@ defmodule Cog.Adapters.HipChat.Connection do
                 room: room,
                 text: text,
                 adapter: @adapter_name,
+                module: @module_name,
                 reply: "/bot/adapters/hipchat/send_message"}
     Carrier.Messaging.Connection.publish(state.mq_conn, payload, routed_by: "/bot/commands")
     {:noreply, state}

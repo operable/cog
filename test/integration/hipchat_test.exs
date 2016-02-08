@@ -1,5 +1,5 @@
 defmodule Integration.HipChatTest do
-  use Cog.AdapterCase, adapter: Cog.Adapters.HipChat
+  use Cog.AdapterCase, adapter: "hipchat"
   alias Cog.Time
 
   @moduletag :hipchat
@@ -34,7 +34,7 @@ defmodule Integration.HipChatTest do
     wait_for_xmpp_connection
 
     user = user("ciuser")
-    |> with_chat_handle_for("HipChat")
+    |> with_chat_handle_for("hipchat")
 
     {:ok, %{user: user}}
   end

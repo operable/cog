@@ -4,7 +4,7 @@ config :logger, :console,
   level: :info
 
 config :cog,
-  adapter: Cog.Adapters.Null
+  adapter: "null"
 
 config :cog, Cog.Repo,
   pool: Ecto.Adapters.SQL.Sandbox

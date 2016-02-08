@@ -1,10 +1,10 @@
 defmodule Integration.SortTest do
-  use Cog.AdapterCase, adapter: Cog.Adapters.Test
+  use Cog.AdapterCase, adapter: "test"
   import DatabaseTestSetup
 
   setup do
     user = user("jfrost", first_name: "Jim", last_name: "Frost")
-    |> with_chat_handle_for("Test")
+    |> with_chat_handle_for("test")
     |> with_permission("operable:manage_commands")
 
     {:ok, %{user: user}}

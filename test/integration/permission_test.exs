@@ -1,9 +1,9 @@
 defmodule Integration.PermissionTest do
-  use Cog.AdapterCase, adapter: Cog.Adapters.Test
+  use Cog.AdapterCase, adapter: "test"
 
   setup do
     user = user("vanstee", first_name: "Patrick", last_name: "Van Stee")
-    |> with_chat_handle_for("Test")
+    |> with_chat_handle_for("test")
     |> with_permission("operable:manage_users")
     |> with_permission("operable:manage_groups")
     |> with_permission("operable:manage_roles")
@@ -52,7 +52,7 @@ defmodule Integration.PermissionTest do
 
   test "granting a permission to a user without the grant permission" do
     mctesterson = user("mctesterson", first_name: "Testy", last_name: "McTesterson")
-    |> with_chat_handle_for("Test")
+    |> with_chat_handle_for("test")
 
     send_message mctesterson, "@bot: operable:permissions --grant --user=mctesterson --permission=operable:st-echo"
     assert_response "@mctesterson Sorry, you aren't allowed to execute 'operable:permissions --grant --user=mctesterson --permission=operable:st-echo' :(\n You will need the 'operable:manage_users' permission to run this command."

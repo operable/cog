@@ -37,7 +37,8 @@ defmodule Cog.Adapters.Slack.RTMConnector do
   use Slack
   alias Cog.Adapters.Slack.API
 
-  @adapter_name "Slack"
+  @adapter_name "slack"
+  @module_name Cog.Adapters.Slack
 
   ########################################################################
   # Public API
@@ -218,6 +219,7 @@ defmodule Cog.Adapters.Slack.RTMConnector do
                 room: room,
                 text: text,
                 adapter: @adapter_name,
+                module: @module_name,
                 reply: "/bot/adapters/slack/send_message"}
     Carrier.Messaging.Connection.publish(state.bus, payload, routed_by: "/bot/commands")
     {:ok, state}

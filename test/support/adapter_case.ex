@@ -4,8 +4,8 @@ defmodule Cog.AdapterCase do
   alias Cog.Bootstrap
 
   defmacro __using__([adapter: adapter]) do
-    {:__aliases__, _, adapter_name} = adapter
-    adapter_helper = Module.concat(adapter_name ++ ["Helpers"])
+    {:ok, adapter_module} = Cog.adapter_module(String.downcase(adapter))
+    adapter_helper = Module.concat([adapter_module, "Helpers"])
 
     quote do
       use ExUnit.Case

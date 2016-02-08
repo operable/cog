@@ -393,7 +393,7 @@ defmodule Cog.Command.Pipeline.Executor do
   # Returns {:ok, room} or {:error, invalid_redirect}
   defp lookup_room("me", state) do
     user_id = state.request["sender"]["id"]
-    adapter = get_adapter_api(state.request["adapter"])
+    adapter = get_adapter_api(state.request["module"])
     case adapter.lookup_direct_room(user_id: user_id, as_user: user_id) do
       {:ok, direct_chat} -> {:ok, direct_chat}
       error ->
@@ -404,7 +404,7 @@ defmodule Cog.Command.Pipeline.Executor do
   defp lookup_room("here", state),
     do: {:ok, state.request["room"]}
   defp lookup_room(redir, state) do
-    adapter = get_adapter_api(state.request["adapter"])
+    adapter = get_adapter_api(state.request["module"])
     case adapter.lookup_room(redir, as_user: state.request["sender"]["id"]) do
       {:ok, room} ->
         {:ok, room}
@@ -534,8 +534,8 @@ defmodule Cog.Command.Pipeline.Executor do
     end
   end
 
-  defp get_adapter_api(adapter) when is_binary(adapter),
-    do: String.to_existing_atom("Elixir.Cog.Adapters.#{adapter}.API")
+  defp get_adapter_api(module),
+    do: String.to_existing_atom("#{module}.API")
 
   defp sanitize_request(request) do
     prefix = Application.get_env(:cog, :command_prefix, "!")
