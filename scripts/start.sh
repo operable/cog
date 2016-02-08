@@ -128,18 +128,18 @@ function verify_cog_env {
         verify=$((verify+1))
       fi
       ;;
-    "Cog.Adapters.Slack")
+    "Slack")
       if ! verify_slack_vars ; then
         verify=$((verify+1))
       fi
       ;;
-    "Cog.Adapters.HipChat")
+    "HipChat")
       if ! verify_hipchat_vars ; then
         verify=$((verify+1))
       fi
       ;;
     *)
-      echo -e "\tERROR! COG_ADAPTER is set to an unknown Cog Adapter. (Try 'Cog.Adapters.Slack' or 'Cog.Adapers.HipChat'.)"
+      echo -e "\tERROR! COG_ADAPTER is set to an unknown Cog Adapter. (Try 'Slack' or 'HipChat'.)"
       verify=$((verify+1))
       ;;
   esac
