@@ -22,7 +22,7 @@ defmodule Cog.Command.Pipeline.Initializer do
       {true, payload} ->
         case check_history(payload, state) do
           {true, payload, state} ->
-            Cog.Command.Pipeline.ExecutorSup.run(payload)
+            {:ok, _} = Cog.Command.Pipeline.ExecutorSup.run(payload)
             {:noreply, state}
           {false, _, state} ->
             {:noreply, state}
