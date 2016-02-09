@@ -112,7 +112,7 @@ defmodule Cog.Bundle.Install do
     |> Repo.insert!
   end
 
-  defp create_template(bundle, %{"adapter" => adapter, "template" => command_name, "path" => path}) do
+  defp create_template(bundle, %{"adapter" => adapter, "name" => command_name, "path" => path}) do
     case read_template(path) do
       {:ok, source} ->
         params = %{
