@@ -1,5 +1,5 @@
-%{"adz": {:git, "git@github.com:operable/adz", "07ba970e0bec955f1f3ed1c4771511139924c7fd", [ref: "07ba970e0bec955f1f3ed1c4771511139924c7fd"]},
-  "carrier": {:git, "git@github.com:operable/carrier", "fa21dab921ba699d52005fca51b67cc1fa3b3e54", [ref: "09b83330cf957f247eef760723ac19718b5263a5"]},
+%{"adz": {:git, "git@github.com:operable/adz", "07ba970e0bec955f1f3ed1c4771511139924c7fd", [tag: "0.1-rc1"]},
+  "carrier": {:git, "git@github.com:operable/carrier", "385f2d6f724dfd5fea0421e010b9883486ca3cf6", [ref: "385f2d6f724dfd5fea0421e010b9883486ca3cf6"]},
   "certifi": {:hex, :certifi, "0.3.0"},
   "comeonin": {:hex, :comeonin, "1.1.4"},
   "cowboy": {:hex, :cowboy, "1.0.3"},
@@ -47,7 +47,7 @@
   "probe": {:git, "git@github.com:operable/probe", "02c3df4beb0332c4cab47646cfbcdf1cace1da36", [tag: "0.1-rc1"]},
   "ranch": {:hex, :ranch, "1.1.0"},
   "slack": {:git, "https://github.com/christophermaier/Elixir-Slack.git", "d60746bcea7195f36c9d0032d26c42d9e26902e5", [branch: "group-interactions"]},
-  "spanner": {:git, "git@github.com:operable/spanner", "6fea8a5123257f7c1b9e713a0347c343af17b126", [ref: "204558d5d3cbab4f45403688ee92e6c6ef18bcc9"]},
+  "spanner": {:git, "git@github.com:operable/spanner", "204558d5d3cbab4f45403688ee92e6c6ef18bcc9", [ref: "204558d5d3cbab4f45403688ee92e6c6ef18bcc9"]},
   "ssl_verify_hostname": {:hex, :ssl_verify_hostname, "1.0.5"},
   "uuid": {:hex, :uuid, "1.0.1"},
   "websocket_client": {:git, "https://github.com/jeremyong/websocket_client.git", "f6892c8b55004008ce2d52be7d98b156f3e34569", []}}
