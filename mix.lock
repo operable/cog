@@ -30,6 +30,7 @@
   "jsx": {:hex, :jsx, "2.8.0"},
   "lager": {:hex, :lager, "2.1.1"},
   "lager_logger": {:git, "https://github.com/PSPDFKit-labs/lager_logger.git", "0f6374fe3ced05da980ceaf8758f49a1c6223f5b", [branch: "master"]},
+  "logger_file_backend": {:git, "https://github.com/onkel-dirtus/logger_file_backend.git", "1a93ad84e12fa79f979fea2a70d1d1b0b1fe2899", [tag: "v0.0.6"]},
   "mimerl": {:hex, :mimerl, "1.0.2"},
   "mix_test_watch": {:hex, :mix_test_watch, "0.1.2"},
   "mochiweb": {:git, "git://github.com/emqtt/mochiweb.git", "f1ce26fe373b2a9b52b0b1a5d2306ebb225af7bd", [branch: "master"]},
@@ -49,4 +50,4 @@
   "spanner": {:git, "git@github.com:operable/spanner", "6fea8a5123257f7c1b9e713a0347c343af17b126", [ref: "6fea8a5123257f7c1b9e713a0347c343af17b126"]},
   "ssl_verify_hostname": {:hex, :ssl_verify_hostname, "1.0.5"},
   "uuid": {:hex, :uuid, "1.0.1"},
-  "websocket_client": {:git, "https://github.com/jeremyong/websocket_client.git", "10712ac0d69ae5f49cfa9575dc7634f8850fd251", []}}
+  "websocket_client": {:git, "https://github.com/jeremyong/websocket_client.git", "f6892c8b55004008ce2d52be7d98b156f3e34569", []}}
