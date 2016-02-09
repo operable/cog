@@ -44,9 +44,14 @@ config :cog, :emqttc,
 # ========================================================================
 # Logging
 
-config :logger, :console,
+config :logger,
+  backends: [:console, {LoggerFileBackend, :cog_log}],
   metadata: [:module, :line],
   format: {Adz, :text}
+
+# configuration for the {LoggerFileBackend, :cog_log} backend
+config :logger, :cog_log,
+  path: data_dir("cog.log")
 
 config :lager, :error_logger_redirect, false
 config :lager, :error_logger_whitelist, [Logger.ErrorHandler]
