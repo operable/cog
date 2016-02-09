@@ -27,28 +27,4 @@ defmodule Cog.Adapters.Test.Helpers do
     end
   end
 
-  #def assert_response(message) do
-    #Assertions.polling_assert(message, &last_message/0, @interval, @timeout)
-  #end
-
-  #def assert_payload(payload) do
-    #Assertions.polling_assert(payload, &last_response/0, @interval, @timeout)
-  #end
-
-  #def assert_response_in(message) do
-    #Assertions.polling_assert_in(message, &last_message/0, @interval, @timeout)
-  #end
-
-  #def get_response do
-    #Assertions.polling(&last_message/0, @interval, @timeout)
-  #end
-
-  #defp last_message() do
-    #Cog.Adapters.Test.last_message(true)
-  #end
-
-  #defp last_response() do
-    #Cog.Adapters.Test.last_response(true)
-  #end
-
 end
