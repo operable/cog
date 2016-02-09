@@ -47,7 +47,7 @@
   "probe": {:git, "git@github.com:operable/probe", "02c3df4beb0332c4cab47646cfbcdf1cace1da36", [tag: "0.1-rc1"]},
   "ranch": {:hex, :ranch, "1.1.0"},
   "slack": {:git, "https://github.com/christophermaier/Elixir-Slack.git", "d60746bcea7195f36c9d0032d26c42d9e26902e5", [branch: "group-interactions"]},
-  "spanner": {:git, "git@github.com:operable/spanner", "6fea8a5123257f7c1b9e713a0347c343af17b126", [ref: "6fea8a5123257f7c1b9e713a0347c343af17b126"]},
+  "spanner": {:git, "git@github.com:operable/spanner", "6fea8a5123257f7c1b9e713a0347c343af17b126", [ref: "204558d5d3cbab4f45403688ee92e6c6ef18bcc9"]},
   "ssl_verify_hostname": {:hex, :ssl_verify_hostname, "1.0.5"},
   "uuid": {:hex, :uuid, "1.0.1"},
   "websocket_client": {:git, "https://github.com/jeremyong/websocket_client.git", "f6892c8b55004008ce2d52be7d98b156f3e34569", []}}
