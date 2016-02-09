@@ -21,9 +21,8 @@ defmodule Cog.Adapters.Test.Helpers do
         :emqttc.disconnect(mq_conn)
         Poison.decode!(msg)
     after @timeout ->
+      :emqttc.disconnect(mq_conn)
         raise(RuntimeError, "Connection timed out waiting for a response")
-        :emqttc.disconnect(mq_conn)
-        {:error, :timeout}
     end
   end
 
