@@ -1,6 +1,5 @@
 defmodule Integration.RuleTest do
   use Cog.AdapterCase, adapter: "test"
-  import ExUnit.Assertions
 
   setup do
     user = user("belf", first_name: "Buddy", last_name: "Elf")

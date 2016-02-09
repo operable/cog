@@ -12,6 +12,7 @@ defmodule Cog.AdapterCase do
       import unquote(adapter_helper)
       import unquote(__MODULE__)
       import Cog.Support.ModelUtilities
+      import ExUnit.Assertions
 
       setup_all do
         adapter = replace_adapter(unquote(adapter))
