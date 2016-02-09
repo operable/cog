@@ -4,7 +4,7 @@ defmodule Cog.Command.CommandSup do
   alias Cog.Command
 
   def start_link do
-    Supervisor.start_link(__MODULE__, [])
+    Supervisor.start_link(__MODULE__, [], name: __MODULE__)
   end
 
   def init(_) do

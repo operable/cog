@@ -4,7 +4,7 @@ defmodule Cog.Adapters.Slack.Sup do
   import Cog.Helpers, only: [ensure_integer: 1]
 
   def start_link do
-    Supervisor.start_link(__MODULE__, [])
+    Supervisor.start_link(__MODULE__, [], name: __MODULE__)
   end
 
   def init(_) do
