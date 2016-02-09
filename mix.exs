@@ -19,8 +19,7 @@ defmodule Cog.Mixfile do
   end
 
   def application do
-    [applications: [:sasl,
-                    :logger,
+    [applications: [:logger,
                     :probe,
                     :logger_file_backend,
                     :ibrowse,
