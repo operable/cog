@@ -112,23 +112,16 @@ defmodule Cog.Bundle.Install do
     |> Repo.insert!
   end
 
-  defp create_template(bundle, %{"adapter" => adapter, "name" => command_name, "path" => path}) do
-    case File.read(path) do
-      {:ok, source} ->
-        params = %{
-          adapter: adapter,
-          name: command_name,
-          source: source
-        }
-        bundle
-        |> Ecto.Model.build(:templates)
-        |> Template.changeset(params)
-        |> Repo.insert!
-      {:error, reason} ->
-        Logger.error("Unable to load `#{adapter}` template for `#{command_name}` located at `#{path}`: #{reason}")
-    end
-  end
-  defp create_template(bundle, _) do
-    Logger.error("Bundle #{bundle.name} has a misconfigured template")
+  defp create_template(bundle, %{"adapter" => adapter, "name" => name, "source" => source}) do
+    params = %{
+      adapter: adapter,
+      name: name,
+      source: source
+    }
+
+    bundle
+    |> Ecto.Model.build(:templates)
+    |> Template.changeset(params)
+    |> Repo.insert!
   end
 end
