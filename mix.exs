@@ -42,6 +42,7 @@ defmodule Cog.Mixfile do
   defp deps do
     [
      {:slack, "~> 0.4.2"},
+     {:websocket_client, github: "jeremyong/websocket_client", ref: "f6892c8b55004008ce2d52be7d98b156f3e34569"},
      {:poison, "1.5.0"},
      {:ibrowse, github: "cmullaparthi/ibrowse", tag: "v4.1.2"},
      {:uuid, "1.0.1"},
