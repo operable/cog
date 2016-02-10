@@ -12,6 +12,7 @@ defmodule Cog.AdapterCase do
       import unquote(adapter_helper)
       import unquote(__MODULE__)
       import Cog.Support.ModelUtilities
+      import ExUnit.Assertions
 
       setup_all do
         adapter = replace_adapter(unquote(adapter))
@@ -34,6 +35,9 @@ defmodule Cog.AdapterCase do
     end
   end
 
+  # If we are using the test adapter, we do nothing
+  def replace_adapter("test"),
+    do: Application.get_env(:cog, :adapter)
   def replace_adapter(new_adapter) do
     adapter = Application.get_env(:cog, :adapter)
     Application.put_env(:cog, :adapter, new_adapter)

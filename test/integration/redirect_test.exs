@@ -9,62 +9,62 @@ defmodule Integration.RedirectTest do
   end
 
   test "redirecting to 'here'", %{user: user} do
-    send_message user, "@bot: operable:echo test_here > here"
+    response = send_message(user, "@bot: operable:echo test_here > here")
 
-    response = %{"adapter" => "test",
-                 "response" => "test_here",
-                 "room" => %{"id" => 1, "name" => "general"}}
+    expected_response = %{"adapter" => "test",
+                          "response" => "test_here",
+                          "room" => %{"id" => 1, "name" => "general"}}
 
-    assert_payload response
+    assert response["data"] == expected_response
   end
 
   test "redirection to '#general'", %{user: user} do
-    send_message user, "@bot: operable:echo test_general > #general"
+    response = send_message(user, "@bot: operable:echo test_general > #general")
 
-    response = %{"adapter" => "test",
-                 "response" => "test_general",
-                 "room" => %{"id" => 1, "name" => "general"}}
+    expected_response = %{"adapter" => "test",
+                          "response" => "test_general",
+                          "room" => %{"id" => 1, "name" => "general"}}
 
-    assert_payload response
+    assert response["data"] == expected_response
   end
 
   test "redirection to 'general'", %{user: user} do
-    send_message user, "@bot: operable:echo test_general > general"
+    response = send_message(user, "@bot: operable:echo test_general > general")
 
-    response = %{"adapter" => "test",
-                 "response" => "test_general",
-                 "room" => %{"id" => 1, "name" => "general"}}
+    expected_response = %{"adapter" => "test",
+                          "response" => "test_general",
+                          "room" => %{"id" => 1, "name" => "general"}}
 
-    assert_payload response
+    assert response["data"] == expected_response
   end
 
   test "redirection to 'me'", %{user: user} do
-    send_message user, "@bot: operable:t-echo test_me > me"
+    response = send_message(user, "@bot: operable:t-echo test_me > me")
 
-    response = %{"adapter" => "test",
-                 "response" => "test_me",
-                 "room" => %{"id" => "channel1"}}
+    expected_response = %{"adapter" => "test",
+                          "response" => "test_me",
+                          "room" => %{"id" => "channel1"}}
 
-    assert_payload response
+    assert response["data"] == expected_response
   end
 
   test "redirection to 'vanstee'", %{user: user} do
-    send_message user, "@bot: operable:echo test_vanstee > vanstee"
+    response = send_message(user, "@bot: operable:echo test_vanstee > vanstee")
 
-    response = %{"adapter" => "test",
-                 "response" => "test_vanstee",
-                 "room" => %{"id" => 1, "name" => "vanstee"}}
+    expected_response = %{"adapter" => "test",
+                          "response" => "test_vanstee",
+                          "room" => %{"id" => 1, "name" => "vanstee"}}
 
-    assert_payload response
+    assert response["data"] == expected_response
   end
 
   test "redirection to '@vanstee'", %{user: user} do
-    send_message user, "@bot: operable:echo test_vanstee > @vanstee"
+    response = send_message(user, "@bot: operable:echo test_vanstee > @vanstee")
 
-    response = %{"adapter" => "test",
-                 "response" => "test_vanstee",
-                 "room" => %{"id" => 1, "name" => "direct"}}
+    expected_response = %{"adapter" => "test",
+                          "response" => "test_vanstee",
+                          "room" => %{"id" => 1, "name" => "direct"}}
 
-    assert_payload response
+    assert response["data"] == expected_response
   end
 end
