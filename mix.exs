@@ -1,4 +1,3 @@
-
 Code.load_file(Path.join([__DIR__, "config", "helpers.exs"]))
 
 defmodule Cog.Mixfile do
@@ -42,7 +41,7 @@ defmodule Cog.Mixfile do
 
   defp deps do
     [
-     {:slack, github: "christophermaier/Elixir-Slack", branch: "group-interactions"},
+     {:slack, "~> 0.4.2"},
      {:poison, "1.5.0"},
      {:ibrowse, github: "cmullaparthi/ibrowse", tag: "v4.1.2"},
      {:uuid, "1.0.1"},
