@@ -113,7 +113,7 @@ defmodule Cog.Bundle.Install do
   end
 
   defp create_template(bundle, %{"adapter" => adapter, "name" => command_name, "path" => path}) do
-    case read_template(path) do
+    case File.read(path) do
       {:ok, source} ->
         params = %{
           adapter: adapter,
@@ -131,9 +131,4 @@ defmodule Cog.Bundle.Install do
   defp create_template(bundle, _) do
     Logger.error("Bundle #{bundle.name} has a misconfigured template")
   end
-
-  defp read_template(path),
-    do: File.open(path, [:read], fn(file) ->
-          IO.read(file, :all)
-        end)
 end
