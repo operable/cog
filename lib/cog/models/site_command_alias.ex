@@ -7,6 +7,8 @@ defmodule Cog.Models.SiteCommandAlias do
   schema "site_command_aliases" do
     field :name, :string
     field :pipeline, :string
+
+    timestamps
   end
 
   @required_fields ~w(name pipeline)
