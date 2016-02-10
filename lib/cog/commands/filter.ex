@@ -67,7 +67,7 @@ defmodule Cog.Commands.Filter do
   end
 
   defp matches?(nil, regex),
-    do: matches?("", regex)
+    do: false
   defp matches?(obj, regex) when is_map(obj),
     do: matches?(Poison.encode!(obj), regex)
   defp matches?(int, regex) when is_integer(int),
