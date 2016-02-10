@@ -508,13 +508,20 @@ defmodule Cog.Command.Pipeline.Executor do
     |> List.flatten
     |> Enum.reject(&is_nil/1)
 
-    case command.execution do
-      "once" ->
-        {:next_state, :bind, %{state | current: h, remaining: t, input: [], output: [], context: new_output}, 0}
-      "multiple" ->
-        [oh|ot] = new_output
-        {:next_state, :bind, %{state | current: h, remaining: t, input: ot, output: [], context: oh}, 0}
-    end
+    case new_output do
+      [] ->
+        error_message = "No output received from command '#{state.current}'"
+        Helpers.send_error(error_message, state.request, state.mq_conn)
+        fail_pipeline(state, :empty_output, error_message)
+      _ ->
+        case command.execution do
+          "once" ->
+            {:next_state, :bind, %{state | current: h, remaining: t, input: [], output: [], context: new_output}, 0}
+          "multiple" ->
+            [oh|ot] = new_output
+            {:next_state, :bind, %{state | current: h, remaining: t, input: ot, output: [], context: oh}, 0}
+        end
+      end
   end
 
   defp prepare(%__MODULE__{pipeline: %Ast.Pipeline{invocations: invocations}}=state) do
