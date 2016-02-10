@@ -9,6 +9,8 @@ defmodule Cog.Models.UserCommandAlias do
     field :pipeline, :string
 
     belongs_to :user, User
+
+    timestamps
   end
 
   @required_fields ~w(name pipeline user_id)
