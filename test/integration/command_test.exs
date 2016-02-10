@@ -108,4 +108,9 @@ defmodule Integration.CommandTest do
     response = send_message(user, "@bot: operable:weirdo test")
     assert response["data"]["response"] == "@vanstee Sorry, I don't know the 'operable:weirdo' command :("
   end
+
+  test "running a command in a pipeline with nil output", %{user: user} do
+    response = send_message(user, ~s(@bot: seed '[{"a": "1", "b": "2"}, {"a": "3"}]' | filter --field="b" | echo $a))
+    assert response["data"]["response"] == "1"
+  end
 end

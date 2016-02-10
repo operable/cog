@@ -492,7 +492,7 @@ defmodule Cog.Command.Pipeline.Executor do
     {:stop, :shutdown, %{state | output: resp.body}}
   end
   defp prepare_or_finish(%__MODULE__{input: [], output: output, remaining: []}=state, resp) do
-    final_result = output ++ [resp.body]
+    final_result = Enum.reject(output ++ [resp.body], &is_nil/1)
     send_user_resp(%{resp | body: final_result}, state)
     {:stop, :shutdown, %{state | output: final_result}}
   end
@@ -503,14 +503,25 @@ defmodule Cog.Command.Pipeline.Executor do
   defp prepare_or_finish(%__MODULE__{input: [], output: output, remaining: [h|t]}=state, resp) do
     # Fetch the next command
     {:ok, command} = CommandCache.fetch(h)
-    new_output = List.flatten(output ++ [resp.body])
-    case command.execution do
-      "once" ->
-        {:next_state, :bind, %{state | current: h, remaining: t, input: [], output: [], context: new_output}, 0}
-      "multiple" ->
-        [oh|ot] = new_output
-        {:next_state, :bind, %{state | current: h, remaining: t, input: ot, output: [], context: oh}, 0}
-    end
+
+    new_output = output ++ [resp.body]
+    |> List.flatten
+    |> Enum.reject(&is_nil/1)
+
+    case new_output do
+      [] ->
+        error_message = "No output received from command '#{state.current}'"
+        Helpers.send_error(error_message, state.request, state.mq_conn)
+        fail_pipeline(state, :empty_output, error_message)
+      _ ->
+        case command.execution do
+          "once" ->
+            {:next_state, :bind, %{state | current: h, remaining: t, input: [], output: [], context: new_output}, 0}
+          "multiple" ->
+            [oh|ot] = new_output
+            {:next_state, :bind, %{state | current: h, remaining: t, input: ot, output: [], context: oh}, 0}
+        end
+      end
   end
 
   defp prepare(%__MODULE__{pipeline: %Ast.Pipeline{invocations: invocations}}=state) do

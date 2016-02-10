@@ -29,6 +29,12 @@ defmodule Cog.Commands.Filter do
       false -> nil
     end
   end
+  defp maybe_match(%{"field" => field}, item) do
+    case item[field] do
+      nil -> nil
+      _ -> item
+    end
+  end
   defp maybe_match(_, item),
     do: item
 
@@ -60,6 +66,8 @@ defmodule Cog.Commands.Filter do
     matches?(obj, regex)
   end
 
+  defp matches?(nil, _regex),
+    do: false
   defp matches?(obj, regex) when is_map(obj),
     do: matches?(Poison.encode!(obj), regex)
   defp matches?(int, regex) when is_integer(int),
