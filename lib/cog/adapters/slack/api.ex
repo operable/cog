@@ -112,24 +112,39 @@ defmodule Cog.Adapters.Slack.API do
   end
 
   def handle_call({:lookup_user, [id: id]}, _from, state) do
-    case call_api!("users.info", state.token, body: %{user: id},
-                   parser: &parse_user_result/1) do
-      {:ok, handle} ->
-        user = %{id: id, handle: handle}
-        expiry = Cog.Time.now() + state.ttl
-        :ets.insert(@user_cache, {id, {user, expiry}})
-        {:reply, {:ok, user}, state}
-      error ->
-        {:reply, error, state}
+    result = call_api!("users.info", state.token, body: %{user: id})
+    reply = if result["ok"] do
+      cache_item = result["user"] |> cache(state.ttl)
+      {:ok, cache_item}
+    else
+      {:error, result["error"]}
     end
+    {:reply, reply, state}
   end
   def handle_call({:lookup_user, [handle: handle]}, _from, state) do
-    case call_api!("users.list", state.token, parser: &(parse_users_result(&1, handle, state))) do
-      {:ok, user} ->
-        {:reply, {:ok, user}, state}
-      error ->
-        {:reply, error, state}
+    # Only used to lookup users mentioned without an "@"
+    result = call_api!("users.list", state.token, [])
+    reply = if result["ok"] do
+      {_cached, maybe_match} = Enum.map_reduce(result["members"], nil,
+        fn(user, previous_match) ->
+          cached = cache(user, state.ttl)
+          if user["name"] == handle do
+            {cached, cached}
+          else
+            {cached, previous_match}
+          end
+        end)
+
+      case maybe_match do
+        nil ->
+          {:error, :not_found}
+        value ->
+          {:ok, value}
+      end
+    else
+      {:error, result["error"]}
     end
+    {:reply, reply, state}
   end
 
   # Group chat IDs start with "G"
@@ -151,9 +166,9 @@ defmodule Cog.Adapters.Slack.API do
     result = call_api!("channels.info", state.token, body: %{channel: id})
     reply = if result["ok"] do
       channel = result["channel"]
-      true = maybe_cache_channel(channel, state.ttl)
       if is_member?(channel) do
-        {:ok, channel_cache_item(channel)}
+        cached = cache(channel, state.ttl)
+        {:ok, cached}
       else
         {:error, :not_a_member}
       end
@@ -166,19 +181,22 @@ defmodule Cog.Adapters.Slack.API do
     result = call_api!("channels.list", state.token, body: %{exclude_archived: 1})
     reply = if result["ok"] do
       channels = result["channels"]
-      Enum.each(channels, &maybe_cache_channel(&1, state.ttl))
 
-      case Enum.find(channels, &is_channel_named?(&1, name)) do
-        channel when is_map(channel) ->
-          if is_member?(channel) do
-            # Return what would come out of the cache if
-            # we'd found it there in the first place
-            {:ok, channel_cache_item(channel)}
-          else
-            {:error, :not_a_member}
+      # Cache all the channels we need to, and return their cache representations
+      cached = Enum.filter_map(channels, &is_member?/1, &cache(&1, state.ttl))
+
+      case Enum.find(cached, &is_channel_named?(&1, name)) do
+        channel when not(is_nil(channel)) ->
+          {:ok, channel}
+        _ ->
+          # if it's in the original list from the API, then we're not
+          # a member; If it wasn't there, then it  doesn't exist
+          case Enum.find(channels, &is_channel_named?(&1, name)) do
+            nil ->
+              {:error, :not_found}
+            _ ->
+              {:error, :not_a_member}
           end
-        nil ->
-          {:error, :not_found}
       end
     else
       {:error, result["error"]}
@@ -194,42 +212,17 @@ defmodule Cog.Adapters.Slack.API do
     # See https://api.slack.com/methods/im.open
     result = call_api!("im.open", state.token, [body: %{user: user_id}])
     if result["ok"] do
-      %{"id" => _channel_id} = response = result["channel"]
-      cache_direct_chat(user_id, response, state.ttl)
-      {:reply, {:ok, response}, state}
+      direct_chat = result["channel"]
+      cached = cache_direct_chat(user_id, direct_chat, state.ttl)
+      {:reply, {:ok, cached}, state}
     else
       {:reply, {:error, translate_slack_error("im.open", result["error"])}, state}
     end
   end
 
-  defp parse_users_result(result, query, state) do
-    case result["ok"] do
-      false ->
-        {:error, result["error"]}
-      true ->
-        expiry = Cog.Time.now() + state.ttl
-        case Enum.reduce(result["members"], nil,
-                         fn(user, acc) ->
-                           user_record = %{id: user["id"],
-                                           handle: user["name"]}
-                           :ets.insert(@user_cache, {user["id"], {user_record, expiry}})
-                           :ets.insert(@user_cache, {user["name"], {user["id"], expiry}})
-                           maybe_return_user(query, user_record, acc) end) do
-          nil ->
-            {:error, :not_found}
-          value ->
-            {:ok, value}
-        end
-    end
-  end
-
-  defp maybe_return_user(query, %{handle: query}=user, nil), do: user
-  defp maybe_return_user(_query, _user, acc), do: acc
-
-  defp is_channel_named?(%{"name" => name}, name),
-    do: true
-  defp is_channel_named?(_, _),
-    do: false
+  defp is_channel_named?(%{name: name}, name), do: true
+  defp is_channel_named?(%{"name" => name}, name), do: true
+  defp is_channel_named?(_, _), do: false
 
   # Given a Slack channel object, return whether the API user (i.e.,
   # the bot) is a member.
@@ -239,58 +232,27 @@ defmodule Cog.Adapters.Slack.API do
   defp is_member?(%{"is_member" => is_member}),
     do: is_member
 
-  defp parse_user_result(result) do
-    case result["ok"] do
-      false ->
-        {:error, result["error"]}
-      true ->
-        {:ok, result["user"]["name"]}
-    end
-  end
-
   ########################################################################
   # Cache-related Functions
 
-  # handle_call for lookup_user still does some caching, as does
-  # parse_users_result/3. It would be good to ultimately consolidate
-  # all the cache-related operations in these functions below.
-
-  # Caches the channel identifier under the user ID for future
-  # retrievals. Although Slack does not document the details of direct
-  # channel identifiers (how long they're valid, etc.), so far
-  # they seem stable.
-  defp cache_direct_chat(user_id, %{"id" => channel_id}=value, ttl) when is_binary(channel_id),
-    do: :ets.insert(@direct_chat_channel_cache, {user_id, {value, expiration(ttl)}})
-
-  # Only cache a channel if the bot is present in the channel
+  # Cache Slack objects, keyed by id and name.
   #
-  # May be a "channel object" (https://api.slack.com/types/channel)
-  # from, e.g., "channels.info", or a limited channel object, from,
-  # e.g., "channels.list"
-  #(https://api.slack.com/methods/channels.list)
+  # Returns the value that was cached, which is a minimal version of
+  # the input, reflecting just what we need. See cache_item/1 for more.
   #
-  # In either case, they'll have the id, name, and membership information
-  defp maybe_cache_channel(%{"is_member" => false}, _ttl),
-    do: true
-  defp maybe_cache_channel(%{"id" => id, "name" => name}=channel, ttl) do
+  # Caches channels, groups, and users; see:
+  # * https://api.slack.com/types/channel
+  # * https://api.slack.com/types/group
+  # * https://api.slack.com/types/user
+  defp cache(%{"is_channel" => true, "id" => id, "name" => name}=channel, ttl) do
     expiry = expiration(ttl)
-    cache_item = channel_cache_item(channel)
+    cache_item = cache_item(channel)
     :ets.insert(@channel_cache, {id, {cache_item, expiry}})
     # TODO: do we want to cache the cache_item itself under name, too?
     :ets.insert(@channel_cache, {name, {id, expiry}})
+    cache_item
   end
-
-  # Given a Slack channel object
-  # (https://api.slack.com/types/channel), pull out the data we care
-  # about for our caching purposes.
-  defp channel_cache_item(channel) when is_map(channel) do
-    %{id: channel["id"],
-      name: channel["name"]}
-  end
-
-  # This is starting out by just caching groups, but it can be
-  # extended to handle the caching of everything
-  defp cache(%{"id" => id, "name" => name, "is_group" => true}=group, ttl) do
+  defp cache(%{"is_group" => true, "id" => id, "name" => name}=group, ttl) do
     expiry = expiration(ttl)
     cache_item = cache_item(group)
     :ets.insert(@channel_cache, {id, {cache_item, expiry}})
@@ -298,12 +260,46 @@ defmodule Cog.Adapters.Slack.API do
     :ets.insert(@channel_cache, {name, {id, expiry}})
     cache_item
   end
+  defp cache(%{"id" => id, "name" => handle, "profile" => %{}}=user, ttl) do
+    # Users don't have an "is_user" key, but they do have a profile
+    expiry = expiration(ttl)
+    cache_item = cache_item(user)
+    :ets.insert(@user_cache, {id, {cache_item, expiry}})
+    # TODO: do we want to cache the cache_item itself under name, too?
+    :ets.insert(@user_cache, {handle, {id, expiry}})
+    cache_item
+  end
 
-  # Likewise, this is starting out by just creating the cached
-  # representation of a group, but can evolve to create items for
-  # everything we need to cache
+  # Conceptually the same as `cache/2`, but Slack's `im.open` method
+  # doesn't actually return an `im` object; if it did, we'd have the
+  # channel id and the user ID in one place. As it is, we supply that
+  # information ourselves
+  #
+  # See:
+  # * https://api.slack.com/methods/im.open
+  # * https://api.slack.com/types/im
+  defp cache_direct_chat(user_id, direct_chat, ttl) do
+    expiry = expiration(ttl)
+    cache_item = cache_item(direct_chat)
+    :ets.insert(@direct_chat_channel_cache, {user_id, {cache_item, expiry}})
+    cache_item
+  end
+
+  # Create pared-down versions of Slack API objects to serve as values
+  # in our caches.
+  #
+  # We extract only the information we care about, and use atom keys
+  # instead of strings.
+  defp cache_item(%{"is_channel" => true, "id" => id, "name" => name}),
+    do: %{id: id, name: name}
   defp cache_item(%{"is_group" => true, "id" => id, "name" => name}),
     do: %{id: id, name: name}
+  # users have names, but not "is_user" fields :( they do have profiles, though
+  defp cache_item(%{"id" => id, "name" => name, "profile" => %{}}),
+    do: %{id: id, handle: name}
+  # result of 'im.open' calls; they have no name
+  defp cache_item(%{"id" => id}=im) when map_size(im) == 1,
+    do: %{id: id}
 
   defp expiration(ttl),
     do: Cog.Time.now + ttl
