@@ -23,7 +23,7 @@ ci-reset:
 ci-setup: ci-reset
 # Nuke mnesia dirs so we don't get borked on emqttd upgrades
 	rm -rf Mnesia.* $(GENERATED_FILES)
-	mix deps.update spanner
+	mix deps.update spanner && mix deps.update piper
 	mix deps.get
 
 ci-cleanup:
