@@ -124,5 +124,4 @@ defmodule Cog.Bundle.Install do
     |> Template.changeset(params)
     |> Repo.insert!
   end
-  end
 end
