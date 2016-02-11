@@ -309,7 +309,7 @@ defmodule Cog.Command.Pipeline.Executor do
         topic = "/bot/commands/#{relay}/#{bundle}/#{name}"
         reply_to_topic = "#{state.topic}/reply"
         cog_env = maybe_add_env(current_bound, state)
-        req = request_for_invocation(current_bound, request["sender"], request["room"], reply_to_topic, cog_env)
+        req = request_for_invocation(current_bound, request["sender"], request["room"], request["adapter"], reply_to_topic, cog_env)
 
         dispatch_event(state, relay)
 
@@ -543,7 +543,8 @@ defmodule Cog.Command.Pipeline.Executor do
     {:next_state, :bind, %{state | current: current, remaining: remaining}, 0}
   end
 
-  defp request_for_invocation(invoke, requestor, room, reply_to, cog_env) do
+  defp request_for_invocation(invoke, requestor, room, provider, reply_to, cog_env) do
+    requestor = Map.put_new(requestor, "provider", provider)
     %Spanner.Command.Request{command: invoke.command, options: invoke.options,
                              args: invoke.args, requestor: requestor,
                              cog_env: cog_env, room: room, reply_to: reply_to}
