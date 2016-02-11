@@ -112,6 +112,17 @@ defmodule Cog.Bundle.Install do
     |> Repo.insert!
   end
 
+  defp create_template(bundle, %{"adapter" => adapter, "name" => command_name, "source" => source}) do
+    params = %{
+      adapter: adapter,
+      name: command_name,
+      source: source
+    }
+    bundle
+    |> Ecto.Model.build(:templates)
+    |> Template.changeset(params)
+    |> Repo.insert!
+  end
   defp create_template(bundle, %{"adapter" => adapter, "name" => command_name, "path" => path}) do
     case File.read(path) do
       {:ok, source} ->
