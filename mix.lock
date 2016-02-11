@@ -38,7 +38,7 @@
   "phoenix_ecto": {:hex, :phoenix_ecto, "1.2.0"},
   "phoenix_html": {:hex, :phoenix_html, "2.2.0"},
   "phoenix_live_reload": {:hex, :phoenix_live_reload, "1.0.1"},
-  "piper": {:git, "git@github.com:operable/piper", "1b0526c67541b59ff4ede84153a29f9b74e62d98", [ref: "888d9df3eeeb16954bf0e68c9083a28baf6c92d5"]},
+  "piper": {:git, "git@github.com:operable/piper", "1b0526c67541b59ff4ede84153a29f9b74e62d98", [ref: "1b0526c67541b59ff4ede84153a29f9b74e62d98"]},
   "plug": {:hex, :plug, "1.0.2"},
   "poison": {:hex, :poison, "1.5.0"},
   "poolboy": {:hex, :poolboy, "1.5.1"},
@@ -47,7 +47,7 @@
   "probe": {:git, "git@github.com:operable/probe", "02c3df4beb0332c4cab47646cfbcdf1cace1da36", [tag: "0.1-rc1"]},
   "ranch": {:hex, :ranch, "1.1.0"},
   "slack": {:hex, :slack, "0.4.2"},
-  "spanner": {:git, "git@github.com:operable/spanner", "7781da041d911d820d8e3a8329a6a738858ea95b", [branch: "lhaskins/not-relative"]},
+  "spanner": {:git, "git@github.com:operable/spanner", "1fad75fd9a7583290b6aefc31f631467537352bc", [branch: "lhaskins/not-relative"]},
   "ssl_verify_hostname": {:hex, :ssl_verify_hostname, "1.0.5"},
   "uuid": {:hex, :uuid, "1.0.1"},
   "websocket_client": {:git, "https://github.com/jeremyong/websocket_client.git", "f6892c8b55004008ce2d52be7d98b156f3e34569", [ref: "f6892c8b55004008ce2d52be7d98b156f3e34569"]}}
