@@ -27,9 +27,14 @@ defmodule Cog.RuleIngestion do
   Returns `{:ok, Rule}` or an error tuple with a list of all errors
   encountered in processing.
   """
-  def ingest(rule_text) do
+  def ingest(rule_text, start_txn \\ true)
+  def ingest(rule_text, true) do
     Repo.transaction(fn() ->
-      case %__MODULE__{rule_text: rule_text}
+      ingest(rule_text, false)
+    end)
+  end
+  def ingest(rule_text, false) do
+    case %__MODULE__{rule_text: rule_text}
       |> validate_rule_text
       |> validate_command
       |> validate_permissions
@@ -39,7 +44,6 @@ defmodule Cog.RuleIngestion do
         {:error, errors} ->
           Repo.rollback(errors)
       end
-    end)
   end
 
   # Ensure that the given rule text is syntactically valid. If it is, a

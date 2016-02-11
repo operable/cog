@@ -63,13 +63,13 @@ defmodule Cog.Bundle.Install do
       |> Enum.each(&create_command(bundle, &1))
 
       bundle.config_file["rules"]
-      |> Enum.each(&Cog.RuleIngestion.ingest/1)
+      |> Enum.each(&(Cog.RuleIngestion.ingest(&1, false)))
 
       Map.get(bundle.config_file, "templates", [])
       |> Enum.each(&create_template(bundle, &1))
-
       bundle
     end)
+
     bundle
   end
 
