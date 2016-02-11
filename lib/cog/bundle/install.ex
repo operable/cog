@@ -45,7 +45,7 @@ defmodule Cog.Bundle.Install do
   def install_bundle(bundle_params) do
     # TODO: Validate bundle (e.g., check manifest, etc)
 
-    {:ok, bundle} = Repo.transaction(fn ->
+    Repo.transaction(fn ->
       bundle = %Bundle{}
       |> Bundle.changeset(bundle_params)
       |> Repo.insert!
@@ -67,10 +67,9 @@ defmodule Cog.Bundle.Install do
 
       Map.get(bundle.config_file, "templates", [])
       |> Enum.each(&create_template(bundle, &1))
+
       bundle
     end)
-
-    bundle
   end
 
   # Given the parent `bundle` and the bundle configuration schema for a
