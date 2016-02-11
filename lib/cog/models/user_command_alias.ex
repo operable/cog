@@ -7,6 +7,7 @@ defmodule Cog.Models.UserCommandAlias do
   schema "user_command_aliases" do
     field :name, :string
     field :pipeline, :string
+    field :visibility, :string, virtual: true, default: "user"
 
     belongs_to :user, User
 
@@ -15,6 +16,9 @@ defmodule Cog.Models.UserCommandAlias do
 
   @required_fields ~w(name pipeline user_id)
   @optional_fields ~w()
+
+  summary_fields [:name, :pipeline, :visibility]
+  detail_fields [:name, :pipeline, :visibility]
 
   def changeset(model, params) do
     model
