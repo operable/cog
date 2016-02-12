@@ -14,39 +14,46 @@ defmodule Cog.Commands.Filter do
 
   option "matches", type: "string", required: false
   option "field", type: "string", required: false
-  option "return", type: "string", required: false
+  option "return", type: "list", required: false
 
   def handle_message(req, state) do
-    item = maybe_match(req.options, req.cog_env)
-    |> maybe_pluck(req.options["return"])
-    {:reply, req.reply_to, item, state}
+    %{cog_env: item, options: options} = req
+
+    result = item
+    |> maybe_filter(options)
+    |> maybe_pluck(options)
+
+    {:reply, req.reply_to, result, state}
   end
 
-  defp maybe_match(%{"matches" => matches}=options, item) do
-    regex = compile_regex(matches)
-    case matches?(item, regex, options["field"]) do
-      true -> item
-      false -> nil
+  defp maybe_filter(item, %{"field" => field, "matches" => matches}) do
+    match = with {:ok, field} <- Access.fetch(item, field),
+      regex = compile_regex(matches),
+      field_string = to_string(field),
+      do: String.match?(field_string, regex)
+
+    case match do
+      true ->
+        item
+      _ ->
+        nil
     end
   end
-  defp maybe_match(%{"field" => field}, item) do
-    case item[field] do
-      nil -> nil
-      _ -> item
+  defp maybe_filter(item, %{"field" => field}) do
+    case Access.fetch(item, field) do
+      {:ok, _} ->
+        item
+      :error ->
+        nil
     end
   end
-  defp maybe_match(_, item),
+  defp maybe_filter(item, _),
     do: item
 
-  defp maybe_pluck([], _),
-    do: []
-  defp maybe_pluck(item, nil),
+  defp maybe_pluck(item, %{"return" => []}),
     do: item
-  defp maybe_pluck(item, field_string) when is_map(item) do
-    return_fields = String.split(field_string, ~r/[\,\s]/, trim: true)
-    {new_item, _} = Map.split(item, return_fields)
-    new_item
-  end
+  defp maybe_pluck(item, %{"return" => fields}) when is_map(item),
+    do: Map.take(item, fields)
   defp maybe_pluck(item, _),
     do: item
 
@@ -58,28 +65,4 @@ defmodule Cog.Commands.Filter do
         Regex.compile!(regex, opts)
     end
   end
-
-  defp matches?(obj, regex, field) when is_map(obj) and field != nil do
-    matches?(obj[field], regex)
-  end
-  defp matches?(obj, regex, _) do
-    matches?(obj, regex)
-  end
-
-  defp matches?(nil, _regex),
-    do: false
-  defp matches?(obj, regex) when is_map(obj),
-    do: matches?(Poison.encode!(obj), regex)
-  defp matches?(int, regex) when is_integer(int),
-    do: matches?(Integer.to_string(int), regex)
-  defp matches?(float, regex) when is_float(float),
-    do: matches?(Float.to_string(float), regex)
-  defp matches?(text, regex) when is_binary(text) do
-    case Regex.run(regex, text) do
-      nil -> false
-      _ -> true
-    end
-  end
-
 end
-
