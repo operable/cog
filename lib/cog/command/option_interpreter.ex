@@ -176,9 +176,12 @@ defmodule Cog.Command.OptionInterpreter do
     {:ok, Enum.member?(@truthy_values, value)}
   end
   defp interpret_kv_option("incr", value),
-  do: interpret_kv_option("int", value)
+    do: interpret_kv_option("int", value)
   defp interpret_kv_option("string", value),
-  do: {:ok, value}
+    do: {:ok, value}
+  defp interpret_kv_option("list", value) when is_binary(value) do
+    {:ok, String.split(value, ",", trim: true)}
+  end
   defp interpret_kv_option(type, value) do
     {:error, {type, value.__struct__}}
   end
