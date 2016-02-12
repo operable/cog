@@ -22,7 +22,7 @@ defmodule Cog.Commands.Table do
   def handle_message(req, state) do
     %{"fields" => headers} = hd(req.options)
     table = format_table(headers, req.cog_env)
-    {:reply, req.reply_to, "raw", %{"table" => table}, state}
+    {:reply, req.reply_to, "table", %{"table" => table}, state}
   end
 
   defp format_table(headers, rows) do
