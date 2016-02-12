@@ -17,6 +17,9 @@ defmodule Cog do
   @doc "The name of the embedded command bundle."
   def embedded_bundle, do: "operable"
 
+  @doc "The name of the site namespace."
+  def site_namespace, do: "site"
+
   defp build_children(:dev, nochat, _) when nochat != nil do
     [supervisor(Cog.Endpoint, []),
      worker(Cog.Repo, []),
