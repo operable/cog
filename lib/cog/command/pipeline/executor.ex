@@ -491,10 +491,10 @@ defmodule Cog.Command.Pipeline.Executor do
     # This is *NOT* a long-term solution.
     case TemplateCache.lookup(bundle_id, adapter, template) do
       fun when is_function(fun) ->
-        if length(context) < 2 do
-          fun.(context)
-        else
+        if is_list(context) do
           Enum.join(Enum.map(context, fun))
+        else
+          fun.(context)
         end
       nil ->
         # Unfortunately, we don't have the bundle name or the command
