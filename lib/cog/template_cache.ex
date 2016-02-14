@@ -27,12 +27,17 @@ defmodule Cog.TemplateCache do
     {:ok, %__MODULE__{ttl: ttl, tref: tref}}
   end
 
+  @doc """
+  Returns an arity-1 function that takes a context and returns a
+  template-rendered response, or `nil` if the specified template does
+  not exist for the given inputs.
+  """
+  @spec lookup(String.t, String.t, String.t) :: (term -> String.t) | nil
   def lookup(_bundle, _adapter, "raw") do
     fn context ->
       inspect(context)
     end
   end
-
   def lookup(_bundle, _adapter, "text") do
     fn context ->
       case context do
@@ -50,23 +55,19 @@ defmodule Cog.TemplateCache do
       "```#{text}```"
     end
   end
-
   def lookup(_bundle, "hipchat", "json") do
     fn context ->
       text = Poison.encode!(context, pretty: true)
       "/code #{text}"
     end
   end
-
   def lookup(_bundle, _adapter, "json") do
     fn context ->
       Poison.encode!(context, pretty: true)
     end
   end
-
   def lookup(bundle, adapter, template) do
-    {:ok, fun} = GenServer.call(__MODULE__, {:lookup, bundle, adapter, template})
-    fun
+    GenServer.call(__MODULE__, {:lookup, bundle, adapter, template})
   end
 
   def handle_call({:lookup, bundle, adapter, template}, _from, state) do
@@ -75,7 +76,7 @@ defmodule Cog.TemplateCache do
 
     reply = case :ets.lookup(@ets_table, {bundle, adapter, template}) do
       [{{^bundle, ^adapter, ^template}, value, expiry}] when expiry > expires_before ->
-        {:ok, value}
+        value
       _ ->
         fetch_and_cache(bundle, adapter, template, state)
     end
@@ -89,17 +90,25 @@ defmodule Cog.TemplateCache do
   end
 
   defp fetch_and_cache(bundle, adapter, template, state) do
-    source = Template.template_source(bundle, adapter, template) |> Repo.one!
-    template_fun = FuManchu.Compiler.compile!(source)
+    case Template.template_source(bundle, adapter, template) |> Repo.one do
+      nil ->
+        # Note that this bypasses caching if no template is found;
+        # long term, we need to consolidate the default / fallback
+        # template logic from the executor with the logic in this
+        # module.
+        nil
+      source ->
+        template_fun = FuManchu.Compiler.compile!(source)
 
-    wrapped_fun = fn context ->
-      template_fun.(%{context: context, partials: []})
+        wrapped_fun = fn context ->
+          template_fun.(%{context: context, partials: []})
+        end
+
+        expiry = Cog.Time.now + state.ttl
+        :ets.insert(@ets_table, {{bundle, adapter, template}, wrapped_fun, expiry})
+
+        wrapped_fun
     end
-
-    expiry = Cog.Time.now + state.ttl
-    :ets.insert(@ets_table, {{bundle, adapter, template}, wrapped_fun, expiry})
-
-    {:ok, wrapped_fun}
   end
 
   defp expire_old_entries do
