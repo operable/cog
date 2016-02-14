@@ -44,14 +44,14 @@ defmodule Cog.TemplateCache do
     end
   end
 
-  def lookup(_bundle, "Slack", "json") do
+  def lookup(_bundle, "slack", "json") do
     fn context ->
       text = Poison.encode!(context, pretty: true)
       "```#{text}```"
     end
   end
 
-  def lookup(_bundle, "HipChat", "json") do
+  def lookup(_bundle, "hipchat", "json") do
     fn context ->
       text = Poison.encode!(context, pretty: true)
       "/code #{text}"
