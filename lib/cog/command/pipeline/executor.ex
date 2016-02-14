@@ -483,8 +483,21 @@ defmodule Cog.Command.Pipeline.Executor do
   end
   # Render the provided template
   defp render_template(bundle_id, adapter, template, context) do
-    fun = TemplateCache.lookup(bundle_id, adapter, template)
-    fun.(context)
+    # If `TemplateCache.lookup/3` returns nil instead of a function,
+    # we know that the adapter doesn't have a template with the given
+    # name. In this case, we can fall back to no template and run
+    # through render_template again to pick up a default
+    #
+    # This is *NOT* a long-term solution.
+    case TemplateCache.lookup(bundle_id, adapter, template) do
+      fun when is_function(fun) ->
+        fun.(context)
+      nil ->
+        # Unfortunately, we don't have the bundle name or the command
+        # name down here for this warning message :(
+        Logger.warn("The template `#{template}` was not found for adapter `#{adapter}` in bundle `#{bundle_id}`; falling back to the default")
+        render_template(bundle_id, adapter, nil, context)
+    end
   end
 
   defp prepare_or_finish(%__MODULE__{input: [], output: [], remaining: []}=state, resp) do
