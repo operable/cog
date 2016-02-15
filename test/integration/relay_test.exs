@@ -1,14 +1,15 @@
 defmodule Integration.RelayTest do
-  use Cog.AdapterCase, adapter: "slack"
+  use Cog.AdapterCase, adapter: "test"
   alias Carrier.Messaging
 
-  @moduletag :slack
+  @moduletag :relay
 
   @relays_discovery_topic "bot/relays/discover"
+  @timeout 60000 # 60 seconds
 
   setup do
     user = user("botci")
-    |> with_chat_handle_for("slack")
+    |> with_chat_handle_for("test")
 
     {:ok, %{user: user}}
   end
@@ -19,20 +20,20 @@ defmodule Integration.RelayTest do
     checkout_relay
     build_relay
     port = start_relay
-    wait_for_relay
+    wait_for_relay(conn)
 
     checkout_mist
     build_mist
     install_mist
-    wait_for_mist
+    wait_for_mist(conn)
 
-    message = send_message user, "@deckard: help mist:ec2-find"
-    assert_response """
-      Documentation for `mist:ec2-find`
-
-      mist:ec2-find --region=&lt;region&gt; [--state | --tags | --ami | --return=(id,pubdns,privdns,state,keyname,ami,kernel,arch,vpc,pubip,privip,az,tags)]
-
-    """, after: message
+    response = send_message(user, "@bot: help mist:ec2-find")
+    assert response["data"]["response"] == """
+    {
+      "documentation": "mist:ec2-find --region=<region> [--state | --tags | --ami | --return=(id,pubdns,privdns,state,keyname,ami,kernel,arch,vpc,pubip,privip,az,tags)]",
+      "command": "mist:ec2-find"
+    }
+    """ |> String.rstrip
 
     stop_relay(port)
     disconnect_from_relay_discover(conn)
@@ -73,27 +74,33 @@ defmodule Integration.RelayTest do
     conn
   end
 
-  def wait_for_relay do
+  def wait_for_relay(conn) do
     receive do
       {:publish, @relays_discovery_topic, message} ->
         message = Poison.decode!(message)
 
         case match?(%{"data" => %{"intro" => _relay}}, message) do
           true  -> true
-          false -> wait_for_relay
+          false -> wait_for_relay(conn)
         end
+    after @timeout ->
+      disconnect_from_relay_discover(conn)
+      raise(RuntimeError, "Connection timeout out waiting for relay to start")
     end
   end
 
-  def wait_for_mist do
+  def wait_for_mist(conn) do
     receive do
       {:publish, @relays_discovery_topic, message} ->
         message = Poison.decode!(message)
 
         case match?(%{"data" => %{"announce" => %{"bundles" => [%{"bundle" => %{"name" => "mist"}}]}}}, message) do
           true  -> true
-          false -> wait_for_mist
+          false -> wait_for_mist(conn)
         end
+    after @timeout ->
+      disconnect_from_relay_discover(conn)
+      raise(RuntimeError, "Connection timeout out waiting for mist to be installed")
     end
   end
 
