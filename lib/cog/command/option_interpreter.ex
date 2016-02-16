@@ -141,12 +141,10 @@ defmodule Cog.Command.OptionInterpreter do
     {:error, "Unexpected end of input."}
   end
 
-  defp interpret_kv_option("int", value) when is_integer(value) do
-    {:ok, value}
-  end
-  defp interpret_kv_option("int", value) when is_float(value) do
-    {:error, error_msg(:type_error, value, "int")}
-  end
+  defp interpret_kv_option("int", value) when is_integer(value),
+    do: {:ok, value}
+  defp interpret_kv_option("int", value) when is_float(value),
+    do: {:error, error_msg(:type_error, value, "int")}
   defp interpret_kv_option("int", value) when is_binary(value) do
     case Integer.parse(value) do
       {int, ""} ->
@@ -155,12 +153,10 @@ defmodule Cog.Command.OptionInterpreter do
         {:error, error_msg(:type_error, value, "int")}
     end
   end
-  defp interpret_kv_option("float", value) when is_float(value) do
-    {:ok, value}
-  end
-  defp interpret_kv_option("float", value) when is_integer(value) do
-    {:ok, value/1}
-  end
+  defp interpret_kv_option("float", value) when is_float(value),
+    do: {:ok, value}
+  defp interpret_kv_option("float", value) when is_integer(value),
+    do: {:ok, value/1}
   defp interpret_kv_option("float", value) when is_binary(value) do
     case Float.parse(value) do
       {float, _rem} ->
@@ -169,22 +165,18 @@ defmodule Cog.Command.OptionInterpreter do
         {:error, error_msg(:type_error, value, "float")}
     end
   end
-  defp interpret_kv_option("bool", value) when is_integer(value) do
-    {:ok, value > 0}
-  end
-  defp interpret_kv_option("bool", value) do
-    {:ok, Enum.member?(@truthy_values, value)}
-  end
+  defp interpret_kv_option("bool", value) when is_integer(value),
+    do: {:ok, value > 0}
+  defp interpret_kv_option("bool", value),
+    do: {:ok, Enum.member?(@truthy_values, value)}
   defp interpret_kv_option("incr", value),
     do: interpret_kv_option("int", value)
   defp interpret_kv_option("string", value),
     do: {:ok, value}
-  defp interpret_kv_option("list", value) when is_binary(value) do
-    {:ok, String.split(value, ",", trim: true)}
-  end
-  defp interpret_kv_option(type, value) do
-    {:error, {type, value.__struct__}}
-  end
+  defp interpret_kv_option("list", value) when is_binary(value),
+    do: {:ok, String.split(value, ",", trim: true)}
+  defp interpret_kv_option(type, value),
+    do: {:error, {type, value.__struct__}}
 
   defp check_required_options(defs, opts) do
     required_set = Enum.filter_map(defs,
