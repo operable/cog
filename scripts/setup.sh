@@ -213,6 +213,7 @@ for repo in ${REPOS}; do
         write_err "Error refreshing ${repo} to release tag ${RELEASE_TAG}"
         abort
       fi
+      cd ..
     fi
   else
     write_log "Updating previous ${repo} clone."
