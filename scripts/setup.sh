@@ -285,8 +285,8 @@ write_log "in ${HOME}/cog.vars. Note that you will have to add configuration"
 write_log "for your chat provider."
 write_log
 
-write_log "To start Cog:\tcd %s/cog && make run"
-write_log "To start Relay:\tcd %s/relay && scripts/relay start"
+write_log "To start Cog:\tcd %s/cog && make run" ${install_dir}
+write_log "To start Relay:\tcd %s/relay && scripts/relay start" ${install_dir}
 write_log
 write_log "Path to relayctl:\t%s/relayctl" ${install_dir}
 write_log "Path to cogctl:\t%s/cogctl" ${install_dir}
