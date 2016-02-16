@@ -8,22 +8,21 @@ defmodule Cog.Formatters.Table do
   format/2
 
   `data` - a list of rows(lists) that will populate the table.
-  `padding` - the spacing between columns
   """
-  def format(data, padding) do
+  def format(data) do
     data
     |> transpose
-    |> Enum.map(&align_column(&1, padding))
+    |> Enum.map(&align_column(&1))
     |> transpose
   end
 
-  defp align_column(column, padding) do
+  defp align_column(column) do
     # First we convert all values in the column to strings
     string_column = Enum.map(column, &cell_string/1)
     # Next we get the longest string from the column and set that to the max width
     max = max_length(string_column)
     # Last we align the column
-    Enum.map(string_column, &String.ljust(&1, max + padding))
+    Enum.map(string_column, &String.ljust(&1, max))
   end
 
   defp max_length(column) do
