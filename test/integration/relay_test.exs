@@ -39,12 +39,17 @@ defmodule Integration.RelayTest do
     disconnect_from_relay_discover(conn)
   end
 
+  # Runs `rm -rf` on the path before checking out the repo
+  def checkout(name) do
+    Mix.SCM.Git.checkout(dest: "../cog_#{name}", git: "git@github.com:operable/#{name}.git")
+  end
+
   def checkout_relay do
-    Mix.SCM.Git.checkout(dest: "../cog_relay", git: "git@github.com:operable/relay.git")
+    checkout("relay")
   end
 
   def checkout_mist do
-    Mix.SCM.Git.checkout(dest: "../cog_mist", git: "git@github.com:operable/mist.git")
+    checkout("mist")
   end
 
   def build_relay do
