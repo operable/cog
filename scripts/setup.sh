@@ -134,6 +134,10 @@ do
     -h)
       usage && exit 0
       ;;
+    --tag)
+      shift
+      RELEASE_TAG="$1"
+      ;;
     --verbose)
       verbose="1"
       ;;
@@ -209,6 +213,7 @@ for repo in ${REPOS}; do
         write_err "Error refreshing ${repo} to release tag ${RELEASE_TAG}"
         abort
       fi
+      cd ..
     fi
   else
     write_log "Updating previous ${repo} clone."
@@ -280,8 +285,8 @@ write_log "in ${HOME}/cog.vars. Note that you will have to add configuration"
 write_log "for your chat provider."
 write_log
 
-write_log "To start Cog:\tcd %s/cog && make run" ${install_dir}
-write_log "To start Relay:\tcd %s/relay && scripts/start.sh" ${install_dir}
+write_log "To start Cog:\tcd %s/cog && make run"
+write_log "To start Relay:\tcd %s/relay && scripts/relay start"
 write_log
 write_log "Path to relayctl:\t%s/relayctl" ${install_dir}
 write_log "Path to cogctl:\t%s/cogctl" ${install_dir}
