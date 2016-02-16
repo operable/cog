@@ -138,10 +138,6 @@ do
       shift
       RELEASE_TAG="$1"
       ;;
-    --tag=)
-      shift
-      RELEASE_TAG="$1"
-      ;;
     --verbose)
       verbose="1"
       ;;
