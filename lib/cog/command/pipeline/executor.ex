@@ -104,6 +104,7 @@ defmodule Cog.Command.Pipeline.Executor do
   alias Cog.Events.PipelineEvent
 
   use Adz
+  use Cog.Util.Debug
 
   def start_link(request) do
     :gen_fsm.start_link(__MODULE__, [request], [])
@@ -469,8 +470,8 @@ defmodule Cog.Command.Pipeline.Executor do
     do: "raw"
 
   # Could be a raw response or rendered lines of output; render each line separately
-  defp render_template(bundle_id, adapter, nil, context) when is_list(context) do
-    Enum.map_join(context, "\n", &render_template(bundle_id, adapter, nil, &1))
+  defp render_template(bundle_id, adapter, template, context) when is_list(context) do
+    Enum.map_join(context, "\n", &render_template(bundle_id, adapter, template, &1))
   end
   # Rendered lines of output; render each line of text separately
   defp render_template(bundle_id, adapter, nil, %{"body" => context}) when is_list(context) do
