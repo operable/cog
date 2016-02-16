@@ -134,6 +134,14 @@ do
     -h)
       usage && exit 0
       ;;
+    --tag)
+      shift
+      RELEASE_TAG="$1"
+      ;;
+    --tag=)
+      shift
+      RELEASE_TAG="$1"
+      ;;
     --verbose)
       verbose="1"
       ;;
