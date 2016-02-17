@@ -13,6 +13,7 @@ defmodule Cog.Relay.Relays do
   alias Carrier.Messaging
   alias Cog.Models.Bundle
   alias Cog.Repo
+  alias Cog.Relay.Util
 
   @relays_discovery_topic "bot/relays/discover"
 
@@ -148,7 +149,36 @@ defmodule Cog.Relay.Relays do
   end
 
   defp process_announcement(announcement, %__MODULE__{tracker: tracker}=state) do
+    {success_bundles, failed_bundles} = announcement
+    |> Map.fetch!("bundles")
+    |> Enum.map(&lookup_or_install/1)
+    |> Enum.partition(&Util.is_ok?/1)
+    |> Util.unwrap_partition_results
+
+    tracker = update_tracker(announcement, tracker, success_bundles)
+
+    case Map.fetch(announcement, "reply_to")  do
+      :error ->
+        :ok # The embedded bundle has no need for a reply
+      {:ok, reply_to} ->
+        # If the message has a `reply_to` field, it must also have an
+        # `announcement_id` field
+        announcement_id = Map.fetch!(announcement, "announcement_id")
+        receipt = receipt(announcement_id, failed_bundles)
+        Logger.debug("Sending receipt to #{reply_to}: #{inspect receipt}")
+        Messaging.Connection.publish(state.mq_conn, receipt, routed_by: reply_to)
+    end
+    %{state | tracker: tracker}
+  end
+
+  defp receipt(announcement_id, []),
+    do: %{"announcement_id" => announcement_id, "status" => "success", "bundles" => []}
+  defp receipt(announcement_id, failed_bundles),
+    do: %{"announcement_id" => announcement_id, "status" => "failed", "bundles" => failed_bundles}
+
+  defp update_tracker(announcement, tracker, success_bundles) do
     relay_id = Map.fetch!(announcement, "relay")
+
     online_status = case Map.fetch!(announcement, "online") do
                       true -> :online
                       false -> :offline
@@ -159,40 +189,19 @@ defmodule Cog.Relay.Relays do
                         false -> :incremental
                       end
 
-    bundles = announcement
-    |> Map.fetch!("bundles")
-    |> Enum.map(&lookup_or_install/1)
-
-    bundle_names = Enum.map(bundles, &Map.get(&1, :name)) # Just for logging purposes
-
-    tracker = case {online_status, snapshot_status} do
-                {:offline, _} ->
-                  Logger.info("Removing Relay #{relay_id} from active relay list")
-                  Tracker.remove_relay(tracker, relay_id)
-                {:online, :incremental} ->
-                  Logger.info("Incrementally adding bundles for Relay #{relay_id}: #{inspect bundle_names}")
-                  Tracker.add_bundles_for_relay(tracker, relay_id, bundles)
-                {:online, :snapshot} ->
-                  Logger.info("Setting bundles list for Relay #{relay_id}: #{inspect bundle_names}")
-                  Tracker.set_bundles_for_relay(tracker, relay_id, bundles)
-              end
-
-    case Map.fetch(announcement, "reply_to")  do
-      :error ->
-        :ok # The embedded bundle has no need for a reply
-      {:ok, reply_to} ->
-        # If the message has a `reply_to` field, it must also have an
-        # `announcement_id` field
-        announcement_id = Map.fetch!(announcement, "announcement_id")
-        receipt = receipt(announcement_id)
-        Logger.debug("Sending receipt to #{reply_to}: #{inspect receipt}")
-        Messaging.Connection.publish(state.mq_conn, receipt, routed_by: reply_to)
+    bundle_names = Enum.map(success_bundles, &Map.get(&1, :name)) # Just for logging purposes
+    case {online_status, snapshot_status} do
+      {:offline, _} ->
+        Logger.info("Removing Relay #{relay_id} from active relay list")
+        Tracker.remove_relay(tracker, relay_id)
+      {:online, :incremental} ->
+        Logger.info("Incrementally adding bundles for Relay #{relay_id}: #{inspect bundle_names}")
+        Tracker.add_bundles_for_relay(tracker, relay_id, success_bundles)
+      {:online, :snapshot} ->
+        Logger.info("Setting bundles list for Relay #{relay_id}: #{inspect bundle_names}")
+        Tracker.set_bundles_for_relay(tracker, relay_id, success_bundles)
     end
-    %{state | tracker: tracker}
   end
-
-  defp receipt(announcement_id),
-    do: %{"acknowledged" => announcement_id}
 
   # If `config` exists in the database (by name), retrieves the
   # database record. If not, installs the bundle and returns the
@@ -200,16 +209,20 @@ defmodule Cog.Relay.Relays do
   defp lookup_or_install(%{"bundle" => %{"name" => name}} = config) do
     case Repo.get_by(Bundle, name: name) do
       %Bundle{}=bundle ->
-        bundle
+        {:ok, bundle}
       nil ->
         Logger.info("Installing bundle: #{name}")
         # TODO: Eventually the manifest can go away, as it's not really
         # needed on the bot side of things. Until then, we can fake it
         # with an empty map
-        Cog.Bundle.Install.install_bundle(%{name: name,
-                                            config_file: config,
-                                            manifest_file: %{}})
-
+        case Cog.Bundle.Install.install_bundle(%{name: name, config_file: config,
+                                                 manifest_file: %{}}) do
+          {:ok, bundle} ->
+            {:ok, bundle}
+          {:error, error} ->
+            Logger.error("Error! Unable to install bundle `#{name}`: #{inspect error}")
+            {:error, name}
+        end
     end
   end
 
