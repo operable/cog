@@ -14,10 +14,9 @@ defmodule Cog.Adapters.Slack.RTMConnector do
   ## Fields
 
   * `:id` - The ID of the bot user, e.g. `"U023BECGF"`
-  * `:direct_name` - The bot id, wrapped in brackets and an "@",
-    e.g. `"<@U023BECGF>"`. This is how mentions look in a received
-    message; we'll need it to figure out when someone is talking
-    directly to the bot.
+  * `:direct_name` - The bot username formatted as a mention,
+    e.g. `"@cog"`. This is how mentions look after they are unescaped; we'll
+    need it to figure out when someone is talking directly to the bot.
   * `:name` - The name of the bot user, without the "@", e.g. `"cog"`
   * `:bus` - connection to the Cog message bus
 
@@ -36,6 +35,7 @@ defmodule Cog.Adapters.Slack.RTMConnector do
   require Logger
   use Slack
   alias Cog.Adapters.Slack.API
+  alias Cog.Adapters.Slack.Formatter
 
   @adapter_name "slack"
   @module_name Cog.Adapters.Slack
@@ -91,7 +91,7 @@ defmodule Cog.Adapters.Slack.RTMConnector do
     Carrier.Messaging.Connection.subscribe(bus, "/bot/adapters/slack/+")
     state = %__MODULE__{id: slack.me.id,
                         name: slack.me.name,
-                        direct_name: "<@" <> slack.me.id <> ">",
+                        direct_name: "@" <> slack.me.name,
                         bus: bus}
     :erlang.register(__MODULE__, self())
     Logger.info("Ready. Slack username: #{slack.me.name}, userid: #{slack.me.id}.")
@@ -102,6 +102,8 @@ defmodule Cog.Adapters.Slack.RTMConnector do
   end
 
   def handle_message(%{type: "message", user: user_id, channel: channel, text: text}, _slack, state) do
+    text = Formatter.unescape(text)
+
     case invocation_type(user_id, channel, text, state) do
       :ignore ->
         {:ok, state}
@@ -118,6 +120,8 @@ defmodule Cog.Adapters.Slack.RTMConnector do
   end
   # Called when a user edits a previous command
   def handle_message(%{channel: channel, type: "message", message: %{edited: _info, text: text, user: user_id}}, slack, state) do
+    text = Formatter.unescape(text)
+
     {:ok, user} = API.lookup_user(id: user_id)
     {message, handler} = case invocation_type(user_id, channel, text, state) do
                            :ignore ->
