@@ -1,4 +1,5 @@
 defmodule Cog.Command.Pipeline.Executor do
+
   @moduledoc """
   The command executor, `#{inspect __MODULE__}` is responsible for parsing the
   command request and executing one or more commands. This is largely a
