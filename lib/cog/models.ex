@@ -37,6 +37,8 @@ defmodule Cog.Models do
       alias Cog.Models.RulePermission
       alias Cog.Models.Token
       alias Cog.Models.Template
+      alias Cog.Models.UserCommandAlias
+      alias Cog.Models.SiteCommandAlias
     end
   end
 end
