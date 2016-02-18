@@ -322,6 +322,14 @@ defmodule Integration.Commands.AliasTest do
     assert response["data"]["response"] == expected_response
   end
 
+  test "list all aliases with no aliases", %{user: user} do
+    alias_list = []
+
+    response = send_message(user, "@bot: operable:alias ls")
+    expected_response = Helpers.render_template("alias-ls", alias_list)
+    assert response["data"]["response"] == expected_response
+  end
+
   test "list aliases with an invalid pattern", %{user: user} do
     response = send_message(user, "@bot: operable:alias ls \"% &my#-*\"")
     assert response["data"]["response"] == "@vanstee Whoops! An error occurred. Bad pattern. Sorry, but that is an invalid pattern only letters numbers and the following special characters are allowed: *, -, _"

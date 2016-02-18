@@ -11,6 +11,7 @@ defmodule Cog.Commands.Alias do
   * mv <alias-name> <site | user>:[new-alias-name] -- moves aliases between user and site visibility. Optionally renames aliases.
   * rm <alias-name> -- Removes aliases
   * which <alias-name> -- Returns the visibility of the alias, site or user.
+  * ls [pattern] -- Returns the list of aliases optionally filtered by pattern. Pattern support basic wildcards with '*'.
 
   ## Example
 
