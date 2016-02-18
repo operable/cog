@@ -119,7 +119,7 @@ defmodule Cog.Adapters.Slack.RTMConnector do
     end
   end
   # Called when a user edits a previous command
-  def handle_message(%{channel: channel, type: "message", message: %{edited: _info, text: text, user: user_id}}, slack, state) do
+  def handle_message(%{channel: channel, type: "message", message: %{edited: _info, text: text, user: user_id}}, _slack, state) do
     text = Formatter.unescape(text)
 
     {:ok, user} = API.lookup_user(id: user_id)
@@ -137,7 +137,7 @@ defmodule Cog.Adapters.Slack.RTMConnector do
                               fn() -> handle_command(room, user_id, text, state) end}
                          end
     unless message == nil do
-      send_message(message, channel, slack)
+      API.send_message(channel, message)
     end
     handler.()
   end
@@ -156,18 +156,18 @@ defmodule Cog.Adapters.Slack.RTMConnector do
     send_raw(json, slack)
     {:ok, state}
   end
-  def handle_info({:publish, "/bot/adapters/slack/send_message", message}, slack, state) do
+  def handle_info({:publish, "/bot/adapters/slack/send_message", message}, _slack, state) do
     # We got a message back from one of our commands; pass it along to Slack
     case Carrier.CredentialManager.verify_signed_message(message) do
       {true, payload} ->
-        send_message(payload["response"], payload["room"]["id"], slack)
+        API.send_message(payload["room"]["id"], payload["response"])
       false ->
         Logger.error("Message signature not verified! #{inspect message}")
     end
     {:ok, state}
   end
-  def handle_info({{:send_message, ref, sender}, room, message}, slack, state) do
-    send_message(message, room, slack)
+  def handle_info({{:send_message, ref, sender}, room, message}, _slack, state) do
+    API.send_message(room, message)
     send(sender, {ref, :ok})
     {:ok, state}
   end

@@ -15,6 +15,10 @@ defmodule Cog.Adapters.Slack.API do
     GenServer.start_link(__MODULE__, [token, ttl], name: @server_name)
   end
 
+  def send_message(channel_id, message) when is_binary(message) do
+    GenServer.call(@server_name, {:send_message, channel_id, message}, :infinity)
+  end
+
   def lookup_user(key) when is_tuple(hd(key)) do
     case query_cache(@user_cache, key) do
       nil ->
@@ -109,6 +113,17 @@ defmodule Cog.Adapters.Slack.API do
         Logger.info("Ready. Response cache TTL is #{state.ttl} seconds.")
         {:ok, state}
     end
+  end
+
+  def handle_call({:send_message, channel, message}, _from, state) do
+    result = call_api!("chat.postMessage", state.token, body: %{channel: channel, text: message, as_user: true, parse: "full"})
+    reply = case result["ok"] do
+      true ->
+        {:ok, result["message"]}
+      false ->
+        {:error, result["error"]}
+    end
+    {:reply, reply, state}
   end
 
   def handle_call({:lookup_user, [id: id]}, _from, state) do
