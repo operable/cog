@@ -17,8 +17,13 @@ defmodule Cog.Adapters.Slack.FormatterTest do
     assert unescaped == "I love to wake up early and tell @everyone I'm @here."
   end
 
-  test "unecaping links" do
+  test "unescaping links" do
     unescaped = Formatter.unescape("Hey check this out: <https://www.youtube.com/watch?v=dQw4w9WgXcQ>")
     assert unescaped == "Hey check this out: https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+  end
+
+  test "unescapeing everything all-in-one" do
+    unescaped = Formatter.unescape("Here's that link <@U9AF923J|imbriaco> posted in <#C014BE7LR|alpha>: <https://www.youtube.com/watch?v=dQw4w9WgXcQ>")
+    assert unescaped == "Here's that link @imbriaco posted in #alpha: https://www.youtube.com/watch?v=dQw4w9WgXcQ"
   end
 end
