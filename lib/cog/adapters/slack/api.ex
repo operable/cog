@@ -15,6 +15,10 @@ defmodule Cog.Adapters.Slack.API do
     GenServer.start_link(__MODULE__, [token, ttl], name: @server_name)
   end
 
+  def send_message(channel_id, message) when is_binary(message) do
+    GenServer.call(@server_name, {:send_message, channel_id, message}, :infinity)
+  end
+
   def lookup_user(key) when is_tuple(hd(key)) do
     case query_cache(@user_cache, key) do
       nil ->
@@ -44,46 +48,30 @@ defmodule Cog.Adapters.Slack.API do
 
   NOTE: Only called (in this form) from the executor for finding redirects.
   """
-  def lookup_room(id, as_user: _unused_pending_refactor) do
-    case remove_brackets_if_present_from(id) do
-      "@" <> user_id ->
-        # If the user really exists, `user_id` will be an internal
-        # Slack identifier. If not, `user_id` will be the whatever
-        # name the end-user typed.
-        lookup_direct_room(user_id: user_id, as_user: :unused_pending_refactor)
-      "#" <> room_id ->
-        # Similarly, if the room really exists, `room_id` will be an
-        # internal Slack identifier.
-        lookup_room(id: room_id)
-      other ->
-        # We do some snazzy recovery by not actually requiring the
-        # end-user to preface user or room names with "@" or "#",
-        # respectively (we can do this because we only accept room or
-        # user names in specific places in pipeline invocations). In
-        # this case, Slack of course won't have translated to internal
-        # IDs, so we'll need to do that ourselves.
-        #
-        # First, we try the string as a room name, and if that fails,
-        # fall back to treating it as a user name. If neither works,
-        # we fail.
-        case GenServer.call(@server_name, {:lookup_room, [name: other]}, :infinity) do
-          {:ok, room} ->
-            {:ok, room}
-          {:error, :not_a_member} ->
-            # We know the room exists, but we're not a member, so bail now
-            {:error, :not_a_member}
-          {:error, :not_found} ->
-            case GenServer.call(@server_name, {:lookup_user, [handle: other]}, :infinity) do
-              {:ok, user} ->
-                lookup_direct_room(user_id: user.id, as_user: :unused_pending_refactor)
-              {:error, _}=error ->
-                error
-            end
-        end
-    end
+  def lookup_room("@" <> user_name) do
+    {:ok, user} = lookup_user(handle: user_name)
+    lookup_direct_room(user_id: user.id)
   end
 
-  def lookup_direct_room(user_id: id, as_user: _old_unused_arg_pending_refactoring) do
+  def lookup_room("#" <> channel_name) do
+    lookup_room(name: channel_name)
+  end
+
+  # We do some snazzy recovery by not actually requiring the
+  # end-user to preface user or room names with "@" or "#",
+  # respectively (we can do this because we only accept room or
+  # user names in specific places in pipeline invocations).
+  #
+  # First, we try the string as a room name, and if that fails,
+  # fall back to treating it as a user name. If neither works,
+  # we fail.
+  def lookup_room(other) when is_binary(other) do
+    with {:error, :not_found} <- lookup_room(name: other),
+      {:ok, user} <- lookup_user(handle: other),
+      do: lookup_direct_room(user_id: user.id)
+  end
+
+  def lookup_direct_room(user_id: id) do
     case query_cache(@direct_chat_channel_cache, [id: id]) do
       nil ->
         GenServer.call(@server_name, {:open_direct_chat, id}, :infinity)
@@ -109,6 +97,17 @@ defmodule Cog.Adapters.Slack.API do
         Logger.info("Ready. Response cache TTL is #{state.ttl} seconds.")
         {:ok, state}
     end
+  end
+
+  def handle_call({:send_message, channel, message}, _from, state) do
+    result = call_api!("chat.postMessage", state.token, body: %{channel: channel, text: message, as_user: true, parse: "full"})
+    reply = case result["ok"] do
+      true ->
+        {:ok, result["message"]}
+      false ->
+        {:error, result["error"]}
+    end
+    {:reply, reply, state}
   end
 
   def handle_call({:lookup_user, [id: id]}, _from, state) do
@@ -362,20 +361,4 @@ defmodule Cog.Adapters.Slack.API do
   defp translate_slack_error("im.open", "user_not_found"), do: :user_not_found
   defp translate_slack_error("im.open", "user_not_visible"), do: :user_not_visible
   defp translate_slack_error("im.open", "user_disabled"), do: :user_disabled
-
-  # If a user mentions a real Slack room or user by name
-  # (e.g. "#general", "@a_user_that_exists"), the message text that we
-  # receive has these names converted into internal Slack identifiers,
-  # rather than the names. Additionally, they are wrapped in brackets.
-  #
-  # Thus a mention of "#general" will come to us like "<#C00ABCDEF>",
-  # and "@a_user_that_exists" like "<@U0A12ABCD>". If a user mentions
-  # a room or user that doesn't exist, we'll just get the raw text:
-  # "#not_a_real_room", "@easter_bunny", etc.
-  #
-  # In order to normalize things, we strip off any enclosing brackets
-  # we may find.
-  defp remove_brackets_if_present_from(id),
-    do: String.replace(id, ~r/<([^>]*)>/, "\\1")
-
 end

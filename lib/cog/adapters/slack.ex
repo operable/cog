@@ -24,7 +24,7 @@ defmodule Cog.Adapters.Slack do
   def message(room, message) do
     case Cog.Adapters.Slack.API.lookup_room(room) do
       {:ok, room} ->
-        Cog.Adapters.Slack.RTMConnector.send_chat_message(room.id, message)
+        Cog.Adapters.Slack.API.send_message(room.id, message)
       error ->
         error
     end

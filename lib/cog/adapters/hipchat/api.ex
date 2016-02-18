@@ -26,8 +26,6 @@ defmodule Cog.Adapters.HipChat.API do
     get!("/#{subject}/#{id}" <> expands_list(expands))
   end
 
-  def lookup_direct_room(user_id: user_id, as_user: _),
-    do: {:ok, %{"direct" => user_id}}
   def lookup_direct_room(user_id: user_id),
     do: {:ok, %{"direct" => user_id}}
 

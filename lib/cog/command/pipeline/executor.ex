@@ -395,8 +395,9 @@ defmodule Cog.Command.Pipeline.Executor do
   defp lookup_room("me", state) do
     user_id = state.request["sender"]["id"]
     adapter = get_adapter_api(state.request["module"])
-    case adapter.lookup_direct_room(user_id: user_id, as_user: user_id) do
-      {:ok, direct_chat} -> {:ok, direct_chat}
+    case adapter.lookup_direct_room(user_id: user_id) do
+      {:ok, direct_chat} ->
+        {:ok, direct_chat}
       error ->
         Logger.error("Error resolving redirect 'me' with adapter #{adapter}: #{inspect error}")
         {:error, "me"}
@@ -406,7 +407,7 @@ defmodule Cog.Command.Pipeline.Executor do
     do: {:ok, state.request["room"]}
   defp lookup_room(redir, state) do
     adapter = get_adapter_api(state.request["module"])
-    case adapter.lookup_room(redir, as_user: state.request["sender"]["id"]) do
+    case adapter.lookup_room(redir) do
       {:ok, room} ->
         {:ok, room}
       {:error, reason} ->

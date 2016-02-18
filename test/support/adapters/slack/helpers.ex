@@ -30,9 +30,6 @@ defmodule Cog.Adapters.Slack.Helpers do
   end
 
   def send_message(user, message) do
-    {:ok, %{id: id}} = Slack.API.lookup_user(handle: @bot_handle)
-    message = String.replace(message, "@#{@bot_handle}", "<@#{id}>")
-
     {:ok, %{id: channel}} = Slack.API.lookup_room(name: @room)
 
     url = "https://slack.com/api/chat.postMessage"
@@ -62,7 +59,7 @@ defmodule Cog.Adapters.Slack.Helpers do
           [] ->
             {:ok, nil}
           [%{"text" => text}] ->
-            {:ok, text}
+            {:ok, Slack.Formatter.unescape(text)}
         end
     end
   end
