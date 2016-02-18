@@ -1,4 +1,10 @@
 defmodule Cog.Commands.Thorn do
+  @moduledoc """
+  This command replaces `Th` following a word boundary with þ
+
+  Examples:
+  > @bot operable:thorn foo-Thbar-Thbaz
+  """
   use Spanner.GenCommand.Base, bundle: Cog.embedded_bundle, enforcing: false
 
   @upcase_thorn "Þ"
