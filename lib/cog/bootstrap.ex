@@ -50,7 +50,8 @@ defmodule Cog.Bootstrap do
     # Horrible quick n' dirty hack to strip
     # ; and # from passwords so ConfigParse_Ex doesn't
     # choke on them.
-    password = String.replace(Comeonin.Password.gen_password(32), ~r/[;#]/, "")
+    password = String.replace(Cog.Passwords.generate_password(32), ~r/[;#]/, "")
+
     params = %{
       username: @admin_name,
       first_name: "Cog",
