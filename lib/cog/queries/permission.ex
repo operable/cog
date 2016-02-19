@@ -56,4 +56,11 @@ defmodule Cog.Queries.Permission do
     where: g.id == ^group_id,
     select: p
   end
+
+  def directly_granted_to_role(role_id) do
+    from r in Cog.Models.Role,
+    join: p in assoc(r, :permissions),
+    where: r.id == ^role_id,
+    select: p
+  end
 end

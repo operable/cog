@@ -99,6 +99,8 @@ defmodule Cog.V1.PermissionController do
     do: Queries.Permission.directly_granted_to_user(user)
   def filtered_permissions_query(%{"group_id" => group}),
     do: Queries.Permission.directly_granted_to_group(group)
+  def filtered_permissions_query(%{"role_id" => role}),
+    do: Queries.Permission.directly_granted_to_role(role)
   def filtered_permissions_query(_params),
     do: Permission
 
