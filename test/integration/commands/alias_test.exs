@@ -355,4 +355,14 @@ defmodule Integration.Commands.AliasTest do
     assert response["data"]["response"] == "@vanstee Whoops! An error occurred. Not enough args. Arguments required: exactly 2."
   end
 
+  test "passing an unknown subcommand", %{user: user} do
+    response = send_message(user, "@bot: operable:alias foo")
+    assert response["data"]["response"] == "@vanstee Whoops! An error occurred. Unknown subcommand 'foo'"
+  end
+
+  test "passing now subcommand", %{user: user} do
+    response = send_message(user, "@bot: operable:alias")
+    assert response["data"]["response"] == "@vanstee Whoops! An error occurred. I don't what to do, please specify a subcommand"
+  end
+
 end

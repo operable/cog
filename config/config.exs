@@ -41,6 +41,9 @@ config :cog, :user_perms_ttl, {10, :sec}
 config :cog, :emqttc,
   log_level: :info
 
+# How many levels deep do we expand aliases, '0' disables aliases
+config :cog, :max_alias_expansion, 5
+
 # ========================================================================
 # Logging
 
