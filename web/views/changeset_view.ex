@@ -2,8 +2,12 @@ defmodule Cog.ChangesetView do
   use Cog.Web, :view
 
   def render("error.json", %{changeset: changeset}) do
-    # When encoded, the changeset returns its errors
-    # as a JSON object. So we just pass it forward.
-    %{errors: changeset}
+    errors = Enum.reduce(changeset.errors, %{}, fn {key, value}, acc ->
+      Map.merge(acc, %{key => [value]}, fn _key, value1, value2 ->
+        value1 ++ value2
+      end)
+    end)
+
+    %{errors: errors}
   end
 end
