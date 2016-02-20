@@ -140,7 +140,7 @@ defmodule Cog.Command.Pipeline.Executor do
         initialization_event(loop_data)
         {:ok, :parse, loop_data, 0}
       {:error, :not_found} ->
-        Logger.warn("Ignoring message from unknown user #{adapter}/#{handle}")
+        alert_unregistered_user(%__MODULE__{mq_conn: conn, request: request})
         :ignore
     end
   end
@@ -451,8 +451,11 @@ defmodule Cog.Command.Pipeline.Executor do
                   _ -> Cog.Queries.Bundles.bundle_id_from_name(bundle) |> Cog.Repo.one!
                 end
     text = render_template(bundle_id, adapter, template, body)
+    response_fn(text, adapter)
+  end
+  defp response_fn(message, adapter) when is_binary(message) do
     fn(room) ->
-      %{response: text,
+      %{response: message,
         room: room,
         adapter: adapter}
     end
@@ -717,5 +720,69 @@ defmodule Cog.Command.Pipeline.Executor do
   # permissions, since we'll need them later anyway
   defp resolve_user_and_permissions(adapter, handle),
     do: Cog.Command.UserPermissionsCache.fetch(username: handle, adapter: adapter)
+
+  defp alert_unregistered_user(state) do
+    response_fn = response_fn(unregistered_user_message(state.request),
+                              state.request["adapter"])
+    publish_response(response_fn, state.request["room"], state)
+  end
+
+  defp unregistered_user_message(request) do
+    adapter = get_adapter_api(request["module"])
+    mention_name = adapter.mention_name(request["sender"]["handle"])
+    service_name = adapter.service_name
+    user_creators = user_creators(request)
+
+    # If no users that can help have chat handles registered (e.g.,
+    # the system was just bootstrapped and only the bootstrap
+    # administrator is wired up permission-wise yet), we'll output a
+    # basic message to ask for help.
+    #
+    # On the other hand, if there are people that can help that have
+    # chat presences, we'll further add their names to the message, so
+    # the user will some real people to ask
+    #
+    # I want error templates!
+    call_to_action = case user_creators do
+                       [] ->
+                         "You'll need to ask a Cog administrator to fix this situation and to register your #{service_name} handle."
+                       _ ->
+                         "You'll need to ask a Cog administrator to fix this situation and to register your #{service_name} handle; the following users can help you right here in chat: #{Enum.join(user_creators, ", ")} ."
+                     end
+    # Yes, that space between the last mention and the period is
+    # significant, at least for Slack; it won't format the mention as
+    # a mention otherwise, because periods are allowed in their handles.
+
+    """
+    #{mention_name}: I'm sorry, but either I don't have a Cog account for you, or your #{service_name} chat handle has not been registered. Currently, only registered users can interact with me.
+
+   #{call_to_action}
+    """
+  end
+
+  # Returns a list of adapter-appropriate "mention names" of all Cog
+  # users with registered handles for the adapter that currently have
+  # the permissions required to create and manipulate new Cog user
+  # accounts.
+  #
+  # The intention is to create a list of people that can assist
+  # immediately in-chat when unregistered users attempt to interact
+  # with Cog. Not every Cog user with these permissions will
+  # necessarily have a chat handle registered for the chat provider
+  # being used (most notably, the bootstrap admin user).
+  defp user_creators(request) do
+    adapter = request["adapter"]
+    adapter_module = get_adapter_api(request["module"])
+
+    "operable:manage_users"
+    |> Cog.Queries.Permission.from_full_name
+    |> Cog.Repo.one!
+    |> Cog.Queries.User.with_permission
+    |> Cog.Queries.User.with_chat_handle_for(adapter)
+    |> Cog.Repo.all
+    |> Enum.flat_map(&(&1.chat_handles))
+    |> Enum.map(&(adapter_module.mention_name(&1.handle)))
+    |> Enum.sort
+  end
 
 end
