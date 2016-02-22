@@ -5,7 +5,7 @@ defmodule Cog.Mixfile do
 
   def project do
     [app: :cog,
-     version: "0.0.1",
+     version: "0.2.0",
      elixir: "~> 1.2",
      leex_options: [:warnings_as_errors],
      elixirc_options: [warnings_as_errors: System.get_env("ALLOW_WARNINGS") == nil],
@@ -51,7 +51,6 @@ defmodule Cog.Mixfile do
      {:ecto, "~> 1.1.3"},
      {:lager_logger, "~> 1.0.2"},
      {:logger_file_backend, github: "onkel-dirtus/logger_file_backend", ref: "457ce74fc242261328f71a77d75252bf0c74c170"},
-     {:emqttc, github: "operable/emqttc", ref: "dc36f593822f8e01771a7edc780441fdfb2f7b15"},
      {:emqttd, github: "operable/emqttd", branch: "tweaks-for-upstream"},
      {:lager, "~> 3.0.2", override: true},
      {:cowboy, "~> 1.0.4"},
@@ -62,10 +61,10 @@ defmodule Cog.Mixfile do
      {:hedwig, "~> 0.3.0"},
      {:gproc, "~> 0.5.0", override: true},
      {:html_entities, "~> 0.3.0"},
-     {:spanner, git: "git@github.com:operable/spanner", ref: "fac050660f08384eec2dd98ff34b5e3b087ab47f"},
-     {:probe, git: "git@github.com:operable/probe", ref: "a3c0c068b3b51c2b84ff8bae7f8bc8bba01fff54"},
+     {:spanner, git: "git@github.com:operable/spanner", tag: "0.2"},
+     {:probe, git: "git@github.com:operable/probe", tag: "0.2"},
      {:exml, github: "paulgray/exml", tag: "2.2.1"},
-     {:fumanchu, github: "operable/fumanchu", ref: "6b85a3fe3ce5849fb0505f05cdbda220829bf7ef"},
+     {:fumanchu, github: "operable/fumanchu", ref: "cog-0.2"},
 
      {:phoenix_live_reload, "~> 1.0.3", only: :dev},
      {:earmark, "~> 0.2.1", only: :dev},
