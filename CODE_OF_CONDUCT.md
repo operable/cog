@@ -55,12 +55,12 @@ further defined and clarified by project maintainers.
 ## Enforcement
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
-reported by contacting [Mark Imbriaco](mailto:mark@operable.io) or [Kevin
-Smith](mailto:kevin@operable.io). All complaints will be reviewed and investigated
-and will result in a response that is deemed necessary and appropriate to the
-circumstances. The project team is obligated to maintain confidentiality with
-regard to the reporter of an incident. Further details of specific enforcement
-policies may be posted separately.
+reported by contacting [founders@operable.io](mailto:founders@operable.io).
+All complaints will be reviewed and investigated and will result in a response
+that is deemed necessary and appropriate to the circumstances. The project team
+is obligated to maintain confidentiality with regard to the reporter of an
+incident. Further details of specific enforcement policies may be posted
+separately.
 
 ## Attribution
 
