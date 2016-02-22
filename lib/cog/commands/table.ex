@@ -27,10 +27,7 @@ defmodule Cog.Commands.Table do
 
   defp format_table(headers, rows) do
     rows = Enum.map(rows, fn row ->
-      headers
-      |> Enum.into(%{}, &{&1, ""})
-      |> Map.merge(Map.take(row, headers))
-      |> Map.values
+      Enum.map(headers, &Map.get(row, &1, ""))
     end)
 
     [headers|rows]
