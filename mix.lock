@@ -46,7 +46,7 @@
   "poolboy": {:hex, :poolboy, "1.5.1"},
   "porcelain": {:hex, :porcelain, "2.0.1"},
   "postgrex": {:hex, :postgrex, "0.11.1"},
-  "probe": {:git, "git@github.com:operable/probe", "5cc91eae289ef5f862223796c45a7088750e2c46", [ref: "5cc91eae289ef5f862223796c45a7088750e2c46"]},
+  "probe": {:git, "git@github.com:operable/probe", "a3c0c068b3b51c2b84ff8bae7f8bc8bba01fff54", [ref: "a3c0c068b3b51c2b84ff8bae7f8bc8bba01fff54"]},
   "ranch": {:hex, :ranch, "1.2.1"},
   "slack": {:hex, :slack, "0.4.2"},
   "spanner": {:git, "git@github.com:operable/spanner", "fac050660f08384eec2dd98ff34b5e3b087ab47f", [ref: "fac050660f08384eec2dd98ff34b5e3b087ab47f"]},
