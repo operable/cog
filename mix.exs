@@ -62,7 +62,7 @@ defmodule Cog.Mixfile do
      {:hedwig, "~> 0.3.0"},
      {:gproc, "~> 0.5.0", override: true},
      {:html_entities, "~> 0.3.0"},
-     {:spanner, git: "git@github.com:operable/spanner", ref: "33af977194f2377048ae41a4e9d180ebc86e4d70"},
+     {:spanner, git: "git@github.com:operable/spanner", ref: "952dd481ad7f86984254b7c0a8053234fee1a23b"},
      {:probe, git: "git@github.com:operable/probe", ref: "5cc91eae289ef5f862223796c45a7088750e2c46"},
      {:exml, github: "paulgray/exml", tag: "2.2.1"},
      {:fumanchu, github: "operable/fumanchu", ref: "6b85a3fe3ce5849fb0505f05cdbda220829bf7ef"},
