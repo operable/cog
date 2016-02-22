@@ -28,12 +28,13 @@ defmodule Cog.Router do
     resources "/v1/permissions", V1.PermissionController, except: [:update]
     get "/v1/users/:user_id/permissions", V1.PermissionController, :index
     get "/v1/groups/:group_id/permissions", V1.PermissionController, :index
+    get "/v1/roles/:role_id/permissions", V1.PermissionController, :index
 
     post "/v1/token", V1.TokenController, :create
 
     post "/v1/users/:id/permissions", V1.PermissionGrantController, :manage_user_permissions
-    post "/v1/roles/:id/permissions", V1.PermissionGrantController, :manage_role_permissions
     post "/v1/groups/:id/permissions", V1.PermissionGrantController, :manage_group_permissions
+    post "/v1/roles/:id/permissions", V1.PermissionGrantController, :manage_role_permissions
 
     post "/v1/users/:id/roles", V1.RoleGrantController, :manage_user_roles
     post "/v1/groups/:id/roles", V1.RoleGrantController, :manage_group_roles
