@@ -8,6 +8,20 @@ defmodule Cog.Adapters.HipChat.API do
   @api_base "https://api.hipchat.com/v2"
   @timeout 15000 # 15 seconds
 
+  # TODO: This should be part of a future adapter behavior
+  @doc """
+  Format a chat handle to correspond to a "mention" in this chat
+  provider.
+  """
+  def mention_name(handle), do: "@" <> handle
+
+  # TODO: This should be part of a future adapter behavior
+  @doc """
+  The "name" of the chat service, properly formatted, capitalized,
+  etc. to correspond with colloquial usage.
+  """
+  def service_name, do: "HipChat"
+
   def message(room, message), do: send_message(room, message)
   def send_message(room, message) do
     url = "/room/" <> to_string(room) <> "/message"

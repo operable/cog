@@ -50,4 +50,38 @@ defmodule Cog.Queries.User do
     where: t.value == ^token,
     select: {u, datetime_add(t.inserted_at, ^ttl_in_seconds, "second") > ^Ecto.DateTime.utc}
   end
+
+  @doc """
+  Chainable query fragment that selects all users that have a
+  given permission, whether directly, by role, or by (recursive) group
+  membership, or any combination thereof.
+
+  The queryable that is given must ultimately resolve to a user, and
+  if not given, defaults to the `User` model for maximum flexibility
+  """
+  def with_permission(queryable \\ User, %Permission{}=permission) do
+    id = Cog.UUID.uuid_to_bin(permission.id)
+    from u in queryable,
+    # TODO: Use a fragment join instead?
+    where: u.id in fragment("SELECT * FROM users_with_permission(?)", ^id)
+  end
+
+  @doc """
+  Chainable query fragment that selects all users that have a
+  chat handle for a given chat provider.
+
+  The queryable that is given must ultimately resolve to a user, and
+  if not given, defaults to the `User` model for maximum flexibility
+  """
+  # TODO: This is identical to `for_handle/2` but without the
+  #     where: ch.handle == ^handle
+  # fragment
+  def with_chat_handle_for(queryable \\ User, provider) do
+    from u in queryable,
+    join: ch in assoc(u, :chat_handles),
+    join: cp in assoc(ch, :chat_provider),
+    where: cp.name == ^provider,
+    preload: [chat_handles: ch]
+  end
+
 end

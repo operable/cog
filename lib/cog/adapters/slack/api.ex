@@ -15,6 +15,20 @@ defmodule Cog.Adapters.Slack.API do
     GenServer.start_link(__MODULE__, [token, ttl], name: @server_name)
   end
 
+  # TODO: This should be part of a future adapter behavior
+  @doc """
+  Format a chat handle to correspond to a "mention" in this chat
+  provider.
+  """
+  def mention_name(handle), do: "@" <> handle
+
+  # TODO: This should be part of a future adapter behavior
+  @doc """
+  The "name" of the chat service, properly formatted, capitalized,
+  etc. to correspond with colloquial usage.
+  """
+  def service_name, do: "Slack"
+
   def send_message(channel_id, message) when is_binary(message) do
     GenServer.call(@server_name, {:send_message, channel_id, message}, :infinity)
   end
