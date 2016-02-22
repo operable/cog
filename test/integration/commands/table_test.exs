@@ -1,4 +1,4 @@
-defmodule Integration.Commands.AliasTest do
+defmodule Integration.Commands.TableTest do
   use Cog.AdapterCase, adapter: "test"
   alias Cog.Repo
 
