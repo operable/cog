@@ -36,10 +36,11 @@ WORKDIR /
 
 # Setup Cog
 ENV MIX_ENV staging
-RUN mkdir -p /app
+RUN mkdir -p /app/config
 WORKDIR /app
 
 COPY mix.exs mix.lock /app/
+COPY config/helpers.exs /app/config/
 RUN mix deps.get && mix deps.compile
 
 COPY . /app/
