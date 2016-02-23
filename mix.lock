@@ -1,5 +1,10 @@
+<<<<<<< 766ebd01bf96dd32e6472cd567d9f9b38f574c90
 %{"adz": {:git, "https://github.com/operable/adz.git", "601ceb3a19716ea635a7cd83c05f5593f5cf6c40", [tag: "0.2"]},
   "carrier": {:git, "https://github.com/operable/carrier.git", "addaf0acd9acc3af894ccb396550f8785f277074", [tag: "0.2"]},
+=======
+%{"adz": {:git, "git@github.com:operable/adz", "601ceb3a19716ea635a7cd83c05f5593f5cf6c40", [tag: "0.2"]},
+  "carrier": {:git, "git@github.com:operable/carrier", "107ee3b252cc57c8581cb3f37000139a7bb1a2d0", [tag: "0.2"]},
+>>>>>>> Ensure mix deps are up-to-date
   "certifi": {:hex, :certifi, "0.3.0"},
   "comeonin": {:hex, :comeonin, "2.1.1"},
   "connection": {:hex, :connection, "1.0.2"},
