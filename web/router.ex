@@ -56,7 +56,5 @@ defmodule Cog.Router do
 
   scope "/", Cog do
     pipe_through :browser
-
-    get "/websockets", WebSocketController, :index
   end
 end
