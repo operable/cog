@@ -1,5 +1,39 @@
-bot:
-  build: .
+#
+# Notes:
+#
+# The following variables must be set in the shell that docker-compose
+# is executed from:
+#
+# POSTGRES_USER, POSTGRES_PASSWORD, SLACK_API_TOKEN
+#
+# In addition, a TAG variable may be defined. If present, it will be appended
+# to the Docker image names that are used for Cog and Relay. It should begin
+# with a colon (:), i.e. TAG=:0.2.1-dev
+#
+# $ docker-compose up
+#
+
+postgres:
+  image: postgres:9.5
+  environment:
+    - POSTGRES_USER=${POSTGRES_USER}
+    - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+cog:
+  image: operable/cog${TAG}
+  environment:
+    - COG_MQTT_HOST=0.0.0.0
+    - SLACK_API_TOKEN=${SLACK_API_TOKEN}
+    - DATABASE_URL=ecto://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/cog
+  links:
+    - postgres
   ports:
     - 80:4000
-  command: MIX_ENV=staging mix Phoenix.server
+    - 1883
+  entrypoint: scripts/wait-for-it.sh -s -t 0 -h postgres -p 5432 -- elixir --no-halt --name cog@127.0.0.1 --no-halt -S mix do ecto.create, ecto.migrate, phoenix.server
+relay:
+  image: operable/relay${TAG}
+  environment:
+    - COG_MQTT_HOST=cog
+  links:
+    - cog
+  entrypoint: scripts/wait-for-it.sh -s -t 0 -h cog -p 1883 -- elixir --no-halt --name relay@127.0.0.1 -S mix
