@@ -25,7 +25,7 @@ defmodule Cog.Models.Bundle do
     model
     |> cast(params, @required_fields, @optional_fields)
     |> validate_format(:name, ~r/\A[A-Za-z0-9\_\-\.]+\z/)
-    |> unique_constraint(:name)
+    |> unique_constraint(:name, name: :bundles_name_index)
     |> enable_if_embedded
   end
 
