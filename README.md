@@ -32,4 +32,5 @@ Below is a list of some of the current features. Cog is under heavy development 
 * [Cog Wiki](https://github.com/operable/cog/wiki)
 * [GitHub Issues](https://github.com/operable/cog/issues)
 * [Cog Public Chat](http://slack.operable.io/)
-
+* [How to Contribute](https://github.com/operable/cog/blob/master/CONTRIBUTING.md)
+* [Code of Conduct](https://github.com/operable/cog/blob/master/CODE_OF_CONDUCT.md)
