@@ -15,7 +15,7 @@ RUN apt-get install -y apt-transport-https build-essential git-core postgresql-c
 # Setup Elixir runtime
 RUN echo "deb https://packages.erlang-solutions.com/debian jessie contrib" >> /etc/apt/sources.list && \
     apt-key adv --fetch-keys http://packages.erlang-solutions.com/debian/erlang_solutions.asc && \
-    apt-get -qq update && apt-get install -y esl-erlang=1:18.1 && \
+    apt-get -qq update && apt-get install -y esl-erlang=1:18.1 libexpat-dev libsodium-dev && \
     apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Download and Install Specific Version of Elixir
@@ -36,10 +36,11 @@ WORKDIR /
 
 # Setup Cog
 ENV MIX_ENV staging
-RUN mkdir -p /app
+RUN mkdir -p /app/config
 WORKDIR /app
 
 COPY mix.exs mix.lock /app/
+COPY config/helpers.exs /app/config/
 RUN mix deps.get && mix deps.compile
 
 COPY . /app/
