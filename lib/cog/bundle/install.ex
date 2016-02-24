@@ -86,9 +86,7 @@ defmodule Cog.Bundle.Install do
   #                              "options": [%{"name" => "instance-id", "type" => "string", "required" => true}],
   #                              "module" => "Cog.Commands.EC2Tag"})
   defp create_command(%Bundle{}=bundle, command_spec) do
-    command_spec = command_spec
-    |> Enum.filter(fn({key, _}) -> key in @command_attrs end)
-    |> Enum.into(%{})
+    command_spec = Map.take(command_spec, @command_attrs)
 
     command = Command.build_new(bundle, command_spec)
     |> Repo.insert!
