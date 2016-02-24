@@ -6,7 +6,7 @@ defmodule RuleTest do
 
   setup do
     bundle = Bundle.changeset(%Bundle{}, %{name: "test_bundle", config_file: %{}, manifest_file: %{}}) |> Repo.insert!
-    {:ok, command} = Command.insert_new(%{name: "pugbomb", version: "1.0.0", bundle_id: bundle.id})
+    {:ok, command} = Command.insert_new(%{name: "pugbomb", bundle_id: bundle.id})
     {:ok, [command: command]}
   end
 
@@ -30,7 +30,7 @@ defmodule RuleTest do
       bundle = Bundle.changeset(%Bundle{}, %{name: "test_bundle", config_file: %{}, manifest_file: %{}}) |> Repo.insert!
       rule_text = "when command is s3:list must have s3:delete"
       {:ok, expr, _} = Piper.Permissions.Parser.parse(rule_text)
-      {:ok, command} = Command.insert_new(%{name: "pugbomb", version: "1.0.0", bundle_id: bundle.id})
+      {:ok, command} = Command.insert_new(%{name: "pugbomb", bundle_id: bundle.id})
       {:ok, rule} = Rule.insert_new(command, expr)
       {:ok, [rule: rule,
              permission: permission("pugbomb:create")]}

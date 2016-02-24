@@ -6,7 +6,6 @@ defmodule Cog.Models.Command do
 
   schema "commands" do
     field :name, :string
-    field :version, :string
     field :documentation, :string
     field :enforcing, :boolean, default: true
     field :calling_convention, :string, default: "bound"
@@ -18,11 +17,11 @@ defmodule Cog.Models.Command do
     has_many :options, CommandOption
   end
 
-  @required_fields ~w(name version bundle_id)
+  @required_fields ~w(name bundle_id)
   @optional_fields ~w(documentation enforcing calling_convention execution)
 
-  summary_fields [:id, :name, :version]
-  detail_fields [:id, :name, :version, :documentation]
+  summary_fields [:id, :name]
+  detail_fields [:id, :name, :documentation]
 
   @doc """
   Create a new changeset for a command, associating it with its parent
