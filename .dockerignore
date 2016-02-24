@@ -1,7 +1,7 @@
 _build
 deps
+data
 .git
 lib/cog/permissions/bp_lexer.erl
 lib/cog/permissions/bp_parser.erl
 Mnesia*
-audit_logs
