@@ -381,14 +381,16 @@ defmodule Cog.Command.Pipeline.Executor do
   # are invalid for any reason, returns an error with the list of
   # invalid redirects.
   defp resolve_redirects(redirects, state) do
-    case redirects
-    |> Enum.map(&lookup_room(&1, state))
-    |> Enum.partition(&is_ok/1) do
-      {found, []} ->
-        {:ok, Enum.map(found, &unwrap_tuple/1)}
-      {_, invalid} ->
-        {:error, Enum.map(invalid, &unwrap_tuple/1)}
-    end
+    Enum.reduce(redirects, {:ok, []}, fn(redirect, {status, rooms}) ->
+      case lookup_room(redirect, state) do
+        {^status, room} ->
+          {status, [room|rooms]}
+        {:error, room} ->
+          {:error, [room]}
+        _ ->
+          {status, rooms}
+      end
+    end)
   end
 
   # Returns {:ok, room} or {:error, invalid_redirect}
@@ -415,12 +417,6 @@ defmodule Cog.Command.Pipeline.Executor do
         {:error, {reason, redir}}
     end
   end
-
-  defp is_ok({:ok, _}), do: true
-  defp is_ok(_), do: false
-
-  defp unwrap_tuple({:ok, value}), do: value
-  defp unwrap_tuple({:error, value}), do: value
 
   # Render a templated response and send it out to all pipeline
   # destinations. Renders template only once.
