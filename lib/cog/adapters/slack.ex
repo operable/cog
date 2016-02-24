@@ -1,11 +1,14 @@
 defmodule Cog.Adapters.Slack do
+  use GenServer
   import Supervisor.Spec
   alias Cog.Adapters.Slack
+  alias Cog.Adapters.Connector
 
   @behaviour Cog.Adapter
 
   def describe_tree() do
-    [supervisor(Slack.Sup, [])]
+    [supervisor(Slack.Sup, []),
+     worker(Connector, [Cog.Adapters.Slack])]
   end
 
   def send_message(room, message) do
@@ -24,6 +27,10 @@ defmodule Cog.Adapters.Slack do
 
   def service_name() do
     "Slack"
+  end
+
+  def bus_name() do
+    "slack"
   end
 
   def mention_name(name) do

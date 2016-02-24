@@ -24,6 +24,10 @@ defmodule Cog.Adapters.HipChat do
     "HipChat"
   end
 
+  def bus_name() do
+    "hipchat"
+  end
+
   def mention_name(name) do
     "@" <> name
   end

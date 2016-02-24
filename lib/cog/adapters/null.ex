@@ -27,6 +27,10 @@ defmodule Cog.Adapters.Null do
     "Null"
   end
 
+  def bus_name() do
+    "null"
+  end
+
   def mention_name(name) do
     "@" <> name
   end

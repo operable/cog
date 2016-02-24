@@ -12,5 +12,7 @@ defmodule Cog.Adapter do
 
   @callback service_name() :: String.t
 
+  @callback bus_name() :: String.t
+
   @callback mention_name(String.t) :: String.t
 end
