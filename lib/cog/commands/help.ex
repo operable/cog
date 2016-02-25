@@ -14,7 +14,7 @@ defmodule Cog.Commands.Help do
   use Cog.Models
   alias Cog.Repo
   alias Cog.Queries
-  alias Cog.Command.BundleResolver
+  alias Cog.Command.CommandResolver
   alias Piper.Command.SemanticError
 
   option "all", type: "bool", required: false
@@ -46,7 +46,7 @@ defmodule Cog.Commands.Help do
   defp find_command(command) do
     case String.contains?(command, ":") do
       false ->
-        case BundleResolver.find_bundle(command) do
+        case CommandResolver.find_bundle(command) do
           {:ok, bundle} ->
             {:ok, bundle <> ":" <> command}
           error ->

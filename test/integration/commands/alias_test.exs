@@ -322,6 +322,14 @@ defmodule Integration.Commands.AliasTest do
     assert response["data"]["response"] == expected_response
   end
 
+  test "list all aliases with no aliases", %{user: user} do
+    alias_list = []
+
+    response = send_message(user, "@bot: operable:alias ls")
+    expected_response = Helpers.render_template("alias-ls", alias_list)
+    assert response["data"]["response"] == expected_response
+  end
+
   test "list aliases with an invalid pattern", %{user: user} do
     response = send_message(user, "@bot: operable:alias ls \"% &my#-*\"")
     assert response["data"]["response"] == "@vanstee Whoops! An error occurred. Bad pattern. Sorry, but that is an invalid pattern only letters numbers and the following special characters are allowed: *, -, _"
@@ -345,6 +353,16 @@ defmodule Integration.Commands.AliasTest do
   test "passing too few args", %{user: user} do
     response = send_message(user, "@bot: operable:alias new my-invalid-alias")
     assert response["data"]["response"] == "@vanstee Whoops! An error occurred. Not enough args. Arguments required: exactly 2."
+  end
+
+  test "passing an unknown subcommand", %{user: user} do
+    response = send_message(user, "@bot: operable:alias foo")
+    assert response["data"]["response"] == "@vanstee Whoops! An error occurred. Unknown subcommand 'foo'"
+  end
+
+  test "passing now subcommand", %{user: user} do
+    response = send_message(user, "@bot: operable:alias")
+    assert response["data"]["response"] == "@vanstee Whoops! An error occurred. I don't what to do, please specify a subcommand"
   end
 
 end

@@ -11,6 +11,7 @@ defmodule Cog.Command.Pipeline.Executor do
   * :parse
   * :lookup_redirects
   * :bind
+  * :maybe_expand
   * :get_options
   * :maybe_enforce
   * :check_permissions
@@ -55,6 +56,8 @@ defmodule Cog.Command.Pipeline.Executor do
     pipeline.
   * `:error_message` - additional information about the error that has
     occurred. Only set if `:error_type` is non-nil.
+  * `:current_depth` - The depth of alias expansion we are currently at.
+  * `:max_depth` - The max depth of alias expansion.
   """
   @type state :: %__MODULE__{
     id: String.t,
@@ -92,13 +95,14 @@ defmodule Cog.Command.Pipeline.Executor do
   alias Cog.Command.OptionInterpreter
   alias Cog.Command.PermissionInterpreter
   alias Cog.Command.CommandCache
-  alias Cog.Command.BundleResolver
   alias Cog.Models
   alias Cog.TemplateCache
-  alias Piper.Command.Parser
+  alias Cog.Command.AliasExpander
+  alias Cog.Command.CommandResolver
   alias Piper.Command.Ast
   alias Piper.Command.Bindable
   alias Piper.Command.Bind
+  alias Piper.Command.Parser
 
   alias Carrier.Messaging.Connection
   alias Cog.Events.PipelineEvent
@@ -153,12 +157,10 @@ defmodule Cog.Command.Pipeline.Executor do
   to `remaining` in the state.
   """
   def parse(:timeout, state) do
-    case Parser.scan_and_parse(state.request["text"], command_resolver: &BundleResolver.find_bundle/1) do
-      {:ok, %Ast.Invocation{}=invocation} ->
-        {:next_state, :lookup_redirects, %{state | pipeline: %Ast.Pipeline{invocations: [invocation]}}, 0}
+    case Parser.scan_and_parse(state.request["text"], command_resolver: &CommandResolver.find_bundle/1, return_pipeline: true) do
       {:ok, %Ast.Pipeline{}=pipeline} ->
         {:next_state, :lookup_redirects, %{state | pipeline: pipeline}, 0}
-      {:error, msg}->
+      {:error, msg} ->
         Helpers.send_reply(msg, state.request, state.mq_conn)
         fail_pipeline(state, :parse_error, "Error parsing command pipeline '#{state.request["text"]}': #{msg}")
     end
@@ -197,7 +199,7 @@ defmodule Cog.Command.Pipeline.Executor do
   end
 
   @doc """
-  `bind` -> {:next_state, :get_options}
+  `bind` -> {:next_state, :maybe_expand}
 
   Binds the current invocation to the scope. The scope is created based on the
   context. nil context: blank scope, map context: singular scope, list context:
@@ -215,7 +217,25 @@ defmodule Cog.Command.Pipeline.Executor do
         fail_pipeline(state, :binding_error, "Error preparing to execute command pipeline '#{state.request["text"]}': #{msg}")
       bound ->
         {current_bound, bound_scope} = collect_bound(bound)
-        {:next_state, :get_options, %{state | current_bound: current_bound, scope: bound_scope}, 0}
+        {:next_state, :maybe_expand, %{state | current_bound: current_bound, scope: bound_scope}, 0}
+    end
+  end
+
+  @doc """
+  `expand` -> {:stop, :shutdown} | {:next_state, :get_options}
+
+  If a command begins with 'user' or 'site' it is treated as an alias and expanded.
+  """
+  def maybe_expand(:timeout, %__MODULE__{current: current_bound}=state) do
+    case AliasExpander.expand(current_bound.command) do
+      {:ok, :not_an_alias} ->
+        {:next_state, :get_options, state, 0}
+      {:ok, invocations} ->
+        [new_current|rest] = invocations
+        {:next_state, :bind, %{state | current: new_current, remaining: rest ++ state.remaining}, 0}
+      {:error, msg} ->
+        Helpers.send_reply(msg, state.request, state.mq_conn)
+        fail_pipeline(state, :alias_expansion_error, "Error expanding alias '#{current_bound.command}': #{msg}")
     end
   end
 
@@ -515,8 +535,7 @@ defmodule Cog.Command.Pipeline.Executor do
     {:stop, :shutdown, %{state | output: final_result}}
   end
   defp prepare_or_finish(%__MODULE__{input: [h|t], output: output}=state, resp) do
-    scope = Bind.Scope.from_map(h)
-    {:next_state, :bind, %{state | input: t, output: output ++ [resp.body], scope: scope, context: h}, 0}
+    {:next_state, :bind, %{state | input: t, output: output ++ [resp.body], context: h}, 0}
   end
   defp prepare_or_finish(%__MODULE__{input: [], output: output, remaining: [h|t]}=state, resp) do
     # Fetch the next command
