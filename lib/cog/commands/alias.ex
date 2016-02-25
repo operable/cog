@@ -7,7 +7,7 @@ defmodule Cog.Commands.Alias do
   Manages aliases
 
   Subcommands
-  * new <alias-name>=<alias-definition> -- creates a new alias visible to the creating user.
+  * new <alias-name> <alias-definition> -- creates a new alias visible to the creating user.
   * mv <alias-name> <site | user>:[new-alias-name] -- moves aliases between user and site visibility. Optionally renames aliases.
   * rm <alias-name> -- Removes aliases
   * which <alias-name> -- Returns the visibility of the alias, site or user.
@@ -15,7 +15,7 @@ defmodule Cog.Commands.Alias do
 
   ## Example
 
-    @bot #{Cog.embedded_bundle}:alias new my-awesome-alias="echo \"My Awesome Alias\""
+    @bot #{Cog.embedded_bundle}:alias new my-awesome-alias "echo \"My Awesome Alias\""
     > user:my-awesome-alias has been created
 
     @bot #{Cog.embedded_bundle}:alias mv my-awesome-alias site:awesome-alias
