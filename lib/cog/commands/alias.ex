@@ -26,6 +26,15 @@ defmodule Cog.Commands.Alias do
 
     @bot #{Cog.embedded_bundle}:alias which my-other-awesome-alias
     > user
+
+    @bot #{Cog.embedded_bundle}:alias ls
+    > Name: 'my-awesome-alias'
+      Visibility: 'user'
+      Pipeline: 'echo my-awesome-alias'
+
+      Name: 'my-other-awesome-alias'
+      Visibility: 'site'
+      Pipeline: 'echo my-other-awesome-alias'
   """
 
   def handle_message(req, state) do
