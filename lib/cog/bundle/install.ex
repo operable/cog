@@ -15,7 +15,7 @@ defmodule Cog.Bundle.Install do
 
   require Logger
 
-  @command_attrs ["name", "version", "options", "enforcing",
+  @command_attrs ["name", "options", "enforcing",
                   "calling_convention", "execution",
                   "documentation"]
 
@@ -82,13 +82,10 @@ defmodule Cog.Bundle.Install do
   #                              "enforcing" => true,
   #                              "calling_convention" => "bound",
   #                              "execution" => "multiple",
-  #                              "version" => "0.0.1",
   #                              "options": [%{"name" => "instance-id", "type" => "string", "required" => true}],
   #                              "module" => "Cog.Commands.EC2Tag"})
   defp create_command(%Bundle{}=bundle, command_spec) do
-    command_spec = command_spec
-    |> Enum.filter(fn({key, _}) -> key in @command_attrs end)
-    |> Enum.into(%{})
+    command_spec = Map.take(command_spec, @command_attrs)
 
     command = Command.build_new(bundle, command_spec)
     |> Repo.insert!

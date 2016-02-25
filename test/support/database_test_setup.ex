@@ -24,7 +24,7 @@ defmodule DatabaseTestSetup do
   @doc """
   Create a command with the given name
   """
-  def command(name, version \\ "1.0.0") do
+  def command(name) do
     bundle = case Repo.get_by(Bundle, name: "cog") do
       nil ->
         bundle("cog")
@@ -33,7 +33,7 @@ defmodule DatabaseTestSetup do
     end
 
     %Command{}
-    |> Command.changeset(%{name: name, version: version, bundle_id: bundle.id})
+    |> Command.changeset(%{name: name, bundle_id: bundle.id})
     |> Repo.insert!
   end
 

@@ -9,7 +9,7 @@ defmodule Cog.Models.CommandTest do
 
   setup do
     {:ok, bundle} = Repo.insert(%Bundle{name: "test_bundle", config_file: %{}, manifest_file: %{}})
-    {:ok, command} = Command.insert_new(%{name: "drop_database", version: "1.0.0", bundle_id: bundle.id})
+    {:ok, command} = Command.insert_new(%{name: "drop_database", bundle_id: bundle.id})
     {:ok, expr, _} = Parser.parse("when command is operable:drop_database must have drop_database:write")
     {:ok, rule} = Rule.insert_new(command, expr)
     {:ok, [bundle: bundle,
@@ -18,13 +18,8 @@ defmodule Cog.Models.CommandTest do
   end
 
   test "command names are unique", %{bundle: bundle} do
-    params = %{name: "pugbomb", version: "1.0.0", bundle_id: bundle.id}
-    {:ok, _} = Command.insert_new(params)
-    assert {:error, %Ecto.Changeset{}} = Command.insert_new(params)
-  end
-
-  test "command versions are required", %{bundle: bundle} do
     params = %{name: "pugbomb", bundle_id: bundle.id}
+    {:ok, _} = Command.insert_new(params)
     assert {:error, %Ecto.Changeset{}} = Command.insert_new(params)
   end
 
@@ -42,12 +37,12 @@ defmodule Cog.Models.CommandTest do
   test "command option names are unique to each command", %{bundle: bundle, command: command} do
     {:ok, _} = CommandOption.insert_new(command, %{name: "term1", type: "bool", required: false})
     assert({:error, %Ecto.Changeset{}=_} = CommandOption.insert_new(command, %{name: "term1", type: "bool", required: false}))
-    {:ok, command} = Command.insert_new(%{name: "wubba", version: "1.0.0", bundle_id: bundle.id})
+    {:ok, command} = Command.insert_new(%{name: "wubba", bundle_id: bundle.id})
     assert({:ok, _} = CommandOption.insert_new(command, %{name: "term1", type: "bool", required: false}))
   end
 
   test "command names must be made up of word characters and dashes", %{bundle: bundle} do
-    params = %{name: "weird:name", version: "1.0.0", bundle_id: bundle.id}
+    params = %{name: "weird:name", bundle_id: bundle.id}
     {:error, command} = Command.insert_new(params)
     assert %{errors: [name: "has invalid format"]} = command
   end
