@@ -49,6 +49,7 @@ defmodule Integration.AliasExecutionTest do
     send_message(user, "@bot: operable:alias new my-alias \"my-alias\"")
     response = send_message(user, "@bot: my-alias")
 
-    assert response["data"]["response"] == "@vanstee Error expanding alias. Expansion goes beyond configured limit."
+    assert Regex.match?(~r/@vanstee Error expanding alias 'user:my-alias'. Expansion goes beyond the configured limit of '\d*'./,
+                        response["data"]["response"])
   end
 end
