@@ -6,7 +6,8 @@ defmodule Cog.Adapters.HipChat.Supervisor do
   end
 
   def init(_) do
-    children = [worker(Cog.Adapters.HipChat.Connection, [])]
+    children = [worker(Cog.Adapters.HipChat, []),
+                worker(Cog.Adapters.HipChat.Connection, [])]
     supervise(children, strategy: :one_for_all)
   end
 end

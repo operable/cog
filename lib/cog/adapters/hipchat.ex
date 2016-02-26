@@ -2,7 +2,6 @@ defmodule Cog.Adapters.HipChat do
   use Cog.Adapter
   alias Cog.Adapters.HipChat
 
-  # TODO: Fix this by changing the publish callback
   def send_message(room, message) do
     HipChat.API.send_message(room, message)
   end

@@ -30,7 +30,7 @@ defmodule Cog.Adapter do
         if topic == reply_topic() do
           case Carrier.CredentialManager.verify_signed_message(message) do
             {true, payload} ->
-              send_message(payload["room"]["id"], payload["response"])
+              send_message(payload["room"], payload["response"])
             false ->
               Logger.error("Message signature not verified! #{inspect message}")
           end
@@ -67,7 +67,7 @@ defmodule Cog.Adapter do
 
   @callback receive_message(sender :: Map.t, room :: Map.t, message :: String.t) :: :ok | :error
 
-  @callback send_message(room :: String.t, message :: String.t) :: :ok | :error
+  @callback send_message(room :: Map.t, message :: String.t) :: :ok | :error
 
   @callback lookup_room(lookup_opts()) :: lookup_result()
 

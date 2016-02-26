@@ -9,7 +9,7 @@ defmodule Cog.Adapters.HipChat.Helpers do
   @timeout 120000 # 2 minutes
 
   def send_message(%User{username: _username}, message) do
-    HipChat.send_message(@room, message)
+    HipChat.send_message(%{"id" => @room}, message)
   end
 
   def assert_response(message, [after: %{"id" => id}]) do

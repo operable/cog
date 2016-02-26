@@ -1,19 +1,17 @@
 defmodule Cog.Adapters.Slack do
   use Cog.Adapter
-  alias Cog.Adapters.Slack.API
+  alias Cog.Adapters.Slack
 
   def send_message(room, message) do
-    with {:ok, room} <- lookup_room(room) do
-      API.send_message(room.id, message)
-    end
+    Slack.API.send_message(room, message)
   end
 
   def lookup_room(opts) do
-    API.lookup_room(opts)
+    Slack.API.lookup_room(opts)
   end
 
   def lookup_direct_room(opts) do
-    API.lookup_direct_room(opts)
+    Slack.API.lookup_direct_room(opts)
   end
 
   def mention_name(name) do
