@@ -538,12 +538,9 @@ defmodule Cog.Command.Pipeline.Executor do
     {:next_state, :bind, %{state | input: t, output: output ++ [resp.body], context: h}, 0}
   end
   defp prepare_or_finish(%__MODULE__{input: [], output: output, remaining: [h|t]}=state, resp) do
-    # Fetch the next command
-    {:ok, command} = CommandCache.fetch(h)
-
     new_output = output ++ [resp.body]
-    |> List.flatten
-    |> Enum.reject(&is_nil/1)
+                 |> List.flatten
+                 |> Enum.reject(&is_nil/1)
 
     case new_output do
       [] ->
@@ -551,14 +548,24 @@ defmodule Cog.Command.Pipeline.Executor do
         Helpers.send_error(error_message, state.request, state.mq_conn)
         fail_pipeline(state, :empty_output, error_message)
       _ ->
-        case command.execution do
-          "once" ->
+        case CommandCache.fetch(h) do
+          {:ok, command} ->
+            case command.execution do
+              "once" ->
+                {:next_state, :bind, %{state | current: h, remaining: t, input: [], output: [], context: new_output}, 0}
+              "multiple" ->
+                [oh|ot] = new_output
+                {:next_state, :bind, %{state | current: h, remaining: t, input: ot, output: [], context: oh}, 0}
+            end
+          {:not_found, "user:" <> _user_alias} ->
             {:next_state, :bind, %{state | current: h, remaining: t, input: [], output: [], context: new_output}, 0}
-          "multiple" ->
-            [oh|ot] = new_output
-            {:next_state, :bind, %{state | current: h, remaining: t, input: ot, output: [], context: oh}, 0}
+          {:not_found, "site:" <> _site_alias} ->
+            {:next_state, :bind, %{state | current: h, remaining: t, input: [], output: [], context: new_output}, 0}
+          {:not_found, command} ->
+            Helpers.send_idk(state.request, command, state.mq_conn)
+            fail_pipeline(state, :preparation_error, "Error preparing next command: The command '#{command}' was not found")
         end
-      end
+    end
   end
 
   defp prepare(%__MODULE__{pipeline: %Ast.Pipeline{invocations: invocations}}=state) do
