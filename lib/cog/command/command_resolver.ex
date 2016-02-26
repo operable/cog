@@ -33,6 +33,9 @@ defmodule Cog.Command.CommandResolver do
     SemanticError.new("#{inspect name}", :no_command)
   end
 
+  # TODO: This is an expensive operation we need to find a more optimal solution
+  # especially considering that it can potentially be executed on every invocation
+  # in a pipeline.
   defp get_alias_type(name) do
     case Repo.all(Alias.user_alias_by_name(name)) do
       [] ->
