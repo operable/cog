@@ -1,13 +1,8 @@
 defmodule Cog.Adapters.HipChat do
-  import Supervisor.Spec, only: [supervisor: 2]
+  use Cog.Adapter
   alias Cog.Adapters.HipChat
 
-  @behaviour Cog.Adapter
-
-  def describe_tree() do
-    [supervisor(Cog.Adapters.HipChat.Supervisor, [])]
-  end
-
+  # TODO: Fix this by changing the publish callback
   def send_message(room, message) do
     HipChat.API.send_message(room, message)
   end
@@ -20,15 +15,15 @@ defmodule Cog.Adapters.HipChat do
     HipChat.API.lookup_direct_room(opts)
   end
 
-  def service_name() do
-    "HipChat"
+  def mention_name(name) do
+    "@" <> name
   end
 
-  def bus_name() do
+  def name() do
     "hipchat"
   end
 
-  def mention_name(name) do
-    "@" <> name
+  def display_name() do
+    "HipChat"
   end
 end

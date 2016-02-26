@@ -31,11 +31,7 @@ defmodule Cog.Adapters.Slack.RTMConnector do
 
   require Logger
   use Slack
-  alias Cog.Adapters.Slack.API
-  alias Cog.Adapters.Slack.Formatter
-
-  @adapter_name "slack"
-  @module_name Cog.Adapters.Slack
+  alias Cog.Adapters.Slack
 
   ########################################################################
   # Public API
@@ -76,7 +72,7 @@ defmodule Cog.Adapters.Slack.RTMConnector do
   end
 
   def handle_message(%{type: "message", user: user_id, channel: channel, text: text}, _slack, state) do
-    text = Formatter.unescape(text)
+    text = Slack.Formatter.unescape(text)
 
     case invocation_type(user_id, channel, text, state) do
       :ignore ->
@@ -94,9 +90,9 @@ defmodule Cog.Adapters.Slack.RTMConnector do
   end
   # Called when a user edits a previous command
   def handle_message(%{channel: channel, type: "message", message: %{edited: _info, text: text, user: user_id}}, _slack, state) do
-    text = Formatter.unescape(text)
+    text = Slack.Formatter.unescape(text)
 
-    {:ok, user} = API.lookup_user(id: user_id)
+    {:ok, user} = Slack.API.lookup_user(id: user_id)
     {message, handler} = case invocation_type(user_id, channel, text, state) do
                            :ignore ->
                              {nil, fn() -> {:ok, state} end}
@@ -111,7 +107,7 @@ defmodule Cog.Adapters.Slack.RTMConnector do
                               fn() -> handle_command(room, user_id, text, state) end}
                          end
     unless message == nil do
-      API.send_message(channel, message)
+      Slack.API.send_message(channel, message)
     end
     handler.()
   end
@@ -131,7 +127,7 @@ defmodule Cog.Adapters.Slack.RTMConnector do
     {:ok, state}
   end
   def handle_info({{:send_message, ref, sender}, room, message}, _slack, state) do
-    API.send_message(room, message)
+    Slack.API.send_message(room, message)
     send(sender, {ref, :ok})
     {:ok, state}
   end
@@ -182,8 +178,8 @@ defmodule Cog.Adapters.Slack.RTMConnector do
   # Take a raw command text (stripped of any bot mentions or command
   # prefixes) and place it on the command bus
   defp forward_command(room, user_id, text, state) do
-    {:ok, sender} = API.lookup_user(id: user_id)
-    Cog.Adapters.Connector.forward_command(Cog.Adapters.Slack, sender, room, text)
+    {:ok, sender} = Slack.API.lookup_user(id: user_id)
+    Slack.receive_message(sender, room, text)
     {:ok, state}
   end
 
@@ -202,7 +198,7 @@ defmodule Cog.Adapters.Slack.RTMConnector do
         :ignore
       false ->
         # Determine how to respond based on what kind of message it is
-        {:ok, room} = API.lookup_room(id: channel)
+        {:ok, room} = Slack.API.lookup_room(id: channel)
         cond do
           room.name == "direct" ->
             {:direct, room}

@@ -22,7 +22,6 @@ defmodule Cog.Adapters.HipChat.API do
   """
   def service_name, do: "HipChat"
 
-  def message(room, message), do: send_message(room, message)
   def send_message(room, message) do
     url = "/room/" <> to_string(room) <> "/message"
     body = Poison.encode!(%{message: message})

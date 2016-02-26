@@ -32,7 +32,8 @@ defmodule Cog do
      worker(Cog.TemplateCache, []),
      worker(Carrier.CredentialManager, []),
      supervisor(Cog.Relay.RelaySup, []),
-     supervisor(Cog.Command.CommandSup, [])] ++ adapter.describe_tree()
+     supervisor(Cog.Command.CommandSup, []),
+     supervisor(Module.concat(adapter, "Supervisor"), [])]
   end
 
   defp get_adapter! do

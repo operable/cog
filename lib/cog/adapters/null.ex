@@ -1,10 +1,5 @@
 defmodule Cog.Adapters.Null do
-
-  @behaviour Cog.Adapter
-
-  def describe_tree() do
-    []
-  end
+  use Cog.Adapter
 
   def send_message(_room, _message) do
     {:error, :not_implemented}
@@ -23,15 +18,15 @@ defmodule Cog.Adapters.Null do
     {:error, :not_implemented}
   end
 
-  def service_name() do
-    "Null"
+  def mention_name(name) do
+    "@" <> name
   end
 
-  def bus_name() do
+  def name() do
     "null"
   end
 
-  def mention_name(name) do
-    "@" <> name
+  def display_name() do
+    "Null"
   end
 end

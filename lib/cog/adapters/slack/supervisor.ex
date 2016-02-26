@@ -1,4 +1,4 @@
-defmodule Cog.Adapters.Slack.Sup do
+defmodule Cog.Adapters.Slack.Supervisor do
   use Supervisor
 
   import Cog.Helpers, only: [ensure_integer: 1]
@@ -13,7 +13,8 @@ defmodule Cog.Adapters.Slack.Sup do
     api_token = fetch_required(config, :api_token)
     cache_ttl = ensure_integer(Keyword.get(config, :api_cache_ttl))
 
-    children = [worker(Cog.Adapters.Slack.RTMConnector, [api_token]),
+    children = [worker(Cog.Adapters.Slack, []),
+                worker(Cog.Adapters.Slack.RTMConnector, [api_token]),
                 worker(Cog.Adapters.Slack.API, [api_token, cache_ttl])]
     supervise(children, strategy: :one_for_all)
   end
