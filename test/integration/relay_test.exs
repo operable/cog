@@ -15,7 +15,7 @@ defmodule Integration.RelayTest do
 
     checkout_relay
     build_relay
-    port = start_relay
+    os_pid = start_relay
     wait_for_relay(conn)
 
     checkout_mist
@@ -24,7 +24,7 @@ defmodule Integration.RelayTest do
     wait_for_mist(conn)
 
     on_exit(fn ->
-      stop_relay(port)
+      stop_relay(os_pid)
       disconnect_from_relay_discover(conn)
     end)
 
@@ -59,11 +59,12 @@ defmodule Integration.RelayTest do
   end
 
   def start_relay do
-    Port.open({:spawn, "iex -S mix"}, cd: "../cog_relay", env: [{'COG_MQTT_PORT', '1884'}])
+    port = Port.open({:spawn, "iex -S mix"}, cd: "../cog_relay", env: [{'COG_MQTT_PORT', '1884'}])
+    {:os_pid, os_pid} = Port.info(port, :os_pid)
+    os_pid
   end
 
-  def stop_relay(port) do
-    {:os_pid, os_pid} = Port.info(port, :os_pid)
+  def stop_relay(os_pid) do
     System.cmd("kill", ["-9", to_string(os_pid)])
   end
 
