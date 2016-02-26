@@ -68,6 +68,6 @@ defmodule Cog.Command.AliasExpander do
     do: true
   defp is_alias?("user:" <> _),
     do: true
-  defp is_alias?(name) when is_binary(name),
+  defp is_alias?(_),
     do: false
 end
