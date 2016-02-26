@@ -24,29 +24,27 @@ defmodule Cog.Command.AliasExpander do
     end
   end
 
-  defp expand(alias_name, acc, limit, current_depth) do
-    cond do
-      current_depth <= limit ->
-        case get_alias(alias_name) do
-          :not_found ->
-            {:error, "Command alias not found"}
-          command_alias ->
-            case Parser.scan_and_parse(command_alias.pipeline, command_resolver: &CommandResolver.find_bundle/1, return_pipeline: true) do
-              {:ok, %Ast.Pipeline{invocations: invocations}} ->
-                [invocation|rest] = invocations
-                case is_alias?(invocation.command) do
-                  true ->
-                    expand(invocation.command, rest ++ acc, limit, current_depth + 1)
-                  false ->
-                    {:ok, invocations ++ acc}
-                end
-              error ->
-                error
+  defp expand(alias_name, acc, limit, current_depth) when current_depth <= limit do
+    case get_alias(alias_name) do
+      :not_found ->
+        {:error, "Command alias not found"}
+      command_alias ->
+        case Parser.scan_and_parse(command_alias.pipeline, command_resolver: &CommandResolver.find_bundle/1, return_pipeline: true) do
+          {:ok, %Ast.Pipeline{invocations: invocations}} ->
+            [invocation|rest] = invocations
+            case is_alias?(invocation.command) do
+              true ->
+                expand(invocation.command, rest ++ acc, limit, current_depth + 1)
+              false ->
+                {:ok, invocations ++ acc}
             end
+          error ->
+            error
         end
-      current_depth > limit ->
-        {:error, "Error expanding alias. Expansion goes beyond configured limit."}
     end
+  end
+  defp expand(alias_name, _acc, limit, _current_depth) do
+    {:error, "Error expanding alias '#{alias_name}'. Expansion goes beyond the configured limit of '#{limit}'."}
   end
 
   defp get_alias("user:" <> name) do
