@@ -1,5 +1,6 @@
 defmodule Cog.Queries.Alias do
   use Cog.Queries
+  import Ecto.Query, only: [from: 2, where: 2]
 
   def user_matching(pattern, handle, provider) do
     from a in UserCommandAlias,
@@ -29,5 +30,11 @@ defmodule Cog.Queries.Alias do
     from a in SiteCommandAlias,
     select: a
   end
+
+  def user_alias_by_name(name),
+    do: UserCommandAlias |> where(name: ^name)
+
+  def site_alias_by_name(name),
+    do: SiteCommandAlias |> where(name: ^name)
 
 end

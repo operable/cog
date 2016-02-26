@@ -72,8 +72,8 @@ defmodule Cog.Commands.Alias.Helpers do
     do: "Too many wildcards. You can only include one wildcard in a query"
   def error(:no_subcommand),
     do: "I don't what to do, please specify a subcommand"
-  def error(:unknown_subcommand),
-    do: "Unknown subcommand"
+  def error({:unknown_subcommand, subcommand}),
+    do: "Unknown subcommand '#{subcommand}'"
 
   @doc """
   Returns an alias. If the visibility isn't passed we first search for a user
