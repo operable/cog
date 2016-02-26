@@ -9,6 +9,16 @@ config :cog,
 
 config :cog, :enable_spoken_commands, true
 
+config :cog, :message_bus,
+  host: System.get_env("COG_MQTT_HOST") || "127.0.0.1",
+  port: ensure_integer(System.get_env("COG_MQTT_PORT")) || 1883
+
+# Uncomment the next three lines and edit ssl_cert and ssl_key
+# to point to your SSL certificate and key files.
+# config :cog, :message_bus,
+#  ssl_cert: "priv/ssl/cert.pem",
+#  ssl_key: "priv/ssl/key.pem"
+
 config :cog, Cog.Adapters.Slack,
   api_token: System.get_env("SLACK_API_TOKEN"),
   api_cache_ttl: System.get_env("SLACK_API_CACHE_TTL") || 900
@@ -76,37 +86,6 @@ config :cog, Cog.Repo,
   parameters: [timezone: 'UTC']
 
 # ========================================================================
-# MQTT Messaging
-
-config :emqttd, :access,
-  auth: [anonymous: []],
-  acl: [internal: [file: 'config/acl.conf', nomatch: :allow]]
-
-config :emqttd, :broker,
-  sys_interval: 60,
-  retained: [max_message_num: 1024, max_payload_size: 65535],
-  pubsub: [pool_size: 8]
-
-config :emqttd, :mqtt,
-  packet: [max_clientid_len: 128, max_packet_size: 163840],
-  client: [ingoing_rate_limit: :'64KB/s', idle_timeout: 1],
-  session: [max_inflight: 100, unack_retry_interval: 60,
-            await_rel_timeout: 15, max_awaiting_rel: 0,
-            collect_interval: 0, expired_after: 4],
-  queue: [max_length: 100, low_watermark: 0.2, high_watermark: 0.6,
-          queue_qos0: true],
-  modules: [presence: [qos: 0]]
-
-config :emqttd, :listeners,
-  [{:mqtt, ensure_integer(System.get_env("COG_MQTT_PORT")) || 1883,
-    [acceptors: 16,
-     max_clients: 64,
-     access: [allow: :all],
-     sockopts: [backlog: 8,
-                ip: System.get_env("COG_MQTT_HOST") || "127.0.0.1",
-                recbuf: 4096,
-                sndbuf: 4096,
-                buffer: 4096]]}]
 
 config :carrier, :credentials_dir, data_dir("carrier_creds")
 

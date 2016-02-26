@@ -25,6 +25,7 @@ defmodule Cog do
   end
   defp build_children(_, _, adapter_supervisor) do
     [supervisor(Cog.Endpoint, []),
+     worker(Cog.BusDriver, [], shutdown: 10000),
      worker(Cog.Repo, []),
      worker(Cog.TokenReaper, []),
      worker(Cog.TemplateCache, []),
