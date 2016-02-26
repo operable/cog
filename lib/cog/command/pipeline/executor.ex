@@ -724,7 +724,7 @@ defmodule Cog.Command.Pipeline.Executor do
     adapter = String.to_existing_atom(request["module"])
     handle = request["sender"]["handle"]
     mention_name = adapter.mention_name(handle)
-    service_name = adapter.service_name()
+    display_name = adapter.display_name()
     user_creators = user_creators(request)
 
     # If no users that can help have chat handles registered (e.g.,
@@ -739,16 +739,16 @@ defmodule Cog.Command.Pipeline.Executor do
     # I want error templates!
     call_to_action = case user_creators do
                        [] ->
-                         "You'll need to ask a Cog administrator to fix this situation and to register your #{service_name} handle."
+                         "You'll need to ask a Cog administrator to fix this situation and to register your #{display_name} handle."
                        _ ->
-                         "You'll need to ask a Cog administrator to fix this situation and to register your #{service_name} handle; the following users can help you right here in chat: #{Enum.join(user_creators, ", ")} ."
+                         "You'll need to ask a Cog administrator to fix this situation and to register your #{display_name} handle; the following users can help you right here in chat: #{Enum.join(user_creators, ", ")} ."
                      end
     # Yes, that space between the last mention and the period is
     # significant, at least for Slack; it won't format the mention as
     # a mention otherwise, because periods are allowed in their handles.
 
     """
-    #{mention_name}: I'm sorry, but either I don't have a Cog account for you, or your #{service_name} chat handle has not been registered. Currently, only registered users can interact with me.
+    #{mention_name}: I'm sorry, but either I don't have a Cog account for you, or your #{display_name} chat handle has not been registered. Currently, only registered users can interact with me.
 
    #{call_to_action}
     """
