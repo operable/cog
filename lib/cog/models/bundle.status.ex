@@ -19,16 +19,9 @@ defmodule Cog.Models.Bundle.Status do
 
   """
   def current(bundle) do
-    case Cog.Relay.Relays.bundle_status(bundle.name) do
-      {:ok, map} ->
-        %{bundle: bundle.name,
-          relays: map.relays,
-          status: map.status}
-      {:error, :no_relays_serving_bundle} ->
-        %{bundle: bundle.name,
-          relays: [],
-          status: bool_to_status(bundle.enabled)}
-    end
+    %{bundle: bundle.name,
+      relays: Cog.Relay.Relays.relays_running(bundle.name),
+      status: bool_to_status(bundle.enabled)}
   end
 
   @doc """
@@ -42,7 +35,6 @@ defmodule Cog.Models.Bundle.Status do
     if Bundle.embedded?(bundle) do
       {:error, :embedded_bundle}
     else
-      :ok = Cog.Relay.Relays.set_status(bundle.name, status)
       bundle = bundle
       |> Bundle.changeset(%{enabled: status_to_bool(status)})
       |> Repo.update!

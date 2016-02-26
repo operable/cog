@@ -29,31 +29,19 @@ defmodule Cog.Relay.Relays do
   """
   @spec pick_one(String.t) :: String.t | nil
   def pick_one(bundle),
-    do: GenServer.call(__MODULE__, {:random_active_relay, bundle}, :infinity)
+    do: GenServer.call(__MODULE__, {:random_relay, bundle}, :infinity)
 
   def drop_bundle(bundle) do
     GenServer.call(__MODULE__, {:drop_bundle, bundle}, :infinity)
   end
 
   @doc """
-  Mark `bundle_name` as having the specified `status`.
+  Returns the IDs of all Relays currently running `bundle_name`. If no
+  Relays are running the bundle, an empty list is returned.
   """
-  def set_status(bundle_name, status) when status in [:enabled, :disabled],
-    do: GenServer.call(__MODULE__, {:set_status, bundle_name, status}, :infinity)
-
-  @doc """
-  Returns the current known information for `bundle_name`, or
-  an error if the tracker does not know about `bundle_name`.
-
-  Example:
-
-      %{status: :enabled,
-        relays: ["44a92066-b1ae-4456-8e6a-4f212ded3180",
-                 "85da0992-cfcf-49b5-bc5b-d9bd53fb23cd"]}
-  """
-  @spec bundle_status(String.t) :: {:ok, map} | {:error, :no_relays_serving_bundle}
-  def bundle_status(bundle_name),
-    do: GenServer.call(__MODULE__, {:bundle_status, bundle_name}, :infinity)
+  @spec relays_running(String.t) :: [String.t]
+  def relays_running(bundle_name),
+    do: GenServer.call(__MODULE__, {:relays_running, bundle_name}, :infinity)
 
   def init(_) do
     case Messaging.Connection.connect() do
@@ -82,24 +70,14 @@ defmodule Cog.Relay.Relays do
     new_state = process_discovery(message, state)
     {:reply, :ok, new_state}
   end
-  def handle_call({:random_active_relay, bundle}, _from, state),
-    do: {:reply, random_active_relay(state.tracker, bundle), state}
+  def handle_call({:random_relay, bundle}, _from, state),
+    do: {:reply, random_relay(state.tracker, bundle), state}
   def handle_call({:drop_bundle, bundle}, _from, state) do
     tracker = Tracker.drop_bundle(state.tracker, bundle)
     {:reply, :ok, %{state | tracker: tracker}}
   end
-  def handle_call({:bundle_status, bundle_name} , _from, state) do
-    status = Tracker.bundle_status(state.tracker, bundle_name)
-    {:reply, status, state}
-  end
-  def handle_call({:set_status, bundle_name, :disabled}, _from, state) do
-    tracker = Tracker.disable_bundle(state.tracker, bundle_name)
-    {:reply, :ok, %{state | tracker: tracker}}
-  end
-  def handle_call({:set_status, bundle_name, :enabled}, _from, state) do
-    tracker =  Tracker.enable_bundle(state.tracker, bundle_name)
-    {:reply, :ok, %{state | tracker: tracker}}
-  end
+  def handle_call({:relays_running, bundle_name} , _from, state),
+    do: {:reply, Tracker.relays(state.tracker, bundle_name), state}
 
   def handle_info({:publish, @relays_discovery_topic, message}, state) do
     # Not authenticating messages here, because we don't have the keys
@@ -226,8 +204,8 @@ defmodule Cog.Relay.Relays do
     end
   end
 
-  defp random_active_relay(tracker, bundle) do
-    case Tracker.active_relays(tracker, bundle) do
+  defp random_relay(tracker, bundle) do
+    case Tracker.relays(tracker, bundle) do
       [] -> nil
       relays -> Enum.random(relays)
     end
