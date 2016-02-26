@@ -11,10 +11,6 @@ defmodule Integration.RelayTest do
     user = user("botci")
     |> with_chat_handle_for("test")
 
-    {:ok, %{user: user}}
-  end
-
-  test "running command from newly installed bundle", %{user: user} do
     conn = subscribe_to_relay_discover
 
     checkout_relay
@@ -27,6 +23,15 @@ defmodule Integration.RelayTest do
     install_mist
     wait_for_mist(conn)
 
+    on_exit(fn ->
+      stop_relay(port)
+      disconnect_from_relay_discover(conn)
+    end)
+
+    {:ok, %{user: user}}
+  end
+
+  test "running command from newly installed bundle", %{user: user} do
     response = send_message(user, "@bot: help mist:ec2-find")
     assert response["data"]["response"] == """
     {
@@ -34,9 +39,6 @@ defmodule Integration.RelayTest do
       "command": "mist:ec2-find"
     }
     """ |> String.rstrip
-
-    stop_relay(port)
-    disconnect_from_relay_discover(conn)
   end
 
   # Runs `rm -rf` on the path before checking out the repo
