@@ -2,7 +2,7 @@ defmodule Cog.Command.CommandResolver do
 
   alias Cog.Repo
   alias Cog.Queries.Command
-  alias Cog.Queries.Alias
+  alias Cog.Queries.Alias, as: AliasQuery
   alias Piper.Command.SemanticError
 
   def find_bundle(name) when is_binary(name) do
@@ -37,9 +37,9 @@ defmodule Cog.Command.CommandResolver do
   # especially considering that it can potentially be executed on every invocation
   # in a pipeline.
   defp get_alias_type(name) do
-    case Repo.all(Alias.user_alias_by_name(name)) do
+    case Repo.all(AliasQuery.user_alias_by_name(name)) do
       [] ->
-        case Repo.all(Alias.site_alias_by_name(name)) do
+        case Repo.all(AliasQuery.site_alias_by_name(name)) do
           [] ->
             nil
           _site_alias ->
