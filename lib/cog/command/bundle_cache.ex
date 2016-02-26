@@ -38,6 +38,14 @@ defmodule Cog.Command.BundleCache do
     end
   end
 
+  @doc """
+  Removes any entry for `bundle_name` in the cache. The next time
+  information for the bundle is requested, it will be retrieved fresh
+  from the database.
+  """
+  def purge(bundle_name),
+    do: GenServer.call(__MODULE__, {:purge, bundle_name})
+
   def init(_) do
     new_ets_cache_table(@ets_table)
     ttl = resolve_ttl_in_seconds!(:bundle_cache_ttl)
@@ -56,6 +64,10 @@ defmodule Cog.Command.BundleCache do
                 {:ok, cached_value}
             end
     {:reply, reply, state}
+  end
+  def handle_call({:purge, bundle_name}, _caller, state) do
+    purge(state.table, bundle_name)
+    {:reply, :ok, state}
   end
 
   defp bool_to_status(true),  do: :enabled
@@ -144,4 +156,8 @@ defmodule Cog.Command.BundleCache do
     purge_expired(table, now, :ets.next(table, key))
   end
 
+  defp purge(table, key) do
+    Logger.debug("Purging cache entry for `#{key}` by request")
+    :ets.delete(table, key)
+  end
 end

@@ -38,6 +38,10 @@ defmodule Cog.Models.Bundle.Status do
       bundle = bundle
       |> Bundle.changeset(%{enabled: status_to_bool(status)})
       |> Repo.update!
+
+      # TODO: Eventually, do this via event signaling
+      Cog.Command.BundleCache.purge(bundle.name)
+
       {:ok, bundle}
     end
   end
