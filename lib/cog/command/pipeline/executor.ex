@@ -381,20 +381,22 @@ defmodule Cog.Command.Pipeline.Executor do
   # are invalid for any reason, returns an error with the list of
   # invalid redirects.
   defp resolve_redirects(redirects, state) do
-    case redirects
-    |> Enum.map(&lookup_room(&1, state))
-    |> Enum.partition(&is_ok/1) do
-      {found, []} ->
-        {:ok, Enum.map(found, &unwrap_tuple/1)}
-      {_, invalid} ->
-        {:error, Enum.map(invalid, &unwrap_tuple/1)}
-    end
+    Enum.reduce(redirects, {:ok, []}, fn(redirect, {status, rooms}) ->
+      case lookup_room(redirect, state) do
+        {^status, room} ->
+          {status, [room|rooms]}
+        {:error, room} ->
+          {:error, [room]}
+        _ ->
+          {status, rooms}
+      end
+    end)
   end
 
   # Returns {:ok, room} or {:error, invalid_redirect}
   defp lookup_room("me", state) do
     user_id = state.request["sender"]["id"]
-    adapter = get_adapter_api(state.request["module"])
+    adapter = String.to_existing_atom(state.request["module"])
     case adapter.lookup_direct_room(user_id: user_id) do
       {:ok, direct_chat} ->
         {:ok, direct_chat}
@@ -406,7 +408,7 @@ defmodule Cog.Command.Pipeline.Executor do
   defp lookup_room("here", state),
     do: {:ok, state.request["room"]}
   defp lookup_room(redir, state) do
-    adapter = get_adapter_api(state.request["module"])
+    adapter = String.to_existing_atom(state.request["module"])
     case adapter.lookup_room(redir) do
       {:ok, room} ->
         {:ok, room}
@@ -415,12 +417,6 @@ defmodule Cog.Command.Pipeline.Executor do
         {:error, {reason, redir}}
     end
   end
-
-  defp is_ok({:ok, _}), do: true
-  defp is_ok(_), do: false
-
-  defp unwrap_tuple({:ok, value}), do: value
-  defp unwrap_tuple({:error, value}), do: value
 
   # Render a templated response and send it out to all pipeline
   # destinations. Renders template only once.
@@ -563,9 +559,6 @@ defmodule Cog.Command.Pipeline.Executor do
         nil
     end
   end
-
-  defp get_adapter_api(module),
-    do: String.to_existing_atom("#{module}.API")
 
   defp sanitize_request(request) do
     prefix = Application.get_env(:cog, :command_prefix, "!")
@@ -728,9 +721,10 @@ defmodule Cog.Command.Pipeline.Executor do
   end
 
   defp unregistered_user_message(request) do
-    adapter = get_adapter_api(request["module"])
-    mention_name = adapter.mention_name(request["sender"]["handle"])
-    service_name = adapter.service_name
+    adapter = String.to_existing_atom(request["module"])
+    handle = request["sender"]["handle"]
+    mention_name = adapter.mention_name(handle)
+    service_name = adapter.service_name()
     user_creators = user_creators(request)
 
     # If no users that can help have chat handles registered (e.g.,
@@ -772,7 +766,7 @@ defmodule Cog.Command.Pipeline.Executor do
   # being used (most notably, the bootstrap admin user).
   defp user_creators(request) do
     adapter = request["adapter"]
-    adapter_module = get_adapter_api(request["module"])
+    adapter_module = String.to_existing_atom(request["module"])
 
     "operable:manage_users"
     |> Cog.Queries.Permission.from_full_name

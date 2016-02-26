@@ -18,27 +18,20 @@ defmodule Cog.Adapters.Slack.RTMConnector do
     e.g. `"@cog"`. This is how mentions look after they are unescaped; we'll
     need it to figure out when someone is talking directly to the bot.
   * `:name` - The name of the bot user, without the "@", e.g. `"cog"`
-  * `:bus` - connection to the Cog message bus
 
   [the Slack library]: https://github.com/BlakeWilliams/Elixir-Slack
 
   """
   @type state :: %__MODULE__{id: String.t,
                              direct_name: String.t,
-                             name: String.t,
-                             bus: Carrier.Messaging.Connection.connection}
+                             name: String.t}
   defstruct [id: nil,
              direct_name: nil,
-             name: nil,
-             bus: nil]
+             name: nil]
 
   require Logger
   use Slack
-  alias Cog.Adapters.Slack.API
-  alias Cog.Adapters.Slack.Formatter
-
-  @adapter_name "slack"
-  @module_name Cog.Adapters.Slack
+  alias Cog.Adapters.Slack
 
   ########################################################################
   # Public API
@@ -50,25 +43,6 @@ defmodule Cog.Adapters.Slack.RTMConnector do
   def start_link(token) do
     # `start_link/2` is generated for us by `use Slack`
     __MODULE__.start_link(token, @initial_state)
-  end
-
-  @doc """
-  Send a message directly to Slack.
-
-  We're using a bit of messaging indirection here because otherwise we
-  don't have access to the `slack` object.
-
-  Not clear that this is really used currently.
-  """
-  def send_chat_message(room, message) when is_binary(room) and is_binary(message) do
-    ref = :erlang.make_ref()
-    send(__MODULE__, {{:send_message, ref, self()}, room, message})
-    receive do
-      {^ref, reply} ->
-        reply
-    after @send_chat_message_timeout ->
-        {:error, :timeout}
-    end
   end
 
   ########################################################################
@@ -83,16 +57,12 @@ defmodule Cog.Adapters.Slack.RTMConnector do
   # * handle_info/3
 
   @doc """
-  Sets up our connection with our command bus and initializes our
-  state.
+  Initializes our state.
   """
   def handle_connect(slack, @initial_state) do
-    {:ok, bus} = Carrier.Messaging.Connection.connect()
-    Carrier.Messaging.Connection.subscribe(bus, "/bot/adapters/slack/+")
     state = %__MODULE__{id: slack.me.id,
                         name: slack.me.name,
-                        direct_name: "@" <> slack.me.name,
-                        bus: bus}
+                        direct_name: "@" <> slack.me.name}
     :erlang.register(__MODULE__, self())
     Logger.info("Ready. Slack username: #{slack.me.name}, userid: #{slack.me.id}.")
 
@@ -102,7 +72,7 @@ defmodule Cog.Adapters.Slack.RTMConnector do
   end
 
   def handle_message(%{type: "message", user: user_id, channel: channel, text: text}, _slack, state) do
-    text = Formatter.unescape(text)
+    text = Slack.Formatter.unescape(text)
 
     case invocation_type(user_id, channel, text, state) do
       :ignore ->
@@ -120,9 +90,9 @@ defmodule Cog.Adapters.Slack.RTMConnector do
   end
   # Called when a user edits a previous command
   def handle_message(%{channel: channel, type: "message", message: %{edited: _info, text: text, user: user_id}}, _slack, state) do
-    text = Formatter.unescape(text)
+    text = Slack.Formatter.unescape(text)
 
-    {:ok, user} = API.lookup_user(id: user_id)
+    {:ok, user} = Slack.API.lookup_user(id: user_id)
     {message, handler} = case invocation_type(user_id, channel, text, state) do
                            :ignore ->
                              {nil, fn() -> {:ok, state} end}
@@ -137,7 +107,7 @@ defmodule Cog.Adapters.Slack.RTMConnector do
                               fn() -> handle_command(room, user_id, text, state) end}
                          end
     unless message == nil do
-      API.send_message(channel, message)
+      Slack.API.send_message(channel, message)
     end
     handler.()
   end
@@ -156,18 +126,8 @@ defmodule Cog.Adapters.Slack.RTMConnector do
     send_raw(json, slack)
     {:ok, state}
   end
-  def handle_info({:publish, "/bot/adapters/slack/send_message", message}, _slack, state) do
-    # We got a message back from one of our commands; pass it along to Slack
-    case Carrier.CredentialManager.verify_signed_message(message) do
-      {true, payload} ->
-        API.send_message(payload["room"]["id"], payload["response"])
-      false ->
-        Logger.error("Message signature not verified! #{inspect message}")
-    end
-    {:ok, state}
-  end
   def handle_info({{:send_message, ref, sender}, room, message}, _slack, state) do
-    API.send_message(room, message)
+    Slack.API.send_message(room, message)
     send(sender, {ref, :ok})
     {:ok, state}
   end
@@ -218,14 +178,8 @@ defmodule Cog.Adapters.Slack.RTMConnector do
   # Take a raw command text (stripped of any bot mentions or command
   # prefixes) and place it on the command bus
   defp forward_command(room, user_id, text, state) do
-    {:ok, sender} = API.lookup_user(id: user_id)
-    payload = %{sender: sender,
-                room: room,
-                text: text,
-                adapter: @adapter_name,
-                module: @module_name,
-                reply: "/bot/adapters/slack/send_message"}
-    Carrier.Messaging.Connection.publish(state.bus, payload, routed_by: "/bot/commands")
+    {:ok, sender} = Slack.API.lookup_user(id: user_id)
+    Slack.receive_message(sender, room, text)
     {:ok, state}
   end
 
@@ -244,7 +198,7 @@ defmodule Cog.Adapters.Slack.RTMConnector do
         :ignore
       false ->
         # Determine how to respond based on what kind of message it is
-        {:ok, room} = API.lookup_room(id: channel)
+        {:ok, room} = Slack.API.lookup_room(id: channel)
         cond do
           room.name == "direct" ->
             {:direct, room}

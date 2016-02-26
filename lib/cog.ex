@@ -5,10 +5,8 @@ defmodule Cog do
   import Supervisor.Spec, warn: false
 
   def start(_type, _args) do
-    adapter = get_adapter!
-    Logger.info "Using #{adapter} chat adapter"
-
-    children = build_children(Mix.env, System.get_env("NOCHAT"), adapter)
+    adapter_supervisor = get_adapter_supervisor!()
+    children = build_children(Mix.env, System.get_env("NOCHAT"), adapter_supervisor)
 
     opts = [strategy: :one_for_one, name: Cog.Supervisor]
     Supervisor.start_link(children, opts)
@@ -25,21 +23,31 @@ defmodule Cog do
      worker(Cog.Repo, []),
      worker(Cog.TokenReaper, [])]
   end
-  defp build_children(_, _, adapter) do
+  defp build_children(_, _, adapter_supervisor) do
     [supervisor(Cog.Endpoint, []),
      worker(Cog.Repo, []),
      worker(Cog.TokenReaper, []),
      worker(Cog.TemplateCache, []),
      worker(Carrier.CredentialManager, []),
      supervisor(Cog.Relay.RelaySup, []),
-     supervisor(Cog.Command.CommandSup, [])] ++ adapter.describe_tree()
+     supervisor(Cog.Command.CommandSup, []),
+     supervisor(adapter_supervisor, [])]
   end
 
-  defp get_adapter! do
+  defp get_adapter_supervisor!() do
     adapter = Application.get_env(:cog, :adapter)
+    Logger.info "Using #{adapter} chat adapter"
+
     case adapter_module(String.downcase(adapter)) do
       {:ok, module} ->
-        module
+        supervisor = Module.concat(module, "Supervisor")
+
+        case Code.ensure_loaded(supervisor) do
+          {:module, module} ->
+            module
+          {:error, _} ->
+            raise RuntimeError, "#{inspect(supervisor)} was not found. Please define a supervisor for the #{adapter} adapter"
+        end
       {:error, msg} ->
         raise RuntimeError, "Please configure a chat adapter before starting cog. #{msg}"
     end

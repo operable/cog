@@ -8,32 +8,17 @@ defmodule Cog.Adapters.HipChat.API do
   @api_base "https://api.hipchat.com/v2"
   @timeout 15000 # 15 seconds
 
-  # TODO: This should be part of a future adapter behavior
-  @doc """
-  Format a chat handle to correspond to a "mention" in this chat
-  provider.
-  """
-  def mention_name(handle), do: "@" <> handle
-
-  # TODO: This should be part of a future adapter behavior
-  @doc """
-  The "name" of the chat service, properly formatted, capitalized,
-  etc. to correspond with colloquial usage.
-  """
-  def service_name, do: "HipChat"
-
-  def message(room, message), do: send_message(room, message)
-  def send_message(room, message) do
-    url = "/room/" <> to_string(room) <> "/message"
+  def send_message(%{"id" => room_id}, message) do
+    url = "/room/#{room_id}/message"
     body = Poison.encode!(%{message: message})
     {:ok, response} = post(url, body)
     response.body
   end
-
-  def send_direct_message(user_id, message) do
-    url = "/user/" <> to_string(user_id) <> "/message"
+  def send_message(%{"direct" => user_id}, message) do
+    url = "/user/#{user_id}/message"
     body = Poison.encode!(%{message: message})
-    post(url, body)
+    {:ok, response} = post(url, body)
+    response.body
   end
 
   def lookup(subject, id, expands \\ nil) do

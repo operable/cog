@@ -30,7 +30,7 @@ defmodule Cog.Adapters.Slack.Formatter do
     replace(message, @user, fn original ->
       case Regex.run(@user, original) do
         [^original, user_id] ->
-          {:ok, user} = Slack.lookup_user(id: user_id)
+          {:ok, user} = Slack.API.lookup_user(id: user_id)
           "@" <> Map.get(user, :handle)
         [^original, _user_id, _right, user_name] ->
           "@" <> user_name

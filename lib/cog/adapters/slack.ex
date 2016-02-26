@@ -1,33 +1,28 @@
 defmodule Cog.Adapters.Slack do
+  use Cog.Adapter
+  alias Cog.Adapters.Slack
 
-  import Supervisor.Spec
-  @behaviour Cog.Adapter
-
-  def describe_tree() do
-    [supervisor(Cog.Adapters.Slack.Sup, [])]
+  def send_message(room, message) do
+    Slack.API.send_message(room, message)
   end
 
-  def lookup_room([id: _id]=opts) do
-    Cog.Adapters.Slack.API.lookup_room(opts)
-  end
-  def lookup_room([name: _name]=opts) do
-    Cog.Adapters.Slack.API.lookup_room(opts)
+  def lookup_room(opts) do
+    Slack.API.lookup_room(opts)
   end
 
-  def lookup_user([id: _id]=opts) do
-    Cog.Adapters.Slack.API.lookup_user(opts)
-  end
-  def lookup_user([name: _name]=opts) do
-    Cog.Adapters.Slack.API.lookup_user(opts)
+  def lookup_direct_room(opts) do
+    Slack.API.lookup_direct_room(opts)
   end
 
-  def message(room, message) do
-    case Cog.Adapters.Slack.API.lookup_room(room) do
-      {:ok, room} ->
-        Cog.Adapters.Slack.API.send_message(room.id, message)
-      error ->
-        error
-    end
+  def mention_name(name) do
+    "@" <> name
   end
 
+  def name() do
+    "slack"
+  end
+
+  def display_name() do
+    "Slack"
+  end
 end

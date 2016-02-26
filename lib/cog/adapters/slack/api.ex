@@ -1,6 +1,6 @@
 defmodule Cog.Adapters.Slack.API do
-  require Logger
   use GenServer
+  require Logger
 
   defstruct token: nil, ttl: nil
 
@@ -15,22 +15,8 @@ defmodule Cog.Adapters.Slack.API do
     GenServer.start_link(__MODULE__, [token, ttl], name: @server_name)
   end
 
-  # TODO: This should be part of a future adapter behavior
-  @doc """
-  Format a chat handle to correspond to a "mention" in this chat
-  provider.
-  """
-  def mention_name(handle), do: "@" <> handle
-
-  # TODO: This should be part of a future adapter behavior
-  @doc """
-  The "name" of the chat service, properly formatted, capitalized,
-  etc. to correspond with colloquial usage.
-  """
-  def service_name, do: "Slack"
-
-  def send_message(channel_id, message) when is_binary(message) do
-    GenServer.call(@server_name, {:send_message, channel_id, message}, :infinity)
+  def send_message(room, message) when is_binary(message) do
+    GenServer.call(@server_name, {:send_message, room, message}, :infinity)
   end
 
   def lookup_user(key) when is_tuple(hd(key)) do
@@ -113,8 +99,8 @@ defmodule Cog.Adapters.Slack.API do
     end
   end
 
-  def handle_call({:send_message, channel, message}, _from, state) do
-    result = call_api!("chat.postMessage", state.token, body: %{channel: channel, text: message, as_user: true, parse: "full"})
+  def handle_call({:send_message, room, message}, _from, state) do
+    result = call_api!("chat.postMessage", state.token, body: %{channel: room["id"], text: message, as_user: true, parse: "full"})
     reply = case result["ok"] do
       true ->
         {:ok, result["message"]}

@@ -1,14 +1,9 @@
 defmodule Cog.Adapters.HipChat.Connection do
+  use GenServer
+  alias Cog.Adapters.HipChat
   require Logger
 
-  alias Cog.Adapters.HipChat
-
-  use GenServer
-
-  @adapter_name "hipchat"
-  @module_name Cog.Adapters.HipChat
-
-  defstruct xmpp_conn: nil, mq_conn: nil
+  defstruct xmpp_conn: nil
 
   def start_link() do
     GenServer.start_link(__MODULE__, HipChat.Config.fetch_config, name: __MODULE__)
@@ -17,13 +12,11 @@ defmodule Cog.Adapters.HipChat.Connection do
   def init(config) do
     HipChat.API.start
 
-    {:ok, xmpp_conn} =
-      Map.put(config[:xmpp], :config, xmpp_server_options)
-      |> Hedwig.start_client
-    {:ok, mq_conn} = Carrier.Messaging.Connection.connect()
-    Carrier.Messaging.Connection.subscribe(mq_conn, "/bot/adapters/hipchat/+")
+    {:ok, xmpp_conn} = config[:xmpp]
+    |> Map.put(:config, xmpp_server_options)
+    |> Hedwig.start_client
 
-    {:ok, %{xmpp_conn: xmpp_conn, mq_conn: mq_conn}}
+    {:ok, %{xmpp_conn: xmpp_conn}}
   end
 
   def xmpp_server_options do
@@ -32,35 +25,6 @@ defmodule Cog.Adapters.HipChat.Connection do
 
   def event_manager do
     GenServer.call(__MODULE__, :event_manager)
-  end
-
-  def handle_info({:publish, "/bot/adapters/hipchat/send_message", message}, state) do
-    case Carrier.CredentialManager.verify_signed_message(message) do
-      {true, payload} ->
-        message = render_template(payload)
-        case message_target(payload["room"]) do
-          {:direct, dest} ->
-            HipChat.API.send_direct_message(dest, message)
-          {:room, room_id} ->
-            HipChat.API.send_message(room_id, message)
-        end
-        {:noreply, state}
-      false ->
-        Logger.error("Message signature not verified! #{inspect message}")
-        {:noreply, state}
-    end
-  end
-  def handle_info(_req, state) do
-    {:noreply, state}
-  end
-
-  defp message_target(target) when is_map(target) do
-    case target["direct"] do
-      nil ->
-        {:room, target["id"]}
-      target ->
-        {:direct, target}
-    end
   end
 
   def receive_message(msg, opts) do
@@ -132,20 +96,8 @@ defmodule Cog.Adapters.HipChat.Connection do
     forward_command(%{direct: sender[:id]}, sender, text, state)
   end
   defp forward_command(room, sender, text, state) do
-    payload = %{sender: sender,
-                room: room,
-                text: text,
-                adapter: @adapter_name,
-                module: @module_name,
-                reply: "/bot/adapters/hipchat/send_message"}
-    Carrier.Messaging.Connection.publish(state.mq_conn, payload, routed_by: "/bot/commands")
+    HipChat.receive_message(sender, room, text)
     {:noreply, state}
-  end
-
-  # TODO: Replace Slack rendering with HipChat specific output formatting once our formatting and templating take shape.
-  defp render_template(json) do
-    strip_code_markdown = ~r/(\A```)|(```\z)/
-    "/code " <> Regex.replace(strip_code_markdown, json["response"], "")
   end
 
   defp command_pattern() do

@@ -1,6 +1,5 @@
 defmodule Integration.Commands.TableTest do
   use Cog.AdapterCase, adapter: "test"
-  alias Cog.Repo
 
   setup do
     user = user("vanstee", first_name: "Patrick", last_name: "Van Stee")
