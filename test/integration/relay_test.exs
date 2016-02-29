@@ -42,47 +42,47 @@ defmodule Integration.RelayTest do
   end
 
   # Runs `rm -rf` on the path before checking out the repo
-  def checkout(name) do
+  defp checkout(name) do
     Mix.SCM.Git.checkout(dest: "../cog_#{name}", git: "git@github.com:operable/#{name}.git")
   end
 
-  def checkout_relay do
+  defp checkout_relay do
     checkout("relay")
   end
 
-  def checkout_mist do
+  defp checkout_mist do
     checkout("mist")
   end
 
-  def build_relay do
+  defp build_relay do
     System.cmd("mix", ["deps.get"], cd: "../cog_relay")
   end
 
-  def start_relay do
+  defp start_relay do
     port = Port.open({:spawn, "iex -S mix"}, cd: "../cog_relay", env: [{'COG_MQTT_PORT', '1884'}])
     {:os_pid, os_pid} = Port.info(port, :os_pid)
     os_pid
   end
 
-  def stop_relay(os_pid) do
+  defp stop_relay(os_pid) do
     System.cmd("kill", ["-9", to_string(os_pid)])
   end
 
-  def build_mist do
+  defp build_mist do
     System.cmd("make", [], cd: "../cog_mist")
   end
 
-  def install_mist do
+  defp install_mist do
     System.cmd("cp", ["mist.cog", "../cog_relay/data/pending"], cd: "../cog_mist")
   end
 
-  def subscribe_to_relay_discover do
+  defp subscribe_to_relay_discover do
     {:ok, conn} = Messaging.Connection.connect
     Messaging.Connection.subscribe(conn, @relays_discovery_topic)
     conn
   end
 
-  def wait_for_relay(conn) do
+  defp wait_for_relay(conn) do
     receive do
       {:publish, @relays_discovery_topic, message} ->
         message = Poison.decode!(message)
@@ -97,7 +97,7 @@ defmodule Integration.RelayTest do
     end
   end
 
-  def wait_for_mist(conn) do
+  defp wait_for_mist(conn) do
     receive do
       {:publish, @relays_discovery_topic, message} ->
         message = Poison.decode!(message)
@@ -112,7 +112,7 @@ defmodule Integration.RelayTest do
     end
   end
 
-  def disconnect_from_relay_discover(conn) do
+  defp disconnect_from_relay_discover(conn) do
     :emqttc.disconnect(conn)
   end
 end
