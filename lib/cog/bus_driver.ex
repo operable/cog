@@ -70,9 +70,9 @@ defmodule Cog.BusDriver do
               Logger.error("Message bus SSL configuration error. Path to key file is empty.")
               {:error, {:missing_config, :key_file}}
             end
-          error ->
-            error
       end
+      error ->
+        error
     end
   end
 
