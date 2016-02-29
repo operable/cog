@@ -17,6 +17,7 @@ defmodule Cog.Models.Rule do
   end
 
   @required_fields ~w(parse_tree score)
+  @optional_fields ~w()
 
   summary_fields [:id, :score, :parse_tree]
   detail_fields [:id, :score, :parse_tree]
@@ -34,7 +35,7 @@ defmodule Cog.Models.Rule do
 
   def changeset(model, params) do
     model
-    |> Changeset.cast(params, @required_fields)
+    |> Changeset.cast(params, @required_fields, @optional_fields)
     |> unique_constraint(:no_dupes, name: "rules_command_id_parse_tree_index")
   end
 
