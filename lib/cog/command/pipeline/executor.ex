@@ -544,22 +544,27 @@ defmodule Cog.Command.Pipeline.Executor do
         Helpers.send_error(error_message, state.request, state.mq_conn)
         fail_pipeline(state, :empty_output, error_message)
       _ ->
-        case CommandCache.fetch(h) do
-          {:ok, command} ->
-            case command.execution do
-              "once" ->
+        case h do
+          %Ast.Invocation{command: %Ast.Variable{}} ->
+            {:next_state, :bind, %{state | current: h, remaining: t, input: [], output: [], context: new_output}, 0}
+          _ ->
+            case CommandCache.fetch(h) do
+              {:ok, command} ->
+                case command.execution do
+                  "once" ->
+                    {:next_state, :bind, %{state | current: h, remaining: t, input: [], output: [], context: new_output}, 0}
+                  "multiple" ->
+                    [oh|ot] = new_output
+                    {:next_state, :bind, %{state | current: h, remaining: t, input: ot, output: [], context: oh}, 0}
+                end
+              {:not_found, "user:" <> _user_alias} ->
                 {:next_state, :bind, %{state | current: h, remaining: t, input: [], output: [], context: new_output}, 0}
-              "multiple" ->
-                [oh|ot] = new_output
-                {:next_state, :bind, %{state | current: h, remaining: t, input: ot, output: [], context: oh}, 0}
+              {:not_found, "site:" <> _site_alias} ->
+                {:next_state, :bind, %{state | current: h, remaining: t, input: [], output: [], context: new_output}, 0}
+              {:not_found, command} ->
+                Helpers.send_idk(state.request, command, state.mq_conn)
+                fail_pipeline(state, :preparation_error, "Error preparing next command: The command '#{command}' was not found")
             end
-          {:not_found, "user:" <> _user_alias} ->
-            {:next_state, :bind, %{state | current: h, remaining: t, input: [], output: [], context: new_output}, 0}
-          {:not_found, "site:" <> _site_alias} ->
-            {:next_state, :bind, %{state | current: h, remaining: t, input: [], output: [], context: new_output}, 0}
-          {:not_found, command} ->
-            Helpers.send_idk(state.request, command, state.mq_conn)
-            fail_pipeline(state, :preparation_error, "Error preparing next command: The command '#{command}' was not found")
         end
     end
   end
