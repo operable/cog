@@ -32,6 +32,7 @@ defmodule Cog.Models.Permission do
   end
 
   @required_fields ~w(name)
+  @optional_fields ~w()
 
   summary_fields [:id, :name, :namespace]
   detail_fields [:id, :name, :namespace]
@@ -66,7 +67,7 @@ defmodule Cog.Models.Permission do
 
   def changeset(model, params) do
     model
-    |> Changeset.cast(params, @required_fields)
+    |> Changeset.cast(params, @required_fields, @optional_fields)
     |> Changeset.unique_constraint(:name, name: "permissions_namespace_id_name_index")
   end
 

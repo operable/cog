@@ -16,7 +16,7 @@ defmodule Cog.Models.Role do
   detail_fields [:id, :name]
 
   @required_fields ~w(name)
-  @optional_fields []
+  @optional_fields ~w()
 
   def changeset(model, params \\ :empty) do
     model

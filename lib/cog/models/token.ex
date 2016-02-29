@@ -9,6 +9,8 @@ defmodule Cog.Models.Token do
   end
 
   @required_fields ~w(value)
+  @optional_fields ~w()
+
   summary_fields [:value]
   detail_fields [:value]
 
@@ -32,7 +34,7 @@ defmodule Cog.Models.Token do
   """
   def changeset(model, params) do
     model
-    |> cast(params, @required_fields)
+    |> cast(params, @required_fields, @optional_fields)
     |> unique_constraint(:users_tokens_must_be_unique, name: "tokens_user_id_value_index")
   end
 
