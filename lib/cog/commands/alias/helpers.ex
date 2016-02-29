@@ -67,7 +67,7 @@ defmodule Cog.Commands.Alias.Helpers do
   def error({:alias_not_found, alias}),
     do: "I can't find '#{alias}'. Please try again"
   def error(:bad_pattern),
-    do: "Bad pattern. Sorry, but that is an invalid pattern only letters numbers and the following special characters are allowed: *, -, _"
+    do: "Invalid alias name. Only emoji, letters, numbers, and the following special characters are allowed: *, -, _"
   def error(:too_many_wildcards),
     do: "Too many wildcards. You can only include one wildcard in a query"
   def error(:no_subcommand),
