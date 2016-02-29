@@ -27,7 +27,7 @@ defmodule Integration.Commands.AliasTest do
     send_message(user, "@bot: operable:alias new my-new-alias \"echo My New Alias\"")
 
     response = send_message(user, "@bot: operable:alias new my-new-alias \"echo My New Alias\"")
-    assert response["data"]["response"] == "@vanstee Whoops! An error occurred. name has already been taken"
+    assert response["data"]["response"] == "@vanstee Whoops! An error occurred. The alias name is already in use."
   end
 
   test "removing an alias", %{user: user} do
@@ -237,7 +237,7 @@ defmodule Integration.Commands.AliasTest do
     send_message(user, "@bot: operable:alias new my-new-alias \"echo My New Alias\"")
 
     response = send_message(user, "@bot: operable:alias mv user:my-new-alias site")
-    assert response["data"]["response"] == "@vanstee Whoops! An error occurred. name has already been taken"
+    assert response["data"]["response"] == "@vanstee Whoops! An error occurred. The alias name is already in use."
   end
 
   test "moving an alias to user when an alias with that name already exists in user", %{user: user} do
@@ -246,7 +246,7 @@ defmodule Integration.Commands.AliasTest do
     send_message(user, "@bot: operable:alias new my-new-alias \"echo My New Alias\"")
 
     response = send_message(user, "@bot: operable:alias mv site:my-new-alias user")
-    assert response["data"]["response"] == "@vanstee Whoops! An error occurred. name has already been taken"
+    assert response["data"]["response"] == "@vanstee Whoops! An error occurred. The alias name is already in use."
   end
 
   test "an alias in the 'user' visibility should return 'user'", %{user: user} do
