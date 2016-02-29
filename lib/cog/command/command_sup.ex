@@ -11,6 +11,7 @@ defmodule Cog.Command.CommandSup do
     children = [worker(Command.RuleCache, []),
                 worker(Command.CommandCache, []),
                 worker(Command.UserPermissionsCache, []),
+                worker(Command.BundleCache, []),
                 supervisor(Command.Pipeline.ExecutorSup, []),
                 worker(Command.Pipeline.Initializer, [])]
     supervise(children, strategy: :one_for_one)

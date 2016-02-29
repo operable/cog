@@ -320,21 +320,28 @@ defmodule Cog.Command.Pipeline.Executor do
   def run_command(:timeout, %__MODULE__{current_bound: current_bound,
                                         request: request}=state) do
     {bundle, name} = Models.Command.split_name(current_bound.command)
-    case Cog.Relay.Relays.pick_one(bundle) do
-      nil ->
-        msg = "No Cog Relays supporting the `#{bundle}` bundle are currently online"
+    case Cog.Command.BundleCache.status(bundle) do
+      {:ok, :enabled} ->
+        case Cog.Relay.Relays.pick_one(bundle) do
+          nil ->
+            msg = "No Cog Relays supporting the `#{bundle}` bundle are currently online"
+            Helpers.send_error(msg, state.request, state.mq_conn)
+            fail_pipeline(state, :no_relays, msg)
+          relay ->
+            topic = "/bot/commands/#{relay}/#{bundle}/#{name}"
+            reply_to_topic = "#{state.topic}/reply"
+            cog_env = maybe_add_env(current_bound, state)
+            req = request_for_invocation(current_bound, request["sender"], request["room"], request["adapter"], reply_to_topic, cog_env)
+
+            dispatch_event(state, relay)
+
+            Connection.publish(state.mq_conn, Spanner.Command.Request.encode!(req), routed_by: topic)
+            {:next_state, :wait_for_command, state, @command_timeout}
+        end
+      {:ok, :disabled} ->
+        msg = "The `#{bundle}` bundle is currently disabled"
         Helpers.send_error(msg, state.request, state.mq_conn)
         fail_pipeline(state, :no_relays, msg)
-      relay ->
-        topic = "/bot/commands/#{relay}/#{bundle}/#{name}"
-        reply_to_topic = "#{state.topic}/reply"
-        cog_env = maybe_add_env(current_bound, state)
-        req = request_for_invocation(current_bound, request["sender"], request["room"], request["adapter"], reply_to_topic, cog_env)
-
-        dispatch_event(state, relay)
-
-        Connection.publish(state.mq_conn, Spanner.Command.Request.encode!(req), routed_by: topic)
-        {:next_state, :wait_for_command, state, @command_timeout}
     end
   end
 

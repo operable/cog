@@ -8,14 +8,10 @@ defmodule Cog.Relay.Tracker do
   operate on it.
 
   Tracks all the relays that have checked in with the bot, recording
-  which bundles they each serve. Additionally, we track a bundle's
-  current activation status (enabled or disabled) in order to help
-  determine which relays we can dispatch to.
+  which bundles they each serve.
   """
 
-  @type bundle_status :: :enabled | :disabled
-  @type t :: %__MODULE__{map: %{String.t => %{relays: MapSet.t,
-                                              status: bundle_status()}}}
+  @type t :: %__MODULE__{map: %{String.t => MapSet.t}}
   defstruct [map: %{}]
 
   @doc """
@@ -32,19 +28,14 @@ defmodule Cog.Relay.Tracker do
   """
   @spec remove_relay(t, String.t) :: t
   def remove_relay(tracker, relay) do
-    map = tracker.map
-    tracker_bundles = Map.keys(map)
-
-    map = Enum.reduce(tracker_bundles, map, fn(bundle, acc) ->
-      acc = Map.update!(acc, bundle, &delete_relay(&1, relay))
-      relays_remaining = get_in(acc, [bundle, :relays])
-      if Enum.empty?(relays_remaining) do
-        Map.delete(acc, bundle)
-      else
+    map = Enum.reduce(tracker.map, %{}, fn({bundle, relays}, acc) ->
+      remaining = MapSet.delete(relays, relay)
+      if Enum.empty?(remaining) do
         acc
+      else
+        Map.put(acc, bundle, remaining)
       end
     end)
-
     %{tracker | map: map}
   end
 
@@ -52,15 +43,11 @@ defmodule Cog.Relay.Tracker do
   Records `relay` as serving each of `bundles`. If `relay` has
   previously been recorded as serving other bundles, those bundles are
   retained; this is an incremental, cumulative operation.
-
-  If `relay` is the first to serve a bundle, the current status of the
-  bundle is recorded in the tracker.
   """
   @spec add_bundles_for_relay(t, String.t, [%Bundle{}]) :: t
   def add_bundles_for_relay(tracker, relay, bundles) do
     map = Enum.reduce(bundles, tracker.map, fn(bundle, acc) ->
-      initial_status = if bundle.enabled, do: :enabled, else: :disabled
-      Map.update(acc, bundle.name, entry(relay, initial_status), &append_relay(&1, relay))
+      Map.update(acc, bundle.name, MapSet.new([relay]), &MapSet.put(&1, relay))
     end)
     %{tracker | map: map}
   end
@@ -87,72 +74,14 @@ defmodule Cog.Relay.Tracker do
   end
 
   @doc """
-  Returns the current information for `bundle_name` in the tracker, or
-  an error if the tracker does not know about `bundle_name`.
-
-  Example:
-
-      %{status: :enabled,
-        relays: ["44a92066-b1ae-4456-8e6a-4f212ded3180",
-                 "85da0992-cfcf-49b5-bc5b-d9bd53fb23cd"]}
-  """
-  @spec bundle_status(t, String.t) :: {:ok, map()} | {:error, :no_relays_serving_bundle}
-  def bundle_status(%__MODULE__{map: map}, bundle_name) do
-    case Map.get(map, bundle_name) do
-      nil ->
-        {:error, :no_relays_serving_bundle}
-      entry ->
-        {:ok, Map.update!(entry, :relays, &MapSet.to_list(&1))}
-    end
-  end
-
-  @doc """
   Return a list of relays serving `bundle_name`. If the bundle is
   disabled, return an empty list.
   """
-  @spec active_relays(t, String.t) :: [String.t]
-  def active_relays(tracker, bundle_name) do
-    case tracker do
-      %__MODULE__{map: %{^bundle_name => %{status: :enabled, relays: relays}}} ->
-        MapSet.to_list(relays)
-      _ ->
-        []
-    end
-  end
-
-  @doc """
-  Mark `bundle_name` as being enabled.
-  """
-  @spec enable_bundle(t, String.t) :: t
-  def enable_bundle(tracker, bundle_name),
-    do: set_status(tracker, bundle_name, :enabled)
-
-  @doc """
-  Mark `bundle_name` as being disabled.
-  """
-  @spec disable_bundle(t, String.t) :: t
-  def disable_bundle(tracker, bundle),
-    do: set_status(tracker, bundle, :disabled)
-
-  ########################################################################
-
-  defp entry(relay, initial_status),
-    do: %{status: initial_status, relays: MapSet.new([relay])}
-
-  defp append_relay(entry, relay),
-    do: Map.update!(entry, :relays, &MapSet.put(&1, relay))
-
-  defp delete_relay(entry, relay),
-    do: Map.update!(entry, :relays, &MapSet.delete(&1, relay))
-
-  defp set_status(tracker, bundle, status) do
-    map = case Map.get(tracker.map, bundle) do
-            nil ->
-              tracker.map
-            _ ->
-              put_in(tracker.map, [bundle, :status], status)
-          end
-    %{tracker | map: map}
+  @spec relays(t, String.t) :: [String.t]
+  def relays(tracker, bundle_name) do
+    tracker.map
+    |> Map.get(bundle_name, MapSet.new)
+    |> MapSet.to_list
   end
 
 end
