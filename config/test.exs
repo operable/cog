@@ -9,23 +9,8 @@ config :cog,
 config :cog, Cog.Repo,
   pool: Ecto.Adapters.SQL.Sandbox
 
-config :carrier, Carrier.Messaging.Connection,
-  host: "127.0.0.1",
-  port: 1884,
-  log_level: :info
-
 config :cog,
   :template_cache_ttl, {1, :sec}
-
-config :emqttd, :listeners,
-  [{:mqtt, 1884, [acceptors: 16,
-                  max_clients: 64,
-                  access: [allow: :all],
-                  sockopts: [backlog: 8,
-                             ip: "127.0.0.1",
-                             recbuf: 4096,
-                             sndbuf: 4096,
-                             buffer: 4096]]}]
 
 config :cog, Cog.Endpoint,
   http: [port: 4001],
