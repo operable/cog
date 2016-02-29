@@ -40,11 +40,16 @@ defmodule Cog.Models.Command do
   name.
   """
   def split_name(name) do
-    case String.split(name, ":", parts: 2) do
+    case String.split(name, "::", parts: 2) do
       [bundle, command] ->
         {bundle, command}
-      [command] ->
-        {command, command}
+      [_] ->
+        case String.split(name, ":", parts: 2) do
+          [bundle, command] ->
+            {bundle, command}
+          [_] ->
+            {name, name}
+        end
     end
   end
 
