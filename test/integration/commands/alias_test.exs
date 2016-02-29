@@ -332,7 +332,7 @@ defmodule Integration.Commands.AliasTest do
 
   test "list aliases with an invalid pattern", %{user: user} do
     response = send_message(user, "@bot: operable:alias ls \"% &my#-*\"")
-    assert response["data"]["response"] == "@vanstee Whoops! An error occurred. Bad pattern. Sorry, but that is an invalid pattern only letters numbers and the following special characters are allowed: *, -, _"
+    assert response["data"]["response"] == "@vanstee Whoops! An error occurred. Invalid alias name. Only emoji, letters, numbers, and the following special characters are allowed: *, -, _"
   end
 
   test "list aliases with too many wildcards", %{user: user} do
@@ -342,7 +342,7 @@ defmodule Integration.Commands.AliasTest do
 
   test "list aliases with a bad pattern and too many wildcards", %{user: user} do
     response = send_message(user, "@bot: operable:alias ls \"*m++%y-*\"")
-    assert response["data"]["response"] == "@vanstee Whoops! An error occurred. Too many wildcards. You can only include one wildcard in a query\nBad pattern. Sorry, but that is an invalid pattern only letters numbers and the following special characters are allowed: *, -, _"
+    assert response["data"]["response"] == "@vanstee Whoops! An error occurred. Too many wildcards. You can only include one wildcard in a query\nInvalid alias name. Only emoji, letters, numbers, and the following special characters are allowed: *, -, _"
   end
 
   test "passing too many args", %{user: user} do
