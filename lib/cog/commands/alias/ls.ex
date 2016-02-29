@@ -130,7 +130,7 @@ defmodule Cog.Commands.Alias.Ls do
 
   # Check that only valid characters have been passed.
   defp valid_characters(pattern) do
-    case Regex.match?(~r/^[a-zA-Z0-9-_*]*$/, pattern) do
+    case Regex.match?(~r/^:?[a-zA-Z0-9-_*]+:?$/, pattern) do
       true ->
         :ok
       false ->
