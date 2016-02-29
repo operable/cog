@@ -61,7 +61,7 @@ defmodule Cog.Mixfile do
      {:hedwig, "~> 0.3.0"},
      {:gproc, "~> 0.5.0", override: true},
      {:html_entities, "~> 0.3.0"},
-     {:spanner, git: "git@github.com:operable/spanner", branch: "kevsmith/emojis"},
+     {:spanner, git: "git@github.com:operable/spanner", ref: "cc46321b5987c5c000dc46ed98f8fe8918239a88"},
      {:probe, github: "operable/probe", tag: "0.2"},
      {:exml, github: "paulgray/exml", tag: "2.2.1"},
      {:fumanchu, github: "operable/fumanchu", ref: "cog-0.2"},
