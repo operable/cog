@@ -13,7 +13,7 @@ REPOS="cog relay cogctl relayctl"
 COG_REPO="https://github.com/operable/cog.git"
 RELAY_REPO="https://github.com/operable/relay.git"
 COGCTL_REPO="https://github.com/operable/cogctl.git"
-RELAYCTL_REPO="https://github.com/operable/relayctl"
+RELAYCTL_REPO="https://github.com/operable/relayctl.git"
 
 # All the executables needed to clone and
 # build Cog & Relay
