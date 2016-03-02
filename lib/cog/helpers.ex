@@ -37,4 +37,8 @@ defmodule Cog.Helpers do
       :error -> "#{num} is not a number"
     end
   end
+
+  @doc "Return true if tuple has an :ok status"
+  def is_ok?({:ok, _}), do: true
+  def is_ok?(_), do: false
 end
