@@ -101,7 +101,10 @@ defmodule Cog.Commands.Alias.Helpers do
     do: EctoJson.render(data)
 
   # Special errors that come when there are issues with the database.
-  defp db_errors(errors),
-    do: Enum.map_join(errors, "\n", fn({key, message}) -> "#{key} #{message}" end)
+  defp db_errors(errors) do
+    Enum.map_join(errors, "\n", fn({key, message}) ->
+        "#{key}: #{message}"
+    end)
+  end
 
 end

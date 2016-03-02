@@ -21,6 +21,6 @@ defmodule Cog.Models.SiteCommandAlias do
   def changeset(model, params) do
     model
     |> cast(params, @required_fields, @optional_fields)
-    |> unique_constraint(:name, name: :site_command_aliases_name_index)
+    |> unique_constraint(:name, name: :site_command_aliases_name_index, message: "The alias name is already in use.")
   end
 end
