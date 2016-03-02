@@ -34,9 +34,12 @@ defmodule Cog.Commands.Sort do
 
   def handle_message(req, state) do
     args = case req.cog_env do
-      nil -> req.args
-      arg -> arg
-    end
+             [map] when map == %{} ->
+               req.args
+             arg ->
+               arg
+           end
+
     options = get_options(req.options)
     {:reply, req.reply_to, sort_items(options, args), state}
   end

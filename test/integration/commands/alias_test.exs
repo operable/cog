@@ -294,19 +294,13 @@ defmodule Integration.Commands.AliasTest do
   end
 
   test "list all aliases with no matching aliases", %{user: user} do
-    alias_list = []
-
     response = send_message(user, "@bot: operable:alias ls \"my-*\"")
-    expected_response = Helpers.render_template("alias-ls", Enum.sort(alias_list))
-    assert response["data"]["response"] == expected_response
+    assert response["data"]["response"] == "Pipeline executed successfully, but no output was returned"
   end
 
   test "list all aliases with no aliases", %{user: user} do
-    alias_list = []
-
     response = send_message(user, "@bot: operable:alias ls")
-    expected_response = Helpers.render_template("alias-ls", alias_list)
-    assert response["data"]["response"] == expected_response
+    assert response["data"]["response"] == "Pipeline executed successfully, but no output was returned"
   end
 
   test "list aliases with an invalid pattern", %{user: user} do

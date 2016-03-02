@@ -75,7 +75,7 @@ defmodule Integration.RuleTest do
 
   test "error when creating a rule specifying a non-string permission", %{user: user} do
     assert_error(user, "@bot: operable:rules --add --for-command=\"operable:st-echo\" --permission=123",
-                 "@belf Whoops! An error occurred. \n* The option `permission` must be a string; you gave `123`\n\n")
+                 "@belf Whoops! An error occurred. Type Error: `123` is not of type `string`")
   end
 
   test "error when creating a rule specifying an unqualified permission", %{user: user} do
@@ -134,7 +134,7 @@ defmodule Integration.RuleTest do
 
   test "error when dropping rule with non-string id", %{user: user} do
     assert_error(user, "@bot: operable:rules --drop --id=123",
-                 "@belf Whoops! An error occurred. \n* The option `id` must be a UUID; you gave `123`\n\n")
+                 "@belf Whoops! An error occurred. Type Error: `123` is not of type `string`")
   end
 
   test "error when dropping rule with non-UUID string id", %{user: user} do

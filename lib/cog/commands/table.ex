@@ -20,7 +20,7 @@ defmodule Cog.Commands.Table do
   @cell_padding "  "
 
   def handle_message(req, state) do
-    %{"fields" => headers} = hd(req.options)
+    %{"fields" => headers} =req.options
     table = format_table(headers, req.cog_env)
     {:reply, req.reply_to, "table", %{"table" => table}, state}
   end

@@ -26,7 +26,7 @@ defmodule Integration.SortTest do
     assert response["data"]["response"] == "on\ngoes\nLife"
 
     response = send_message(user, "@bot: operable:sort Life is 10 percent what happens to us and 90% how we react to it")
-    assert response["data"]["response"] == "10\n90\n%\nLife\nand\nhappens\nhow\nis\nit\npercent\nreact\nto\nto\nus\nwe\nwhat"
+    assert response["data"]["response"] == "10\n90%\nLife\nand\nhappens\nhow\nis\nit\npercent\nreact\nto\nto\nus\nwe\nwhat"
   end
 
   test "sorting in a pipeline", %{user: user} do
@@ -36,11 +36,6 @@ defmodule Integration.SortTest do
 
     response = send_message(user, "@bot: operable:rules --list --for-command=operable:rules | sort --field=rule")
     response = response["data"]["response"]
-    assert String.at(response, 44) == "m"
-    assert String.at(response, 205) == "w"
-    assert String.at(response, 217) == "g"
-    assert String.at(response, 403) == "r"
-    assert String.at(response, 587) == "u"
 
     assert response =~ """
     {

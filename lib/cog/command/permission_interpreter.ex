@@ -1,41 +1,42 @@
 defmodule Cog.Command.PermissionInterpreter do
 
-  require Logger
-
-  alias Piper.Command.Ast
   alias Piper.Permissions.Parser
-  alias Cog.Command
   alias Cog.Permissions
+  alias Cog.Models.Command
 
-  def check(%Ast.Invocation{}=invoke, user, perms) do
-    context = Permissions.Context.new(user: user, permissions: perms, command: invoke.command,
-                                      options: invoke.options, args: invoke.args)
-    {:ok, rules} = Command.RuleCache.fetch(invoke.command)
-    results = Enum.map(rules, &(evaluate(&1, context)))
-    |> Enum.filter(fn({type, _, _}) -> type != :nomatch end)
-    |> Enum.sort(&sort_perm_checks/2)
+  def check(%Command{enforcing: false}, _options, _args, _perms),
+    do: :allowed
+  def check(command, options, args, perms) do
+    context = Permissions.Context.new(permissions: perms,
+                                      command: Cog.Models.Command.full_name(command),
+                                      options: options,
+                                      args: args)
+    results = command.rules
+    |> Enum.map(&(evaluate(&1, context)))
+    |> Enum.reject(&(&1 == :nomatch))
+    |> Enum.sort(&by_score/2)
     case results do
       [] ->
-        {:no_rule, invoke}
+        {:error, :no_rule}
       [{true, _, _}|_] ->
         :allowed
       [{false, _, rule}|_] ->
-        {:denied, invoke, rule}
+        {:error, {:denied, rule}}
     end
   end
 
-  defp sort_perm_checks({true, n, _}, {false, n, _}),
-  do: true
-  defp sort_perm_checks({_, n1, _}, {_, n2, _}),
-  do: n1 > n2
+  defp by_score({true, n, _}, {false, n, _}),
+    do: true
+  defp by_score({_, n1, _}, {_, n2, _}),
+    do: n1 > n2
 
   defp evaluate(rule, context) do
     rule = Parser.json_to_rule!(rule.parse_tree)
     case Cog.Eval.value_of(rule, context) do
       {{:error, :bad_reference}, _} ->
-        {:nomatch, 0, rule}
+        :nomatch
       :nomatch ->
-        {:nomatch, 0, rule}
+        :nomatch
       {result, count} ->
         {result, count, rule}
     end

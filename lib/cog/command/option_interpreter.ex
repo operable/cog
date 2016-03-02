@@ -1,20 +1,20 @@
 defmodule Cog.Command.OptionInterpreter do
   require Logger
-  alias Cog.Command.CommandCache
+  alias Cog.Models.CommandOption
   alias Piper.Command.Ast
 
-  @truthy_values ["1", "t", "true", "y", "yes", "on"]
+  require Logger
 
-  def initialize(%Ast.Invocation{}=command, raw) do
-    case CommandCache.fetch_options(command, :prepared) do
-      :not_found ->
-        :not_found
-      {:ok, defs} ->
-        case interpret(defs, raw, [], %{}) do
+  @truthy_values ["true", "t", "y", "yes", "on"]
+
+  def initialize(%Ast.Invocation{args: args, meta: command_model}=invocation) do
+    case Enum.reduce(command_model.options, %{}, &(prepare_option(&1, &2))) do
+      defs when is_map(defs) ->
+        case interpret(defs, args, [], %{}) do
           {:ok, options, args} ->
             case check_required_options(defs, options) do
               :ok ->
-                options = set_defaults(command, options)
+                options = set_defaults(invocation, options)
                 {:ok, options, args}
               error ->
                 error
@@ -25,29 +25,67 @@ defmodule Cog.Command.OptionInterpreter do
     end
   end
 
-  def interpret(%Ast.Invocation{}=command, options, raw) do
-    case initialize(command, raw) do
-      {:ok, new_options, args} ->
-        options = Dict.merge(options, new_options, &merge_options/3)
-        {:ok, options, args}
-      error ->
-        error
+  ########################################################################
+
+  defp prepare_option(%CommandOption{long_flag: lflag, short_flag: nil}=opt, acc),
+    do: Map.put(acc, lflag, opt)
+  defp prepare_option(%CommandOption{long_flag: nil, short_flag: sflag}=opt, acc),
+    do: Map.put(acc, sflag, opt)
+  defp prepare_option(%CommandOption{long_flag: lflag, short_flag: sflag}=opt, acc) do
+    acc
+    |> Map.put(lflag, opt)
+    |> Map.put(sflag, opt)
+  end
+
+  defp interpret(_defs, nil, true_args, validated_options),
+    do: {:ok, validated_options, true_args}
+  defp interpret(_defs, [], true_args, validated_options),
+    do: {:ok, validated_options, Enum.reverse(true_args)}
+  defp interpret(defs, [%Ast.Option{name: %Ast.String{value: name}, value: nil}=opt|t], true_args, validated_options) do
+    case Map.get(defs, name) do
+      nil ->
+        Logger.debug("Skipping unknown name #{name}")
+        interpret(defs, t, true_args, validated_options)
+      opt_def ->
+        case maybe_consume_arg(opt_def.option_type.name, t) do
+          {:ok, value, t} ->
+            opt = %{opt | value: value}
+            interpret(defs, t, true_args, store_option(validated_options, opt_def, opt))
+          error ->
+            error
+        end
     end
   end
+  defp interpret(defs, [%Ast.Option{name: %Ast.String{value: name},
+                                    value: value}=opt|t], true_args, validated_options) do
+    case Map.get(defs, name) do
+      nil ->
+        Logger.debug("Skipping unknown name #{name}")
+        interpret(defs, t, true_args, validated_options)
+      opt_def ->
+        case coerce_value(opt_def.option_type.name, value) do
+          {:ok, coerced} ->
+            opt = %{opt | value: coerced}
+            interpret(defs, t, true_args, store_option(validated_options, opt_def, opt))
+          error ->
+            error
+        end
+    end
+  end
+  defp interpret(defs, [arg|t], true_args, validated_options),
+    do: interpret(defs, t, store_arg_value(arg,true_args), validated_options)
 
-  defp merge_options(_key, v1, v2) when is_list(v1) do
-    v1 ++ v2
+  def store_arg_value(arg, args) when is_binary(arg) or
+                                      is_integer(arg) or
+                                      is_float(arg) or
+                                      is_boolean(arg) do
+    [arg|args]
   end
-  defp merge_options(_key, v1, v2) when is_integer(v1) do
-    v1 + v2
-  end
-  defp merge_options(_key, _v1, v2) do
-    v2
-  end
-
+  def store_arg_value(%Ast.Variable{value: value}, args),
+    do: [value|args]
 
   defp set_defaults(%Ast.Invocation{}=command, options) do
-    {:ok, defs} = CommandCache.fetch_options(command, :options)
+    defs = command.meta.options
     Enum.reduce(defs, options, &(set_default_value(&1.name, &1.option_type.name, &2)))
   end
 
@@ -58,94 +96,52 @@ defmodule Cog.Command.OptionInterpreter do
       options
     end
   end
-  defp set_default_value(_name, _type, options) do
-    options
-  end
-
-
-  defp interpret(_defs, nil, args, state) do
-    {:ok, state, args}
-  end
-  defp interpret(_defs, [], args, state) do
-    {:ok, state, Enum.reverse(args)}
-  end
-  defp interpret(defs, [%Ast.Option{flag: flag, value: nil}=opt|t], args, state) do
-    case Map.get(defs, flag) do
-      nil ->
-        Logger.debug("Skipping unknown flag #{flag}")
-        interpret(defs, t, args, state)
-      opt_def ->
-        case maybe_consume_arg(opt_def.option_type.name, t) do
-          {:ok, value, t} ->
-            opt = %{opt | value: value}
-            interpret(defs, t, args, store_option(state, opt_def, opt))
-          error ->
-            error
-        end
-    end
-  end
-  defp interpret(defs, [%Ast.Option{flag: flag, value: value}=opt|t], args, state) do
-    case Map.get(defs, flag) do
-      nil ->
-        Logger.debug("Skipping unknown flag #{flag}")
-        interpret(defs, t, args, state)
-      opt_def ->
-        case interpret_kv_option(opt_def.option_type.name, value) do
-          {:ok, updated} ->
-            opt = %{opt | value: updated}
-            interpret(defs, t, args, store_option(state, opt_def, opt))
-          error ->
-            error
-        end
-    end
-  end
-  defp interpret(defs, [arg|t], args, state) do
-    interpret(defs, t, [arg|args], state)
-  end
+  defp set_default_value(_name, _type, options),
+    do: options
 
   defp store_option(opts, opt_def, opt) do
     case is_map(opt.value) and Map.has_key?(opt.value, :__struct__) do
       true ->
         store_option_value(opts, opt_def, opt.value.value)
       false ->
-      store_option_value(opts, opt_def, opt.value)
+        store_option_value(opts, opt_def, opt.value)
     end
   end
 
   defp store_option_value(opts, opt_def, value) do
     if opt_def.option_type.name == "incr" do
-      Map.update(opts, opt_def.name, value, &(%{&1 | value: &1.value  + value}))
+      Map.update(opts, opt_def.name, value, &(&1+value))
     else
       Map.put(opts, opt_def.name, value)
     end
   end
 
-  defp maybe_consume_arg("incr", [%Ast.Integer{value: value}|t]) do
-    {:ok, value, t}
-  end
-  defp maybe_consume_arg("incr", args) do
-    {:ok, 1, args}
-  end
-  defp maybe_consume_arg("bool", args) do
-    {:ok, true, args}
-  end
+  defp maybe_consume_arg("incr", [%Ast.Integer{value: value}|t]),
+    do: {:ok, value, t}
+  defp maybe_consume_arg("incr", args),
+    do: {:ok, 1, args}
+  defp maybe_consume_arg("bool", args),
+    do: {:ok, true, args}
+  defp maybe_consume_arg(_type, [%Ast.Option{}|_]),
+    do: {:error, error_msg(:no_value)}
   defp maybe_consume_arg(type, [arg|t]) do
-    case interpret_kv_option(type, arg) do
+    case coerce_value(type, arg) do
       {:ok, updated} ->
         {:ok, updated, t}
       error ->
         error
     end
   end
-  defp maybe_consume_arg(_type, []) do
-    {:error, "Unexpected end of input."}
-  end
+  defp maybe_consume_arg(_type, []),
+    do: {:error, "Unexpected end of input."}
 
-  defp interpret_kv_option("int", value) when is_integer(value),
+  defp coerce_value(type, %Ast.Variable{value: value}),
+    do: coerce_value(type, value)
+  defp coerce_value("int", value) when is_integer(value),
     do: {:ok, value}
-  defp interpret_kv_option("int", value) when is_float(value),
+  defp coerce_value("int", value) when is_float(value),
     do: {:error, error_msg(:type_error, value, "int")}
-  defp interpret_kv_option("int", value) when is_binary(value) do
+  defp coerce_value("int", value) when is_binary(value) do
     case Integer.parse(value) do
       {int, ""} ->
         {:ok, int}
@@ -153,11 +149,11 @@ defmodule Cog.Command.OptionInterpreter do
         {:error, error_msg(:type_error, value, "int")}
     end
   end
-  defp interpret_kv_option("float", value) when is_float(value),
+  defp coerce_value("float", value) when is_float(value),
     do: {:ok, value}
-  defp interpret_kv_option("float", value) when is_integer(value),
+  defp coerce_value("float", value) when is_integer(value),
     do: {:ok, value/1}
-  defp interpret_kv_option("float", value) when is_binary(value) do
+  defp coerce_value("float", value) when is_binary(value) do
     case Float.parse(value) do
       {float, _rem} ->
         {:ok, float}
@@ -165,18 +161,26 @@ defmodule Cog.Command.OptionInterpreter do
         {:error, error_msg(:type_error, value, "float")}
     end
   end
-  defp interpret_kv_option("bool", value) when is_integer(value),
+  defp coerce_value("bool", value) when is_integer(value),
     do: {:ok, value > 0}
-  defp interpret_kv_option("bool", value),
-    do: {:ok, Enum.member?(@truthy_values, value)}
-  defp interpret_kv_option("incr", value),
-    do: interpret_kv_option("int", value)
-  defp interpret_kv_option("string", value),
+  defp coerce_value("bool", value) when is_boolean(value),
     do: {:ok, value}
-  defp interpret_kv_option("list", value) when is_binary(value),
+  defp coerce_value("bool", value) when is_binary(value),
+    do: {:ok, Enum.member?(@truthy_values, value)}
+  defp coerce_value("incr", value) do
+    case coerce_value("int", value) do
+      {:ok, _}=value ->
+        value
+      {:error, _} ->
+        {:error, error_msg(:type_error, value, "incr")}
+    end
+  end
+  defp coerce_value("string", value) when is_binary(value),
+    do: {:ok, value}
+  defp coerce_value("list", value) when is_binary(value),
     do: {:ok, String.split(value, ",", trim: true)}
-  defp interpret_kv_option(type, value),
-    do: {:error, {type, value.__struct__}}
+  defp coerce_value(type, value),
+    do: {:error, error_msg(:type_error, value, type)}
 
   defp check_required_options(defs, opts) do
     required_set = Enum.filter_map(defs,
@@ -194,7 +198,10 @@ defmodule Cog.Command.OptionInterpreter do
     end
   end
 
+  defp error_msg(:no_value),
+    do: "No value supplied!"
+
   defp error_msg(:type_error, value, req_type),
-    do: "Type Error: '#{value}' is not of type '#{req_type}'"
+    do: "Type Error: `#{inspect value}` is not of type `#{req_type}`"
 
 end

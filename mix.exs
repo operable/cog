@@ -42,6 +42,7 @@ defmodule Cog.Mixfile do
 
   defp deps do
     [{:slack, "~> 0.4.2"},
+     {:piper, github: "operable/piper", branch: "kevsmith/new-cmd-parser", override: true},
      {:websocket_client, github: "jeremyong/websocket_client", ref: "f6892c8b55004008ce2d52be7d98b156f3e34569"},
      {:poison, "~> 1.5.2"},
      {:ibrowse, "~> 4.2.2"},
@@ -71,7 +72,8 @@ defmodule Cog.Mixfile do
      {:phoenix_live_reload, "~> 1.0.3", only: :dev},
      {:earmark, "~> 0.2.1", only: :dev},
      {:ex_doc, "~> 0.10", only: :dev},
-     {:mix_test_watch, "~> 0.1.1", only: :dev},
+     {:mix_test_watch, "~> 0.1.1", only: :test}
+
     ]
   end
 

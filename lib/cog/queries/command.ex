@@ -24,13 +24,24 @@ defmodule Cog.Queries.Command do
 
   def named(name) do
     {bundle, command} = Command.split_name(name)
+    named(bundle, command)
+  end
 
+  def named(bundle, command) do
     from c in Command,
     join: b in assoc(c, :bundle),
     where: b.name == ^bundle,
     where: c.name == ^command
   end
 
+  def with_bundle(queryable),
+    do: from c in queryable, preload: [:bundle]
+
+  def with_rules(queryable),
+    do: from c in queryable, preload: [:rules]
+
+  def with_options(queryable),
+    do: from c in queryable, preload: [options: :option_type]
 
   def rules_for_cmd(name) do
     {ns, name} = Models.Command.split_name(name)
@@ -40,6 +51,16 @@ defmodule Cog.Queries.Command do
     join: c in assoc(r, :command),
     where: c.name == ^name,
     where: c.bundle_id == ^bundle.id
+  end
+
+  @doc """
+  Retrieve all information about a command
+  """
+  def complete_command(bundle_name, command_name) do
+    named(bundle_name, command_name)
+    |> with_bundle
+    |> with_rules
+    |> with_options
   end
 
   @doc """

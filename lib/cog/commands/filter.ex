@@ -55,9 +55,9 @@ defmodule Cog.Commands.Filter do
     do: state
 
   defp validate_matches(state, matches) do
-    case String.valid?(matches) do
-      true -> %{state | match: compile_regex(matches)}
-      false -> add_errors(state, :bad_match)
+    case Regex.compile(matches) do
+      {:ok, _} -> %{state | match: compile_regex(matches)}
+      {:error, _} -> add_errors(state, :bad_match)
     end
   end
 

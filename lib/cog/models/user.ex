@@ -51,9 +51,9 @@ defmodule Cog.Models.User do
   end
 
   @doc """
-  Returns list of permission ids and fully qualified permissions names
-  granted to the user. This takes into account recursive group memberhip
-  and role grants.
+  Returns list of fully-qualified permissions names granted to the
+  user. This takes into account recursive group memberhip and role
+  grants.
   """
   def all_permissions(%__MODULE__{}=user) do
     alias Ecto.Adapters.SQL
@@ -61,7 +61,7 @@ defmodule Cog.Models.User do
     results = SQL.query!(Repo,
                          "SELECT fetch_user_permissions($1)",
                          [uuid_to_bin(user.id)])
-    Enum.reduce(results.rows, %{}, fn([{uuid, name}], acc) -> Map.put(acc, name, bin_to_uuid(uuid)) end)
+    Enum.map(results.rows, fn([{_uuid, name}]) -> name end)
   end
 
   @doc """

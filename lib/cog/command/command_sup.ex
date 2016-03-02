@@ -8,10 +8,7 @@ defmodule Cog.Command.CommandSup do
   end
 
   def init(_) do
-    children = [worker(Command.RuleCache, []),
-                worker(Command.CommandCache, []),
-                worker(Command.UserPermissionsCache, []),
-                worker(Command.BundleCache, []),
+    children = [worker(Command.UserPermissionsCache, []),
                 supervisor(Command.Pipeline.ExecutorSup, []),
                 worker(Command.Pipeline.Initializer, [])]
     supervise(children, strategy: :one_for_one)
