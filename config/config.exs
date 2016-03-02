@@ -34,6 +34,12 @@ config :cog, Cog.Adapters.HipChat,
   api_token: System.get_env("HIPCHAT_API_TOKEN"),
   mention_name: System.get_env("HIPCHAT_MENTION_NAME")
 
+config :cog, Cog.Adapters.IRC,
+  host: System.get_env("IRC_HOST"),
+  port: System.get_env("IRC_PORT"),
+  channel: System.get_env("IRC_CHANNEL"),
+  nick: System.get_env("IRC_NICK")
+
 # ========================================================================
 # Commands, Bundles, and Services
 
