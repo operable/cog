@@ -39,6 +39,9 @@ config :cog, Cog.Adapters.IRC,
   port: System.get_env("IRC_PORT"),
   channel: System.get_env("IRC_CHANNEL"),
   nick: System.get_env("IRC_NICK"),
+  user: System.get_env("IRC_USER"),
+  name: System.get_env("IRC_NAME"),
+  password: System.get_env("IRC_PASSWORD"),
   use_ssl: System.get_env("IRC_USE_SSL") || true
 
 # ========================================================================

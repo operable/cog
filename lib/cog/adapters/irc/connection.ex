@@ -81,10 +81,14 @@ defmodule Cog.Adapters.IRC.Connection do
     {:reply, {:error, :invalid_options}, state}
   end
 
-  # TODO: Support passing in a password, user and name
   def handle_info({:connected, _, _}, %{client: client, config: config} = state) do
-    nick = config[:irc][:nick]
-    ExIrc.Client.logon(client, nil, nick, nick, nick)
+    password = config[:irc][:password]
+    nick     = config[:irc][:nick]
+    user     = config[:irc][:user] || nick
+    name     = config[:irc][:name] || nick
+
+    ExIrc.Client.logon(client, password, nick, user, name)
+
     {:noreply, state}
   end
 
@@ -105,7 +109,7 @@ defmodule Cog.Adapters.IRC.Connection do
     {:noreply, state}
   end
 
-  def handle_info(message, state) do
+  def handle_info(_message, state) do
     {:noreply, state}
   end
 
