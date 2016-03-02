@@ -8,6 +8,22 @@ defmodule Cog.Adapters.IRC.Connection do
     GenServer.call(__MODULE__, {:send_message, room, message})
   end
 
+  def lookup_room("#" <> name) do
+    lookup_room(name: name)
+  end
+
+  def lookup_room(name) when is_binary(name) do
+    lookup_direct_room(name: name)
+  end
+
+  def lookup_room([{_key, _value}] = options) do
+    GenServer.call(__MODULE__, {:lookup_room, options})
+  end
+
+  def lookup_direct_room([{_key, _value}] = options) do
+    GenServer.call(__MODULE__, {:lookup_direct_room, options})
+  end
+
   def start_link(client, host, port, nick, channel) do
     GenServer.start_link(__MODULE__, [client, host, port, nick, channel], name: __MODULE__)
   end
@@ -23,6 +39,40 @@ defmodule Cog.Adapters.IRC.Connection do
     {:reply, :ok, state}
   end
 
+  def handle_call({:lookup_room, [{_key, name}]}, _from, %{client: client} = state) do
+    channels = ExIrc.Client.channels(client)
+
+    reply = if name in channels do
+      {:ok, %{id: name, handle: name}}
+    else
+      {:error, :not_found}
+    end
+
+    {:reply, reply, state}
+  end
+
+  def handle_call({:lookup_room, _options}, _from, state) do
+    {:reply, {:error, :invalid_options}, state}
+  end
+
+  def handle_call({:lookup_direct_room, [{_key, name}]}, _from, %{client: client} = state) do
+    channels = ExIrc.Client.channels(client)
+    names = Enum.flat_map(channels, &ExIrc.Client.channel_users(client, &1))
+
+    reply = if name in names do
+      {:ok, %{id: name, name: name}}
+    else
+      {:error, :not_found}
+    end
+
+    {:reply, reply, state}
+  end
+
+  def handle_call({:lookup_direct_room, _options}, _from, state) do
+    {:reply, {:error, :invalid_options}, state}
+  end
+
+  # TODO: Support passing in a password, user and name
   def handle_info({:connected, _, _}, %{client: client, nick: nick} = state) do
     ExIrc.Client.logon(client, nil, nick, nick, nick)
     {:noreply, state}
@@ -33,10 +83,11 @@ defmodule Cog.Adapters.IRC.Connection do
     {:noreply, state}
   end
 
+  # TODO: Support spoken commands
   def handle_info({:received, message, nick, channel}, state) do
     with {true, message} <- mentioned?(message, state.nick) do
-      sender = %{handle: nick, id: nick}
-      room = %{name: channel, id: channel}
+      sender = %{id: nick, handle: nick}
+      room = %{id: channel, name: channel}
       IRC.receive_message(sender, room, message)
     end
 

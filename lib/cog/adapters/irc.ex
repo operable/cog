@@ -7,11 +7,11 @@ defmodule Cog.Adapters.IRC do
   end
 
   def lookup_room(opts) do
-    # IRC.API.lookup_room(opts)
+    IRC.Connection.lookup_room(opts)
   end
 
   def lookup_direct_room(opts) do
-    # IRC.API.lookup_direct_room(opts)
+    IRC.Connection.lookup_direct_room(opts)
   end
 
   def mention_name(name) do
