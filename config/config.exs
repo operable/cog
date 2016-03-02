@@ -38,7 +38,8 @@ config :cog, Cog.Adapters.IRC,
   host: System.get_env("IRC_HOST"),
   port: System.get_env("IRC_PORT"),
   channel: System.get_env("IRC_CHANNEL"),
-  nick: System.get_env("IRC_NICK")
+  nick: System.get_env("IRC_NICK"),
+  use_ssl: System.get_env("IRC_USE_SSL") || true
 
 # ========================================================================
 # Commands, Bundles, and Services

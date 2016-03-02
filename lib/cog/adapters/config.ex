@@ -28,6 +28,7 @@ defmodule Cog.Adapters.Config do
 
     * `:required` - A value must be set for this key.
     * `:integer` - Attempt to convert the value to an integer.
+    * `:boolean` - Attempt to convert the value to an boolean.
     * `:split` - Splits a String value at comma boundaries and returns a list of the results.
 
   ### Examples:
@@ -153,7 +154,16 @@ defmodule Cog.Adapters.Config do
               "The value for configuration key #{source} in #{@config}} must be an integer."
         end
       end
-
+      defp process_option(:boolean, true, _field_spec),
+        do: true
+      defp process_option(:boolean, "true", _field_spec),
+        do: true
+      defp process_option(:boolean, false, _field_spec),
+        do: false
+      defp process_option(:boolean, "false", _field_spec),
+        do: false
+      defp process_option(:boolean, _value, {_, _, source}),
+        do: raise ArgumentError, "The value for configuration key #{source} in #{@config}} must be a boolean."
       defp process_option(:required, value, field_spec) do
         case value do
           nil ->

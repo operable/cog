@@ -2,7 +2,7 @@ defmodule Cog.Adapters.IRC.Connection do
   use GenServer
   alias Cog.Adapters.IRC
 
-  defstruct [:client, :host, :port, :nick, :channel]
+  defstruct [:client, :config]
 
   def send_message(room, message) do
     GenServer.call(__MODULE__, {:send_message, room, message})
@@ -24,14 +24,23 @@ defmodule Cog.Adapters.IRC.Connection do
     GenServer.call(__MODULE__, {:lookup_direct_room, options})
   end
 
-  def start_link(client, host, port, nick, channel) do
-    GenServer.start_link(__MODULE__, [client, host, port, nick, channel], name: __MODULE__)
+  def start_link([client: client, config: config]) do
+    GenServer.start_link(__MODULE__, [client: client, config: config], name: __MODULE__)
   end
 
-  def init([client, host, port, nick, channel]) do
+  def init([client: client, config: config]) do
     ExIrc.Client.add_handler(client, self)
-    ExIrc.Client.connect!(client, host, port)
-    {:ok, %__MODULE__{client: client, host: host, port: port, nick: nick, channel: channel}}
+
+    connect = case config[:irc][:use_ssl] do
+      true ->
+        &ExIrc.Client.connect_ssl!/3
+      false ->
+        &ExIrc.Client.connect!/3
+    end
+
+    connect.(client, config[:irc][:host], config[:irc][:port])
+
+    {:ok, %__MODULE__{client: client, config: config}}
   end
 
   def handle_call({:send_message, room, message}, _from, %{client: client} = state) do
@@ -73,19 +82,21 @@ defmodule Cog.Adapters.IRC.Connection do
   end
 
   # TODO: Support passing in a password, user and name
-  def handle_info({:connected, _, _}, %{client: client, nick: nick} = state) do
+  def handle_info({:connected, _, _}, %{client: client, config: config} = state) do
+    nick = config[:irc][:nick]
     ExIrc.Client.logon(client, nil, nick, nick, nick)
     {:noreply, state}
   end
 
-  def handle_info(:logged_in, %{client: client, channel: channel} = state) do
+  def handle_info(:logged_in, %{client: client, config: config} = state) do
+    channel = config[:irc][:channel]
     ExIrc.Client.join(client, channel)
     {:noreply, state}
   end
 
   # TODO: Support spoken commands
-  def handle_info({:received, message, nick, channel}, state) do
-    with {true, message} <- mentioned?(message, state.nick) do
+  def handle_info({:received, message, nick, channel}, %{config: config} = state) do
+    with {true, message} <- mentioned?(message, config[:irc][:nick]) do
       sender = %{id: nick, handle: nick}
       room = %{id: channel, name: channel}
       IRC.receive_message(sender, room, message)
