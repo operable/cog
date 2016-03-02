@@ -496,6 +496,10 @@ defmodule Cog.Command.Pipeline.Executor do
   defp default_template(_),
     do: "raw"
 
+  # Temporary solution!! Handle the nil or empty list results when no template is supplied
+  defp render_template(bundle_id, adapter, nil, context) when is_nil(context) or context == [] do
+    render_template(bundle_id, adapter, nil, %{body: nil})
+  end
   # Could be a raw response or rendered lines of output; render each line separately
   defp render_template(bundle_id, adapter, template, context) when is_list(context) do
     Enum.map_join(context, "\n", &render_template(bundle_id, adapter, template, &1))
