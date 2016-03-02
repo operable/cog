@@ -98,9 +98,8 @@ defmodule Cog.Adapters.IRC.Connection do
     {:noreply, state}
   end
 
-  # TODO: Support spoken commands
   def handle_info({:received, message, nick, channel}, %{config: config} = state) do
-    with {true, message} <- mentioned?(message, config[:irc][:nick]) do
+    with {true, message} <- command?(message, config[:irc][:nick]) do
       sender = %{id: nick, handle: nick}
       room = %{id: channel, name: channel}
       IRC.receive_message(sender, room, message)
@@ -118,14 +117,35 @@ defmodule Cog.Adapters.IRC.Connection do
     :ok
   end
 
-  defp mentioned?(message, nick) do
-    case String.starts_with?(message, nick) do
-      true ->
-        ["", message] = String.split(message, nick)
-        message = Regex.replace(~r/^:\s*/, message, "")
+  defp command?(message, nick) do
+    mention?(message, nick) || spoken?(message)
+  end
+
+  defp mention?(message, nick) do
+    regex = ~r/^#{nick}:\s*/
+
+    case Regex.split(regex, message, parts: 2) do
+      ["", message] ->
         {true, message}
-      false ->
+      _ ->
         false
     end
   end
+
+  defp spoken?(message) do
+    regex = ~r/^#{command_prefix}\s*/
+
+    case {enable_spoken_commands?, Regex.split(regex, message, parts: 2)} do
+      {true, ["", message]} ->
+        {true, message}
+      _ ->
+        false
+    end
+  end
+
+  defp enable_spoken_commands?,
+    do: Application.get_env(:cog, :enable_spoken_commands, true)
+
+  defp command_prefix,
+    do: Application.get_env(:cog, :command_prefix, "!")
 end
