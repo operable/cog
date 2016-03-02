@@ -23,7 +23,7 @@ defmodule Cog.Models.UserCommandAlias do
   def changeset(model, params) do
     model
     |> cast(params, @required_fields, @optional_fields)
-    |> unique_constraint(:name, name: :user_command_aliases_name_user_id_index)
+    |> unique_constraint(:name, name: :user_command_aliases_name_user_id_index, message: "The alias name is already in use")
   end
 end
 
