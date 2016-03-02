@@ -6,8 +6,8 @@ defmodule Cog.Adapter do
 
       @behaviour Cog.Adapter
 
-      def receive_message(room, user_id, text) do
-        GenServer.call(__MODULE__, {:receive_message, room, user_id, text})
+      def receive_message(sender, room, message) do
+        GenServer.call(__MODULE__, {:receive_message, sender, room, message})
       end
 
       def start_link() do
@@ -21,8 +21,9 @@ defmodule Cog.Adapter do
         {:ok, %{conn: conn}}
       end
 
-      def handle_call({:receive_message, sender, room, text}, _from, state) do
-        Carrier.Messaging.Connection.publish(state.conn, payload(sender, room, text), routed_by: "/bot/commands")
+      def handle_call({:receive_message, sender, room, message}, _from, state) do
+        message = payload(sender, room, message)
+        Carrier.Messaging.Connection.publish(state.conn, message, routed_by: "/bot/commands")
         {:reply, :ok, state}
       end
 
