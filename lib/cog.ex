@@ -85,7 +85,7 @@ defmodule Cog do
 
   defp verify_smp() do
     if :erlang.system_info(:schedulers_online) < 2 do
-      {:error, "SMP support disabled. Add '-smp enable' to $ERL_OPTS and restart Cog."}
+      {:error, "SMP support disabled. Add '-smp enable' to $ERL_FLAGS and restart Cog."}
     else
       {:ok, "SMP support enabled."}
     end
