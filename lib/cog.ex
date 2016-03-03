@@ -78,6 +78,7 @@ defmodule Cog do
     end
     unless smp_status == :ok and ds_status == :ok do
       Logger.error("Application start aborted.")
+      Logger.flush()
       :init.stop()
     end
   end
