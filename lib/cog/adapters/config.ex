@@ -28,7 +28,7 @@ defmodule Cog.Adapters.Config do
 
     * `:required` - A value must be set for this key.
     * `:integer` - Attempt to convert the value to an integer.
-    * `:boolean` - Attempt to convert the value to an boolean.
+    * `:boolean` - Attempt to convert the value to a boolean.
     * `:split` - Splits a String value at comma boundaries and returns a list of the results.
 
   ### Examples:
