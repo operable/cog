@@ -24,6 +24,7 @@ cog:
     - COG_MQTT_HOST=0.0.0.0
     - SLACK_API_TOKEN=${SLACK_API_TOKEN}
     - DATABASE_URL=ecto://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/cog
+    - ERL_FLAGS=-smp enable
   links:
     - postgres
   ports:
@@ -34,6 +35,7 @@ relay:
   image: operable/relay${TAG}
   environment:
     - COG_MQTT_HOST=cog
+    - ERL_FLAGS=-smp enable
   links:
     - cog
   entrypoint: scripts/wait-for-it.sh -s -t 0 -h cog -p 1883 -- elixir --no-halt --name relay@127.0.0.1 -S mix
