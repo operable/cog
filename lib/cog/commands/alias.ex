@@ -10,7 +10,6 @@ defmodule Cog.Commands.Alias do
   * new <alias-name> <alias-definition> -- creates a new alias visible to the creating user.
   * mv <alias-name> <site | user>:[new-alias-name] -- moves aliases between user and site visibility. Optionally renames aliases.
   * rm <alias-name> -- Removes aliases
-  * which <alias-name> -- Returns the visibility of the alias, site or user.
   * ls [pattern] -- Returns the list of aliases optionally filtered by pattern. Pattern support basic wildcards with '*'.
 
   ## Example
@@ -23,9 +22,6 @@ defmodule Cog.Commands.Alias do
 
     @bot #{Cog.embedded_bundle}:alias rm awesome-alias
     > Removed site:awesome-alias
-
-    @bot #{Cog.embedded_bundle}:alias which my-other-awesome-alias
-    > user
 
     @bot #{Cog.embedded_bundle}:alias ls
     > Name: 'my-awesome-alias'
@@ -47,8 +43,6 @@ defmodule Cog.Commands.Alias do
         Alias.Mv.mv_command_alias(req, args)
       "rm" ->
         Alias.Rm.rm_command_alias(req, args)
-      "which" ->
-        Alias.Which.which_command_namespace(req, args)
       "ls" ->
         Alias.Ls.list_command_aliases(req, args)
       nil ->
