@@ -4,6 +4,7 @@ defmodule Cog.Commands.Pluck do
 
   @moduledoc """
   Returns the specified fields from a set of inputs.
+  Be sure to add quotes when traversing a JSON path.
 
   ## Example
 
@@ -48,7 +49,7 @@ defmodule Cog.Commands.Pluck do
   defp validate_options(%__MODULE__{req: %{options: %{"fields" => opt_fields}}, input: item}=state) do
     fields = String.split(opt_fields, ",")
     |> Enum.map(&get_nested(&1))
-    |> Enum.reject(fn(field) -> field == [] end)
+    |> Enum.take_while(fn(field) -> field != [] end)
 
     case Enum.reject(fields, &get_in(item, &1)) do
       [] ->
@@ -107,6 +108,8 @@ defmodule Cog.Commands.Pluck do
 
   defp translate_error({:not_string, fields}),
     do: "You entered a field that is ambiguous. Please quote the following in the field option: #{inspect fields}"
-  defp translate_error({:invalid_field, missing}),
-    do: "You entered a field that is not present in each instance: #{inspect missing}"
+  defp translate_error({:invalid_field, missing}) do
+    fields = Enum.map(missing, &Enum.join(&1, "."))
+    "You entered a field that is not present in each instance: #{inspect fields}"
+  end
 end
