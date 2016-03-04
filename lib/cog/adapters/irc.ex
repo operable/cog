@@ -15,7 +15,7 @@ defmodule Cog.Adapters.IRC do
   end
 
   def mention_name(name) do
-    "@" <> name
+    name
   end
 
   def name() do
