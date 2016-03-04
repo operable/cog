@@ -1,6 +1,6 @@
 defmodule Cog.Commands.Pluck do
   use Spanner.GenCommand.Base, bundle: Cog.embedded_bundle, enforcing: false, calling_convention: :all
-  alias Cog.Command.Helpers, as: CommandHelpers
+  alias Cog.Commands.Helpers, as: CommandHelpers
 
   @moduledoc """
   Returns the specified fields from a set of inputs.
@@ -107,7 +107,7 @@ defmodule Cog.Commands.Pluck do
     do: {:ok, output}
 
   defp translate_error({:not_string, fields}),
-    do: "You entered a field that is ambiguous. Please quote the following in the field option: #{inspect fields}"
+    do: "You entered an ambiguous field. Please quote the following in the field option: #{inspect fields}"
   defp translate_error({:invalid_field, missing}) do
     fields = Enum.map(missing, &Enum.join(&1, "."))
     "You entered a field that is not present in each instance: #{inspect fields}"

@@ -73,8 +73,8 @@ defmodule Integration.Commands.PluckTest do
   end
 
   test "with a bad field name", %{user: user} do
-    input = [%{"foo" => %{"bar" => %{"baz" => "stuff"}}},
-             %{"foo" => %{"bar" => %{"baz" => "me"}}}]
+    input = [%{foo: %{bar: %{baz: "stuff"}}},
+             %{foo: %{bar: %{baz: "me"}}}]
     response = send_message(user, Helpers.seed(input, "pluck --fields=qux"))
     assert response["data"]["response"] == "@lucky Whoops! An error occurred. \n* You entered a field that is not present in each instance: [\"qux\"]\n\n"
   end
@@ -95,6 +95,6 @@ defmodule Integration.Commands.PluckTest do
              %{"foo" => %{"bar" => %{"baz" => "me"}},
                "true" => "two"}]
     response = send_message(user, Helpers.seed(input, "pluck --fields=true"))
-    assert response["data"]["response"] == "@lucky Whoops! An error occurred. \n* You entered a field that is ambiguous. Please quote the following in the field option: true\n\n"
+    assert response["data"]["response"] == "@lucky Whoops! An error occurred. \n* You entered an ambiguous field. Please quote the following in the field option: true\n\n"
   end
 end
