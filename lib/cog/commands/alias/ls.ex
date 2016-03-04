@@ -1,7 +1,7 @@
 defmodule Cog.Commands.Alias.Ls do
   alias Cog.Repo
   alias Cog.Queries
-  alias Cog.Commands.Alias.Helpers
+  alias Cog.Commands.Helpers
 
   @moduledoc """
   Lists aliases. Subcommand for alias.

@@ -249,27 +249,6 @@ defmodule Integration.Commands.AliasTest do
     assert response["data"]["response"] == "@vanstee Whoops! An error occurred. name: The alias name is already in use."
   end
 
-  test "an alias in the 'user' visibility should return 'user'", %{user: user} do
-    expected_map = %{"visibility" => "user"}
-
-    send_message(user, "@bot: operable:alias new my-new-alias \"echo My New Alias\"")
-
-    response = send_message(user, "@bot: operable:alias which my-new-alias")
-    expected_response = Helpers.render_template("alias-which", expected_map)
-    assert response["data"]["response"] == expected_response
-  end
-
-  test "an alias in the 'site' visibility should return 'site'", %{user: user} do
-    expected_map = %{"visibility" => "site"}
-
-    send_message(user, "@bot: operable:alias new my-new-alias \"echo My New Alias\"")
-    send_message(user, "@bot: operable:alias mv my-new-alias site")
-
-    response = send_message(user, "@bot: operable:alias which my-new-alias")
-    expected_response = Helpers.render_template("alias-which", expected_map)
-    assert response["data"]["response"] == expected_response
-  end
-
   test "list all aliases", %{user: user} do
     send_message(user, "@bot: operable:alias new my-new-alias \"echo My New Alias\"")
     send_message(user, "@bot: operable:alias new my-new-alias1 \"echo My New Alias\"")
