@@ -2,7 +2,7 @@ defmodule Cog.Commands.Alias.Mv do
   alias Cog.Repo
   alias Cog.Models.UserCommandAlias
   alias Cog.Models.SiteCommandAlias
-  alias Cog.Commands.Alias.Helpers
+  alias Cog.Commands.Helpers
 
   @moduledoc """
   Moves aliases between visibilities. Optionally renames the alias. Subcommand

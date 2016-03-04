@@ -1,6 +1,6 @@
 defmodule Cog.Commands.Alias.Rm do
   alias Cog.Repo
-  alias Cog.Commands.Alias.Helpers
+  alias Cog.Commands.Helpers
 
   @moduledoc """
   Removes an alias. Subcommand for alias.

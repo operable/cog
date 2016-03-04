@@ -1,6 +1,6 @@
 defmodule Cog.Commands.Alias.New do
   alias Cog.Repo
-  alias Cog.Commands.Alias.Helpers
+  alias Cog.Commands.Helpers
   alias Cog.Models.UserCommandAlias
 
   @moduledoc """

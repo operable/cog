@@ -1,7 +1,7 @@
 defmodule Cog.Commands.Alias do
   use Spanner.GenCommand.Base, bundle: Cog.embedded_bundle, enforcing: false
   alias Cog.Commands.Alias
-  alias Cog.Commands.Alias.Helpers
+  alias Cog.Commands.Helpers
 
   @moduledoc """
   Manages aliases

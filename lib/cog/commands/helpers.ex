@@ -1,4 +1,4 @@
-defmodule Cog.Commands.Alias.Helpers do
+defmodule Cog.Commands.Helpers do
   alias Cog.Repo
   alias Cog.Queries
   alias Cog.Models.UserCommandAlias
@@ -6,7 +6,7 @@ defmodule Cog.Commands.Alias.Helpers do
   alias Cog.Models.EctoJson
 
   @moduledoc """
-  A collection of helper functions for working with aliases.
+  A collection of helper functions for working with commands.
   """
 
   @doc """

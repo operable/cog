@@ -1,5 +1,5 @@
 defmodule Cog.Commands.Alias.Which do
-  alias Cog.Commands.Alias.Helpers
+  alias Cog.Commands.Helpers
   alias Cog.Models.UserCommandAlias
   alias Cog.Models.SiteCommandAlias
 
