@@ -5,25 +5,41 @@ defmodule Cog.Command.CommandResolver do
   alias Cog.Queries.Alias, as: AliasQuery
   alias Piper.Command.SemanticError
 
-  def find_bundle(<<":", _::binary>>=name) do
-    find_bundle_or_alias(name)
+  def find_bundle(<<":", _::binary>>=name, user) do
+    find_bundle_or_alias(name, user)
   end
-  def find_bundle(name) when is_binary(name) do
+  def find_bundle(name, user) when is_binary(name) do
     if String.contains?(name, ":") do
       :identity
     else
-      find_bundle_or_alias(name)
+      find_bundle_or_alias(name, user)
     end
   end
-  def find_bundle(name) do
+  def find_bundle(name, _user) do
     SemanticError.new("#{inspect name}", :no_command)
+  end
+
+  defp find_bundle_or_alias(name, user) do
+    case get_alias_type(name, user) do
+      {:ok, alias_type} ->
+        {:ok, alias_type}
+      nil ->
+        case Repo.all(Command.bundle_for(name)) do
+          [] ->
+            SemanticError.new(name, :no_command)
+          [bundle_name] ->
+            {:ok, bundle_name}
+          bundle_names when is_list(bundle_names) ->
+            SemanticError.new(name, {:ambiguous_command, bundle_names})
+        end
+    end
   end
 
   # TODO: This is an expensive operation we need to find a more optimal solution
   # especially considering that it can potentially be executed on every invocation
   # in a pipeline.
-  defp get_alias_type(name) do
-    case Repo.all(AliasQuery.user_alias_by_name(name)) do
+  defp get_alias_type(name, user) do
+    case Repo.all(AliasQuery.user_alias_by_name(user, name)) do
       [] ->
         case Repo.all(AliasQuery.site_alias_by_name(name)) do
           [] ->
@@ -33,27 +49,6 @@ defmodule Cog.Command.CommandResolver do
         end
       _user_alias ->
         {:ok, "user"}
-    end
-  end
-
-  defp find_bundle_or_alias(name) do
-    case Repo.all(Command.bundle_for(name)) do
-      [bundle_name] ->
-        case get_alias_type(name) do
-          {:ok, alias_type} ->
-            SemanticError.new(name, {:ambiguous_alias, {bundle_name <> ":" <> name, alias_type <> ":" <> name}})
-          nil ->
-            {:ok, bundle_name}
-        end
-      [] ->
-        case get_alias_type(name) do
-          {:ok, alias_type} ->
-            {:ok, alias_type}
-          nil ->
-            SemanticError.new(name, :no_command)
-        end
-      bundle_names ->
-        SemanticError.new(name, {:ambiguous_command, bundle_names})
     end
   end
 

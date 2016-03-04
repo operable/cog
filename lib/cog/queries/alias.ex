@@ -31,8 +31,11 @@ defmodule Cog.Queries.Alias do
     select: a
   end
 
-  def user_alias_by_name(name),
-    do: UserCommandAlias |> where(name: ^name)
+  def user_alias_by_name(%Cog.Models.User{id: id}, alias_name) do
+    from ua in UserCommandAlias,
+    where: ua.name == ^alias_name,
+    where: ua.user_id == ^id
+  end
 
   def site_alias_by_name(name),
     do: SiteCommandAlias |> where(name: ^name)

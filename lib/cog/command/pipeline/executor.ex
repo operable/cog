@@ -157,7 +157,7 @@ defmodule Cog.Command.Pipeline.Executor do
   to `remaining` in the state.
   """
   def parse(:timeout, state) do
-    case Parser.scan_and_parse(state.request["text"], command_resolver: &CommandResolver.find_bundle/1, return_pipeline: true) do
+    case Parser.scan_and_parse(state.request["text"], command_resolver: &CommandResolver.find_bundle(&1, state.user), return_pipeline: true) do
       {:ok, %Ast.Pipeline{}=pipeline} ->
         {:next_state, :lookup_redirects, %{state | pipeline: pipeline}, 0}
       {:error, msg} ->
@@ -227,7 +227,7 @@ defmodule Cog.Command.Pipeline.Executor do
   If a command begins with 'user' or 'site' it is treated as an alias and expanded.
   """
   def maybe_expand(:timeout, %__MODULE__{current: current_bound}=state) do
-    case AliasExpander.expand(current_bound.command) do
+    case AliasExpander.expand(current_bound.command, state.user) do
       {:ok, :not_an_alias} ->
         {:next_state, :get_options, state, 0}
       {:ok, invocations} ->
