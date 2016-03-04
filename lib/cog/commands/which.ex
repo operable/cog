@@ -25,14 +25,17 @@ defmodule Cog.Commands.Which do
     > command - operable:an-awesome-command
 
     @bot #{Cog.embedded_bundle}:which not-anything
-    > No matching commands or aliases
+    > No matching commands or aliases.
   """
 
   def handle_message(req, state) do
-    user = Helpers.get_user(req.requestor)
-    case Helpers.get_args(req.args, count: 1) do
-      {:ok, [arg]} ->
-        {:reply, req.reply_to, "which", which(user, arg), state}
+    results = with {:ok, user} <- get_user(req.requestor),
+                   {:ok, [arg]} <- Helpers.get_args(req.args, count: 1),
+                     do: which(user, arg)
+
+    case results do
+      {:ok, data} ->
+        {:reply, req.reply_to, "which", data, state}
       {:error, err} ->
         {:error, req.reply_to, Helpers.error(err), state}
     end
@@ -47,16 +50,27 @@ defmodule Cog.Commands.Which do
       nil ->
         case Repo.get_by(Command, name: arg) do
           nil ->
-            %{}
+            {:ok, %{not_found: true}}
           %Command{} ->
             bundle = Queries.Command.bundle_for(arg)
             |> Repo.one!
-            %{type: "command", scope: bundle, name: arg}
+            {:ok, %{type: "command", scope: bundle, name: arg}}
         end
       %UserCommandAlias{pipeline: pipeline} ->
-        %{type: "alias", scope: "user", name: arg, pipeline: pipeline}
+        {:ok, %{type: "alias", scope: "user", name: arg, pipeline: pipeline}}
       %SiteCommandAlias{pipeline: pipeline} ->
-        %{type: "alias", scope: "site", name: arg, pipeline: pipeline}
+        {:ok, %{type: "alias", scope: "site", name: arg, pipeline: pipeline}}
+    end
+  end
+
+  # A simple wrapper around Helpers.get_user/1. So we can get output like we
+  # want it.
+  defp get_user(requestor) do
+    case Helpers.get_user(requestor) do
+      nil ->
+        {:error, {:no_user, requestor["handle"], requestor["provider"]}}
+      user ->
+        {:ok, user}
     end
   end
 end

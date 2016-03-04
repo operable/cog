@@ -48,6 +48,8 @@ defmodule Cog.Commands.Helpers do
     do: Enum.map_join(errors, "\n", &error/1)
   def error({:db_errors, errors}),
     do: db_errors(errors)
+  def error({:no_user, handle, provider}),
+    do: "No user '#{handle}' found for '#{provider}'."
   def error({:not_enough_args, count}),
     do: "Not enough args. Arguments required: exactly #{count}."
   def error({:under_min_args, min}),
