@@ -11,8 +11,8 @@ defmodule Cog.Adapters.Slack.API do
   @channel_cache :slack_api_channels
   @direct_chat_channel_cache :slack_im
 
-  def start_link(token, ttl) do
-    GenServer.start_link(__MODULE__, [token, ttl], name: @server_name)
+  def start_link(config) do
+    GenServer.start_link(__MODULE__, [config], name: @server_name)
   end
 
   def send_message(room, message) when is_binary(message) do
@@ -80,7 +80,10 @@ defmodule Cog.Adapters.Slack.API do
     end
   end
 
-  def init([token, ttl]) when is_integer(ttl) or ttl == nil do
+  def init(config) do
+    token = config[:api][:token]
+    cache_ttl = config[:api][:cache_ttl] || @default_ttl
+
     case verify_token(token) do
       false ->
         {:error, :bad_slack_token}
@@ -88,14 +91,10 @@ defmodule Cog.Adapters.Slack.API do
         :ets.new(@user_cache, [:named_table, {:read_concurrency, true}])
         :ets.new(@channel_cache, [:named_table, {:read_concurrency, true}])
         :ets.new(@direct_chat_channel_cache, [:named_table, {:read_concurrency, true}])
-        state = case ttl do
-                  nil ->
-                    %__MODULE__{token: token, ttl: @default_ttl}
-                  _ ->
-                    %__MODULE__{token: token, ttl: ttl}
-                end
-        Logger.info("Ready. Response cache TTL is #{state.ttl} seconds.")
-        {:ok, state}
+
+        Logger.info("Ready. Response cache TTL is #{cache_ttl} seconds.")
+
+        {:ok, %__MODULE__{token: token, ttl: cache_ttl}}
     end
   end
 
