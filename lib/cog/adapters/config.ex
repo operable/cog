@@ -1,4 +1,6 @@
 defmodule Cog.Adapters.Config do
+  require Logger
+
   @moduledoc """
   The Config module is used to ingest adapter configuration that is specified
   in Mix, apply validations and type coercion, cache it in the state of a
@@ -72,57 +74,44 @@ defmodule Cog.Adapters.Config do
         numbers: %{size: 123, max: 200}}
   """
 
-  defmacro __using__([schema: schema]) do
-    quote do
-      use GenServer
-      import Supervisor.Spec
+  defmacro __using__(options) do
+    key = Keyword.get(options, :key, __CALLER__.module)
+    schema = Keyword.fetch!(options, :schema)
+
+    quote location: :keep do
       import Cog.Adapters.Config
+      require Logger
 
-      def start_link(schema) do
-        GenServer.start_link(__MODULE__, schema, name: __MODULE__)
+      def fetch_config do
+        Cog.Adapters.Config.fetch_config(unquote(key), unquote(schema))
       end
 
-      def config do
-        ensure_started
-        GenServer.call(__MODULE__, :fetch_config)
-      end
-
-      def init(schema) do
-        config = fetch_config(__MODULE__, schema)
-        {:ok, config}
-      end
-
-      def handle_call(:fetch_config, _from, config) do
-        {:reply, config, config}
-      end
-
-      defp ensure_started do
-        case Process.whereis(__MODULE__) do
-          nil ->
-            start
-          _pid ->
-            :ok
-        end
-      end
-
-      defp start do
-        children = [worker(__MODULE__, [unquote(schema)])]
-        supervisor_module = Module.concat(__MODULE__, "Supervisor")
-        Supervisor.start_link(children, name: supervisor_module, strategy: :one_for_one)
+      def fetch_config! do
+        Cog.Adapters.Config.fetch_config!(unquote(key), unquote(schema))
       end
     end
   end
 
   # TODO: Alter the schema structure to deterministically identify namespaces
   # from two tuple value definitions.
-  def fetch_config(config, schema) do
-    env = Application.get_env(:cog, config)
+  def fetch_config(key, schema) do
+    config = Application.get_env(:cog, key)
 
     case Keyword.keyword?(schema) do
       true ->
-        namespace_config(schema, env)
+        namespace_config(schema, config)
       false ->
-        apply_schema(schema, env)
+        apply_schema(schema, config)
+    end
+  end
+
+  def fetch_config!(key, schema) do
+    case fetch_config(key, schema) do
+      {:ok, config} ->
+        config
+      {:error, errors} ->
+        Enum.each(format_errors(errors), &Logger.error/1)
+        raise "Invalid config found for #{inspect(key)}"
     end
   end
 
@@ -151,8 +140,8 @@ defmodule Cog.Adapters.Config do
       case fetch_field(config, field) do
         {^state, {key, value}} ->
           {state, Map.put(acc, key, value)}
-        {:error, {key, error}} ->
-          {:error, Map.put(%{}, key, error)}
+        {:error, {key, errors}} ->
+          {:error, Map.put(%{}, key, errors)}
         _ ->
           {state, acc}
       end
@@ -172,13 +161,11 @@ defmodule Cog.Adapters.Config do
   end
 
   defp fetch_field(config, {field, rules, key}) do
-    value = Keyword.fetch(config, key)
+    value = Keyword.get(config, key)
 
     case apply_rules(rules, value) do
-      {:ok, {:ok, value}, []} ->
+      {:ok, value, []} ->
         {:ok, {field, value}}
-      {:ok, :error, []} ->
-        {:ok, {field, nil}}
       {:error, _value, errors} ->
         {:error, {field, errors}}
     end
@@ -191,7 +178,7 @@ defmodule Cog.Adapters.Config do
     Enum.reduce(rules, {:ok, value, []}, fn rule, {state, value, acc} ->
       case {state, apply_rule(rule, value)} do
         {:ok, {:ok, value}} ->
-          {:ok, {:ok, value}, acc}
+          {:ok, value, acc}
         {_, {:error, error}} ->
           {:error, value, [error|acc]}
         {:error, {:ok, value}} ->
@@ -202,14 +189,16 @@ defmodule Cog.Adapters.Config do
 
   defp apply_rule(:required, value) do
     case value do
-      {:ok, value} ->
+      value when not(is_nil(value)) ->
         {:ok, value}
-      :error ->
+      _ ->
         {:error, :missing_required_key}
     end
   end
 
-  defp apply_rule(:integer, {:ok, value}) do
+  defp apply_rule(:integer, nil),
+    do: {:ok, nil}
+  defp apply_rule(:integer, value) do
     case value |> to_string |> Integer.parse do
       {integer, ""} ->
         {:ok, integer}
@@ -218,7 +207,9 @@ defmodule Cog.Adapters.Config do
     end
   end
 
-  defp apply_rule(:boolean, {:ok, value}) do
+  defp apply_rule(:boolean, nil),
+    do: {:ok, nil}
+  defp apply_rule(:boolean, value) do
     case value |> to_string do
       "true" ->
         {:ok, true}
@@ -229,6 +220,8 @@ defmodule Cog.Adapters.Config do
     end
   end
 
+  defp apply_rule(:split, nil),
+    do: {:ok, nil}
   defp apply_rule(:split, {:ok, value}) do
     case value do
       value when is_binary(value) ->
@@ -247,4 +240,22 @@ defmodule Cog.Adapters.Config do
   defp apply_rule(rule, _) do
     raise "Unknown rule #{inspect(rule)} could not be applied"
   end
+
+  defp format_errors(errors) do
+    Enum.flat_map(errors, fn
+      {_key, map} when is_map(map) ->
+        format_errors(map)
+      {key, list} when is_list(list) ->
+        Enum.map(list, &format_error(&1, key))
+    end)
+  end
+
+  defp format_error(:missing_required_key, key),
+    do: "Required key #{inspect key} was not provided"
+  defp format_error(:unable_to_parse_integer, key),
+    do: "Unable to parse value for key #{inspect key} as an integer"
+  defp format_error(:unable_to_parse_boolean, key),
+    do: "Unable to parse value for key #{inspect key} as a boolean"
+  defp format_error(:unable_to_split_nonbinary, key),
+    do: "Unable to split non-string value for key #{key}"
 end
