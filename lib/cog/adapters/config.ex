@@ -3,11 +3,11 @@ defmodule Cog.Adapters.Config do
 
   @moduledoc """
   The Config module is used to ingest adapter configuration that is specified
-  in Mix, apply validations and type coercion, cache it in the state of a
-  GenServer, and make it available to the adapter. To use it, create new module
-  `use Cog.Adapters.Config` with a keyword list containing a `schema` key with
-  your scheam defined. This module assumes that your config is stored under the
-  `:cog` Mix configuration with a key of the new module's name.
+  in Mix and apply validations and type coercion. To use it, create new module
+  `use Cog.Adapters.Config` with a keyword list containing a `key` key for the
+  module under which your config lives and a `schema` key with your schema
+  defined. This module assumes that your config is stored under the `:cog` Mix
+  configuration with a key of the new module's name.
 
   The `schema` value should be a list of field specifications which are used to
   extract values from Mix configuration and transform them into adapter
