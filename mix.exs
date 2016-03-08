@@ -34,7 +34,8 @@ defmodule Cog.Mixfile do
                     :postgrex,
                     :phoenix_html,
                     :comeonin,
-                    :spanner],
+                    :spanner,
+                    :exirc],
      included_applications: [:emqttd],
      mod: {Cog, []}]
   end
@@ -65,6 +66,7 @@ defmodule Cog.Mixfile do
      {:probe, github: "operable/probe", tag: "0.2"},
      {:exml, github: "paulgray/exml", tag: "2.2.1"},
      {:fumanchu, github: "operable/fumanchu", ref: "cog-0.2"},
+     {:exirc, "~> 0.9.2"},
 
      {:phoenix_live_reload, "~> 1.0.3", only: :dev},
      {:earmark, "~> 0.2.1", only: :dev},

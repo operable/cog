@@ -57,6 +57,7 @@ defmodule Cog do
 
   def adapter_module("slack"), do: {:ok, Cog.Adapters.Slack}
   def adapter_module("hipchat"), do: {:ok, Cog.Adapters.HipChat}
+  def adapter_module("irc"), do: {:ok, Cog.Adapters.IRC}
   def adapter_module("null"), do: {:ok, Cog.Adapters.Null}
   def adapter_module("test"), do: {:ok, Cog.Adapters.Test}
   def adapter_module(bad_adapter) do
