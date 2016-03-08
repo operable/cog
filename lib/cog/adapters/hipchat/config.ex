@@ -1,5 +1,6 @@
 defmodule Cog.Adapters.HipChat.Config do
   use Cog.Adapters.Config,
+    key: Cog.Adapters.HipChat,
     schema: [xmpp:
                [{:jid, [:required], :xmpp_jid},
                 {:password, [:required], :xmpp_password},
