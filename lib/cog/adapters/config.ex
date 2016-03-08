@@ -50,10 +50,11 @@ defmodule Cog.Adapters.Config do
 
       defmodule My.Adapter.SimpleConfig do
         use Cog.Adapters.Config,
+          key: Example.Config,
           schema: [:name, :description, :inital_size, :max_size]
       end
       
-      iex(1)> My.Adapter.SimpleConfig.config
+      iex(1)> My.Adapter.SimpleConfig.fetch_config!
       %{name: "Example", description: "My Example Configuration",
         initial_size: 123, max_size: 200}
       
@@ -61,6 +62,7 @@ defmodule Cog.Adapters.Config do
 
       defmodule My.Adapter.ComplexConfig do
         use Cog.Adapters.Config,
+          key: Example.Config,
           schema: [:strings, [{:name, [:required]},
                               :description
                               {:version, :hardcode, "v0.1"}],
@@ -68,7 +70,7 @@ defmodule Cog.Adapters.Config do
                               {:max, [:required, :integer], :max_size}]]
       end
       
-      iex(1)> My.Adapter.ComplexConfig.config
+      iex(1)> My.Adapter.ComplexConfig.fetch_config!
       %{strings: %{name: "Example", decription: "My Example Configuration"
                    version: "v0.1"},
         numbers: %{size: 123, max: 200}}
