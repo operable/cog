@@ -95,26 +95,11 @@ defmodule Cog.Adapters.ConfigTest do
                 how_many_cheeseburgers: 5],
                Cog.Adapters.ConfigTest.TestConfig)
 
-    {:ok, config} = TestConfig.config
+    {:ok, config} = TestConfig.fetch_config
 
     assert config == %{testy: "mctesterson",
                        double: "check",
                        how_many_cheeseburgers: 5}
-  end
-
-  test "configs are cached" do
-    defmodule TestCachedConfig do
-      use Cog.Adapters.Config,
-        schema: [{:testy, [:required], :testy}]
-    end
-
-    put_config([testy: "mctesterson"], Cog.Adapters.ConfigTest.TestCachedConfig)
-    {:ok, config} = TestCachedConfig.config
-    assert config == %{testy: "mctesterson"}
-
-    put_config([testy: "mcnuggets"], Cog.Adapters.ConfigTest.TestCachedConfig)
-    {:ok, config} = TestCachedConfig.config
-    assert config == %{testy: "mctesterson"}
   end
 
   defp put_config(config, module \\ TestConfig) do
