@@ -1,3 +1,4 @@
+[![Stories in Ready](https://badge.waffle.io/operable/cog.png?label=ready&title=Ready)](https://waffle.io/operable/cog)
 # Cog
 
 Cog is an open chatops platform that gives you a secure, collaborative command line right in your chat window. It is designed to be secure, highly available, chat provider agnostic, and to be extensible using your favorite programming language.
