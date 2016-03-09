@@ -4,6 +4,25 @@ Cog is an open chatops platform that gives you a secure, collaborative command l
 
 ![cog-demo-20](https://cloud.githubusercontent.com/assets/1198/13233523/00b9f602-d982-11e5-9177-9442e3ff54de.gif)
 
+## Setup
+
+Cog depends on a few things to run locally:
+
+    * Postgres
+    * A `SLACK_API_TOKEN` environment variable (with a valid token)
+    * Erlang compiled with the dirty scheduler
+    * `libsodium`.
+
+With those installed, setup your computer with:
+
+    $ make setup
+
+## Run Cog
+
+    $ make run
+
+Cog will be run on `http://localhost:4000`.
+
 ## Status
 
 Cog is currently in public alpha and is not currently recommended for mission critical workflows. While many of the core features are in place, there are a number of rough edges that we anticipate smoothing out over the next few months. We are releasing it in this state in order to allow us to collaborate in the open with the community in order to build the best possible platform.
