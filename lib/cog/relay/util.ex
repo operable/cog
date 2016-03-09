@@ -7,10 +7,6 @@ defmodule Cog.Relay.Util do
     String.to_integer(istr, to_base)
   end
 
-  @doc "Return true if tuple has an :ok status"
-  def is_ok?({:ok, _}), do: true
-  def is_ok?({_,_}), do: false
-
   @doc "Returns the data that is wrapped in a tuple"
   def unwrap_tuple({_status, bundle_data}), do: bundle_data
 
