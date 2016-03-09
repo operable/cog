@@ -7,7 +7,7 @@ defmodule Cog.Adapters.IRC.Supervisor do
   end
 
   def init(_) do
-    config = IRC.Config.fetch_config
+    config = IRC.Config.fetch_config!
     {:ok, client} = ExIrc.start_client!
 
     children = [worker(IRC, []),

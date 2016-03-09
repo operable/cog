@@ -1,4 +1,5 @@
 defmodule Cog.Adapters.HipChat.API do
+  alias Cog.Adapters.HipChat
   require Logger
 
   use HTTPoison.Base
@@ -146,7 +147,7 @@ defmodule Cog.Adapters.HipChat.API do
   end
 
   defp api_token do
-    Cog.Adapters.HipChat.Config.fetch_config(:api)[:token]
+    config = HipChat.Config.fetch_config!
+    config[:api][:token]
   end
-
 end

@@ -6,11 +6,13 @@ defmodule Cog.Adapters.HipChat.Connection do
   defstruct xmpp_conn: nil
 
   def start_link() do
-    GenServer.start_link(__MODULE__, HipChat.Config.fetch_config, name: __MODULE__)
+    GenServer.start_link(__MODULE__, [], name: __MODULE__)
   end
 
-  def init(config) do
+  def init([]) do
     HipChat.API.start
+
+    config = HipChat.Config.fetch_config!
 
     {:ok, xmpp_conn} = config[:xmpp]
     |> Map.put(:config, xmpp_server_options)
@@ -108,7 +110,7 @@ defmodule Cog.Adapters.HipChat.Connection do
   end
 
   defp mention_name() do
-    HipChat.Config.fetch_config(:api)
-    |> Access.get(:mention_name)
+    config = HipChat.Config.fetch_config!
+    config[:api][:mention_name]
   end
 end
