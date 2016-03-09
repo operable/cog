@@ -110,7 +110,7 @@ defmodule Cog.Adapters.HipChat.Connection do
   end
 
   defp mention_name() do
-    config = HipChat.Config.fetch_config!(:api)
+    config = HipChat.Config.fetch_config!
     config[:api][:mention_name]
   end
 end

@@ -224,7 +224,7 @@ defmodule Cog.Adapters.Config do
 
   defp apply_rule(:split, nil),
     do: {:ok, nil}
-  defp apply_rule(:split, {:ok, value}) do
+  defp apply_rule(:split, value) do
     case value do
       value when is_binary(value) ->
         {:ok, String.split(value, ",")}
