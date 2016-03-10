@@ -11,7 +11,7 @@ defmodule Cog.Adapters.HipChat.Supervisor do
 
     children = [worker(HipChat, []),
                 worker(HipChat.API, [config]),
-                worker(HipChat.Connection, [])]
+                worker(HipChat.Connection, [config])]
 
     supervise(children, strategy: :one_for_all)
   end

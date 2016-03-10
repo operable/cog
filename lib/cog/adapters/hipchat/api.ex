@@ -1,6 +1,5 @@
 defmodule Cog.Adapters.HipChat.API do
   use GenServer
-  alias Cog.Adapters.HipChat
 
   @base_uri "https://api.hipchat.com/v2"
   @timeout 15000 # 15 seconds

@@ -3,22 +3,20 @@ defmodule Cog.Adapters.HipChat.Connection do
   alias Cog.Adapters.HipChat
   require Logger
 
-  defstruct xmpp_conn: nil
+  defstruct [:xmpp_conn, :command_pattern]
 
-  def start_link() do
-    GenServer.start_link(__MODULE__, [], name: __MODULE__)
+  def start_link(config) do
+    GenServer.start_link(__MODULE__, config, name: __MODULE__)
   end
 
-  def init([]) do
-    HipChat.API.start
-
-    config = HipChat.Config.fetch_config!
-
+  def init(config) do
     {:ok, xmpp_conn} = config[:xmpp]
     |> Map.put(:config, xmpp_server_options)
     |> Hedwig.start_client
 
-    {:ok, %{xmpp_conn: xmpp_conn}}
+    command_pattern = compile_command_pattern(config[:api][:mention_name])
+
+    {:ok, %{xmpp_conn: xmpp_conn, command_pattern: command_pattern}}
   end
 
   def xmpp_server_options do
@@ -42,7 +40,7 @@ defmodule Cog.Adapters.HipChat.Connection do
   end
 
   defp handle_inbound_message(message, state) do
-    case extract_command(message) do
+    case extract_command(message, state.command_pattern) do
       :not_found ->
         {:noreply, state}
       {type, command} ->
@@ -62,7 +60,7 @@ defmodule Cog.Adapters.HipChat.Connection do
     end
   end
 
-  defp extract_command(message) do
+  defp extract_command(message, command_pattern) do
     command = Regex.replace(command_pattern, message.body, "")
     cond do
       command == message.body ->
@@ -102,15 +100,11 @@ defmodule Cog.Adapters.HipChat.Connection do
     {:noreply, state}
   end
 
-  defp command_pattern() do
+  defp compile_command_pattern(mention_name) do
     ~r/\A(@?#{mention_name}:?\s*)|(#{command_prefix})/i
   end
+
   defp command_prefix() do
     Application.get_env(:cog, :command_prefix, "!")
-  end
-
-  defp mention_name() do
-    config = HipChat.Config.fetch_config!
-    config[:api][:mention_name]
   end
 end
