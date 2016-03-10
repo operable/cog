@@ -1,153 +1,139 @@
 defmodule Cog.Adapters.HipChat.API do
+  use GenServer
   alias Cog.Adapters.HipChat
-  require Logger
 
-  use HTTPoison.Base
-
-  defstruct token: nil
-
-  @api_base "https://api.hipchat.com/v2"
+  @base_uri "https://api.hipchat.com/v2"
   @timeout 15000 # 15 seconds
 
-  def send_message(%{"id" => room_id}, message) do
-    url = "/room/#{room_id}/message"
-    body = Poison.encode!(%{message: message})
-    {:ok, response} = post(url, body)
-    response.body
-  end
-  def send_message(%{"direct" => user_id}, message) do
-    url = "/user/#{user_id}/message"
-    body = Poison.encode!(%{message: message})
-    {:ok, response} = post(url, body)
-    response.body
+  def start_link(config) do
+    GenServer.start_link(__MODULE__, config, name: __MODULE__)
   end
 
-  def lookup(subject, id, expands \\ nil) do
-    get!("/#{subject}/#{id}" <> expands_list(expands))
+  def send_message(room, message) do
+    GenServer.call(__MODULE__, {:send_message, room, message})
   end
 
-  def lookup_direct_room(user_id: user_id),
-    do: {:ok, %{"direct" => user_id}}
-
-  defp expands_list(nil), do: ""
-  defp expands_list(expands) do
-    "?expand=" <> Enum.join(expands, ",")
-  end
-
-  # TODO: cache looking up the users in the room
-  def lookup_room_user(room_name, user_name) do
-    room = lookup("room", room_name).body
-    members = get!("/user").body["items"]
-
-    user = Enum.find(members, fn(user) ->
-      Map.get(user, "name") == user_name
-    end)
-
-    %{room: normalize_room(room),
-      user: normalize_user(user)}
-  end
-
-  def lookup_user(opts) do
-    lookup("user", option_key(opts))
-    |> Map.get(:body)
-    |> normalize_user
-  end
-
-  def lookup_room("@" <> handle, as_user: _) do
+  def lookup_room("@" <> handle) do
     user = lookup_user(name: "@" <> handle)
     lookup_direct_room(user_id: user.id)
   end
-  def lookup_room("#" <> room, as_user: _) do
-    room = lookup_room(name: room)
-    {:ok, room}
+
+  def lookup_room("#" <> room) do
+    lookup_room(name: room)
   end
-  def lookup_room(id, as_user: _) do
-    case lookup_user(name: "@" <> id) do
-      %{id: nil} ->
-        case lookup_room(lookup_room(name: id)) do
-          room ->
-            {:ok, room}
-        end
-      user ->
-        lookup_direct_room(user_id: user.id)
+
+  def lookup_room(options) do
+    GenServer.call(__MODULE__, {:lookup_room, options})
+  end
+
+  def lookup_direct_room(user_id: user_id) do
+    {:ok, %{"direct" => user_id}}
+  end
+
+  def lookup_room_user(room_name, user_name) do
+    case lookup_room(name: room_name) do
+      {:ok, room} ->
+        users = lookup_users()
+        user = Enum.find(users, &match?(%{"name" => ^user_name}, &1))
+        {:ok, %{room: room, user: user}}
+      {:error, error} ->
+        {:error, error}
     end
   end
 
-  def lookup_room(opts) do
-    lookup("room", option_key(opts))
-    |> Map.get(:body)
-    |> normalize_room
+  def lookup_user(id: user_id) do
+    GenServer.call(__MODULE__, {:lookup_user, id: user_id})
   end
 
-  def retrieve_last_message(room_name, not_before) do
-    room = lookup_room(name: room_name)
-
-    url = "/room/#{room.id}/history/latest"
-    query = URI.encode_query("max-results": 2, "not-before": not_before)
-
-    get!(url <> "?" <> query)
-    |> Map.get(:body)
-    |> normalize_last_message
+  def lookup_user(name: username) do
+    GenServer.call(__MODULE__, {:lookup_user, id: username})
   end
 
-  defp option_key(opts), do: opts[:id] || opts[:handle] || opts[:name]
-
-  defp normalize_user(user)  do
-    %{id: user["id"],
-      handle: user["mention_name"]}
+  def lookup_users() do
+    GenServer.call(__MODULE__, :lookup_users)
   end
 
-  defp normalize_room(room) do
-    %{id: room["id"],
-      name: room["name"]}
+  # TODO: Check that token is valid before  returning successfully
+  def init(config) do
+    token = config[:api][:token]
+    {:ok, %{client: %{token: token}}}
   end
 
-  defp normalize_last_message(%{"items" => [_sent_message, item|_]}),
-    do: item["message"]
-  defp normalize_last_message(%{"items" => _}),
-    do: nil
-
-  def request(method, url, body, headers, options) do
-    default_options = [timeout: @timeout]
-    options = options ++ default_options
-    super(method, url, body, headers, options)
+  def handle_call({:send_message, %{"id" => room_id}, message}, _from, state) do
+    uri = "/room/#{room_id}/message"
+    body = %{message: message}
+    result = post(state.client, uri, body: body)
+    {:reply, result, state}
   end
 
-  def process_url(url) do
-    @api_base <> url
+  def handle_call({:send_message, %{"direct" => user_id}, message}, _from, state) do
+    uri = "/user/#{user_id}/message"
+    body = %{message: message}
+    result = post(state.client, uri, body: body)
+    {:reply, result, state}
   end
 
-  def process_request(body) do
-    Poison.decode!(body)
+  def handle_call({:lookup_room, name: room_name}, _from, state) do
+    uri = "/room/#{room_name}"
+    result = get(state.client, uri)
+    {:reply, result, state}
   end
 
-  def process_request_headers(headers) do
-    [{"Content-Type", "application/json"},
-     {"Authorization", "Bearer " <> api_token}|headers]
+  def handle_call({:lookup_user, id: user_id}, _from, state) do
+    uri = "/user/#{user_id}"
+    result = get(state.client, uri)
+    {:reply, result, state}
   end
 
-  def process_response_body(body) do
-    case body do
-      "" ->
-        ""
-      body ->
-        Poison.decode!(body)
+  def handle_call(:lookup_users, _from, state) do
+    uri = "/user"
+    result = get(state.client, uri)
+    {:reply, result, state}
+  end
+
+  defp get(client, uri, options \\ []) do
+    request(client, :get, uri, options)
+  end
+
+  defp post(client, uri, options) do
+    request(client, :post, uri, options)
+  end
+
+  defp request(client, method, uri, options) do
+    uri = @base_uri <> uri
+
+    options = options
+    |> include_headers(client)
+    |> encode_body
+
+    response = HTTPotion.request(method, uri, options)
+    body = Poison.decode!(response.body)
+
+    case HTTPotion.Response.success?(response) do
+      true ->
+        {:ok, body}
+      false ->
+        {:error, body["error"]}
     end
   end
 
-  def process_headers(headers) do
-    ratelimit = Enum.into(headers, %{})
-    |> Map.get("X-Ratelimit-Remaining")
-
-    if ratelimit == "0" do
-      Logger.error("HipChat ratelimit exceeded")
-    end
-
-    headers
+  def include_headers(options, config) do
+    headers = request_headers(config)
+    Keyword.update(options, :headers, headers, &(headers ++ &1))
   end
 
-  defp api_token do
-    config = HipChat.Config.fetch_config!
-    config[:api][:token]
+  def request_headers(%{token: token}) do
+    ["Accept":        "application/json",
+     "Content-Type":  "application/json",
+     "Authorization": "Bearer #{token}"]
+  end
+
+  def encode_body(options) do
+    case Keyword.has_key?(options, :body) do
+      true ->
+        Keyword.update!(options, :body, &Poison.encode!/1)
+      false ->
+        options
+    end
   end
 end
