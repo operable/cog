@@ -69,6 +69,7 @@ defmodule Integration.RelayTest do
   end
 
   defp build_mist do
+    System.cmd("make", ["install"], cd: "../cog_mist")
     System.cmd("make", [], cd: "../cog_mist")
   end
 
