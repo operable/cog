@@ -1,6 +1,5 @@
 defmodule RuleIngestionTest do
   use Cog.ModelCase
-  alias Cog.Queries
   alias Piper.Permissions.Parser
 
   test "a valid rule gets parsed and saved" do
@@ -77,7 +76,7 @@ defmodule RuleIngestionTest do
     permission("s3:delete")
     inserted_rule = rule("when command is cog:s3 with option[op] == 'delete' must have s3:delete")
 
-    %Cog.Models.Rule{parse_tree: retrieved_tree} = Queries.Command.rules_for(command) |> Cog.Repo.one!
+    %Cog.Models.Rule{parse_tree: retrieved_tree} = Repo.one!(Ecto.assoc(command, :rules))
     assert ^retrieved_tree = inserted_rule.parse_tree
   end
 

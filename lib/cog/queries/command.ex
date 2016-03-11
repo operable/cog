@@ -31,16 +31,6 @@ defmodule Cog.Queries.Command do
     where: c.name == ^command
   end
 
-  def options_for(%Command{id: id}) do
-    from co in CommandOption,
-    where: co.command_id == ^id,
-    order_by: co.required
-  end
-
-  def rules_for(%Command{id: id}) do
-    from r in Rule,
-    where: r.command_id == ^id
-  end
 
   def rules_for_cmd(name) do
     {ns, name} = Models.Command.split_name(name)
