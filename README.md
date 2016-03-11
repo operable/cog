@@ -1,4 +1,9 @@
-# Cog
+# Cog  [![Build status](https://badge.buildkite.com/ce01baf77e07a728f3d80575254634c3d63d8a5eda69ba7fb3.svg?branch=master)](https://buildkite.com/operable/cog)
+
+------
+
+[![Reasearching Stories](https://badge.waffle.io/operable/cog.svg?label=research&title=Researching)](http://waffle.io/operable/cog)
+[![Stories in Ready](https://badge.waffle.io/operable/cog.svg?label=ready&title=Ready)](http://waffle.io/operable/cog)
 
 Cog is an open chatops platform that gives you a secure, collaborative command line right in your chat window. It is designed to be secure, highly available, chat provider agnostic, and to be extensible using your favorite programming language.
 
