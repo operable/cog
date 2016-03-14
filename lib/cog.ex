@@ -10,7 +10,16 @@ defmodule Cog do
     children = build_children(Mix.env, System.get_env("NOCHAT"), adapter_supervisor)
 
     opts = [strategy: :one_for_one, name: Cog.Supervisor]
-    Supervisor.start_link(children, opts)
+    started = Supervisor.start_link(children, opts)
+
+    # Verify the latest schema migration after starting the database worker
+    {sm_status, sm_message} = verify_schema_migration()
+    log_message(sm_status, sm_message)
+    if sm_status == :error do
+      abort_cog()
+    else
+      started
+    end
   end
 
   @doc "The name of the embedded command bundle."
@@ -66,23 +75,17 @@ defmodule Cog do
 
   defp sanity_check_vm() do
     {smp_status, smp_message} = verify_smp()
+    log_message(smp_status, smp_message)
+
     {ds_status, ds_message} = verify_dirty_schedulers()
-    if smp_status == :ok do
-      Logger.info(smp_message)
-    else
-      Logger.error(smp_message)
-    end
-    if ds_status == :ok do
-      Logger.info(ds_message)
-    else
-      Logger.error(ds_message)
-    end
-    if smp_status == :error or ds_status == :error do
-      Logger.error("Application start aborted.")
-      Logger.flush()
-      :init.stop()
-    end
+    log_message(ds_status, ds_message)
+
+    if smp_status == :error or ds_status == :error, do: abort_cog()
   end
+
+  defp log_message(:ok, message), do: Logger.info(message)
+  defp log_message(:error, message), do: Logger.error(message)
+  defp log_message(_status, message), do: Logger.warn(message)
 
   defp verify_smp() do
     if :erlang.system_info(:schedulers_online) < 2 do
@@ -109,5 +112,37 @@ Erlang VM is missing support for dirty CPU schedulers.
 See http://erlang.org/doc/installation_guide/INSTALL.html for information on enabling dirty scheduler support.
 """}
     end
+  end
+
+  defp verify_schema_migration() do
+    cond do
+      migration_needed? and Mix.env == :dev ->
+        {:dev, "The migration schema is not synchronized. Allowing to continue in the development environment."}
+      migration_needed? ->
+        {:error, "The migration schema is not up-to-date. Please perform a migration and restart Cog."}
+      true ->
+        {:ok, "Schema is at the current version"}
+    end
+  end
+
+  defp migration_needed?() do
+    [last_file_version, _] = Path.join([:code.priv_dir(:cog), "repo", "migrations"])
+    |> File.ls!
+    |> Enum.max
+    |> String.split("_", parts: 2)
+
+    last_db_version = Enum.max(Ecto.Migration.SchemaMigration.migrated_versions(Cog.Repo, "public"))
+
+    if last_db_version != String.to_integer(last_file_version) do
+      true
+    else
+      false
+    end
+  end
+
+  defp abort_cog() do
+    Logger.error("Application start aborted.")
+    Logger.flush()
+    :init.stop()
   end
 end
