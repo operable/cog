@@ -45,7 +45,7 @@ run: check-for-dirty-schedulers
 	iex -S mix phoenix.server
 
 reset-db:
-	mix ecto.reset
+	mix ecto.reset --no-start
 
 test-rollbacks: export MIX_ENV = test
 test-rollbacks: reset-db
