@@ -124,12 +124,9 @@ defmodule Cog.Command.Pipeline.Executor do
         # Extract and unwrap redirect information here; keeps AST
         # details from creeping around, and eliminates the need to
         # keep the pipeline around
-        redirect_destinations = case pipeline.redirect_to do
-                                  nil ->
-                                    []
-                                  %Ast.Redirect{targets: targets} ->
-                                    Enum.map(targets, &(&1.value))
-                                end
+        # If no redirects were given, we default to the
+        # current room; this keeps things uniform later on.
+        redirect_destinations = Ast.Pipeline.redirect_targets(pipeline, state.request["room"]["name"])
         {:next_state, :resolve_destinations, %{state |
                                                destinations: redirect_destinations,
                                                invocations: Enum.to_list(pipeline)}, 0}
@@ -140,24 +137,17 @@ defmodule Cog.Command.Pipeline.Executor do
   end
 
   def resolve_destinations(:timeout, %__MODULE__{destinations: destinations}=state) do
-    redirs = case destinations do
-               [] ->
-                 # If no redirects were given, we default to the
-                 # current room; this keeps things uniform later on.
-                 {:ok, [state.request["room"]]}
-               destinations ->
-                 {ok, errors} = destinations
-                 |> Enum.map(&lookup_room(&1, state))
-                 |> Enum.partition(&match?({:ok, _}, &1))
+    {ok, errors} = destinations
+    |> Enum.map(&lookup_room(&1, state))
+    |> Enum.partition(&match?({:ok, _}, &1))
 
-                 case errors do
-                   [] ->
-                     destinations = Enum.map(ok, fn({:ok, val}) -> val end)
-                     {:ok, destinations}
-                   _ ->
-                     errors = Enum.map(errors, fn({:error, val}) -> val end)
-                     {:error, errors}
-                 end
+    redirs = case errors do
+               [] ->
+                 destinations = Enum.map(ok, fn({:ok, val}) -> val end)
+                 {:ok, destinations}
+                 _ ->
+                   errors = Enum.map(errors, fn({:error, val}) -> val end)
+                   {:error, errors}
              end
     case redirs do
       {:ok, destinations} ->

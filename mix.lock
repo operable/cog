@@ -41,7 +41,7 @@
   "phoenix_ecto": {:hex, :phoenix_ecto, "2.0.1"},
   "phoenix_html": {:hex, :phoenix_html, "2.5.0"},
   "phoenix_live_reload": {:hex, :phoenix_live_reload, "1.0.3"},
-  "piper": {:git, "https://github.com/operable/piper.git", "e1dd89d73bf89177832b53edd75a20817c27d965", [branch: "kevsmith/new-cmd-parser"]},
+  "piper": {:git, "https://github.com/operable/piper.git", "8f46b6f3cd35b0469dd71ac9663baa58db2a4b67", [branch: "kevsmith/new-cmd-parser"]},
   "plug": {:hex, :plug, "1.1.2"},
   "poison": {:hex, :poison, "1.5.2"},
   "poolboy": {:hex, :poolboy, "1.5.1"},
