@@ -1,5 +1,6 @@
 defmodule Cog.Adapters.HipChat.API do
   use GenServer
+  require Logger
 
   @base_uri "https://api.hipchat.com/v2"
   @timeout 15000 # 15 seconds
@@ -54,10 +55,18 @@ defmodule Cog.Adapters.HipChat.API do
     GenServer.call(__MODULE__, {:retrieve_last_message, room, not_before})
   end
 
-  # TODO: Check that token is valid before  returning successfully
   def init(config) do
     token = config[:api][:token]
-    {:ok, %{client: %{token: token}}}
+    client = %{token: token}
+
+    case authenticate(client) do
+      :ok ->
+        {:ok, %{client: client}}
+      {:error, :unauthorized} ->
+        raise "Authentication with the HipChat API failed. Please check your api token and try again."
+      {:error, :nxdomain} ->
+        raise "Connecting to the HipChat API failed. Please check your network settings and try again."
+    end
   end
 
   def handle_call({:send_message, %{"id" => room_id}, message}, _from, state) do
@@ -119,6 +128,23 @@ defmodule Cog.Adapters.HipChat.API do
     {:reply, result, state}
   end
 
+  defp authenticate(client) do
+    uri = "/room"
+
+    result = rescue_econnrefused(fn ->
+      get(client, uri)
+    end)
+
+    case result do
+      {:ok, _result} ->
+        :ok
+      {:error, %{"type" => "Unauthorized"}} ->
+        {:error, :unauthorized}
+      {:error, error} ->
+        {:error, error}
+    end
+  end
+
   defp get(client, uri, options \\ []) do
     request(client, :get, uri, options)
   end
@@ -175,5 +201,19 @@ defmodule Cog.Adapters.HipChat.API do
 
   defp normalize_message(%{"message" => message}) do
     message
+  end
+
+  defp rescue_econnrefused(fun) do
+    try do
+      fun.()
+    rescue
+      e in HTTPotion.HTTPError ->
+        case e do
+          %{message: "nxdomain"} ->
+            {:error, :nxdomain}
+          _ ->
+            {:error, e}
+        end
+    end
   end
 end
