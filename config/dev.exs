@@ -1,9 +1,10 @@
 use Mix.Config
+use Cog.Config.Helpers
 
 config :logger, :console,
   level: :debug
 
-config :cog, :enable_spoken_commands, false
+config :cog, :enable_spoken_commands, ensure_boolean(System.get_env("ENABLE_SPOKEN_COMMANDS")) || false
 
 config :cog,
   :template_cache_ttl, {1, :sec}
