@@ -11,7 +11,7 @@ defmodule Cog.Adapters.HipChat.APITest do
   end
 
   test "looking up a room" do
-    assert {:ok, %{"name" => "ci_bot_testing"}} = HipChat.API.lookup_room(name: "ci_bot_testing")
+    assert {:ok, %{id: 2223837, name: "ci_bot_testing"}} = HipChat.API.lookup_room(name: "ci_bot_testing")
   end
 
   test "looking up a room that doesn't exist"  do
@@ -24,6 +24,6 @@ defmodule Cog.Adapters.HipChat.APITest do
 
   test "sending a message" do
     {:ok, room} = HipChat.API.lookup_room(name: "ci_bot_testing")
-    assert {:ok, _} = HipChat.API.send_message(room, "test")
+    assert {:ok, _} = HipChat.API.send_message(%{"id" => room.id}, "test")
   end
 end
