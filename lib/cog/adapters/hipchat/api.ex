@@ -145,18 +145,18 @@ defmodule Cog.Adapters.HipChat.API do
     end
   end
 
-  def include_headers(options, config) do
+  defp include_headers(options, config) do
     headers = request_headers(config)
     Keyword.update(options, :headers, headers, &(headers ++ &1))
   end
 
-  def request_headers(%{token: token}) do
+  defp request_headers(%{token: token}) do
     ["Accept":        "application/json",
      "Content-Type":  "application/json",
      "Authorization": "Bearer #{token}"]
   end
 
-  def encode_body(options) do
+  defp encode_body(options) do
     case Keyword.has_key?(options, :body) do
       true ->
         Keyword.update!(options, :body, &Poison.encode!/1)
@@ -165,15 +165,15 @@ defmodule Cog.Adapters.HipChat.API do
     end
   end
 
-  def normalize_user(%{"id" => id, "mention_name" => handle, "name" => name}) do
+  defp normalize_user(%{"id" => id, "mention_name" => handle, "name" => name}) do
     %{id: id, handle: handle, name: name}
   end
 
-  def normalize_room(%{"id" => id, "name" => name}) do
+  defp normalize_room(%{"id" => id, "name" => name}) do
     %{id: id, name: name}
   end
 
-  def normalize_message(%{"message" => message}) do
+  defp normalize_message(%{"message" => message}) do
     message
   end
 end
