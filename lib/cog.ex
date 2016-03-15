@@ -29,20 +29,20 @@ defmodule Cog do
   def site_namespace, do: "site"
 
   defp build_children(:dev, nochat, _) when nochat != nil do
-    [supervisor(Cog.Endpoint, []),
-     worker(Cog.Repo, []),
-     worker(Cog.TokenReaper, [])]
+    [worker(Cog.Repo, []),
+     worker(Cog.TokenReaper, []),
+     supervisor(Cog.Endpoint, [])]
   end
   defp build_children(_, _, adapter_supervisor) do
-    [supervisor(Cog.Endpoint, []),
+    [worker(Cog.Repo, []),
      worker(Cog.BusDriver, [], shutdown: 10000),
-     worker(Cog.Repo, []),
      worker(Cog.TokenReaper, []),
      worker(Cog.TemplateCache, []),
      worker(Carrier.CredentialManager, []),
      supervisor(Cog.Relay.RelaySup, []),
      supervisor(Cog.Command.CommandSup, []),
-     supervisor(adapter_supervisor, [])]
+     supervisor(adapter_supervisor, []),
+     supervisor(Cog.Endpoint, [])]
   end
 
   defp get_adapter_supervisor!() do
