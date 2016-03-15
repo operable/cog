@@ -76,13 +76,9 @@ defmodule Cog.Adapters.HipChat.API do
 
   def handle_call({:lookup_room, name: room_name}, _from, state) do
     uri = "/room/#{room_name}"
-    result = get(state.client, uri)
 
-    result = case result do
-      {:ok, room} ->
-        {:ok, normalize_room(room)}
-      error ->
-        error
+    result = with {:ok, room} <- get(state.client, uri) do
+      {:ok, normalize_room(room)}
     end
 
     {:reply, result, state}
@@ -92,11 +88,8 @@ defmodule Cog.Adapters.HipChat.API do
     uri = "/user/#{user_id}"
     result = get(state.client, uri)
 
-    result = case result do
-      {:ok, user} ->
-        {:ok, normalize_user(user)}
-      error ->
-        error
+    result = with {:ok, user} <- result do
+      {:ok, normalize_user(user)}
     end
 
     {:reply, result, state}
@@ -106,11 +99,8 @@ defmodule Cog.Adapters.HipChat.API do
     uri = "/user"
     result = get(state.client, uri)
 
-    result = case result do
-      {:ok, %{"items" => users}} ->
-        {:ok, Enum.map(users, &normalize_user/1)}
-      error ->
-        error
+    result = with {:ok, %{"items" => users}} <- result do
+      {:ok, Enum.map(users, &normalize_user/1)}
     end
 
     {:reply, result, state}
@@ -122,11 +112,8 @@ defmodule Cog.Adapters.HipChat.API do
     uri = path <> "?" <> query
     result = get(state.client, uri)
 
-    result = case result do
-      {:ok, %{"items" => [_sent_message, message|_]}} ->
-        {:ok, normalize_message(message)}
-      error ->
-        error
+    result = with {:ok, %{"items" => [_sent_message, message|_]}} <- result do
+      {:ok, normalize_message(message)}
     end
 
     {:reply, result, state}
