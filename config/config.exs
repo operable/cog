@@ -7,7 +7,7 @@ use Cog.Config.Helpers
 config :cog,
   adapter: System.get_env("COG_ADAPTER") || "slack"
 
-config :cog, :enable_spoken_commands, true
+config :cog, :enable_spoken_commands, ensure_boolean(System.get_env("ENABLE_SPOKEN_COMMANDS")) || true
 
 config :cog, :message_bus,
   host: System.get_env("COG_MQTT_HOST") || "127.0.0.1",
