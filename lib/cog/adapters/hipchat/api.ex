@@ -30,13 +30,10 @@ defmodule Cog.Adapters.HipChat.API do
   end
 
   def lookup_room_user(room_name, user_name) do
-    case lookup_room(name: room_name) do
-      {:ok, room} ->
-        users = lookup_users()
-        user = Enum.find(users, &match?(%{"name" => ^user_name}, &1))
-        {:ok, %{room: room, user: user}}
-      {:error, error} ->
-        {:error, error}
+    with {:ok, room} <- lookup_room(name: room_name),
+         {:ok, users} <- lookup_users() do
+      user = Enum.find(users, &match?(%{name: ^user_name}, &1))
+      {:ok, %{room: room, user: user}}
     end
   end
 
@@ -50,6 +47,11 @@ defmodule Cog.Adapters.HipChat.API do
 
   def lookup_users() do
     GenServer.call(__MODULE__, :lookup_users)
+  end
+
+  def retrieve_last_message(room_name, not_before) do
+    {:ok, room} = lookup_room(name: room_name)
+    GenServer.call(__MODULE__, {:retrieve_last_message, room, not_before})
   end
 
   # TODO: Check that token is valid before  returning successfully
@@ -75,18 +77,58 @@ defmodule Cog.Adapters.HipChat.API do
   def handle_call({:lookup_room, name: room_name}, _from, state) do
     uri = "/room/#{room_name}"
     result = get(state.client, uri)
+
+    result = case result do
+      {:ok, room} ->
+        {:ok, normalize_room(room)}
+      error ->
+        error
+    end
+
     {:reply, result, state}
   end
 
   def handle_call({:lookup_user, id: user_id}, _from, state) do
     uri = "/user/#{user_id}"
     result = get(state.client, uri)
+
+    result = case result do
+      {:ok, user} ->
+        {:ok, normalize_user(user)}
+      error ->
+        error
+    end
+
     {:reply, result, state}
   end
 
   def handle_call(:lookup_users, _from, state) do
     uri = "/user"
     result = get(state.client, uri)
+
+    result = case result do
+      {:ok, %{"items" => users}} ->
+        {:ok, Enum.map(users, &normalize_user/1)}
+      error ->
+        error
+    end
+
+    {:reply, result, state}
+  end
+
+  def handle_call({:retrieve_last_message, %{id: room_id}, not_before}, _from, state) do
+    path = "/room/#{room_id}/history/latest"
+    query = URI.encode_query("max-results": 2, "not-before": not_before)
+    uri = path <> "?" <> query
+    result = get(state.client, uri)
+
+    result = case result do
+      {:ok, %{"items" => [_sent_message, message|_]}} ->
+        {:ok, normalize_message(message)}
+      error ->
+        error
+    end
+
     {:reply, result, state}
   end
 
@@ -134,5 +176,17 @@ defmodule Cog.Adapters.HipChat.API do
       false ->
         options
     end
+  end
+
+  def normalize_user(%{"id" => id, "mention_name" => handle, "name" => name}) do
+    %{id: id, handle: handle, name: name}
+  end
+
+  def normalize_room(%{"id" => id, "name" => name}) do
+    %{id: id, name: name}
+  end
+
+  def normalize_message(%{"message" => message}) do
+    message
   end
 end

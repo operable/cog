@@ -30,38 +30,38 @@ defmodule Cog.Adapters.HipChat.Connection do
   def receive_message(msg, opts) do
     GenServer.cast(__MODULE__, {:receive_message, msg, opts})
   end
-  def handle_cast({:receive_message, msg, _opts}, state) do
-    handle_inbound_message(msg, state)
-  end
 
   def handle_call(:event_manager, _from, state) do
     event_manager = Hedwig.Client.get(state.xmpp_conn, :event_manager)
     {:reply, event_manager, state}
   end
 
-  defp handle_inbound_message(message, state) do
+  def handle_cast({:receive_message, message, _options}, state) do
     case extract_command(message, state.command_pattern) do
       :not_found ->
         {:noreply, state}
       {type, command} ->
-        %{room: room, user: sender} = message_source(message)
+        {:ok, %{room: room, user: sender}} = message_source(message)
         handle_command(type, room, sender, command, state)
     end
   end
 
   defp message_source(message) do
+    [_org_id, source] = String.split(message.from.user, "_", parts: 2)
+
     case message.type do
       "chat" ->
-        [_org_id, user_id] = String.split(message.from.user, "_", parts: 2)
-        %{room: :direct, user: HipChat.API.lookup_user([id: user_id])}
+        with {:ok, user} <- HipChat.API.lookup_user(id: source) do
+          {:ok, %{room: :direct, user: user}}
+        end
       "groupchat" ->
-        [_org_id, room_name] = String.split(message.from.user, "_", parts: 2)
-        HipChat.API.lookup_room_user(room_name, message.from.resource)
+        HipChat.API.lookup_room_user(source, message.from.resource)
     end
   end
 
   defp extract_command(message, command_pattern) do
     command = Regex.replace(command_pattern, message.body, "")
+
     cond do
       command == message.body ->
         :not_found
