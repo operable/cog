@@ -3,25 +3,14 @@ defmodule Cog.Command.OptionInterpreter do
   alias Cog.Models.CommandOption
   alias Piper.Command.Ast
 
-  require Logger
-
   @truthy_values ["true", "t", "y", "yes", "on"]
 
   def initialize(%Ast.Invocation{args: args, meta: command_model}=invocation) do
-    case Enum.reduce(command_model.options, %{}, &(prepare_option(&1, &2))) do
-      defs when is_map(defs) ->
-        case interpret(defs, args, [], %{}) do
-          {:ok, options, args} ->
-            case check_required_options(defs, options) do
-              :ok ->
-                options = set_defaults(invocation, options)
-                {:ok, options, args}
-              error ->
-                error
-            end
-          error ->
-            error
-        end
+    defs = Enum.reduce(command_model.options, %{}, &prepare_option/2)
+    with({:ok, options, args} <- interpret(defs, args, [], %{}),
+         :ok <- check_required_options(defs, options)) do
+      options = set_defaults(invocation, options)
+      {:ok, options, args}
     end
   end
 
@@ -42,11 +31,8 @@ defmodule Cog.Command.OptionInterpreter do
   defp interpret(_defs, [], true_args, validated_options),
     do: {:ok, validated_options, Enum.reverse(true_args)}
   defp interpret(defs, [%Ast.Option{name: %Ast.String{value: name}, value: nil}=opt|t], true_args, validated_options) do
-    case Map.get(defs, name) do
-      nil ->
-        Logger.debug("Skipping unknown name #{name}")
-        interpret(defs, t, true_args, validated_options)
-      opt_def ->
+    case Map.fetch(defs, name) do
+      {:ok, opt_def} ->
         case maybe_consume_arg(opt_def.option_type.name, t) do
           {:ok, value, t} ->
             opt = %{opt | value: value}
@@ -54,15 +40,15 @@ defmodule Cog.Command.OptionInterpreter do
           error ->
             error
         end
+      :error ->
+        Logger.debug("Skipping unknown name #{name}")
+        interpret(defs, t, true_args, validated_options)
     end
   end
   defp interpret(defs, [%Ast.Option{name: %Ast.String{value: name},
                                     value: value}=opt|t], true_args, validated_options) do
-    case Map.get(defs, name) do
-      nil ->
-        Logger.debug("Skipping unknown name #{name}")
-        interpret(defs, t, true_args, validated_options)
-      opt_def ->
+    case Map.fetch(defs, name) do
+      {:ok, opt_def} ->
         case coerce_value(opt_def.option_type.name, value) do
           {:ok, coerced} ->
             opt = %{opt | value: coerced}
@@ -70,6 +56,9 @@ defmodule Cog.Command.OptionInterpreter do
           error ->
             error
         end
+      :error ->
+        Logger.debug("Skipping unknown name #{name}")
+        interpret(defs, t, true_args, validated_options)
     end
   end
   defp interpret(defs, [arg|t], true_args, validated_options),
@@ -89,13 +78,8 @@ defmodule Cog.Command.OptionInterpreter do
     Enum.reduce(defs, options, &(set_default_value(&1.name, &1.option_type.name, &2)))
   end
 
-  defp set_default_value(name, "incr", options) do
-    if Map.has_key?(options, name) == false do
-      Map.put(options, name, 0)
-    else
-      options
-    end
-  end
+  defp set_default_value(name, "incr", options),
+    do: Map.put_new(options, name, 0)
   defp set_default_value(_name, _type, options),
     do: options
 

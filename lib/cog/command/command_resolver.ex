@@ -59,7 +59,7 @@ defmodule Cog.Command.CommandResolver do
   end
 
   defp lookup(bare_command_name) do
-    case Repo.all(Queries.Command.by_any_name(bare_command_name))do
+    case Repo.all(Queries.Command.by_any_name(bare_command_name)) do
       [] ->
         :not_found
       [command] ->

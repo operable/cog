@@ -5,16 +5,9 @@ defmodule Cog.Command.Pipeline.Binder do
   def bind(unbound_invocation, context) when is_map(context) do
     scope = Scope.from_map(context)
     try do
-      case Bindable.resolve(unbound_invocation, scope) do
-        {:ok, resolved_scope} ->
-          case Bindable.bind(unbound_invocation, resolved_scope) do
-            {:ok, bound_invocation, ^resolved_scope} ->
-              {:ok, bound_invocation}
-            error ->
-              error
-          end
-        {:error, _}=error ->
-          error
+      with({:ok, resolved_scope} <- Bindable.resolve(unbound_invocation, scope),
+           {:ok, bound_invocation, ^resolved_scope} <- Bindable.bind(unbound_invocation, resolved_scope)) do
+        {:ok, bound_invocation}
       end
     catch
       %Piper.Command.BindError{meta: meta, reason: reason} ->
