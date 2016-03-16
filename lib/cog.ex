@@ -5,7 +5,6 @@ defmodule Cog do
   import Supervisor.Spec, warn: false
 
   def start(_type, _args) do
-    sanity_check_vm()
     adapter_supervisor = get_adapter_supervisor!()
     children = build_children(Mix.env, System.get_env("NOCHAT"), adapter_supervisor)
 
@@ -73,46 +72,9 @@ defmodule Cog do
     {:error, "The adapter is set to '#{bad_adapter}', but I don't know what that is. Try 'slack' or 'hipchat' instead."}
   end
 
-  defp sanity_check_vm() do
-    {smp_status, smp_message} = verify_smp()
-    log_message(smp_status, smp_message)
-
-    {ds_status, ds_message} = verify_dirty_schedulers()
-    log_message(ds_status, ds_message)
-
-    if smp_status == :error or ds_status == :error, do: abort_cog()
-  end
-
   defp log_message(:ok, message), do: Logger.info(message)
   defp log_message(:error, message), do: Logger.error(message)
   defp log_message(_status, message), do: Logger.warn(message)
-
-  defp verify_smp() do
-    if :erlang.system_info(:schedulers_online) < 2 do
-      {:error, """
-SMP support disabled.
-SMP support can be enabled via one of the following:
-
-  1. Add '--erl "-smp enable"' to the Elixir args in Cog's launch script.
-  2. Add '-smp enable' to the $ERL_FLAGS environment variable.
-"""}
-    else
-      {:ok, "SMP support enabled."}
-    end
-  end
-
-  defp verify_dirty_schedulers() do
-    try do
-      :erlang.system_info(:dirty_cpu_schedulers)
-      {:ok, "Dirty CPU schedulers enabled."}
-    rescue
-      ArgumentError ->
-        {:error, """
-Erlang VM is missing support for dirty CPU schedulers.
-See http://erlang.org/doc/installation_guide/INSTALL.html for information on enabling dirty scheduler support.
-"""}
-    end
-  end
 
   defp verify_schema_migration() do
     cond do
