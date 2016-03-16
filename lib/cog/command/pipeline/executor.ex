@@ -536,6 +536,10 @@ defmodule Cog.Command.Pipeline.Executor do
     # Replace unicode long dash with '--' to reverse OS X's replacement via the
     # "Smart Dashes" substitution, which is enabled by default
     text = Regex.replace(~r/—/, text, "--")
+    # Replace unicode quotes with '"' to reverse OS X's replacement via the
+    # "Smart Quotes" substitution, which is enabled by default
+    text = Regex.replace(~r/“|”/, text, "\"")
+    text = Regex.replace(~r/‘|’/, text, "'")
     # Decode Html Entities
     text = HtmlEntities.decode(text)
     # Update request with sanitized input
