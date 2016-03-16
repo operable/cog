@@ -53,7 +53,7 @@ defmodule Integration.CommandTest do
 
   test "running a command with an invalid 'int' option", %{user: user} do
     response = send_message(user, "@bot: operable:type-test --int=\"this is a string\"")
-    assert response["data"]["response"] == "@vanstee Whoops! An error occurred. Type Error: 'this is a string' is not of type 'int'"
+    assert response["data"]["response"] == "@vanstee Whoops! An error occurred. Type Error: `\"this is a string\"` is not of type `int`"
   end
 
   test "running a command with a 'float' option", %{user: user} do
@@ -63,7 +63,7 @@ defmodule Integration.CommandTest do
 
   test "running a command with an invalid 'float' option", %{user: user} do
     response = send_message(user, "@bot: operable:type-test --float=\"This is a string\"")
-    assert response["data"]["response"] == "@vanstee Whoops! An error occurred. Type Error: 'This is a string' is not of type 'float'"
+    assert response["data"]["response"] == "@vanstee Whoops! An error occurred. Type Error: `\"This is a string\"` is not of type `float`"
   end
 
   test "running a command with an 'incr' option", %{user: user} do
@@ -106,7 +106,7 @@ defmodule Integration.CommandTest do
 
   test "running unknown commands", %{user: user} do
     response = send_message(user, "@bot: operable:weirdo test")
-    assert response["data"]["response"] == "@vanstee Sorry, I don't know the 'operable:weirdo' command :("
+    assert response["data"]["response"] == "@vanstee Command 'weirdo' not found in any installed bundle."
   end
 
   test "running a command in a pipeline with nil output", %{user: user} do
@@ -114,9 +114,9 @@ defmodule Integration.CommandTest do
     assert response["data"]["response"] == "1"
   end
 
-  test "running a pipeline with a variable that resolves to a command", %{user: user} do
+  test "running a pipeline with a variable that resolves to a command fails with a parse error", %{user: user} do
     response = send_message(user, ~s(@bot: echo "echo" | $body[0] foo))
-    assert response["data"]["response"] == "foo"
+    assert response["data"]["response"] == "@vanstee (Line: 1, Col: 15) syntax error before: \"body\"."
   end
 
   test "reading the path to filter a certain path", %{user: user} do
@@ -125,7 +125,7 @@ defmodule Integration.CommandTest do
   end
 
   test "reading the path to allow quoted path if supplied", %{user: user} do
-    response = send_message(user, ~s(@bot: seed '[{"foo":{"bar.qux":{"baz":"stuff"}}}, {"foo": {"bar":{"baz":"me"}}}]' | operable:filter --path="foo.\\"bar.qux\\".baz"))
+    response = send_message(user, ~s(@bot: seed '[{"foo":{"bar.qux":{"baz":"stuff"}}}, {"foo": {"bar":{"baz":"me"}}}]' | operable:filter --path='foo."bar.qux".baz'))
     assert response["data"]["response"] == "{\n  \"foo\": {\n    \"bar.qux\": {\n      \"baz\": \"stuff\"\n    }\n  }\n}"
   end
 
@@ -135,7 +135,7 @@ defmodule Integration.CommandTest do
   end
 
   test "returning an error if matches is not a valid string", %{user: user} do
-    response = send_message(user, ~s(@bot: seed '{"foo":{"bar":{"baz":"stuff"}}}' | operable:filter --path="foo.bar.baz" --matches=true))
+    response = send_message(user, ~s(@bot: seed '{"foo":{"bar":{"baz":"stuff"}}}' | operable:filter --path="foo.bar.baz" --matches="st[uff"))
     assert response["data"]["response"] == "@vanstee Whoops! An error occurred. \n* The regular expression in `--matches` does not compile correctly.\n\n"
   end
 
@@ -146,7 +146,7 @@ defmodule Integration.CommandTest do
 
   test "an empty response from the filter command single input item", %{user: user} do
     response = send_message(user, ~s(@bot: seed '[{ "foo": { "one": { "name": "asdf" }, "two": { "name": "fdsa" } } }]' | operable:filter --path="foo.one.name" --matches="/blurp/"))
-    assert response["data"]["response"] == "{\n  \"body\": null\n}"
+    assert response["data"]["response"] == "Pipeline executed successfully, but no output was returned"
   end
 
   test "filter matching using regular expression", %{user: user} do
@@ -156,7 +156,7 @@ defmodule Integration.CommandTest do
 
   test "filter where the path has no matching value but the matches value is in the input list", %{user: user} do
     response = send_message(user, ~s(@bot: seed '[ {"key": "Name", "value": "test1"}, {"key": "Name", "value": "test2"} ]' | operable:filter --path="value" --matches="Name"))
-    assert response["data"]["response"] == "{\n  \"body\": null\n}"
+    assert response["data"]["response"] == "Pipeline executed successfully, but no output was returned"
   end
 
   test "filter where execution further down the pipeline only executes how many times the output is generated from the filter command", %{user: user} do

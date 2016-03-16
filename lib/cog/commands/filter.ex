@@ -55,9 +55,9 @@ defmodule Cog.Commands.Filter do
     do: state
 
   defp validate_matches(state, matches) do
-    case String.valid?(matches) do
-      true -> %{state | match: compile_regex(matches)}
-      false -> add_errors(state, :bad_match)
+    case compile_regex(matches) do
+      {:ok, regex} -> %{state | match: regex}
+      {:error, _} -> add_errors(state, :bad_match)
     end
   end
 
@@ -119,9 +119,9 @@ defmodule Cog.Commands.Filter do
   defp compile_regex(string) do
     case Regex.run(~r/^\/(.*)\/(.*)$/, string) do
       nil ->
-        Regex.compile!(string)
+        Regex.compile(string)
       [_, regex, opts] ->
-        Regex.compile!(regex, opts)
+        Regex.compile(regex, opts)
     end
   end
 end

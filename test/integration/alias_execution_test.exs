@@ -48,13 +48,11 @@ defmodule Integration.AliasExecutionTest do
   test "alias expansion fails on infinite expansion", %{user: user} do
     send_message(user, "@bot: operable:alias new my-alias \"my-alias\"")
     response = send_message(user, "@bot: my-alias")
-
-    assert Regex.match?(~r/@vanstee Error expanding alias 'user:my-alias'. Expansion goes beyond the configured limit of '\d*'./,
-                        response["data"]["response"])
+    assert "@vanstee Alias expansion limit (5) exceeded starting with alias 'my-alias'." = response["data"]["response"]
   end
 
   test "alias using slack emoji works", %{user: user} do
-    send_message(user, "@bot: alias new :boom: \"echo BOOM\"")
+    send_message(user, "@bot: alias new \":boom:\" \"echo BOOM\"")
     response = send_message(user, "@bot: :boom:")
     assert Regex.match?(~r/BOOM/, response["data"]["response"])
   end

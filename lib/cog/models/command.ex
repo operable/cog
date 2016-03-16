@@ -54,7 +54,7 @@ defmodule Cog.Models.Command do
   end
 
   @doc """
-  Get the fully qualified name
+  Get the fully qualified name; depends on bundle being preloaded.
   """
   def full_name(%__MODULE__{}=command) do
     "#{command.bundle.name}:#{command.name}"

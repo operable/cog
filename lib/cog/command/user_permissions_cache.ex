@@ -88,7 +88,7 @@ defmodule Cog.Command.UserPermissionsCache do
         {:error, :not_found}
       user ->
         perms = Cog.Models.User.all_permissions(user)
-        value = {user, Map.keys(perms)}
+        value = {user, perms}
         expiry = Cog.Time.now() + state.ttl
         :ets.insert(@ets_table, {key, value, expiry})
         {:ok, value}
