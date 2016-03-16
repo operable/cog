@@ -42,7 +42,6 @@ defmodule Cog.Mixfile do
 
   defp deps do
     [{:slack, "~> 0.4.2"},
-     {:piper, github: "operable/piper", branch: "kevsmith/new-cmd-parser", override: true},
      {:websocket_client, github: "jeremyong/websocket_client", ref: "f6892c8b55004008ce2d52be7d98b156f3e34569"},
      {:poison, "~> 1.5.2"},
      {:ibrowse, "~> 4.2.2"},
@@ -63,7 +62,7 @@ defmodule Cog.Mixfile do
      {:hedwig, "~> 0.3.0"},
      {:gproc, "~> 0.5.0", override: true},
      {:html_entities, "~> 0.3.0"},
-     {:spanner, github: "operable/spanner", ref: "21446f27e6eaf9b40c9ba529810c65adc17b95a2"},
+     {:spanner, github: "operable/spanner", ref: "1b4013d3d42e82a72ee7ca01e475c69a7295fe22"},
      {:probe, github: "operable/probe", tag: "0.2"},
      {:exml, github: "paulgray/exml", tag: "2.2.1"},
      {:fumanchu, github: "operable/fumanchu", ref: "cog-0.2"},
