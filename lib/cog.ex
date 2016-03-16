@@ -94,7 +94,7 @@ SMP support disabled.
 SMP support can be enabled via one of the following:
 
   1. Add '--erl "-smp enable"' to the Elixir args in Cog's launch script.
-  2. Add '-smp enable" to the $ERL_FLAGS environment variable.
+  2. Add '-smp enable' to the $ERL_FLAGS environment variable.
 """}
     else
       {:ok, "SMP support enabled."}
