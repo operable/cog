@@ -9,14 +9,16 @@ defmodule Cog.Adapters.HipChat.Helpers do
   @timeout 120000 # 2 minutes
 
   def send_message(%User{username: _username}, message) do
-    HipChat.send_message(%{"id" => @room}, message)
+    {:ok, message} = HipChat.send_message(%{"id" => @room}, message)
+    message
   end
 
-  def assert_response(message, [after: %{"id" => id}]) do
+  def assert_response(message, after: %{"id" => id}) do
     :timer.sleep(@interval)
 
     last_message_func = fn ->
-      HipChat.API.retrieve_last_message(@room, id)
+      {:ok, message} = HipChat.API.retrieve_last_message(@room, id)
+      message
     end
 
     Assertions.polling_assert(message, last_message_func, @interval, @timeout)

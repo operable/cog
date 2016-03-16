@@ -7,8 +7,11 @@ defmodule Cog.Adapters.HipChat.Supervisor do
   end
 
   def init(_) do
+    config = HipChat.Config.fetch_config!
+
     children = [worker(HipChat, []),
-                worker(HipChat.Connection, [])]
+                worker(HipChat.API, [config]),
+                worker(HipChat.Connection, [config])]
 
     supervise(children, strategy: :one_for_all)
   end

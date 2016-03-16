@@ -3,22 +3,20 @@ defmodule Cog.Adapters.HipChat.Connection do
   alias Cog.Adapters.HipChat
   require Logger
 
-  defstruct xmpp_conn: nil
+  defstruct [:xmpp_conn, :command_pattern]
 
-  def start_link() do
-    GenServer.start_link(__MODULE__, [], name: __MODULE__)
+  def start_link(config) do
+    GenServer.start_link(__MODULE__, config, name: __MODULE__)
   end
 
-  def init([]) do
-    HipChat.API.start
-
-    config = HipChat.Config.fetch_config!
-
+  def init(config) do
     {:ok, xmpp_conn} = config[:xmpp]
     |> Map.put(:config, xmpp_server_options)
     |> Hedwig.start_client
 
-    {:ok, %{xmpp_conn: xmpp_conn}}
+    command_pattern = compile_command_pattern(config[:api][:mention_name])
+
+    {:ok, %{xmpp_conn: xmpp_conn, command_pattern: command_pattern}}
   end
 
   def xmpp_server_options do
@@ -32,38 +30,38 @@ defmodule Cog.Adapters.HipChat.Connection do
   def receive_message(msg, opts) do
     GenServer.cast(__MODULE__, {:receive_message, msg, opts})
   end
-  def handle_cast({:receive_message, msg, _opts}, state) do
-    handle_inbound_message(msg, state)
-  end
 
   def handle_call(:event_manager, _from, state) do
     event_manager = Hedwig.Client.get(state.xmpp_conn, :event_manager)
     {:reply, event_manager, state}
   end
 
-  defp handle_inbound_message(message, state) do
-    case extract_command(message) do
+  def handle_cast({:receive_message, message, _options}, state) do
+    case extract_command(message, state.command_pattern) do
       :not_found ->
         {:noreply, state}
       {type, command} ->
-        %{room: room, user: sender} = message_source(message)
+        {:ok, %{room: room, user: sender}} = message_source(message)
         handle_command(type, room, sender, command, state)
     end
   end
 
   defp message_source(message) do
+    [_org_id, source] = String.split(message.from.user, "_", parts: 2)
+
     case message.type do
       "chat" ->
-        [_org_id, user_id] = String.split(message.from.user, "_", parts: 2)
-        %{room: :direct, user: HipChat.API.lookup_user([id: user_id])}
+        with {:ok, user} <- HipChat.API.lookup_user(id: source) do
+          {:ok, %{room: :direct, user: user}}
+        end
       "groupchat" ->
-        [_org_id, room_name] = String.split(message.from.user, "_", parts: 2)
-        HipChat.API.lookup_room_user(room_name, message.from.resource)
+        HipChat.API.lookup_room_user(source, message.from.resource)
     end
   end
 
-  defp extract_command(message) do
+  defp extract_command(message, command_pattern) do
     command = Regex.replace(command_pattern, message.body, "")
+
     cond do
       command == message.body ->
         :not_found
@@ -102,15 +100,11 @@ defmodule Cog.Adapters.HipChat.Connection do
     {:noreply, state}
   end
 
-  defp command_pattern() do
+  defp compile_command_pattern(mention_name) do
     ~r/\A(@?#{mention_name}:?\s*)|(#{command_prefix})/i
   end
+
   defp command_prefix() do
     Application.get_env(:cog, :command_prefix, "!")
-  end
-
-  defp mention_name() do
-    config = HipChat.Config.fetch_config!
-    config[:api][:mention_name]
   end
 end
