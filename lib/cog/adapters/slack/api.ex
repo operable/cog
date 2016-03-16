@@ -12,7 +12,7 @@ defmodule Cog.Adapters.Slack.API do
   @direct_chat_channel_cache :slack_im
 
   def start_link(config) do
-    GenServer.start_link(__MODULE__, [config], name: @server_name)
+    GenServer.start_link(__MODULE__, config, name: @server_name)
   end
 
   def send_message(room, message) when is_binary(message) do
