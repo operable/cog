@@ -56,13 +56,13 @@ defmodule Cog.Bundle.Install do
       |> Namespace.changeset(%{name: bundle.name, bundle_id: bundle.id})
       |> Repo.insert!
 
-      bundle.config_file["permissions"]
+      Map.get(bundle.config_file, "permissions", [])
       |> Enum.each(&create_permission(ns, &1))
 
       bundle.config_file["commands"]
       |> Enum.each(&create_command(bundle, &1))
 
-      bundle.config_file["rules"]
+      Map.get(bundle.config_file, "rules", [])
       |> Enum.each(&(Cog.RuleIngestion.ingest(&1, false)))
 
       Map.get(bundle.config_file, "templates", [])
