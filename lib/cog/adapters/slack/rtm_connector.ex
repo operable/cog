@@ -132,6 +132,10 @@ defmodule Cog.Adapters.Slack.RTMConnector do
     send(sender, {ref, :ok})
     {:ok, state}
   end
+  def handle_info({:assigned_userid, ref, sender}, _slack, state) do
+    send(sender, {ref, {:ok, state.id}})
+    {:ok, state}
+  end
   def handle_info(info, _slack, state) do
     Logger.info("#{inspect __MODULE__}: received unexpected message: #{inspect info}")
     {:ok, state}

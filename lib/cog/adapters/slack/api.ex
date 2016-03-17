@@ -164,12 +164,8 @@ defmodule Cog.Adapters.Slack.API do
     result = call_api!("channels.info", state.token, body: %{channel: id})
     reply = if result["ok"] do
       channel = result["channel"]
-      if is_member?(channel) do
-        cached = cache(channel, state.ttl)
-        {:ok, cached}
-      else
-        {:error, :not_a_member}
-      end
+      cached = cache(channel, state.ttl)
+      {:ok, cached}
     else
       {:error, result["error"]}
     end
@@ -180,21 +176,14 @@ defmodule Cog.Adapters.Slack.API do
     reply = if result["ok"] do
       channels = result["channels"]
 
-      # Cache all the channels we need to, and return their cache representations
-      cached = Enum.filter_map(channels, &is_member?/1, &cache(&1, state.ttl))
+      # Cache all the channels and return their cache representations
+      cached = Enum.map(channels, &cache(&1, state.ttl))
 
       case Enum.find(cached, &is_channel_named?(&1, name)) do
         channel when not(is_nil(channel)) ->
           {:ok, channel}
         _ ->
-          # if it's in the original list from the API, then we're not
-          # a member; If it wasn't there, then it  doesn't exist
-          case Enum.find(channels, &is_channel_named?(&1, name)) do
-            nil ->
-              {:error, :not_found}
-            _ ->
-              {:error, :not_a_member}
-          end
+          {:error, :not_found}
       end
     else
       {:error, result["error"]}
@@ -221,14 +210,6 @@ defmodule Cog.Adapters.Slack.API do
   defp is_channel_named?(%{name: name}, name), do: true
   defp is_channel_named?(%{"name" => name}, name), do: true
   defp is_channel_named?(_, _), do: false
-
-  # Given a Slack channel object, return whether the API user (i.e.,
-  # the bot) is a member.
-  #
-  # We can currently only redirect to channels that the bot is a
-  # member of.
-  defp is_member?(%{"is_member" => is_member}),
-    do: is_member
 
   ########################################################################
   # Cache-related Functions
@@ -288,8 +269,8 @@ defmodule Cog.Adapters.Slack.API do
   #
   # We extract only the information we care about, and use atom keys
   # instead of strings.
-  defp cache_item(%{"is_channel" => true, "id" => id, "name" => name}),
-    do: %{id: id, name: name}
+  defp cache_item(%{"is_channel" => true, "id" => id, "name" => name, "is_member" => is_member}),
+    do: %{id: id, name: name, is_member: is_member}
   defp cache_item(%{"is_group" => true, "id" => id, "name" => name}),
     do: %{id: id, name: name}
   # users have names, but not "is_user" fields :( they do have profiles, though

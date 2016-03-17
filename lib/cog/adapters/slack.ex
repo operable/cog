@@ -14,6 +14,15 @@ defmodule Cog.Adapters.Slack do
     Slack.API.lookup_direct_room(opts)
   end
 
+  def room_writeable?(opts) do
+    case lookup_room(opts) do
+      {:ok, %{is_member: is_member}} ->
+        is_member
+      _ ->
+        true
+    end
+  end
+
   def mention_name(name) do
     "@" <> name
   end
@@ -25,4 +34,5 @@ defmodule Cog.Adapters.Slack do
   def display_name() do
     "Slack"
   end
+
 end
