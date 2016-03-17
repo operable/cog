@@ -32,7 +32,8 @@ defmodule Cog.V1.RoleController.Test do
     role = role("monkey")
     conn = api_request(user, :get, "/v1/roles")
     assert %{"roles" => [%{"id" => role.id,
-                           "name" => "monkey"}]} == json_response(conn, 200)
+                           "name" => "monkey",
+                           "permissions" => []}]} == json_response(conn, 200)
   end
 
   test "index returns multiple roles when multiple exist", %{authed: user} do
@@ -41,9 +42,11 @@ defmodule Cog.V1.RoleController.Test do
 
     conn = api_request(user, :get, "/v1/roles")
     assert [%{"id" => first.id,
-              "name" => "first"},
+              "name" => "first",
+              "permissions" => []},
             %{"id" => second.id,
-              "name" => "second"}] == json_response(conn, 200)["roles"] |> sort_by("name")
+              "name" => "second",
+              "permissions" => []}] == json_response(conn, 200)["roles"] |> sort_by("name")
   end
 
   test "create works on the happy path", %{authed: user} do
@@ -76,7 +79,8 @@ defmodule Cog.V1.RoleController.Test do
     role = role("admin")
     conn = api_request(user, :get, "/v1/roles/#{role.id}")
     assert %{"role" => %{"id" => role.id,
-                         "name" => "admin"}} == json_response(conn, 200)
+                         "name" => "admin",
+                         "permissions" => []}} == json_response(conn, 200)
   end
 
   test "show fails when the role doesn't exist", %{authed: user} do
@@ -94,7 +98,8 @@ defmodule Cog.V1.RoleController.Test do
     conn = api_request(user, :put, "/v1/roles/#{role.id}",
                        body: %{"role" => %{"name" => "other"}})
     assert %{"role" => %{"id" => role.id,
-                         "name" => "other"}} == json_response(conn, 200)
+                         "name" => "other",
+                         "permissions" => []}} == json_response(conn, 200)
 
   end
 

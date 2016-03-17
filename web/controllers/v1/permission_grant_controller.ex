@@ -1,7 +1,6 @@
 defmodule Cog.V1.PermissionGrantController do
   use Cog.Web, :controller
 
-  alias Cog.Models.EctoJson
   alias Cog.Models.User
   alias Cog.Models.Permission
   alias Cog.Models.Role
@@ -12,6 +11,8 @@ defmodule Cog.V1.PermissionGrantController do
   plug Cog.Plug.Authorization, [permission: "#{Cog.embedded_bundle}:manage_users"] when action == :manage_user_permissions
   plug Cog.Plug.Authorization, [permission: "#{Cog.embedded_bundle}:manage_roles"] when action == :manage_role_permissions
   plug Cog.Plug.Authorization, [permission: "#{Cog.embedded_bundle}:manage_groups"] when action == :manage_group_permissions
+
+  plug :put_view, Cog.V1.PermissionView
 
   def manage_role_permissions(conn, params),
     do: manage_permissions(conn, Role, params)
@@ -44,7 +45,7 @@ defmodule Cog.V1.PermissionGrantController do
     case result do
       {:ok, permittable} ->
         conn
-        |> json(EctoJson.render(permittable.permissions, envelope: :permissions, policy: :detail))
+        |> render("index.json", permissions: permittable.permissions)
       {:error, {:not_found, {"permissions", names}}} ->
         conn
         |> put_status(:unprocessable_entity)

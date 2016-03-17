@@ -1,7 +1,6 @@
 defmodule Cog.V1.RoleGrantController do
   use Cog.Web, :controller
 
-  alias Cog.Models.EctoJson
   alias Cog.Models.User
   alias Cog.Models.Role
   alias Cog.Models.Group
@@ -10,6 +9,8 @@ defmodule Cog.V1.RoleGrantController do
 
   plug Cog.Plug.Authorization, [permission: "#{Cog.embedded_bundle}:manage_users"] when action == :manage_user_roles
   plug Cog.Plug.Authorization, [permission: "#{Cog.embedded_bundle}:manage_groups"] when action == :manage_group_roles
+
+  plug :put_view, Cog.V1.RoleView
 
   def manage_user_roles(conn, params),
     do: manage_roles(conn, User, params)
@@ -32,13 +33,13 @@ defmodule Cog.V1.RoleGrantController do
       permittable
       |> grant(roles_to_grant)
       |> revoke(roles_to_revoke)
-      |> Repo.preload(:roles)
+      |> Repo.preload(roles: :permissions)
     end)
 
     case result do
       {:ok, permittable} ->
         conn
-        |> json(EctoJson.render(permittable.roles, envelope: :roles, policy: :detail))
+        |> render("index.json", roles: permittable.roles)
       {:error, {:not_found, {"roles", names}}} ->
         conn
         |> put_status(:unprocessable_entity)
@@ -58,6 +59,7 @@ defmodule Cog.V1.RoleGrantController do
   defp lookup_all([]), do: {:ok, []} # Don't bother with a DB lookup
   defp lookup_all(names) do
     results = Repo.all(from r in Role, where: r.name in ^names)
+    |> Repo.preload(permissions: :namespace)
 
     # make sure we got a result for each name given
     case length(results) == length(names) do
