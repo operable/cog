@@ -18,11 +18,24 @@ defmodule Cog.Adapters.Slack.Helpers do
     Assertions.polling_assert(message, last_message_func, @interval, @timeout)
   end
 
-  def retrieve_last_message(room: room, oldest: oldest) do
+  def assert_edited_response(message, [after: %{"ts" => ts}]) do
+    :timer.sleep(@interval)
+
+    last_message_func = fn ->
+      {:ok, last_message} = retrieve_last_message(room: @room, oldest: ts, count: 2)
+      last_message
+    end
+
+    Assertions.polling_assert(message, last_message_func, @interval, @timeout)
+  end
+
+  def retrieve_last_message(room: room, oldest: oldest),
+    do: retrieve_last_message(room: room, oldest: oldest, count: 1)
+  def retrieve_last_message(room: room, oldest: oldest, count: count) do
     {:ok, %{id: channel}} = Slack.API.lookup_room(name: room)
 
     url = "https://slack.com/api/channels.history"
-    params = %{channel: channel, oldest: oldest, count: 1, token: token}
+    params = %{channel: channel, oldest: oldest, count: count, token: token}
     query = URI.encode_query(params)
 
     response = HTTPotion.get(url <> "?" <> query, headers: ["Accept": "application/json"])
@@ -37,6 +50,21 @@ defmodule Cog.Adapters.Slack.Helpers do
     query = URI.encode_query(params)
 
     response = HTTPotion.get(url <> "?" <> query, headers: ["Accept": "application/json"])
+
+    {:ok, message} = parse_message(Poison.decode!(response.body))
+    message
+  end
+
+  def send_edited_message(user, message, initial_message \\ "FOO3rjha92") do
+    initial_response = send_message(user, initial_message)
+
+    {:ok, %{id: channel}} = Slack.API.lookup_room(name: @room)
+    url = "https://slack.com/api/chat.update"
+    params = %{channel: channel, ts: initial_response["ts"], text: message, as_user: user.username, token: token}
+    query = URI.encode_query(params)
+
+    response = HTTPotion.get(url <> "?" <> query, headers: ["Accept": "application/json"])
+
     {:ok, message} = parse_message(Poison.decode!(response.body))
     message
   end
@@ -58,8 +86,10 @@ defmodule Cog.Adapters.Slack.Helpers do
         case result["messages"] do
           [] ->
             {:ok, nil}
-          [%{"text" => text}] ->
-            {:ok, Slack.Formatter.unescape(text)}
+          messages ->
+            formatted = Enum.sort(messages, &(&1["ts"] < &2["ts"]))
+            |> Enum.map_join("\n", &(Slack.Formatter.unescape(&1["text"])))
+            {:ok, formatted}
         end
     end
   end
