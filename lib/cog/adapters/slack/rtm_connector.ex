@@ -108,7 +108,10 @@ defmodule Cog.Adapters.Slack.RTMConnector do
                               fn() -> handle_command(room, user_id, text, state) end}
                          end
     unless message == nil do
-      Slack.API.send_message(channel, message)
+      {:ok, room} = Slack.API.lookup_room(id: channel)
+      room = %{"id" => room.id,
+               "name" => room.name}
+      Slack.API.send_message(room, message)
     end
     handler.()
   end
