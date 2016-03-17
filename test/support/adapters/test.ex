@@ -19,6 +19,10 @@ defmodule Cog.Adapters.Test do
     {:ok, %{id: "channel1"}}
   end
 
+  def room_writeable?(_opts) do
+    true
+  end
+
   def mention_name(name) do
     "@" <> name
   end

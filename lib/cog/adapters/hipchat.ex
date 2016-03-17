@@ -14,6 +14,11 @@ defmodule Cog.Adapters.HipChat do
     HipChat.API.lookup_direct_room(opts)
   end
 
+  # TODO: Research a real implementation
+  def room_writeable?(_opts) do
+    true
+  end
+
   def mention_name(name) do
     "@" <> name
   end
