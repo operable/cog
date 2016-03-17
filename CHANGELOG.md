@@ -14,7 +14,6 @@
   - Removed dirty scheduler and SMP support requirement
   - Spoken command configuration controlled by environment variable
   - HipChat config support added to Docker compose file
-  - Docker Cloud support
 - Better error messages
   - Chat adapters aggressively verify their configuration before starting
   - Cog tells unknown users why they are being ignored
