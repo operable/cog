@@ -269,8 +269,8 @@ defmodule Cog.Adapters.Slack.API do
   #
   # We extract only the information we care about, and use atom keys
   # instead of strings.
-  defp cache_item(%{"is_channel" => true, "id" => id, "name" => name, "members" => members}),
-    do: %{id: id, name: name, members: members}
+  defp cache_item(%{"is_channel" => true, "id" => id, "name" => name, "is_member" => is_member}),
+    do: %{id: id, name: name, is_member: is_member}
   defp cache_item(%{"is_group" => true, "id" => id, "name" => name}),
     do: %{id: id, name: name}
   # users have names, but not "is_user" fields :( they do have profiles, though

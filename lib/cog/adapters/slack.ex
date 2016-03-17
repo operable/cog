@@ -16,15 +16,10 @@ defmodule Cog.Adapters.Slack do
 
   def room_writeable?(opts) do
     case lookup_room(opts) do
-      {:ok, room} ->
-        case Slack.RTMConnector.assigned_userid() do
-          {:ok, userid} ->
-            is_member?(room, userid)
-          error ->
-            error
-        end
-      error ->
-        error
+      {:ok, %{is_member: is_member}} ->
+        is_member
+      _ ->
+        true
     end
   end
 
@@ -40,7 +35,4 @@ defmodule Cog.Adapters.Slack do
     "Slack"
   end
 
-  defp is_member?(%{members: members}, userid),
-    do: Enum.member?(members, userid)
-  defp is_member?(_room, _userid), do: true
 end
