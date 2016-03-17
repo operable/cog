@@ -14,7 +14,7 @@ defmodule Cog.Adapters.HipChat.API do
   end
 
   def lookup_room("@" <> handle) do
-    user = lookup_user(name: "@" <> handle)
+    {:ok, user} = lookup_user(name: "@" <> handle)
     lookup_direct_room(user_id: user.id)
   end
 
@@ -161,7 +161,13 @@ defmodule Cog.Adapters.HipChat.API do
     |> encode_body
 
     response = HTTPotion.request(method, uri, options)
-    body = Poison.decode!(response.body)
+
+    body = case response.body do
+      "" ->
+        nil
+      _ ->
+        Poison.decode!(response.body)
+    end
 
     case HTTPotion.Response.success?(response) do
       true ->
