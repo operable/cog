@@ -15,8 +15,8 @@ defmodule Cog.Adapters.Slack.API do
     GenServer.start_link(__MODULE__, config, name: @server_name)
   end
 
-  def send_message(room, message) when is_binary(message) do
-    GenServer.call(@server_name, {:send_message, room, message}, :infinity)
+  def send_message(%{"id" => id}, message) when is_binary(message) do
+    GenServer.call(@server_name, {:send_message, id, message}, :infinity)
   end
 
   def lookup_user(key) when is_tuple(hd(key)) do
@@ -98,8 +98,8 @@ defmodule Cog.Adapters.Slack.API do
     end
   end
 
-  def handle_call({:send_message, room, message}, _from, state) do
-    result = call_api!("chat.postMessage", state.token, body: %{channel: room["id"], text: message, as_user: true, parse: "full"})
+  def handle_call({:send_message, room_id, message}, _from, state) do
+    result = call_api!("chat.postMessage", state.token, body: %{channel: room_id, text: message, as_user: true, parse: "full"})
     reply = case result["ok"] do
       true ->
         {:ok, result["message"]}
