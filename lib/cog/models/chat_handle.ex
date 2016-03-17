@@ -12,11 +12,11 @@ defmodule Cog.Models.ChatHandle do
     timestamps
   end
 
-  @required_fields ~w(handle user_id provider_id)
+  @required_fields ~w(handle user_id provider_id chat_provider_user_id)
   @optional_fields ~w()
 
-  summary_fields [:id, :handle, :user_id, :provider_id]
-  detail_fields [:id, :handle, :user, :chat_provider]
+  summary_fields [:id, :handle, :user_id, :provider_id, :chat_provider_user_id]
+  detail_fields [:id, :handle, :user, :chat_provider, :chat_provider_user_id]
 
   def changeset(model, params \\ :empty) do
     model
