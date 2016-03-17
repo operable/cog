@@ -18,6 +18,10 @@ defmodule Cog.Adapters.Null do
     {:error, :not_implemented}
   end
 
+  def room_writeable?(_opts) do
+    true
+  end
+
   def mention_name(name) do
     "@" <> name
   end

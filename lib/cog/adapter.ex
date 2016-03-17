@@ -74,6 +74,8 @@ defmodule Cog.Adapter do
 
   @callback lookup_direct_room(lookup_opts()) :: lookup_result()
 
+  @callback room_writeable?(lookup_opts()) :: boolean() | {:error, any}
+
   @callback mention_name(String.t) :: String.t
 
   @callback name() :: String.t

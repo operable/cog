@@ -345,7 +345,11 @@ defmodule Cog.Command.Pipeline.Executor do
     adapter = String.to_existing_atom(state.request["module"])
     case adapter.lookup_room(redir) do
       {:ok, room} ->
-        {:ok, room}
+        if adapter.room_writeable?(id: room.id) == true do
+          {:ok, room}
+        else
+          {:error, {:not_a_member, redir}}
+        end
       {:error, reason} ->
         Logger.error("Error resolving redirect '#{redir}' with adapter #{adapter}: #{inspect reason}")
         {:error, {reason, redir}}

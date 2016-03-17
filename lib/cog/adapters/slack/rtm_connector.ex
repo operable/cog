@@ -46,6 +46,14 @@ defmodule Cog.Adapters.Slack.RTMConnector do
     __MODULE__.start_link(token, @initial_state)
   end
 
+  @doc """
+  Returns the bot's Slack-assigned userid
+  """
+  def assigned_userid() do
+    # Retry a few times to avoid race conditions at startup
+    assigned_userid(5)
+  end
+
   ########################################################################
   # Slack callbacks
   #
@@ -132,6 +140,10 @@ defmodule Cog.Adapters.Slack.RTMConnector do
     send(sender, {ref, :ok})
     {:ok, state}
   end
+  def handle_info({:assigned_userid, ref, sender}, _slack, state) do
+    send(sender, {ref, {:ok, state.id}})
+    {:ok, state}
+  end
   def handle_info(info, _slack, state) do
     Logger.info("#{inspect __MODULE__}: received unexpected message: #{inspect info}")
     {:ok, state}
@@ -210,6 +222,28 @@ defmodule Cog.Adapters.Slack.RTMConnector do
           true ->
             :ignore
         end
+    end
+  end
+
+  defp assigned_userid(0) do
+    {:error, :timeout}
+  end
+  defp assigned_userid(count) do
+    rtmpid = :erlang.whereis(__MODULE__)
+    # if RTM process isn't running yet sleep for a bit and try again
+    if rtmpid == :undefined do
+      :timer.sleep(500)
+      assigned_userid(count - 1)
+    end
+    # Use a ref to avoid interleaved receives
+    ref = :erlang.make_ref()
+    send(rtmpid, {:assigned_userid, ref, self()})
+    receive do
+      {^ref, result} ->
+        result
+    # Use 5000 for timeout to be consistent w/GenServer
+    after 5000 ->
+        {:error, :timeout}
     end
   end
 
