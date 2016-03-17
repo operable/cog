@@ -23,7 +23,7 @@ defmodule Cog.V1.ChatHandleController do
   end
 
   def create(conn, %{"chat_handle" => chat_handle_params, "id" => user_id}) do
-    case get_changeset_params(chat_handle_params, user_id) do
+    case merge_provider_params(chat_handle_params, user_id) do
       {:ok, params} ->
         changeset = ChatHandle.changeset(%ChatHandle{}, params)
         case Repo.insert(changeset) do
@@ -41,6 +41,10 @@ defmodule Cog.V1.ChatHandleController do
         conn
         |> put_status(:unprocessable_entity)
         |> render(Cog.ErrorView, "422.json", %{error: "Provider '#{chat_handle_params["chat_provider"]}' not found"})
+      {:error, :invalid_handle} ->
+        conn
+        |> put_status(:unprocessable_entity)
+        |> render(Cog.ErrorView, "422.json", %{error: "User with handle '#{chat_handle_params["handle"]}' not found"})
     end
   end
 
@@ -53,7 +57,7 @@ defmodule Cog.V1.ChatHandleController do
   def update(conn, %{"id" => id, "chat_handle" => chat_handle_params}) do
     chat_handle = Repo.get!(ChatHandle, id)
 
-    case get_changeset_params(chat_handle_params, chat_handle.user_id) do
+    case merge_provider_params(chat_handle_params, chat_handle.user_id) do
       {:ok, params} ->
         changeset = ChatHandle.changeset(chat_handle, params)
         case Repo.update(changeset) do
@@ -69,17 +73,32 @@ defmodule Cog.V1.ChatHandleController do
         conn
         |> put_status(:unprocessable_entity)
         |> render(Cog.ErrorView, "422.json", %{error: "Provider '#{chat_handle_params["chat_provider"]}' not found"})
+      {:error, :invalid_handle} ->
+        conn
+        |> put_status(:unprocessable_entity)
+        |> render(Cog.ErrorView, "422.json", %{error: "User with handle '#{chat_handle_params["handle"]}' not found"})
     end
   end
 
-  defp get_changeset_params(%{"chat_provider" => provider_name, "handle" => handle}, user_id) do
+  defp merge_provider_params(%{"chat_provider" => provider_name, "handle" => handle}, user_id) do
     case Repo.get_by(ChatProvider, name: String.downcase(provider_name)) do
       nil ->
         {:error, :invalid_provider}
-      provider ->
-        {:ok, %{"handle" => handle,
-            "provider_id" => provider.id,
-            "user_id" => user_id}}
+      chat_provider ->
+        case Cog.adapter_module(chat_provider.name) do
+          {:ok, adapter} ->
+            case adapter.lookup_user(handle: handle) do
+              {:ok, %{id: chat_provider_user_id}} ->
+                {:ok, %{"handle" => handle,
+                        "provider_id" => chat_provider.id,
+                        "user_id" => user_id,
+                        "chat_provider_user_id" => chat_provider_user_id}}
+              {:error, _} ->
+                {:error, :invalid_handle}
+            end
+          {:error, _} ->
+            {:error, :invalid_provider}
+        end
     end
   end
 end

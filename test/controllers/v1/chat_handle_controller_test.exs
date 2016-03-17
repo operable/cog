@@ -6,7 +6,7 @@ defmodule Cog.V1.ChatHandleControllerTest do
   alias Cog.Models.ChatProvider
 
   @valid_attrs %{handle: "vansterminator",
-                 chat_provider: "slack"}
+                 chat_provider: "test"}
 
   setup do
     # Requests handled by the role controller require this permission
@@ -22,16 +22,18 @@ defmodule Cog.V1.ChatHandleControllerTest do
     unauthed_user = user("sadpanda") |> with_token
 
     # Provider
-    provider = Repo.get_by(ChatProvider, name: "slack")
+    provider = Repo.get_by(ChatProvider, name: "test")
 
     # Chat handles for our two users
     authed_handle = ChatHandle.changeset(%ChatHandle{}, %{"handle" => "Cogswell",
                                                           "provider_id" => provider.id,
-                                                          "user_id" => authed_user.id})
+                                                          "user_id" => authed_user.id,
+                                                          "chat_provider_user_id" => "U024BE7LH"})
                     |> Repo.insert!
     unauthed_handle = ChatHandle.changeset(%ChatHandle{}, %{"handle" => "supersad",
                                                             "provider_id" => provider.id,
-                                                            "user_id" => unauthed_user.id})
+                                                            "user_id" => unauthed_user.id,
+                                                            "chat_provider_user_id" => "U024BE7LI"})
                       |> Repo.insert!
 
     {:ok, [authed: authed_user,
@@ -52,6 +54,7 @@ defmodule Cog.V1.ChatHandleControllerTest do
     chat_handles_json = json_response(conn, 200)["chat_handles"]
     assert [%{"id" => params.authed_handle.id,
               "handle" => "Cogswell",
+              "chat_provider_user_id" => "U024BE7LH",
               "user" => %{
                 "id" => params.authed.id,
                 "email_address" => params.authed.email_address,
@@ -60,9 +63,10 @@ defmodule Cog.V1.ChatHandleControllerTest do
                 "username" => params.authed.username
               },
               "chat_provider" => %{"id" => params.provider.id,
-                                   "name" => "slack"}},
+                                   "name" => "test"}},
             %{"id" => params.unauthed_handle.id,
               "handle" => "supersad",
+              "chat_provider_user_id" => "U024BE7LI",
               "user" => %{
                 "id" => params.unauthed.id,
                 "email_address" => params.unauthed.email_address,
@@ -71,7 +75,7 @@ defmodule Cog.V1.ChatHandleControllerTest do
                 "username" => params.unauthed.username
               },
               "chat_provider" => %{"id" => params.provider.id,
-                                   "name" => "slack"}}] == chat_handles_json
+                                   "name" => "test"}}] == chat_handles_json
   end
 
   test "lists all entries for a specified user", params do
@@ -79,6 +83,7 @@ defmodule Cog.V1.ChatHandleControllerTest do
     chat_handles_json = json_response(conn, 200)["chat_handles"]
     assert [%{"id" => params.authed_handle.id,
               "handle" => "Cogswell",
+              "chat_provider_user_id" => "U024BE7LH",
               "user" => %{
                 "id" => params.authed.id,
                 "email_address" => params.authed.email_address,
@@ -87,13 +92,14 @@ defmodule Cog.V1.ChatHandleControllerTest do
                 "username" => params.authed.username
               },
               "chat_provider" => %{"id" => params.provider.id,
-                                   "name" => "slack"}}] == chat_handles_json
+                                   "name" => "test"}}] == chat_handles_json
   end
 
   test "deletes an entry", params do
     delete_test = ChatHandle.changeset(%ChatHandle{}, %{"handle" => "DeleteTest",
                                                         "provider_id" => params.provider.id,
-                                                        "user_id" => params.authed.id})
+                                                        "user_id" => params.authed.id,
+                                                        "chat_provider_user_id" => "U024BE7LJ"})
                   |> Repo.insert!
     conn = api_request(params.authed, :delete, "/v1/chat_handles/#{delete_test.id}")
     assert response(conn, 204)
@@ -103,17 +109,19 @@ defmodule Cog.V1.ChatHandleControllerTest do
   test "updates and renders chosen resource when data is valid", params do
     update_test = ChatHandle.changeset(%ChatHandle{}, %{"handle" => "UpdateTest",
                                                         "provider_id" => params.provider.id,
-                                                        "user_id" => params.authed.id})
+                                                        "user_id" => params.authed.id,
+                                                        "chat_provider_user_id" => "U024BE7LK"})
                   |> Repo.insert!
     conn = api_request(params.authed, :put, "/v1/chat_handles/#{update_test.id}",
                        body: %{"chat_handle" => %{
-                                 "chat_provider" => "slack",
-                                 "handle" => "NewUpdateTest"}})
+                                 "chat_provider" => "test",
+                                 "handle" => "updated-user"}})
     chat_handle_json = json_response(conn, 200)["chat_handle"]
     assert chat_handle_json == %{"id" => update_test.id,
                                  "chat_provider" => %{"id" => params.provider.id,
-                                                      "name" => "slack"},
-                                 "handle" => "NewUpdateTest",
+                                                      "name" => "test"},
+                                 "handle" => "updated-user",
+                                 "chat_provider_user_id" => "U024BE7LK",
                                  "user" => %{
                                    "id" => params.authed.id,
                                    "email_address" => params.authed.email_address,
