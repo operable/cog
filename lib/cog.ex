@@ -9,15 +9,18 @@ defmodule Cog do
     children = build_children(Mix.env, System.get_env("NOCHAT"), adapter_supervisor)
 
     opts = [strategy: :one_for_one, name: Cog.Supervisor]
-    started = Supervisor.start_link(children, opts)
-
-    # Verify the latest schema migration after starting the database worker
-    {sm_status, sm_message} = verify_schema_migration()
-    log_message(sm_status, sm_message)
-    if sm_status == :error do
-      abort_cog()
-    else
-      started
+    case Supervisor.start_link(children, opts) do
+      {:ok, top_sup} ->
+        # Verify the latest schema migration after starting the database worker
+        {sm_status, sm_message} = verify_schema_migration()
+        log_message(sm_status, sm_message)
+        if sm_status == :error do
+          abort_cog()
+        else
+          {:ok, top_sup}
+        end
+      error ->
+        error
     end
   end
 
