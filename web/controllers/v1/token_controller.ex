@@ -7,7 +7,8 @@ defmodule Cog.V1.TokenController do
   alias Cog.Passwords
 
   def create(conn, %{"username" => username,
-                     "password" => password}) do
+                     "password" => password}) when not(is_nil(username))
+                                               and not(is_nil (password)) do
     case Repo.get_by(User, username: username) do
       %User{} = user ->
         verify_password(user, conn, password)
@@ -17,6 +18,11 @@ defmodule Cog.V1.TokenController do
         |> put_status(:forbidden)
         |> json(%{error: "Invalid username/password"})
     end
+  end
+  def create(conn, _params) do
+    conn
+    |> put_status(:unauthorized)
+    |> json(%{error: "Must supply both a username and password"})
   end
 
   defp verify_password(user, conn, password) do
