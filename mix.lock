@@ -15,6 +15,7 @@
   "esockd": {:git, "git://github.com/emqtt/esockd.git", "e6c27801bb5331d064081ef6d6af291a2878038c", [branch: "master"]},
   "ex_doc": {:hex, :ex_doc, "0.11.4"},
   "ex_json_schema": {:hex, :ex_json_schema, "0.3.1"},
+  "excoveralls": {:hex, :excoveralls, "0.5.1"},
   "exirc": {:hex, :exirc, "0.9.2"},
   "exjsx": {:hex, :exjsx, "3.1.0"},
   "exml": {:git, "https://github.com/paulgray/exml.git", "4ae6dea65f97764663c43d0bafb177dc702b5c3f", [tag: "2.2.1"]},
