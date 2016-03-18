@@ -21,7 +21,7 @@ config :cog, :message_bus,
 
 config :cog, Cog.Adapters.Slack,
   api_token: System.get_env("SLACK_API_TOKEN"),
-  api_cache_ttl: System.get_env("SLACK_API_CACHE_TTL") || 900
+  api_cache_ttl: System.get_env("SLACK_API_CACHE_TTL") || 60
 
 config :cog, Cog.Adapters.HipChat,
   xmpp_jid: System.get_env("HIPCHAT_XMPP_JID"),

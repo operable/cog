@@ -4,7 +4,7 @@ defmodule Cog.Adapters.Slack.API do
 
   defstruct token: nil, ttl: nil
 
-  @default_ttl 900
+  @default_ttl 60 # 1 minute
   @slack_api "https://slack.com/api/"
   @server_name :slack_api
   @user_cache :slack_api_users
