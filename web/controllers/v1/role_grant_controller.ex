@@ -42,7 +42,7 @@ defmodule Cog.V1.RoleGrantController do
       {:error, {:not_found, {"roles", names}}} ->
         conn
         |> put_status(:unprocessable_entity)
-        |> json(%{"error" => %{"not_found" => %{"roles" => names}}})
+        |> json(%{"errors" => %{"not_found" => %{"roles" => names}}})
     end
   end
 

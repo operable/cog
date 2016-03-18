@@ -147,7 +147,7 @@ defmodule Cog.V1.RoleGrantController.Test do
         conn = api_request(requestor, :post, path,
                            body: %{"roles" => %{"grant" => [existing.name,
                                                             "does_not_exist"]}})
-        assert json_response(conn, 422) == %{"error" => %{"not_found" => %{"roles" => ["does_not_exist"]}}}
+        assert json_response(conn, 422) == %{"errors" => %{"not_found" => %{"roles" => ["does_not_exist"]}}}
 
         refute_role_is_granted(target, existing)
       end
@@ -253,7 +253,7 @@ defmodule Cog.V1.RoleGrantController.Test do
         conn = api_request(requestor, :post, path,
                            body: %{"roles" => %{"revoke" => [existing.name,
                                                              "does_not_exist"]}})
-        assert json_response(conn, 422) == %{"error" => %{"not_found" => %{"roles" => ["does_not_exist"]}}}
+        assert json_response(conn, 422) == %{"errors" => %{"not_found" => %{"roles" => ["does_not_exist"]}}}
 
         # Still got it
         assert_role_is_granted(target, existing)

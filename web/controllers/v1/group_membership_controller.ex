@@ -74,11 +74,11 @@ defmodule Cog.V1.GroupMembershipController do
       {:error, {:not_found, {"users", names}}} ->
         conn
         |> put_status(:unprocessable_entity)
-        |> json(%{"error" => %{"not_found" => %{"users" => names}}})
+        |> json(%{"errors" => %{"not_found" => %{"users" => names}}})
       {:error, {:not_found, {"groups", names}}} ->
         conn
         |> put_status(:unprocessable_entity)
-        |> json(%{"error" => %{"not_found" => %{"groups" => names}}})
+        |> json(%{"errors" => %{"not_found" => %{"groups" => names}}})
     end
   end
 

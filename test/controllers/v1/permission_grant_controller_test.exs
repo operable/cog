@@ -151,7 +151,7 @@ defmodule Cog.V1.PermissionGrantController.Test do
         conn = api_request(requestor, :post, path,
                            body: %{"permissions" => %{"grant" => ["site:first",
                                                                   "site:does_not_exist"]}})
-        assert json_response(conn, 422) == %{"error" => %{"not_found" => %{"permissions" => ["site:does_not_exist"]}}}
+        assert json_response(conn, 422) == %{"errors" => %{"not_found" => %{"permissions" => ["site:does_not_exist"]}}}
 
         refute_permission_is_granted(target, existing)
       end
@@ -259,7 +259,7 @@ defmodule Cog.V1.PermissionGrantController.Test do
         conn = api_request(requestor, :post, path,
                            body: %{"permissions" => %{"revoke" => ["site:first",
                                                                    "site:does_not_exist"]}})
-        assert json_response(conn, 422) == %{"error" => %{"not_found" => %{"permissions" => ["site:does_not_exist"]}}}
+        assert json_response(conn, 422) == %{"errors" => %{"not_found" => %{"permissions" => ["site:does_not_exist"]}}}
 
         # Still got it
         assert_permission_is_granted(target, existing)
