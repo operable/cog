@@ -10,10 +10,10 @@ MYCHECKSUM=`shasum ${MYFULLNAME} | cut -f1 -d' '`
 RELEASE_TAG="0.2"
 
 REPOS="cog relay cogctl relayctl"
-COG_REPO="git@github.com:operable/cog"
-RELAY_REPO="git@github.com:operable/relay"
-COGCTL_REPO="git@github.com:operable/cogctl"
-RELAYCTL_REPO="git@github.com:operable/relayctl"
+COG_REPO="https://github.com/operable/cog.git"
+RELAY_REPO="https://github.com/operable/relay.git"
+COGCTL_REPO="https://github.com/operable/cogctl.git"
+RELAYCTL_REPO="https://github.com/operable/relayctl.git"
 
 # All the executables needed to clone and
 # build Cog & Relay
