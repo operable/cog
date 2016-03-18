@@ -188,7 +188,7 @@ defmodule Cog.Command.Pipeline.Executor do
                                        current_plan: nil,
                                        plans: plans,
                                        invocations: remaining}, 0}
-      {:error, {:not_found, var}} ->
+      {:error, {:missing_key, var}} ->
         Helpers.send_reply("I can't find the variable '$#{var}'.", state.request, state.mq_conn)
         fail_pipeline(state, :binding_error, "Error preparing to execute command pipeline '#{state.request["text"]}': Unknown variable '#{var}'")
       {:error, :no_rule} ->
