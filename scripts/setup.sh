@@ -95,14 +95,6 @@ function bail_on_missing_commands {
 fi
 }
 
-function dirty_scheduler_check {
-  if ! ERL_CRASH_DUMP=/dev/null ${erl_path} -noshell -eval "erlang:system_info(dirty_cpu_schedulers)." -eval "init:stop()" > /dev/null 2>&1 ; then
-    return 1
-  else
-    return 0
-  fi
-}
-
 function usage {
   printf "%s [help|--help|-h|-?|--verbose|-v] <install_dir> \n" ${MYNAME}
 }
@@ -176,19 +168,6 @@ write_check_result ${git_path}
 
 # Bail if not
 bail_on_missing_commands
-
-# Ensure detected Erlang has dirty scheduler support
-write_check "Erlang dirty CPU schedulers supported"
-if ! dirty_scheduler_check ; then
-  write_check_result "No"
-  write_err "Detected Erlang '%s' lacks required dirty scheduler support." ${erl_path}
-  write_err "See http://erlang.org/doc/installation_guide/INSTALL.html for more information."
-  abort
-else
-  write_check_result "Yes"
-fi
-write_log "Prequisite checks completed."
-write_log
 
 if ! mkdir -p ${install_dir} ; then
   write_err "Error preparing installation directory."
