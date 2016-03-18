@@ -106,7 +106,8 @@ defmodule Cog.Support.ModelUtilities do
     user
     |> Ecto.Model.build(:chat_handles,
                         %{provider_id: provider.id,
-                          handle: user.username})
+                          handle: user.username,
+                          chat_provider_user_id: user.username})
     |> Repo.insert!
 
     user

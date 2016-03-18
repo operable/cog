@@ -23,6 +23,10 @@ defmodule Cog.Adapters.Test do
     {:ok, %{id: "U024BE7LK", handle: "updated-user"}}
   end
 
+  def lookup_user(handle: handle) do
+    {:ok, %{id: handle, handle: handle}}
+  end
+
   def lookup_direct_room(_user_id) do
     {:ok, %{id: "channel1"}}
   end

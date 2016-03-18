@@ -9,6 +9,14 @@ defmodule Cog.Queries.User do
     preload: [:chat_handles]
   end
 
+  def for_chat_provider_user_id(chat_provider_user_id, provider) when is_binary(provider) do
+    from u in User,
+    join: ch in assoc(u, :chat_handles),
+    join: cp in assoc(ch, :chat_provider),
+    where: ch.chat_provider_user_id == ^chat_provider_user_id and cp.name == ^provider,
+    preload: [:chat_handles]
+  end
+
   @doc """
   Given a user id, returns the list of chat handles.
   """
