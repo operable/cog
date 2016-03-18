@@ -258,7 +258,7 @@ defmodule Cog.Command.Pipeline.Executor do
           {:next_state, :wait_for_command, updated_state, @command_timeout}
       end
     else
-      msg = "The `#{bundle}` bundle is currently disabled"
+      msg = "The #{inspect(bundle.name)} bundle is currently disabled"
       Helpers.send_error(msg, state.request, state.mq_conn)
       fail_pipeline(state, :no_relays, msg)
     end
