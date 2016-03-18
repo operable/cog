@@ -14,7 +14,12 @@ defmodule Cog.Mixfile do
      deps: deps,
      elixirc_paths: elixirc_paths(Mix.env),
      compilers: [:phoenix] ++ Mix.compilers,
-     aliases: aliases]
+     aliases: aliases,
+     test_coverage: [tool: ExCoveralls],
+     preferred_cli_env: ["coveralls": :test,
+                         "coveralls.html": :test,
+                         "coveralls.post": :test]
+    ]
   end
 
   def application do
@@ -71,7 +76,8 @@ defmodule Cog.Mixfile do
      {:phoenix_live_reload, "~> 1.0.3", only: :dev},
      {:earmark, "~> 0.2.1", only: :dev},
      {:ex_doc, "~> 0.10", only: :dev},
-     {:mix_test_watch, "~> 0.1.1", only: :test}
+     {:mix_test_watch, "~> 0.1.1", only: :test},
+     {:excoveralls, "~> 0.5", only: :test}
 
     ]
   end

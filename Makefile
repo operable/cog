@@ -56,4 +56,9 @@ test-watch: export MIX_ENV = test
 test-watch: reset-db
 	mix test.watch $(TEST)
 
+coverage: export MIX_ENV = test
+coverage: reset-db
+coverage:
+	mix coveralls.html
+
 .PHONY: ci ci-setup ci-cleanup test
