@@ -19,6 +19,10 @@ defmodule Cog.Adapters.HipChat do
     true
   end
 
+  def lookup_user(opts) do
+    HipChat.API.lookup_user(opts)
+  end
+
   def mention_name(name) do
     "@" <> name
   end

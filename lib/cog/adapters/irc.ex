@@ -19,6 +19,10 @@ defmodule Cog.Adapters.IRC do
     true
   end
 
+  def lookup_user(opts) do
+    IRC.Connection.lookup_user(opts)
+  end
+
   def mention_name(name) do
     name
   end

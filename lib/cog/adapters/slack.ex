@@ -23,6 +23,10 @@ defmodule Cog.Adapters.Slack do
     end
   end
 
+  def lookup_user(opts) do
+    Slack.API.lookup_user(opts)
+  end
+
   def mention_name(name) do
     "@" <> name
   end

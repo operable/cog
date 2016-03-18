@@ -100,17 +100,21 @@ defmodule Cog.Support.ModelUtilities do
   Associate a chat handle for the specified provider with
   `user`. Returns the un-modified user for piplines.
   """
-  def with_chat_handle_for(%User{}=user, provider) do
+  def with_chat_handle_for(%User{}=internal_user, provider) do
     provider =  ChatProvider |> Repo.get_by!(name: String.downcase(provider))
 
-    user
-    |> Ecto.Model.build(:chat_handles,
-                        %{provider_id: provider.id,
-                          handle: user.username,
-                          chat_provider_user_id: user.username})
+    {:ok, adapter} = Cog.adapter_module(provider.name)
+    {:ok, external_user} = adapter.lookup_user(handle: internal_user.username)
+
+    params = %{provider_id: provider.id,
+               handle: external_user.handle,
+               chat_provider_user_id: external_user.id}
+
+    internal_user
+    |> Ecto.Model.build(:chat_handles, params)
     |> Repo.insert!
 
-    user
+    internal_user
   end
 
   @doc """

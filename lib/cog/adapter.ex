@@ -76,6 +76,8 @@ defmodule Cog.Adapter do
 
   @callback room_writeable?(lookup_opts()) :: boolean() | {:error, any}
 
+  @callback lookup_user(lookup_opts()) :: lookup_result()
+
   @callback mention_name(String.t) :: String.t
 
   @callback name() :: String.t
