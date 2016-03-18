@@ -37,8 +37,6 @@ Cog depends on a few things to run locally:
 
     * Postgres
     * A `SLACK_API_TOKEN` environment variable (with a valid token)
-    * Erlang compiled with the dirty schedulers enabled
-    * `libsodium`
 
 With those installed, setup your computer with:
 
