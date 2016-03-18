@@ -13,6 +13,11 @@ defmodule Integration.CommandTest do
     assert response["data"]["response"] == "req-opt response"
   end
 
+  test "running a command with a bad template", %{user: user} do
+    response = send_message(user, "@bot: operable:bad-template")
+    assert response["data"]["response"] == "@vanstee Whoops! An error occurred. There was an error rendering the template 'badtemplate' for the adapter 'test'."
+  end
+
   test "running a command with a required option missing", %{user: user} do
     response = send_message(user, "@bot: operable:req-opt")
     assert response["data"]["response"] == "@vanstee Whoops! An error occurred. Looks like you forgot to include some required options: 'req'"
