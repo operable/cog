@@ -8,6 +8,7 @@ defmodule Cog.Mixfile do
      version: "0.2.0",
      elixir: "~> 1.2",
      leex_options: [:warnings_as_errors],
+     erlc_options: [:debug_info],
      elixirc_options: [warnings_as_errors: System.get_env("ALLOW_WARNINGS") == nil],
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
@@ -18,8 +19,20 @@ defmodule Cog.Mixfile do
      test_coverage: [tool: ExCoveralls],
      preferred_cli_env: ["coveralls": :test,
                          "coveralls.html": :test,
-                         "coveralls.post": :test]
+                         "coveralls.post": :test],
+     dialyzer: dialyzer_settings
     ]
+  end
+
+  defp dialyzer_settings do
+    [plt_add_deps: true,
+     plt_file: ".dialyzer.plt",
+     flags: [
+       "-Wunderspecs",
+       "-Werror_handling",
+       "-Wrace_conditions",
+       "-Wno_undefined_callbacks"
+     ]]
   end
 
   def application do
@@ -73,6 +86,7 @@ defmodule Cog.Mixfile do
      {:fumanchu, github: "operable/fumanchu", ref: "cog-0.2"},
      {:exirc, "~> 0.9.2"},
 
+     {:dialyxir, "~> 0.3", only: [:dev, :test]},
      {:credo, "~> 0.3", only: [:dev, :test]},
      {:phoenix_live_reload, "~> 1.0.3", only: :dev},
      {:earmark, "~> 0.2.1", only: :dev},
