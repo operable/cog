@@ -154,20 +154,8 @@ defmodule Cog.Command.Pipeline.Executor do
       {:ok, destinations} ->
         {:next_state, :plan_next_invocation, %{state | destinations: destinations}, 0}
       {:error, invalid} ->
-        # TODO: having a really good error message for this would
-        # entail better differentiating the reasons for specific
-        # failures: room not found, not a member of a room, etc. (You
-        # could even extend this to things like "inactive user",
-        # "archived room", and so on.) Something multi-line would be
-        # best, but formatting ends up being weird with our current
-        # helpers.
-        #
-        # A long-term solution probably involves some sort of error
-        # templating, which we've discussed. The current
-        # implementation at least gives the user some actionable (if
-        # not pretty) feedback.
-        not_a_member = Keyword.get_values(invalid, :not_a_member)
-        Helpers.send_error("No commands were executed because the following redirects are invalid: #{invalid |> Keyword.values |> Enum.join(", ")}#{unless Enum.empty?(not_a_member), do: ". Additionally, the bot must be invited to these rooms before it can redirect to them: #{Enum.join(not_a_member, ", ")}"}", state.request, state.mq_conn)
+        message = redirection_error_message(invalid)
+        Helpers.send_error(message, state.request, state.mq_conn)
         fail_pipeline(state, :redirect_error, "Invalid redirects were specified: #{inspect invalid}")
     end
   end
@@ -354,6 +342,52 @@ defmodule Cog.Command.Pipeline.Executor do
         Logger.error("Error resolving redirect '#{redir}' with adapter #{adapter}: #{inspect reason}")
         {:error, {reason, redir}}
     end
+  end
+
+  # `errors` is a keyword list of [reason: name] for all bad redirect
+  # destinations that were found. `name` is the value as originally
+  # typed by the user.
+  defp redirection_error_message(errors) do
+    main_message = """
+
+    No commands were executed because the following redirects are invalid:
+
+    #{errors |> Keyword.values |> Enum.join(", ")}
+    """
+
+    not_a_member = Keyword.get_values(errors, :not_a_member)
+    not_a_member_message = unless Enum.empty?(not_a_member) do
+    """
+
+    Additionally, the bot must be invited to these rooms before it can
+    redirect to them:
+
+    #{Enum.join(not_a_member, ", ")}
+    """
+    end
+
+    # TODO: This is where I'd like to have error templates, so we can
+    # be specific about recommending the conventions the user use to
+    # refer to users and rooms
+    ambiguous = Keyword.get_values(errors, :ambiguous)
+    ambiguous_message = unless Enum.empty?(ambiguous) do
+    """
+
+    The following redirects are ambiguous; please refer to users and
+    rooms according to the conventions of your chat provider
+    (e.g. `@user`, `#room`):
+
+    #{Enum.join(ambiguous, ", ")}
+    """
+    end
+
+    # assemble final message
+    message_fragments = [main_message,
+                         not_a_member_message,
+                         ambiguous_message]
+    message_fragments
+    |> Enum.reject(&is_nil/1)
+    |> Enum.join("\n")
   end
 
   ########################################################################
