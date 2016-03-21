@@ -80,10 +80,6 @@ defmodule Cog.Command.Pipeline.Executor do
 
   use Adz
 
-  # Provide an empty map for initial binding. The `nil` is for a
-  # template, and just to maintain the proper "shape" of the data
-  @seed_context [{%{}, nil}]
-
   def start_link(request),
     do: :gen_fsm.start_link(__MODULE__, [request], [])
 
@@ -93,29 +89,36 @@ defmodule Cog.Command.Pipeline.Executor do
     id = Map.fetch!(request, "id")
     topic = "/bot/pipelines/#{id}"
     Connection.subscribe(conn, topic <> "/+")
-
-    adapter = request["adapter"]
-    handle = request["sender"]["handle"]
-    # We resolve users and permissions at this stage so that we can
-    # include the Cog user (and not just their adapter-specific
-    # handle) in event logs (and also to prevent us doing unnecessary
-    # work for users that don't have Cog accounts)
-    case UserPermissionsCache.fetch(username: handle, adapter: adapter) do
-      {:ok, {user, perms}} ->
-        loop_data = %__MODULE__{id: id, topic: topic, request: request,
-                                mq_conn: conn,
-                                user: user,
-                                user_permissions: perms,
-                                output: @seed_context,
-                                started: :os.timestamp()}
-        initialization_event(loop_data)
-        {:ok, :parse, loop_data, 0}
-      {:error, :not_found} ->
-        alert_unregistered_user(%__MODULE__{mq_conn: conn, request: request})
+    case create_initial_context(request) do
+      {:ok, initial_context} ->
+        adapter = request["adapter"]
+        handle = request["sender"]["handle"]
+        # We resolve users and permissions at this stage so that we can
+        # include the Cog user (and not just their adapter-specific
+        # handle) in event logs (and also to prevent us doing unnecessary
+        # work for users that don't have Cog accounts)
+        case UserPermissionsCache.fetch(username: handle, adapter: adapter) do
+          {:ok, {user, perms}} ->
+            loop_data = %__MODULE__{id: id, topic: topic, request: request,
+                                    mq_conn: conn,
+                                    user: user,
+                                    user_permissions: perms,
+                                    output: initial_context,
+                                    started: :os.timestamp()}
+            initialization_event(loop_data)
+            {:ok, :parse, loop_data, 0}
+          {:error, :not_found} ->
+            alert_unregistered_user(%__MODULE__{mq_conn: conn, request: request})
+            :ignore
+        end
+      :error ->
+        # TODO: Once externally-triggered pipelines are A Thing and we
+        # sort out how and where to send error messages, this can be
+        # improved. For now, we'll just log and exit
+        Logger.error("Bad initial context provided; all values must be maps: #{inspect request}")
         :ignore
     end
   end
-
   def parse(:timeout, state) do
     options = %ParserOptions{resolver: CommandResolver.command_resolver_fn(state.user)}
     case Parser.scan_and_parse(state.request["text"], options) do
@@ -279,7 +282,8 @@ defmodule Cog.Command.Pipeline.Executor do
                                        # there's nothing to collect
                                        state.output
                                      body ->
-                                       state.output ++ Enum.map(List.wrap(body), &({&1, resp.template}))
+                                       state.output ++ Enum.map(List.wrap(body),
+                                                                &store_with_template(&1, resp.template))
                                        # body may be a map or a list
                                        # of maps; if the latter, we
                                        # want to accumulate it into
@@ -566,13 +570,59 @@ defmodule Cog.Command.Pipeline.Executor do
   end
 
   ########################################################################
-  # Miscellaneous Functions
+  # Context Manipulation Functions
 
-  # When we accumulate output, we pair the response body with the
-  # template in a tuple. To recover just the raw data again, we simply
-  # strip the template and surrounding tuple
+  # Each command in a pipeline has access to a "Cog Env", which is the
+  # accumulated output of the execution of the pipeline thus far. This
+  # is used as a binding context, as well as an input source for the
+  # commands.
+  #
+  # The first command in a pipeline is different, though, as there is
+  # no previous input. However, pipelines triggered by external events
+  # (e.g., webhooks) can set the initial context to be, e.g., the body
+  # of the HTTP request that triggered the pipeline.
+  #
+  # In the absence of an explicit initial context, a single empty map
+  # is used. This provides an empty binding context for the first
+  # command, preventing the use of unbound variables in the first
+  # invocation of a pipeline. (For external-event initiated pipelines
+  # with initial contexts, there can be variables in the first
+  # invocation).
+  #
+  # In general, chat-adapter initiated pipelines will not be supplied
+  # with an initial context.
+  defp create_initial_context(request) do
+    context = request
+    |> Map.get("initial_context", [%{}])
+    |> List.wrap
+
+    if Enum.all?(context, &is_map/1) do
+      {:ok, Enum.map(context, &store_with_template(&1, nil))}
+    else
+      :error
+    end
+  end
+
+  # We need to track command output plus the specified template (if
+  # any) needed to render it.
+  #
+  # See remove_templates/1 for inverse
+  defp store_with_template(data, template),
+    do: {data, template}
+
+  # Templates only really matter at the very end of a pipeline; when
+  # manipulating binding contexts inside the pipeline, we can safely
+  # ignore them.
+  #
+  # See store_with_template/2 for inverse
+  defp remove_template({data, _template}),
+    do: data
+
   defp strip_templates(accumulated_output),
-    do: Enum.map(accumulated_output, fn({data, _template}) -> data end)
+    do: Enum.map(accumulated_output, &remove_template/1)
+
+  ########################################################################
+  # Miscellaneous Functions
 
   defp request_for_plan(plan, requestor, room, provider, reply_to) do
     # TODO: stuffing the provider into requestor here is a bit
