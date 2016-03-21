@@ -45,7 +45,8 @@ defmodule Cog.Adapter do
       end
 
       defp payload(sender, room, text) do
-        %{sender: sender,
+        %{id: UUID.uuid4(:hex),
+          sender: sender,
           room: room,
           text: text,
           adapter: name(),
