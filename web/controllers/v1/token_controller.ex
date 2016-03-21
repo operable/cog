@@ -22,7 +22,7 @@ defmodule Cog.V1.TokenController do
   def create(conn, _params) do
     conn
     |> put_status(:unauthorized)
-    |> json(%{error: "Must supply both a username and password"})
+    |> json(%{errors: "Must supply both a username and password"})
   end
 
   defp verify_password(user, conn, password) do
