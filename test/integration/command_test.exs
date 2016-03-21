@@ -15,7 +15,7 @@ defmodule Integration.CommandTest do
 
   test "running a command with a bad template", %{user: user} do
     response = send_message(user, "@bot: operable:bad-template")
-    assert response["data"]["response"] == "@vanstee Whoops! An error occurred. There was an error rendering the template 'badtemplate' for the adapter 'test'."
+    assert response["data"]["response"] == "@vanstee Whoops! An error occurred. There was an error rendering the template 'badtemplate' for the adapter 'test': %Protocol.UndefinedError{description: nil, protocol: String.Chars, value: %{\"bad\" => %{\"foo\" => \"bar\"}}}"
   end
 
   test "running a command with a required option missing", %{user: user} do

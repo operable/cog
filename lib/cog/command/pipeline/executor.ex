@@ -211,7 +211,7 @@ defmodule Cog.Command.Pipeline.Executor do
 
     case render_templates(output, command, adapter) do
       {:error, {error, template, adapter}} ->
-        msg = "There was an error rendering the template '#{template}' for the adapter '#{adapter}'."
+        msg = "There was an error rendering the template '#{template}' for the adapter '#{adapter}': #{inspect error}"
         Helpers.send_error(msg, state.request, state.mq_conn)
         fail_pipeline(state, :template_rendering_error, "Error rendering template '#{template}' for '#{adapter}': #{inspect error}")
       message ->
@@ -425,16 +425,17 @@ defmodule Cog.Command.Pipeline.Executor do
     do: "raw"
 
   defp render_templates(command_output, command, adapter) do
-    rendered = Enum.reduce_while(command_output, [], fn({data, template}, acc) ->
+    rendered_templates = Enum.reduce_while(command_output, [], fn({data, template}, acc) ->
       try do
-        {:cont, [render_template(command, adapter, template, data) | acc]}
+        rendered_template = render_template(command, adapter, template, data)
+        {:cont, [rendered_template | acc]}
       rescue
         error ->
           {:halt, {:error, {error, template, adapter}}}
       end
     end)
 
-    case rendered do
+    case rendered_templates do
       {:error, data} ->
         {:error, data}
       messages ->
