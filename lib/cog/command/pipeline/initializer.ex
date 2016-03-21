@@ -10,6 +10,10 @@ defmodule Cog.Command.Pipeline.Initializer do
 
   require Logger
 
+  alias Carrier.CredentialManager
+  alias Carrier.Messaging.Connection
+  alias Cog.Command.Pipeline.ExecutorSup
+
   defstruct mq_conn: nil, history: %{}, history_token: ""
 
   use GenServer
@@ -19,18 +23,18 @@ defmodule Cog.Command.Pipeline.Initializer do
 
   def init(_) do
     cp = Application.get_env(:cog, :command_prefix)
-    {:ok, conn} = Carrier.Messaging.Connection.connect()
-    Carrier.Messaging.Connection.subscribe(conn, "/bot/commands")
+    {:ok, conn} = Connection.connect()
+    Connection.subscribe(conn, "/bot/commands")
     Logger.info("Ready.")
     {:ok, %__MODULE__{mq_conn: conn, history_token: "#{cp}#{cp}"}}
   end
 
   def handle_info({:publish, "/bot/commands", message}, state) do
-    case Carrier.CredentialManager.verify_signed_message(message) do
+    case CredentialManager.verify_signed_message(message) do
       {true, payload} ->
         case check_history(payload, state) do
           {true, payload, state} ->
-            {:ok, _} = Cog.Command.Pipeline.ExecutorSup.run(payload)
+            {:ok, _} = ExecutorSup.run(payload)
             {:noreply, state}
           {false, _, state} ->
             {:noreply, state}
@@ -63,7 +67,7 @@ defmodule Cog.Command.Pipeline.Initializer do
         response = %{response: "No history available.",
                      room: payload["room"],
                      adapter: payload["adapter"]}
-        Carrier.Messaging.Connection.publish(state.mq_conn, response, routed_by: payload["reply"])
+        Connection.publish(state.mq_conn, response, routed_by: payload["reply"])
         {false, Poison.encode!(payload), state}
       previous ->
         {true, Poison.encode!(Map.put(payload, "text", previous)), state}
