@@ -1,4 +1,13 @@
 defmodule Cog.Command.Pipeline.Initializer do
+  @moduledoc """
+  Listens for pipeline requests, triggering the execution of those
+  pipelines.
+
+  Additionalaly, tracks the history of requests being made, thus
+  providing a "history" function, whereby a user may re-run the last
+  request they made.
+  """
+
   require Logger
 
   defstruct mq_conn: nil, history: %{}, history_token: ""
