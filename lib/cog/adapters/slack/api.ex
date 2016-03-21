@@ -49,27 +49,13 @@ defmodule Cog.Adapters.Slack.API do
   NOTE: Only called (in this form) from the executor for finding redirects.
   """
   def lookup_room("@" <> user_name) do
-    {:ok, user} = lookup_user(handle: user_name)
-    lookup_direct_room(user_id: user.id)
-  end
-
-  def lookup_room("#" <> channel_name) do
-    lookup_room(name: channel_name)
-  end
-
-  # We do some snazzy recovery by not actually requiring the
-  # end-user to preface user or room names with "@" or "#",
-  # respectively (we can do this because we only accept room or
-  # user names in specific places in pipeline invocations).
-  #
-  # First, we try the string as a room name, and if that fails,
-  # fall back to treating it as a user name. If neither works,
-  # we fail.
-  def lookup_room(other) when is_binary(other) do
-    with {:error, :not_found} <- lookup_room(name: other),
-      {:ok, user} <- lookup_user(handle: other),
+    with {:ok, user} <- lookup_user(handle: user_name),
       do: lookup_direct_room(user_id: user.id)
   end
+  def lookup_room("#" <> channel_name),
+    do: lookup_room(name: channel_name)
+  def lookup_room(other) when is_binary(other),
+    do: {:error, :ambiguous}
 
   def lookup_direct_room(user_id: id) do
     case query_cache(@direct_chat_channel_cache, [id: id]) do

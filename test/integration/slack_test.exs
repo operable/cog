@@ -44,4 +44,25 @@ defmodule Integration.SlackTest do
     message = send_message user, ~s(@deckard: operable:st-echo "this is a test" | operable:st-thorn $body)
     assert_response "@botci Sorry, you aren't allowed to execute 'operable:st-thorn $body' :(\n You will need the 'operable:st-thorn' permission to run this command.", after: message
   end
+
+  test "an ambiguous redirect fails", %{user: user} do
+    message = send_message(user,
+                           ~s(@deckard: operable:echo foo > am_i_user_or_room))
+
+    expected_response = """
+    @botci Whoops! An error occurred. 
+    No commands were executed because the following redirects are invalid:
+
+    am_i_user_or_room
+
+
+    The following redirects are ambiguous; please refer to users and
+    rooms according to the conventions of your chat provider
+    (e.g. `@user`, `#room`):
+
+    am_i_user_or_room
+    """
+
+    assert_response expected_response, after: message
+  end
 end
