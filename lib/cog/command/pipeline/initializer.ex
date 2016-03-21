@@ -5,9 +5,8 @@ defmodule Cog.Command.Pipeline.Initializer do
 
   use GenServer
 
-  def start_link() do
-    GenServer.start_link(__MODULE__, [], name: __MODULE__)
-  end
+  def start_link,
+    do: GenServer.start_link(__MODULE__, [], name: __MODULE__)
 
   def init(_) do
     cp = Application.get_env(:cog, :command_prefix)
@@ -33,9 +32,8 @@ defmodule Cog.Command.Pipeline.Initializer do
     end
   end
 
-  def handle_info(_, state) do
-    {:noreply, state}
-  end
+  def handle_info(_, state),
+    do: {:noreply, state}
 
   defp check_history(payload, state) when is_map(payload) do
     uid = get_in(payload, ["sender", "id"])
@@ -47,9 +45,8 @@ defmodule Cog.Command.Pipeline.Initializer do
     end
   end
 
-  defp put_in_history(uid, text, %__MODULE__{history: history}=state) do
-    %{state | history: Map.put(history, uid, text)}
-  end
+  defp put_in_history(uid, text, %__MODULE__{history: history}=state),
+    do: %{state | history: Map.put(history, uid, text)}
 
   defp retrieve_last(uid, payload, %__MODULE__{history: history}=state) do
     case Map.get(history, uid) do
