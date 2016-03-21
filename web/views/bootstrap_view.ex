@@ -6,7 +6,7 @@ defmodule Cog.V1.BootstrapView do
   end
 
   def render("bootstrapped.json", _) do
-    %{bootstrap: %{errors: "Already bootstrapped"}}
+    %{errors: %{bootstrap: "Already bootstrapped"}}
   end
 
   def render("bootstrap.json", %{user: user}) do
