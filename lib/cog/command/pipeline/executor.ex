@@ -209,12 +209,15 @@ defmodule Cog.Command.Pipeline.Executor do
     command = state.current_plan.command
     adapter = state.request["adapter"]
 
-    message = Enum.map_join(output, "\n", fn({data,template}) ->
-      render_template(command, adapter, template, data)
-    end)
-
-    Enum.each(destinations, &publish_response(response_fn(message, adapter), &1, state))
-    {:stop, :shutdown, state}
+    case render_templates(output, command, adapter) do
+      {:error, {error, template, adapter}} ->
+        msg = "There was an error rendering the template '#{template}' for the adapter '#{adapter}': #{inspect error}"
+        Helpers.send_error(msg, state.request, state.mq_conn)
+        fail_pipeline(state, :template_rendering_error, "Error rendering template '#{template}' for '#{adapter}': #{inspect error}")
+      message ->
+        Enum.each(destinations, &publish_response(response_fn(message, adapter), &1, state))
+        {:stop, :shutdown, state}
+    end
   end
 
   def execute_plan(:timeout, %__MODULE__{plans: [current_plan|remaining_plans], request: request}=state) do
@@ -420,6 +423,26 @@ defmodule Cog.Command.Pipeline.Executor do
     do: "json"
   defp default_template(_),
     do: "raw"
+
+  defp render_templates(command_output, command, adapter) do
+    rendered_templates = Enum.reduce_while(command_output, [], fn({data, template}, acc) ->
+      try do
+        rendered_template = render_template(command, adapter, template, data)
+        {:cont, [rendered_template | acc]}
+      rescue
+        error ->
+          {:halt, {:error, {error, template, adapter}}}
+      end
+    end)
+
+    case rendered_templates do
+      {:error, data} ->
+        {:error, data}
+      messages ->
+        Enum.reverse(messages)
+        |> Enum.join("\n")
+    end
+  end
 
   defp render_template(command, adapter, nil, context),
     do: render_template(command, adapter, default_template(context), context)
