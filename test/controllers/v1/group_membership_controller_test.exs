@@ -144,7 +144,7 @@ defmodule Cog.V1.GroupMembershipController.Test do
     conn = api_request(requestor, :post, "/v1/groups/#{group.id}/membership",
                        body: %{"members" => %{"users" => %{"add" => [existing_user.username,
                                                                      "i_dont_exist"]}}})
-    assert json_response(conn, 422) == %{"error" => %{"not_found" => %{"users" => ["i_dont_exist"]}}}
+    assert json_response(conn, 422) == %{"errors" => %{"not_found" => %{"users" => ["i_dont_exist"]}}}
 
     assert [] == Repo.preload(group, :direct_user_members).direct_user_members
   end
@@ -233,7 +233,7 @@ defmodule Cog.V1.GroupMembershipController.Test do
     conn = api_request(requestor, :post, "/v1/groups/#{group.id}/membership",
                        body: %{"members" => %{"groups" => %{"add" => [existing_group.name,
                                                                      "i_dont_exist"]}}})
-    assert json_response(conn, 422) == %{"error" => %{"not_found" => %{"groups" => ["i_dont_exist"]}}}
+    assert json_response(conn, 422) == %{"errors" => %{"not_found" => %{"groups" => ["i_dont_exist"]}}}
 
     assert [] == Repo.preload(group, :direct_user_members).direct_user_members
   end
@@ -305,7 +305,7 @@ defmodule Cog.V1.GroupMembershipController.Test do
                        body: %{"members" => %{"users" => %{"remove" => [user.username,
                                                                         "i_dont_exist"]}}})
 
-    assert json_response(conn, 422) == %{"error" => %{"not_found" => %{"users" => ["i_dont_exist"]}}}
+    assert json_response(conn, 422) == %{"errors" => %{"not_found" => %{"users" => ["i_dont_exist"]}}}
 
     assert [user] == Repo.preload(group, :direct_user_members).direct_user_members
   end
@@ -385,7 +385,7 @@ defmodule Cog.V1.GroupMembershipController.Test do
                        body: %{"members" => %{"groups" => %{"remove" => [group.name,
                                                                         "i_dont_exist"]}}})
 
-    assert json_response(conn, 422) == %{"error" => %{"not_found" => %{"groups" => ["i_dont_exist"]}}}
+    assert json_response(conn, 422) == %{"errors" => %{"not_found" => %{"groups" => ["i_dont_exist"]}}}
 
     assert [member] == Repo.preload(group, :direct_group_members).direct_group_members
   end

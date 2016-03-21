@@ -71,7 +71,7 @@ defmodule Cog.V1.PermissionController do
       _ ->
         conn
         |> put_status(:forbidden)
-        |> json(%{error: "Modifying permissions outside of the #{@site} namespace is forbidden."})
+        |> json(%{errors: "Modifying permissions outside of the #{@site} namespace is forbidden."})
     end
   end
 
@@ -91,7 +91,7 @@ defmodule Cog.V1.PermissionController do
       _ ->
         conn
         |> put_status(:forbidden)
-        |> json(%{error: "Deleting permissions outside of the #{@site} namespace is forbidden."})
+        |> json(%{errors: "Deleting permissions outside of the #{@site} namespace is forbidden."})
     end
   end
 

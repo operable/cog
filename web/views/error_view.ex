@@ -14,7 +14,7 @@ defmodule Cog.ErrorView do
   end
 
   def render("422.json", %{error: msg}) do
-    %{error: msg}
+    %{errors: msg}
   end
 
   # In case no render clause matches or no

@@ -48,7 +48,7 @@ defmodule Cog.V1.PermissionGrantController do
       {:error, {:not_found, {"permissions", names}}} ->
         conn
         |> put_status(:unprocessable_entity)
-        |> json(%{"error" => %{"not_found" => %{"permissions" => names}}})
+        |> json(%{"errors" => %{"not_found" => %{"permissions" => names}}})
     end
   end
 

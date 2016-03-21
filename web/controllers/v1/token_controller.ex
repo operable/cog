@@ -16,7 +16,7 @@ defmodule Cog.V1.TokenController do
         Passwords.matches?(nil, "")
         conn
         |> put_status(:forbidden)
-        |> json(%{error: "Invalid username/password"})
+        |> json(%{errors: "Invalid username/password"})
     end
   end
   def create(conn, _params) do
@@ -37,7 +37,7 @@ defmodule Cog.V1.TokenController do
           false ->
             conn
             |> put_status(:forbidden)
-            |> json(%{error: "Invalid username/password"})
+            |> json(%{errors: "Invalid username/password"})
         end
     end
   end
