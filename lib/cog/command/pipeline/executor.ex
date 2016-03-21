@@ -202,7 +202,7 @@ defmodule Cog.Command.Pipeline.Executor do
   def plan_next_invocation(:timeout, %__MODULE__{invocations: [], output: [], destinations: destinations}=state) do
     message = "Pipeline executed successfully, but no output was returned"
     adapter = state.request["adapter"]
-    Enum.each(destinations, &publish_response(response_fn(message, adapter), &1, state))
+    Enum.each(destinations, &publish_response(response_generator_fn(message, adapter), &1, state))
     {:stop, :shutdown, %{state | output: []}}
   end
   def plan_next_invocation(:timeout, %__MODULE__{invocations: [], output: output, destinations: destinations}=state) do
@@ -217,7 +217,7 @@ defmodule Cog.Command.Pipeline.Executor do
         Helpers.send_error(msg, state.request, state.mq_conn)
         fail_pipeline(state, :template_rendering_error, "Error rendering template '#{template}' for '#{adapter}': #{inspect error}")
       message ->
-        Enum.each(destinations, &publish_response(response_fn(message, adapter), &1, state))
+        Enum.each(destinations, &publish_response(response_generator_fn(message, adapter), &1, state))
         {:stop, :shutdown, state}
     end
   end
@@ -407,7 +407,7 @@ defmodule Cog.Command.Pipeline.Executor do
   #
   # This enables us to render a template only once, regardless of how
   # many destinations we ultimately forward the response to.
-  defp response_fn(message, adapter) when is_binary(message) do
+  defp response_generator_fn(message, adapter) when is_binary(message) do
     fn(room) ->
       %{response: message,
         room: room,
@@ -415,8 +415,8 @@ defmodule Cog.Command.Pipeline.Executor do
     end
   end
 
-  defp publish_response(response_fn, room, state),
-    do: Connection.publish(state.mq_conn, response_fn.(room), routed_by: state.request["reply"])
+  defp publish_response(generator, room, state),
+    do: Connection.publish(state.mq_conn, generator.(room), routed_by: state.request["reply"])
 
   defp default_template(%{"body" => _}),
     do: "text"
@@ -505,9 +505,9 @@ defmodule Cog.Command.Pipeline.Executor do
   # Unregistered User Functions
 
   defp alert_unregistered_user(state) do
-    response_fn = response_fn(unregistered_user_message(state.request),
-                              state.request["adapter"])
-    publish_response(response_fn, state.request["room"], state)
+    generator = response_generator_fn(unregistered_user_message(state.request),
+                                      state.request["adapter"])
+    publish_response(generator, state.request["room"], state)
   end
 
   defp unregistered_user_message(request) do
@@ -515,7 +515,7 @@ defmodule Cog.Command.Pipeline.Executor do
     handle = request["sender"]["handle"]
     mention_name = adapter.mention_name(handle)
     display_name = adapter.display_name()
-    user_creators = user_creators(request)
+    user_creators = user_creator_handles(request)
 
     # If no users that can help have chat handles registered (e.g.,
     # the system was just bootstrapped and only the bootstrap
@@ -554,7 +554,7 @@ defmodule Cog.Command.Pipeline.Executor do
   # with Cog. Not every Cog user with these permissions will
   # necessarily have a chat handle registered for the chat provider
   # being used (most notably, the bootstrap admin user).
-  defp user_creators(request) do
+  defp user_creator_handles(request) do
     adapter = request["adapter"]
     adapter_module = String.to_existing_atom(request["module"])
 
