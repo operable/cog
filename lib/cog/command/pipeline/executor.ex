@@ -79,6 +79,8 @@ defmodule Cog.Command.Pipeline.Executor do
   alias Cog.Command.CommandResolver
   alias Cog.Command.UserPermissionsCache
   alias Cog.Events.PipelineEvent
+  alias Cog.Queries
+  alias Cog.Repo
   alias Cog.TemplateCache
   alias Piper.Command.Ast
   alias Piper.Command.Parser
@@ -738,8 +740,8 @@ defmodule Cog.Command.Pipeline.Executor do
     adapter   = request["adapter"]
     sender_id = request["sender"]["id"]
 
-    user = Cog.Queries.User.for_chat_provider_user_id(sender_id, adapter)
-    |> Cog.Repo.one
+    user = Queries.User.for_chat_provider_user_id(sender_id, adapter)
+    |> Repo.one
 
     case user do
       nil ->
