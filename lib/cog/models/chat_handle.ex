@@ -5,17 +5,18 @@ defmodule Cog.Models.ChatHandle do
 
   schema "chat_handles" do
     field :handle, :string
+    field :chat_provider_user_id, :string
     belongs_to :user, Cog.Models.User
     belongs_to :chat_provider, Cog.Models.ChatProvider, foreign_key: :provider_id, type: :integer
 
     timestamps
   end
 
-  @required_fields ~w(handle user_id provider_id)
+  @required_fields ~w(handle user_id provider_id chat_provider_user_id)
   @optional_fields ~w()
 
-  summary_fields [:id, :handle, :user_id, :provider_id]
-  detail_fields [:id, :handle, :user, :chat_provider]
+  summary_fields [:id, :handle, :user_id, :provider_id, :chat_provider_user_id]
+  detail_fields [:id, :handle, :user, :chat_provider, :chat_provider_user_id]
 
   def changeset(model, params \\ :empty) do
     model

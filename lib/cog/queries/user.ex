@@ -1,37 +1,6 @@
 defmodule Cog.Queries.User do
   use Cog.Queries
 
-  def for_handle(handle, provider) when is_binary(provider) do
-    from u in User,
-    join: ch in assoc(u, :chat_handles),
-    join: cp in assoc(ch, :chat_provider),
-    where: ch.handle == ^handle and cp.name == ^provider,
-    preload: [:chat_handles]
-  end
-
-  @doc """
-  Given a user id, returns the list of chat handles.
-  """
-  def handles(user_id) do
-    from c in ChatHandle,
-    where: c.user_id == ^user_id,
-    preload: [:chat_provider]
-  end
-
-  @doc """
-  Given a `username` and `password`, find the User they belong to.
-  The `password` is encoded and queried against the `password_digest`
-  field along with the `username`.
-
-  If the user does not exist or the password is invalid, the query
-  returns nothing.
-  """
-  def for_username_password(username, password) do
-    from u in Cog.Models.User,
-    where: u.username == ^username and u.password_digest == ^Cog.Passwords.encode(password),
-    select: u
-  end
-
   @doc """
   Given a `token`, find the User it belongs to. `ttl_in_seconds` is
   the current amount of time that a token can be considered valid; if
@@ -73,15 +42,16 @@ defmodule Cog.Queries.User do
   The queryable that is given must ultimately resolve to a user, and
   if not given, defaults to the `User` model for maximum flexibility
   """
-  # TODO: This is identical to `for_handle/2` but without the
-  #     where: ch.handle == ^handle
-  # fragment
-  def with_chat_handle_for(queryable \\ User, provider) do
+  def for_chat_provider(queryable \\ User, chat_provider_name) when is_binary(chat_provider_name) do
     from u in queryable,
     join: ch in assoc(u, :chat_handles),
     join: cp in assoc(ch, :chat_provider),
-    where: cp.name == ^provider,
-    preload: [chat_handles: ch]
+    where: cp.name == ^chat_provider_name
   end
 
+  def for_chat_provider_user_id(chat_provider_user_id, chat_provider_name) do
+    chat_provider_name
+    |> for_chat_provider
+    |> where([_u, ch], ch.chat_provider_user_id == ^chat_provider_user_id)
+  end
 end

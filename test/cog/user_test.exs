@@ -10,18 +10,6 @@ defmodule UserTest do
            permission: permission("test:creation")]}
   end
 
-  test "retrieving user includes chat handles", %{user: user} do
-    # with_chat_handle_for registers a handle that is the same as the username
-    user |> with_chat_handle_for("slack")
-    found_user = Repo.one!(Cog.Queries.User.for_handle(user.username, "slack"))
-
-    assert(found_user.id == user.id)
-
-    assert(length(found_user.chat_handles) == 1)
-    retrieved_handle = Enum.at(found_user.chat_handles, 0)
-    assert(retrieved_handle.handle == user.username)
-  end
-
   test "permissions may be granted directly to users", %{user: user, permission: permission} do
     :ok = Permittable.grant_to(user, permission)
     assert_permission_is_granted(user, permission)

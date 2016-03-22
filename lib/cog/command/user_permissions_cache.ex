@@ -83,16 +83,38 @@ defmodule Cog.Command.UserPermissionsCache do
 
   defp fetch_and_cache({adapter, username}=key, state) do
     Logger.info("Cache miss for #{inspect key}")
-    case Repo.one(Queries.User.for_handle(username, adapter)) do
-      nil ->
-        {:error, :not_found}
-      user ->
-        perms = Cog.Models.User.all_permissions(user)
-        value = {user, perms}
-        expiry = Cog.Time.now() + state.ttl
-        :ets.insert(@ets_table, {key, value, expiry})
-        {:ok, value}
+
+    with {:ok, external_user} <- fetch_user_from_adapter(adapter, username),
+         {:ok, internal_user} <- fetch_user_from_database(adapter, external_user.id) do
+      perms = Cog.Models.User.all_permissions(internal_user)
+      value = {internal_user, perms}
+      expiry = Cog.Time.now() + state.ttl
+      :ets.insert(@ets_table, {key, value, expiry})
+      {:ok, value}
     end
   end
 
+  def fetch_user_from_adapter(adapter, handle) do
+    user = with {:ok, adapter_module} <- Cog.adapter_module(adapter),
+                do: adapter_module.lookup_user(handle: handle)
+
+    case user do
+      {:ok, user} ->
+        {:ok, user}
+      {:error, _} ->
+        {:error, :not_found}
+    end
+  end
+
+  def fetch_user_from_database(adapter, chat_provider_user_id) do
+    user = Queries.User.for_chat_provider_user_id(chat_provider_user_id, adapter)
+    |> Repo.one
+
+    case user do
+      nil ->
+        {:error, :not_found}
+      user ->
+        {:ok, user}
+    end
+  end
 end

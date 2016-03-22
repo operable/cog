@@ -12,9 +12,9 @@ defmodule Cog.Commands.Helpers do
   @doc """
   Gets the current user based on the handle and provider.
   """
-  def get_user(%{"handle" => handle, "provider" => provider}) do
-    Queries.User.for_handle(handle, provider)
-    |> Repo.one
+  def get_user(%{"id" => id, "provider" => provider}) do
+    Queries.User.for_chat_provider_user_id(id, provider)
+    |> Repo.one!
   end
 
   @doc """

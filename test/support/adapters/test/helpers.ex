@@ -7,8 +7,8 @@ defmodule Cog.Adapters.Test.Helpers do
   def send_message(%User{username: username}, "@bot: " <> message) do
     {:ok, mq_conn} = Connection.connect
     reply_topic = "/bot/adapters/test/#{:erlang.unique_integer([:positive, :monotonic])}"
-    payload = %{sender: %{id: 1, handle: username},
-                room: %{id: 1, name: "general"},
+    payload = %{sender: %{id: username, handle: username},
+                room: %{id: "general", name: "general"},
                 text: message,
                 adapter: "test",
                 module: Cog.Adapters.Test,

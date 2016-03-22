@@ -24,6 +24,10 @@ defmodule Cog.Adapters.IRC.Connection do
     GenServer.call(__MODULE__, {:lookup_direct_room, options})
   end
 
+  def lookup_user([{_key, _value}] = options) do
+    GenServer.call(__MODULE__, {:lookup_user, options})
+  end
+
   def start_link([client: client, config: config]) do
     GenServer.start_link(__MODULE__, [client: client, config: config], name: __MODULE__)
   end
@@ -79,6 +83,19 @@ defmodule Cog.Adapters.IRC.Connection do
 
   def handle_call({:lookup_direct_room, _options}, _from, state) do
     {:reply, {:error, :invalid_options}, state}
+  end
+
+  def handle_call({:lookup_user, [{_key, name}]}, _from, %{client: client} = state) do
+    channels = ExIrc.Client.channels(client)
+    names = Enum.flat_map(channels, &ExIrc.Client.channel_users(client, &1))
+
+    reply = if name in names do
+      {:ok, %{id: name, name: name}}
+    else
+      {:error, :not_found}
+    end
+
+    {:reply, reply, state}
   end
 
   def handle_info({:connected, _, _}, %{client: client, config: config} = state) do
