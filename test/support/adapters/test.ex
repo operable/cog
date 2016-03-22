@@ -5,14 +5,14 @@ defmodule Cog.Adapters.Test do
     {:error, :not_implemented}
   end
 
-  def lookup_room("@" <> _) do
-    {:ok, %{id: 1, name: "direct"}}
+  def lookup_room("@" <> user) do
+    {:ok, %{id: user, name: "direct"}}
   end
   def lookup_room("#" <> room) do
-    {:ok, %{id: 1, name: room}}
+    {:ok, %{id: room, name: room}}
   end
   def lookup_room(room_or_user) do
-    {:ok, %{id: 1, name: room_or_user}}
+    {:ok, %{id: room_or_user, name: room_or_user}}
   end
 
   def lookup_user(handle: "vansterminator") do

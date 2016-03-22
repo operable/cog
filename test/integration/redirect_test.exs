@@ -13,7 +13,7 @@ defmodule Integration.RedirectTest do
 
     expected_response = %{"adapter" => "test",
                           "response" => "test_here",
-                          "room" => %{"id" => 1, "name" => "general"}}
+                          "room" => %{"id" => "general", "name" => "general"}}
 
     assert response["data"] == expected_response
   end
@@ -23,7 +23,7 @@ defmodule Integration.RedirectTest do
 
     expected_response = %{"adapter" => "test",
                           "response" => "test_general",
-                          "room" => %{"id" => 1, "name" => "general"}}
+                          "room" => %{"id" => "general", "name" => "general"}}
 
     assert response["data"] == expected_response
   end
@@ -33,7 +33,7 @@ defmodule Integration.RedirectTest do
 
     expected_response = %{"adapter" => "test",
                           "response" => "test_general",
-                          "room" => %{"id" => 1, "name" => "general"}}
+                          "room" => %{"id" => "general", "name" => "general"}}
 
     assert response["data"] == expected_response
   end
@@ -53,7 +53,7 @@ defmodule Integration.RedirectTest do
 
     expected_response = %{"adapter" => "test",
                           "response" => "test_vanstee",
-                          "room" => %{"id" => 1, "name" => "vanstee"}}
+                          "room" => %{"id" => "vanstee", "name" => "vanstee"}}
 
     assert response["data"] == expected_response
   end
@@ -63,7 +63,7 @@ defmodule Integration.RedirectTest do
 
     expected_response = %{"adapter" => "test",
                           "response" => "test_vanstee",
-                          "room" => %{"id" => 1, "name" => "direct"}}
+                          "room" => %{"id" => "vanstee", "name" => "direct"}}
 
     assert response["data"] == expected_response
   end
