@@ -7,7 +7,7 @@ NC='\033[0m'
 MYNAME=`basename $0`
 MYFULLNAME=$( cd $(dirname $0) ; pwd -P )/${MYNAME}
 MYCHECKSUM=`shasum ${MYFULLNAME} | cut -f1 -d' '`
-RELEASE_TAG="0.3.0"
+RELEASE_TAG="0.3.1"
 
 REPOS="cog relay cogctl relayctl"
 COG_REPO="https://github.com/operable/cog"
