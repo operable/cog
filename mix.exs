@@ -5,7 +5,7 @@ defmodule Cog.Mixfile do
 
   def project do
     [app: :cog,
-     version: "0.2.0",
+     version: "0.4.0",
      elixir: "~> 1.2",
      leex_options: [:warnings_as_errors],
      elixirc_options: [warnings_as_errors: System.get_env("ALLOW_WARNINGS") == nil],
@@ -67,7 +67,7 @@ defmodule Cog.Mixfile do
      {:hedwig, "~> 0.3.0"},
      {:gproc, "~> 0.5.0", override: true},
      {:html_entities, "~> 0.3.0"},
-     {:spanner, github: "operable/spanner", ref: "c4ca04570d37bcab3e4520b6ac9dddcc4b7ac4d3"},
+     {:spanner, github: "operable/spanner", ref: "106b9371fa77c9dcfbdb758598cb3beda13c30f2"},
      {:probe, github: "operable/probe", tag: "0.2"},
      {:exml, github: "paulgray/exml", tag: "2.2.1"},
      {:fumanchu, github: "operable/fumanchu", ref: "cog-0.2"},
