@@ -101,9 +101,10 @@ defmodule Cog.Events.PipelineEvent do
   @doc """
   Create a `command_dispatched` event
   """
-  def dispatched(pipeline_id, elapsed, command, relay) do
+  def dispatched(pipeline_id, elapsed, command, relay, cog_env) do
     new(pipeline_id, :command_dispatched, elapsed, %{command_text: command,
-                                                     relay: relay})
+                                                     relay: relay,
+                                                     cog_env: cog_env})
   end
 
   @doc """
