@@ -1,5 +1,8 @@
 defmodule Cog.Command.Pipeline.Executor do
 
+  @type adapter_name :: String.t
+  @type redirect_destination :: map
+
   @typedoc """
   Custom State for executor
 
@@ -10,6 +13,8 @@ defmodule Cog.Command.Pipeline.Executor do
   * `:started` - Timestamp for the start of the pipeline.
   * `:mq_conn` - The message queue connection.
   * `:request` - The original request from the adapter.
+  * `:raw_destinations` - redirect destinations as typed by the user,
+    prior to any processing
   * `:destinations` - Destinations to which pipeline output will be
     returned.
   * `:invocations` - list of all the invocation ASTs for the
@@ -36,7 +41,8 @@ defmodule Cog.Command.Pipeline.Executor do
     started: :erlang.timestamp(),
     mq_conn: Carrier.Messaging.Connection.connection(),
     request: %Spanner.Command.Request{}, # TODO: needs to be a type
-    destinations: List.t,
+    raw_destinations: [String.t],
+    destinations: %{adapter_name => [redirect_destination]},
     invocations: [%Piper.Command.Ast.Invocation{}], # TODO: needs to be a type
     current_plan: Cog.Command.Pipeline.Plan.t,
     plans: [Cog.Command.Pipeline.Plan.t],
@@ -51,7 +57,8 @@ defmodule Cog.Command.Pipeline.Executor do
     topic: nil,
     mq_conn: nil,
     request: nil,
-    destinations: [],
+    raw_destinations: [],
+    destinations: %{},
     invocations: [],
     current_plan: nil,
     plans: [],
@@ -70,7 +77,6 @@ defmodule Cog.Command.Pipeline.Executor do
 
   alias Carrier.Messaging.Connection
   alias Cog.Command.CommandResolver
-  alias Cog.Command.Pipeline.Executor.Helpers
   alias Cog.Command.UserPermissionsCache
   alias Cog.Events.PipelineEvent
   alias Cog.TemplateCache
@@ -88,6 +94,7 @@ defmodule Cog.Command.Pipeline.Executor do
     {:ok, conn} = Connection.connect()
     id = Map.fetch!(request, "id")
     topic = "/bot/pipelines/#{id}"
+
     Connection.subscribe(conn, topic <> "/+")
     case create_initial_context(request) do
       {:ok, initial_context} ->
@@ -119,25 +126,26 @@ defmodule Cog.Command.Pipeline.Executor do
         :ignore
     end
   end
+
   def parse(:timeout, state) do
     options = %ParserOptions{resolver: CommandResolver.command_resolver_fn(state.user)}
     case Parser.scan_and_parse(state.request["text"], options) do
       {:ok, %Ast.Pipeline{}=pipeline} ->
         {:next_state, :resolve_destinations, %{state |
-                                               destinations: Ast.Pipeline.redirect_targets(pipeline),
+                                               raw_destinations: Ast.Pipeline.redirect_targets(pipeline),
                                                invocations: Enum.to_list(pipeline)}, 0}
       {:error, msg} ->
-        Helpers.send_reply(msg, state.request, state.mq_conn)
+        send_reply(msg, state)
         fail_pipeline(state, :parse_error, "Error parsing command pipeline '#{state.request["text"]}': #{msg}")
     end
   end
 
-  def resolve_destinations(:timeout, %__MODULE__{destinations: destinations}=state) do
+  def resolve_destinations(:timeout, %__MODULE__{raw_destinations: destinations}=state) do
     redirs = case destinations do
                [] ->
                  # If no redirects were given, we default to the
                  # current room; this keeps things uniform later on.
-                 {:ok, [state.request["room"]]}
+                 {:ok, [{state.request["adapter"], state.request["room"]}]}
                _ ->
                  {ok, errors} = destinations
                  |> Enum.map(&lookup_room(&1, state))
@@ -154,10 +162,15 @@ defmodule Cog.Command.Pipeline.Executor do
              end
     case redirs do
       {:ok, destinations} ->
+        destinations = Enum.reduce(destinations, %{},
+          fn({adapter, destination}, acc) ->
+            Map.update(acc, adapter, [destination], &([destination|&1]))
+          end)
+
         {:next_state, :plan_next_invocation, %{state | destinations: destinations}, 0}
       {:error, invalid} ->
         message = redirection_error_message(invalid)
-        Helpers.send_error(message, state.request, state.mq_conn)
+        send_error(message, state)
         fail_pipeline(state, :redirect_error, "Invalid redirects were specified: #{inspect invalid}")
     end
   end
@@ -179,48 +192,30 @@ defmodule Cog.Command.Pipeline.Executor do
                                        plans: plans,
                                        invocations: remaining}, 0}
       {:error, {:missing_key, var}} ->
-        Helpers.send_reply("I can't find the variable '$#{var}'.", state.request, state.mq_conn)
+        send_reply("I can't find the variable '$#{var}'.", state)
         fail_pipeline(state, :binding_error, "Error preparing to execute command pipeline '#{state.request["text"]}': Unknown variable '#{var}'")
       {:error, :no_rule} ->
         why = "No rules match the supplied invocation of '#{current_invocation}'. Check your args and options, then confirm that the proper rules are in place."
-        Helpers.send_denied(current_invocation, why, state.request, state.mq_conn)
+        send_denied(current_invocation, why, state)
         fail_pipeline(state, :missing_rules, "No rule matching '#{current_invocation}'")
       {:error, {:denied, rule}} ->
         why = "You will need the '#{rule.permission_selector.perms.value}' permission to run this command."
-        Helpers.send_denied(current_invocation, why, state.request, state.mq_conn)
+        send_denied(current_invocation, why, state)
         fail_pipeline(state, :permission_denied, "User #{state.request["sender"]["handle"]} denied access to '#{current_invocation}'")
       {:error, msg} ->
         # TODO: what is this error case?
-        Helpers.send_error(msg, state.request, state.mq_conn)
+        send_error(msg, state)
         fail_pipeline(state, :binding_error, "Error preparing to execute command pipeline '#{state.request["text"]}': #{msg}")
       error ->
         {:error, msg} = error
-        Helpers.send_error(msg, state.request, state.mq_conn)
+        send_error(msg, state)
         fail_pipeline(state, :option_interpreter_error, "Error parsing options: #{inspect error}")
     end
   end
-  def plan_next_invocation(:timeout, %__MODULE__{invocations: [], output: [], destinations: destinations}=state) do
-    message = "Pipeline executed successfully, but no output was returned"
-    adapter = state.request["adapter"]
-    Enum.each(destinations, &publish_response(response_generator_fn(message, adapter), &1, state))
-    {:stop, :shutdown, %{state | output: []}}
-  end
-  def plan_next_invocation(:timeout, %__MODULE__{invocations: [], output: output, destinations: destinations}=state) do
-    # No more invocations, but we've got data; run it through
-    # templating and send it out to all the destinations
-    command = state.current_plan.command
-    adapter = state.request["adapter"]
-
-    case render_templates(output, command, adapter) do
-      {:error, {error, template, adapter}} ->
-        msg = "There was an error rendering the template '#{template}' for the adapter '#{adapter}': #{inspect error}"
-        Helpers.send_error(msg, state.request, state.mq_conn)
-        fail_pipeline(state, :template_rendering_error, "Error rendering template '#{template}' for '#{adapter}': #{inspect error}")
-      message ->
-        Enum.each(destinations, &publish_response(response_generator_fn(message, adapter), &1, state))
-        {:stop, :shutdown, state}
-    end
-  end
+  def plan_next_invocation(:timeout, %__MODULE__{invocations: [], output: []}=state),
+    do: respond(%{state | output: [{"Pipeline executed successfully, but no output was returned", nil}]})
+  def plan_next_invocation(:timeout, %__MODULE__{invocations: []}=state),
+    do: respond(state)
 
   def execute_plan(:timeout, %__MODULE__{plans: [current_plan|remaining_plans], request: request}=state) do
     bundle = current_plan.command.bundle
@@ -230,7 +225,7 @@ defmodule Cog.Command.Pipeline.Executor do
       case Cog.Relay.Relays.pick_one(bundle.name) do
         nil ->
           msg = "No Cog Relays supporting the `#{bundle.name}` bundle are currently online"
-          Helpers.send_error(msg, state.request, state.mq_conn)
+          send_error(msg, state)
           fail_pipeline(state, :no_relays, msg)
         relay ->
           topic = "/bot/commands/#{relay}/#{bundle.name}/#{name}"
@@ -252,7 +247,7 @@ defmodule Cog.Command.Pipeline.Executor do
       end
     else
       msg = "The #{inspect(bundle.name)} bundle is currently disabled"
-      Helpers.send_error(msg, state.request, state.mq_conn)
+      send_error(msg, state)
       fail_pipeline(state, :no_relays, msg)
     end
   end
@@ -260,7 +255,7 @@ defmodule Cog.Command.Pipeline.Executor do
     do: {:next_state, :plan_next_invocation, state, 0}
 
   def wait_for_command(:timeout, state) do
-    Helpers.send_timeout(state.current_plan.command, state.request, state.mq_conn)
+    send_timeout(state)
     fail_pipeline(state, :timeout, "Timed out waiting on #{state.current_plan.command} to reply")
   end
 
@@ -272,7 +267,7 @@ defmodule Cog.Command.Pipeline.Executor do
         resp = Spanner.Command.Response.decode!(payload)
         case resp.status do
           "error" ->
-            Helpers.send_error(resp.status_message || resp.body["message"], state.request, state.mq_conn)
+            send_error(resp.status_message || resp.body["message"], state)
             fail_pipeline(state, :command_error, resp.status_message || resp.body["message"])
           "ok" ->
             collected_output = case resp.body do
@@ -317,26 +312,26 @@ defmodule Cog.Command.Pipeline.Executor do
   ########################################################################
   # Redirection Resolution Functions
 
-  # Returns {:ok, room} or {:error, invalid_redirect}
+  # Returns {:ok, {adapter, room}} or {:error, invalid_redirect}
   defp lookup_room("me", state) do
     user_id = state.request["sender"]["id"]
-    adapter = String.to_existing_atom(state.request["module"])
+    adapter = originating_adapter(state)
     case adapter.lookup_direct_room(user_id: user_id) do
       {:ok, direct_chat} ->
-        {:ok, direct_chat}
+        {:ok, {state.request["adapter"], direct_chat}}
       error ->
         Logger.error("Error resolving redirect 'me' with adapter #{adapter}: #{inspect error}")
         {:error, "me"}
     end
   end
   defp lookup_room("here", state),
-    do: {:ok, state.request["room"]}
+    do: {:ok, {state.request["adapter"], state.request["room"]}}
   defp lookup_room(redir, state) do
-    adapter = String.to_existing_atom(state.request["module"])
-    case adapter.lookup_room(redir) do
+    {adapter, destination} = adapter_destination(redir, state)
+    case adapter.lookup_room(destination) do
       {:ok, room} ->
         if adapter.room_writeable?(id: room.id) == true do
-          {:ok, room}
+          {:ok, {adapter.name, room}}
         else
           {:error, {:not_a_member, redir}}
         end
@@ -345,6 +340,24 @@ defmodule Cog.Command.Pipeline.Executor do
         {:error, {reason, redir}}
     end
   end
+
+  # Redirect destinations may be targeted to an adapter different from
+  # where they originated from.
+  #
+  # Destinations prefixed with "chat://" will be routed through the
+  # active chat adapter module. Anything else will be routed through
+  # the adapter that initially serviced the request.
+  defp adapter_destination("chat://" <> destination, _state) do
+    {:ok, adapter} = Cog.adapter_module
+    {adapter, destination}
+  end
+  defp adapter_destination(destination, state),
+    do: {originating_adapter(state), destination}
+
+  # Return the adapter module that initially handled the
+  # request. Won't always be the chat adapter!
+  defp originating_adapter(state),
+    do: String.to_existing_atom(state.request["module"])
 
   # `errors` is a keyword list of [reason: name] for all bad redirect
   # destinations that were found. `name` is the value as originally
@@ -397,32 +410,48 @@ defmodule Cog.Command.Pipeline.Executor do
 
   # TODO: remove bundle and room from command resp so commands can't excape their bundle.
 
-  # Create a function that accepts a room and generates an appropriate
-  # response map. The template is rendered for the response once and
-  # the result is embedded in the returned function.
-  #
-  # This enables us to render a template only once, regardless of how
-  # many destinations we ultimately forward the response to.
-  defp response_generator_fn(message, adapter) when is_binary(message) do
-    fn(room) ->
-      %{response: message,
-        room: room,
-        adapter: adapter}
+  # Given pipeline output, apply templating as appropriate for each
+  # adapter/destination it is to be sent to, and send it to each.
+  defp respond(%__MODULE__{}=state) do
+    output = state.output
+    command = state.current_plan.command
+    destinations = state.destinations
+    adapters = Map.keys(destinations)
+    rendered = render_for_adapters(output, command, adapters)
+
+    case rendered do
+      {:error, {error, template, adapter}} ->
+        msg = "There was an error rendering the template '#{template}' for the adapter '#{adapter}': #{inspect error}"
+        send_error(msg, state)
+        fail_pipeline(state, :template_rendering_error, "Error rendering template '#{template}' for '#{adapter}': #{inspect error}")
+      messages ->
+        messages
+        |> consolidate_by_adapter(destinations)
+        |> Enum.each(fn({msg, adapter, destination}) ->
+          publish_response(msg, destination, adapter, state)
+        end)
+
+        {:stop, :shutdown, state}
     end
   end
 
-  defp publish_response(generator, room, state),
-    do: Connection.publish(state.mq_conn, generator.(room), routed_by: state.request["reply"])
+  # Return a map of adapter -> rendered message
+  @spec render_for_adapters(List.t, %Cog.Models.Command{}, [adapter_name]) ::
+                           %{adapter_name => String.t} |
+                           {:error, {term, term, term}} # {error, template, adapter}
+  defp render_for_adapters(data, command, adapters) do
+    Enum.reduce_while(adapters, %{}, fn(adapter, acc) ->
+      case render_templates(data, command, adapter) do
+        {:error, _}=error ->
+          {:halt, error}
+        message ->
+          {:cont, Map.put(acc, adapter, message)}
+      end
+    end)
+  end
 
-  defp default_template(%{"body" => _}),
-    do: "text"
-  defp default_template(context) when is_binary(context),
-    do: "text"
-  defp default_template(context) when is_map(context),
-    do: "json"
-  defp default_template(_),
-    do: "raw"
-
+  # For a specific adapter, render each output, concatenating all
+  # results into a single response string
   defp render_templates(command_output, command, adapter) do
     rendered_templates = Enum.reduce_while(command_output, [], fn({data, template}, acc) ->
       try do
@@ -443,6 +472,7 @@ defmodule Cog.Command.Pipeline.Executor do
     end
   end
 
+  # Render a single output
   defp render_template(command, adapter, nil, context),
     do: render_template(command, adapter, default_template(context), context)
   defp render_template(command, adapter, template, context) do
@@ -459,6 +489,30 @@ defmodule Cog.Command.Pipeline.Executor do
         Logger.warn("The template `#{template}` was not found for adapter `#{adapter}` in bundle `#{command.bundle.name}`; falling back to the default")
         render_template(command, adapter, nil, context)
     end
+  end
+
+  defp default_template(%{"body" => _}),                  do: "text"
+  defp default_template(context) when is_binary(context), do: "text"
+  defp default_template(context) when is_map(context),    do: "json"
+  defp default_template(_),                               do: "raw"
+
+  # make a list of {msg, adapter, dest}... slightly easier to process
+  # in the end this way.
+  @spec consolidate_by_adapter(%{adapter_name => String.t},
+                               %{adapter_name => [redirect_destination]}) :: [{String.t, adapter_name, redirect_destination}]
+  defp consolidate_by_adapter(adapter_msg, adapter_dest) do
+    Enum.flat_map(adapter_dest, fn({adapter, dests}) ->
+      Enum.map(dests, &({Map.fetch!(adapter_msg, adapter), adapter, &1}))
+    end)
+  end
+
+  defp publish_response(message, room, adapter, state) do
+    response = %{response: message,
+                 id: state.id,
+                 room: room}
+    {:ok, adapter_mod} = Cog.adapter_module(adapter)
+    reply_topic = adapter_mod.reply_topic
+    Connection.publish(state.mq_conn, response, routed_by: reply_topic)
   end
 
   ########################################################################
@@ -503,9 +557,10 @@ defmodule Cog.Command.Pipeline.Executor do
   # Unregistered User Functions
 
   defp alert_unregistered_user(state) do
-    generator = response_generator_fn(unregistered_user_message(state.request),
-                                      state.request["adapter"])
-    publish_response(generator, state.request["room"], state)
+    publish_response(unregistered_user_message(state.request),
+                     state.request["room"],
+                     state.request["adapter"],
+                     state)
   end
 
   defp unregistered_user_message(request) do
@@ -618,6 +673,38 @@ defmodule Cog.Command.Pipeline.Executor do
 
   defp strip_templates(accumulated_output),
     do: Enum.map(accumulated_output, &remove_template/1)
+
+  ########################################################################
+  # Error Handling Functions
+
+  defp send_error(error, state) when is_binary(error),
+    do: send_reply("Whoops! An error occurred. #{error}", state)
+  defp send_error(error, state) do
+    Logger.warn("The error message #{inspect error} should be in string format for displaying to the user")
+    send_reply("Whoops! An error occurred. #{inspect error}", state)
+  end
+
+  defp send_timeout(state) do
+    command = state.current_plan.command
+    send_reply("Hmmm. The #{command} command timed out.", state)
+  end
+
+  defp send_denied(which, why, state),
+    do: send_reply("Sorry, you aren't allowed to execute '#{which}' :(\n #{why}", state)
+
+  defp send_reply(message, state) do
+    request = state.request
+
+    message = if request["room"]["name"] != "direct" do
+      "@#{request["sender"]["handle"]} " <> message
+    else
+      message
+    end
+    publish_response(message,
+                     request["room"],
+                     request["adapter"], # TODO: respect redirects?
+                     state)
+  end
 
   ########################################################################
   # Miscellaneous Functions
