@@ -3,23 +3,20 @@ defmodule Cog.Command.UserPermissionsCache do
   use GenServer
   require Logger
 
-  alias Cog.Repo
-  alias Cog.Queries
-
   @ets_table :cog_userperms_cache
 
   def start_link() do
     GenServer.start_link(__MODULE__, [], name: __MODULE__)
   end
 
-  def fetch(username: username, adapter: adapter) do
+  def fetch(user) do
     expires_before = Cog.Time.now()
-    key = {adapter, username}
+    key = user.id
     case :ets.lookup(@ets_table, key) do
-      [{^key, {user, perms}, expiry}] when expiry > expires_before ->
-        {:ok, {user, perms}}
+      [{^key, perms, expiry}] when expiry > expires_before ->
+        {:ok, perms}
       _ ->
-        GenServer.call(__MODULE__, {:fetch, key}, :infinity)
+        GenServer.call(__MODULE__, {:fetch, user}, :infinity)
     end
   end
 
@@ -39,15 +36,16 @@ defmodule Cog.Command.UserPermissionsCache do
     {:ok, %__MODULE__{ttl: ttl, tref: tref}}
   end
 
-  def handle_call({:fetch, key}, _caller, state) do
+  def handle_call({:fetch, user}, _caller, state) do
     expires_before = Cog.Time.now()
+    key = user.id
     reply = case :ets.lookup(@ets_table, key) do
               [] ->
-                fetch_and_cache(key, state)
+                fetch_and_cache(user, state)
               [{_, _, expiry}] when expiry < expires_before ->
-                fetch_and_cache(key, state)
-              [{^key, {user, perms}, _}] ->
-                {:ok, {user, perms}}
+                fetch_and_cache(user, state)
+              [{^key, perms, _}] ->
+                {:ok, perms}
             end
     {:reply, reply, state}
   end
@@ -81,40 +79,12 @@ defmodule Cog.Command.UserPermissionsCache do
     drop_old_entries(:ets.next(@ets_table, key), time)
   end
 
-  defp fetch_and_cache({adapter, username}=key, state) do
-    Logger.info("Cache miss for #{inspect key}")
+  defp fetch_and_cache(user, state) do
+    Logger.info("Cache miss for #{inspect user.id}")
 
-    with {:ok, external_user} <- fetch_user_from_adapter(adapter, username),
-         {:ok, internal_user} <- fetch_user_from_database(adapter, external_user.id) do
-      perms = Cog.Models.User.all_permissions(internal_user)
-      value = {internal_user, perms}
-      expiry = Cog.Time.now() + state.ttl
-      :ets.insert(@ets_table, {key, value, expiry})
-      {:ok, value}
-    end
-  end
-
-  def fetch_user_from_adapter(adapter, handle) do
-    user = with {:ok, adapter_module} <- Cog.adapter_module(adapter),
-                do: adapter_module.lookup_user(handle: handle)
-
-    case user do
-      {:ok, user} ->
-        {:ok, user}
-      {:error, _} ->
-        {:error, :not_found}
-    end
-  end
-
-  def fetch_user_from_database(adapter, chat_provider_user_id) do
-    user = Queries.User.for_chat_provider_user_id(chat_provider_user_id, adapter)
-    |> Repo.one
-
-    case user do
-      nil ->
-        {:error, :not_found}
-      user ->
-        {:ok, user}
-    end
+    perms = Cog.Models.User.all_permissions(user)
+    expiry = Cog.Time.now() + state.ttl
+    :ets.insert(@ets_table, {user.id, perms, expiry})
+    {:ok, perms}
   end
 end
