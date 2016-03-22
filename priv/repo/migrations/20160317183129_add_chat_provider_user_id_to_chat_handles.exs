@@ -1,8 +1,6 @@
 defmodule Cog.Repo.Migrations.AddChatProviderUserIdToChatHandles do
   use Ecto.Migration
   use Cog.Queries
-  alias Cog.Repo
-  alias Cog.Models.ChatHandle
 
   def change do
     alter table(:chat_handles) do
