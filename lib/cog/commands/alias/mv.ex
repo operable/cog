@@ -24,15 +24,16 @@ defmodule Cog.Commands.Alias.Mv do
   returns {:ok, <msg>} on success {:error, <err>} on failure.
   """
   def mv_command_alias(req, arg_list) do
+    user_id = req.user["id"]
+
     case Helpers.get_args(arg_list, 2) do
       {:ok, [src, dest]} ->
-        user = Helpers.get_user(req.requestor)
-        case Helpers.get_command_alias(user, src) do
+        case Helpers.get_command_alias(user_id, src) do
           nil ->
             Helpers.error(:alias_not_found, src)
           src_alias ->
             results = Repo.transaction(fn ->
-              case generate_changeset(user, src_alias, dest) do
+              case generate_changeset(user_id, src_alias, dest) do
                 {:ok, changeset} ->
                   mv_alias(changeset, src_alias)
                 error ->
@@ -55,23 +56,23 @@ defmodule Cog.Commands.Alias.Mv do
   end
 
   # Generates the changeset for the alias based on the alias type(site or user).
-  defp generate_changeset(user, %SiteCommandAlias{}=src, "user"),
-    do: {:ok, UserCommandAlias.changeset(%UserCommandAlias{}, %{name: src.name, pipeline: src.pipeline, user_id: user.id})}
+  defp generate_changeset(user_id, %SiteCommandAlias{}=src, "user"),
+    do: {:ok, UserCommandAlias.changeset(%UserCommandAlias{}, %{name: src.name, pipeline: src.pipeline, user_id: user_id})}
   defp generate_changeset(_, %UserCommandAlias{}, "user"),
     do: {:error, :alias_in_user}
-  defp generate_changeset(_user, %UserCommandAlias{}=src, "site"),
+  defp generate_changeset(_user_id, %UserCommandAlias{}=src, "site"),
     do: {:ok, SiteCommandAlias.changeset(%SiteCommandAlias{}, %{name: src.name, pipeline: src.pipeline})}
   defp generate_changeset(_, %SiteCommandAlias{}, "site"),
     do: {:error, :alias_in_site}
-  defp generate_changeset(user, src, "user:" <> user_alias),
-    do: {:ok, UserCommandAlias.changeset(%UserCommandAlias{}, %{name: user_alias, pipeline: src.pipeline, user_id: user.id})}
+  defp generate_changeset(user_id, src, "user:" <> user_alias),
+    do: {:ok, UserCommandAlias.changeset(%UserCommandAlias{}, %{name: user_alias, pipeline: src.pipeline, user_id: user_id})}
   defp generate_changeset(_user, src, "site:" <> site_alias),
     do: {:ok, SiteCommandAlias.changeset(%SiteCommandAlias{}, %{name: site_alias, pipeline: src.pipeline})}
   # This bit is called when you just want to rename an alias but leave it in the current visibility
-  defp generate_changeset(user, %UserCommandAlias{}=user_alias, alias),
-    do: generate_changeset(user, user_alias, "user:#{alias}")
-  defp generate_changeset(user, %SiteCommandAlias{}=site_alias, alias),
-    do: generate_changeset(user, site_alias, "site:#{alias}")
+  defp generate_changeset(user_id, %UserCommandAlias{}=user_alias, alias),
+    do: generate_changeset(user_id, user_alias, "user:#{alias}")
+  defp generate_changeset(user_id, %SiteCommandAlias{}=site_alias, alias),
+    do: generate_changeset(user_id, site_alias, "site:#{alias}")
 
   # Inserts the changeset
   defp mv_alias(changeset, src) do

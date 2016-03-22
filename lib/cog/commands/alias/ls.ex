@@ -23,21 +23,18 @@ defmodule Cog.Commands.Alias.Ls do
   Returns {:ok, <alias list>} on success and {:error, <err>} on failure.
   """
   def list_command_aliases(req, arg_list) do
-    %{"id" => user_id, "provider" => provider} = req.requestor
-
-    user = Queries.User.for_chat_provider_user_id(user_id, provider)
-    |> Repo.one!
+    user_id = req.user["id"]
 
     case Helpers.get_args(arg_list, max: 1) do
       {:ok, [pattern]} ->
-        case do_list_command_aliases(user, pattern) do
+        case do_list_command_aliases(user_id, pattern) do
           {:ok, response} ->
             {:ok, "alias-ls", Enum.sort(response)}
           error ->
             error
         end
       {:ok, []} ->
-        case do_list_command_aliases(user) do
+        case do_list_command_aliases(user_id) do
           {:ok, response} ->
             {:ok, "alias-ls", Enum.sort(response)}
           error ->
@@ -48,21 +45,21 @@ defmodule Cog.Commands.Alias.Ls do
     end
   end
 
-  defp do_list_command_aliases(user) do
-    user_aliases = Repo.all(Queries.Alias.for_user(user.id))
+  defp do_list_command_aliases(user_id) do
+    user_aliases = Repo.all(Queries.Alias.for_user(user_id))
     site_aliases = Repo.all(SiteCommandAlias)
     aliases = user_aliases ++ site_aliases
 
     {:ok, Helpers.jsonify(aliases)}
   end
 
-  defp do_list_command_aliases(user, "user:" <> pattern) do
+  defp do_list_command_aliases(user_id, "user:" <> pattern) do
     case sanitary?(pattern) do
       true ->
         pattern = replace_wildcard(pattern)
 
         aliases = UserCommandAlias
-        |> Queries.Alias.for_user(user.id)
+        |> Queries.Alias.for_user(user_id)
         |> Queries.Alias.matching(pattern)
         |> Repo.all
 
@@ -71,12 +68,12 @@ defmodule Cog.Commands.Alias.Ls do
         {:error, error}
     end
   end
-  defp do_list_command_aliases(user, "user") do
-    aliases = Repo.all(Queries.Alias.for_user(user.id))
+  defp do_list_command_aliases(user_id, "user") do
+    aliases = Repo.all(Queries.Alias.for_user(user_id))
 
     {:ok, Helpers.jsonify(aliases)}
   end
-  defp do_list_command_aliases(_user, "site:" <> pattern) do
+  defp do_list_command_aliases(_user_id, "site:" <> pattern) do
     case sanitary?(pattern) do
       true ->
         pattern = replace_wildcard(pattern)
@@ -90,18 +87,18 @@ defmodule Cog.Commands.Alias.Ls do
         {:error, error}
     end
   end
-  defp do_list_command_aliases(_user, "site") do
+  defp do_list_command_aliases(_user_id, "site") do
     aliases = Repo.all(SiteCommandAlias)
 
     {:ok, Helpers.jsonify(aliases)}
   end
-  defp do_list_command_aliases(user, pattern) do
+  defp do_list_command_aliases(user_id, pattern) do
     case sanitary?(pattern) do
       true ->
         pattern = replace_wildcard(pattern)
 
         user_aliases = UserCommandAlias
-        |> Queries.Alias.for_user(user.id)
+        |> Queries.Alias.for_user(user_id)
         |> Queries.Alias.matching(pattern)
         |> Repo.all
 

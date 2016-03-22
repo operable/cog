@@ -1,6 +1,5 @@
 defmodule Cog.Commands.Helpers do
   alias Cog.Repo
-  alias Cog.Queries
   alias Cog.Models.UserCommandAlias
   alias Cog.Models.SiteCommandAlias
   alias Cog.Models.EctoJson
@@ -8,14 +7,6 @@ defmodule Cog.Commands.Helpers do
   @moduledoc """
   A collection of helper functions for working with commands.
   """
-
-  @doc """
-  Gets the current user based on the handle and provider.
-  """
-  def get_user(%{"id" => id, "provider" => provider}) do
-    Queries.User.for_chat_provider_user_id(id, provider)
-    |> Repo.one!
-  end
 
   @doc """
   Returns a list of args based on the count in the form of {:ok, <arg_list>}.
@@ -81,14 +72,14 @@ defmodule Cog.Commands.Helpers do
   Returns an alias. If the visibility isn't passed we first search for a user
   alias and if that isn't found we search for a site alias.
   """
-  def get_command_alias(user, "user:" <> user_alias),
-    do: Repo.get_by(UserCommandAlias, name: user_alias, user_id: user.id)
+  def get_command_alias(user_id, "user:" <> user_alias),
+    do: Repo.get_by(UserCommandAlias, name: user_alias, user_id: user_id)
   def get_command_alias(_, "site:" <> site_alias),
     do: Repo.get_by(SiteCommandAlias, name: site_alias)
-  def get_command_alias(user, alias) do
-    case get_command_alias(user, "user:#{alias}") do
+  def get_command_alias(user_id, alias) do
+    case get_command_alias(user_id, "user:#{alias}") do
       nil ->
-        get_command_alias(user, "site:#{alias}")
+        get_command_alias(user_id, "site:#{alias}")
       src_alias ->
         src_alias
     end
