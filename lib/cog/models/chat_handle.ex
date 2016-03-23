@@ -25,6 +25,10 @@ defmodule Cog.Models.ChatHandle do
     |> cast(params, @required_fields, @optional_fields)
   end
 
+  # Normally we would use an `update_change` call for something like this. But,
+  # in this case, the value can't be coerced as part of the `cast` call and a
+  # changeset is never created. So, instead, we need to mutate the params map
+  # before we pass it in to create a changeset.
   defp coerce_chat_provider_user_id(%{"chat_provider_user_id" => chat_provider_user_id} = params),
     do: Map.put(params, "chat_provider_user_id", to_string(chat_provider_user_id))
   defp coerce_chat_provider_user_id(%{chat_provider_user_id: chat_provider_user_id} = params),
