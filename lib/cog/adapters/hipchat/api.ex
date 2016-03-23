@@ -14,7 +14,7 @@ defmodule Cog.Adapters.HipChat.API do
   end
 
   def lookup_room("@" <> handle) do
-    {:ok, user} = lookup_user(name: "@" <> handle)
+    {:ok, user} = lookup_user(handle: handle)
     lookup_direct_room(user_id: user.id)
   end
 
@@ -42,8 +42,8 @@ defmodule Cog.Adapters.HipChat.API do
     GenServer.call(__MODULE__, {:lookup_user, id: user_id})
   end
 
-  def lookup_user(name: username) do
-    GenServer.call(__MODULE__, {:lookup_user, id: username})
+  def lookup_user(handle: username) do
+    GenServer.call(__MODULE__, {:lookup_user, id: "@" <> username})
   end
 
   def lookup_users() do
