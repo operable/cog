@@ -482,8 +482,10 @@ defmodule Cog.Command.Pipeline.Executor do
     |> Probe.notify
   end
 
-  defp dispatch_event(%__MODULE__{id: id, current_plan: current_plan}=state, relay) do
-    PipelineEvent.dispatched(id, elapsed(state), current_plan.invocation_text, relay)
+  defp dispatch_event(%__MODULE__{id: id, current_plan: plan}=state, relay) do
+    PipelineEvent.dispatched(id, elapsed(state),
+                             plan.invocation_text,
+                             relay, plan.cog_env)
     |> Probe.notify
   end
 
