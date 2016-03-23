@@ -22,6 +22,10 @@ defmodule Cog.Adapters.Null do
     true
   end
 
+  def lookup_user(handle: "admininator") do
+    {:ok, %{id: "admininator", handle: "admininator"}}
+  end
+
   def lookup_user(_opts) do
     {:error, :not_implemented}
   end
