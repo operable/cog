@@ -50,6 +50,8 @@ defmodule Cog.Queries.User do
   end
 
   def for_chat_provider_user_id(chat_provider_user_id, chat_provider_name) do
+    chat_provider_user_id = to_string(chat_provider_user_id)
+
     chat_provider_name
     |> for_chat_provider
     |> where([_u, ch], ch.chat_provider_user_id == ^chat_provider_user_id)

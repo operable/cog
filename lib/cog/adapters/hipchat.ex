@@ -20,8 +20,7 @@ defmodule Cog.Adapters.HipChat do
   end
 
   def lookup_user(opts) do
-    {:ok, user} = HipChat.API.lookup_user(opts)
-    {:ok, Map.put(user, :id, to_string(user.id))}
+    HipChat.API.lookup_user(opts)
   end
 
   def mention_name(name) do

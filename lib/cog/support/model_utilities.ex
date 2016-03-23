@@ -108,10 +108,11 @@ defmodule Cog.Support.ModelUtilities do
 
     params = %{provider_id: provider.id,
                handle: external_user.handle,
-               chat_provider_user_id: external_user.id}
+               chat_provider_user_id: external_user.id,
+               user_id: internal_user.id}
 
-    internal_user
-    |> Ecto.Model.build(:chat_handles, params)
+    %ChatHandle{}
+    |> ChatHandle.changeset(params)
     |> Repo.insert!
 
     internal_user

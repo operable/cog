@@ -19,8 +19,16 @@ defmodule Cog.Models.ChatHandle do
   detail_fields [:id, :handle, :user, :chat_provider, :chat_provider_user_id]
 
   def changeset(model, params \\ :empty) do
+    params = coerce_chat_provider_user_id(params)
+
     model
     |> cast(params, @required_fields, @optional_fields)
   end
 
+  defp coerce_chat_provider_user_id(%{"chat_provider_user_id" => chat_provider_user_id} = params),
+    do: Map.put(params, "chat_provider_user_id", to_string(chat_provider_user_id))
+  defp coerce_chat_provider_user_id(%{chat_provider_user_id: chat_provider_user_id} = params),
+    do: Map.put(params, :chat_provider_user_id, to_string(chat_provider_user_id))
+  defp coerce_chat_provider_user_id(params),
+    do: params
 end
