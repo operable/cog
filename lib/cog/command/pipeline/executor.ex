@@ -90,9 +90,8 @@ defmodule Cog.Command.Pipeline.Executor do
   def init([request]) when is_map(request) do
     request = sanitize_request(request)
     {:ok, conn} = Connection.connect()
-    id = UUID.uuid4(:hex)
+    id = Map.fetch!(request, "id")
     topic = "/bot/pipelines/#{id}"
-
     Connection.subscribe(conn, topic <> "/+")
 
     adapter = request["adapter"]
