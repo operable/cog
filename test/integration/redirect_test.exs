@@ -15,7 +15,7 @@ defmodule Integration.RedirectTest do
                           "response" => "test_here",
                           "room" => %{"id" => "general", "name" => "general"}}
 
-    assert response["data"] == expected_response
+    assert response == expected_response
   end
 
   test "redirection to '#general'", %{user: user} do
@@ -25,7 +25,7 @@ defmodule Integration.RedirectTest do
                           "response" => "test_general",
                           "room" => %{"id" => "general", "name" => "general"}}
 
-    assert response["data"] == expected_response
+    assert response == expected_response
   end
 
   test "redirection to 'general'", %{user: user} do
@@ -35,7 +35,7 @@ defmodule Integration.RedirectTest do
                           "response" => "test_general",
                           "room" => %{"id" => "general", "name" => "general"}}
 
-    assert response["data"] == expected_response
+    assert response == expected_response
   end
 
   test "redirection to 'me'", %{user: user} do
@@ -45,7 +45,7 @@ defmodule Integration.RedirectTest do
                           "response" => "test_me",
                           "room" => %{"id" => "channel1"}}
 
-    assert response["data"] == expected_response
+    assert response == expected_response
   end
 
   test "redirection to 'vanstee'", %{user: user} do
@@ -55,7 +55,7 @@ defmodule Integration.RedirectTest do
                           "response" => "test_vanstee",
                           "room" => %{"id" => "vanstee", "name" => "vanstee"}}
 
-    assert response["data"] == expected_response
+    assert response == expected_response
   end
 
   test "redirection to '@vanstee'", %{user: user} do
@@ -65,6 +65,6 @@ defmodule Integration.RedirectTest do
                           "response" => "test_vanstee",
                           "room" => %{"id" => "vanstee", "name" => "direct"}}
 
-    assert response["data"] == expected_response
+    assert response == expected_response
   end
 end

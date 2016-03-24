@@ -1,6 +1,6 @@
 defmodule Cog.Adapter do
   defmacro __using__(opts) do
-    quote bind_quoted: [opts: opts] do
+    quote bind_quoted: [opts: opts], location: :keep do
       use GenServer
       require Logger
 
@@ -29,7 +29,7 @@ defmodule Cog.Adapter do
 
       def handle_info({:publish, topic, message}, state) do
         if topic == reply_topic() do
-          %{"data" => payload} = Poison.decode!(message)
+          payload = Poison.decode!(message)
           send_message(payload["room"], payload["response"])
         end
 

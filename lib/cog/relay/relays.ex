@@ -100,7 +100,7 @@ defmodule Cog.Relay.Relays do
   # real Relay instance, or from the bot itself, announcing the
   # embedded bundle.
   defp process_discovery(discovery, state) when is_map(state) do
-    case Map.fetch!(discovery, "data") do
+    case discovery do
       %{"intro" => intro} ->
         process_introduction(intro, state)
       %{"announce" => announcement} ->

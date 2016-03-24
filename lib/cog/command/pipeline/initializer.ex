@@ -29,7 +29,7 @@ defmodule Cog.Command.Pipeline.Initializer do
   end
 
   def handle_info({:publish, "/bot/commands", message}, state) do
-    %{"data" => payload} = Poison.decode!(message)
+    payload = Poison.decode!(message)
     case check_history(payload, state) do
       {true, payload, state} ->
         {:ok, _} = ExecutorSup.run(payload)

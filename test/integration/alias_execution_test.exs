@@ -10,51 +10,51 @@ defmodule Integration.AliasExecutionTest do
 
   test "alias executes properly", %{user: user} do
     send_message(user, "@bot: operable:alias new my-alias \"echo my alias\"")
-    response = send_message(user, "@bot: my-alias")
+    response = send_message(user, "@bot: my-alias") |> Map.fetch!("response")
 
-    assert response["data"]["response"] == "my alias"
+    assert response == "my alias"
   end
 
   test "alias executes properly in the site namespace", %{user: user} do
     send_message(user, "@bot: operable:alias new my-alias \"echo my alias\"")
     send_message(user, "@bot: operable:alias mv my-alias site")
-    response = send_message(user, "@bot: my-alias")
+    response = send_message(user, "@bot: my-alias") |> Map.fetch!("response")
 
-    assert response["data"]["response"] == "my alias"
+    assert response == "my alias"
   end
 
   test "alias executes properly in pipelines", %{user: user} do
     send_message(user, "@bot: operable:alias new my-alias \"echo my alias\"")
-    response = send_message(user, "@bot: my-alias | echo $body")
+    response = send_message(user, "@bot: my-alias | echo $body") |> Map.fetch!("response")
 
-    assert response["data"]["response"] == "my alias"
+    assert response == "my alias"
   end
 
   test "alias executes properly in mid pipeline", %{user: user} do
     send_message(user, "@bot: operable:alias new my-alias \"echo $body\"")
-    response = send_message(user, "@bot: echo \"foo\" | my-alias")
+    response = send_message(user, "@bot: echo \"foo\" | my-alias") |> Map.fetch!("response")
 
-    assert response["data"]["response"] == "foo"
+    assert response == "foo"
   end
 
   test "alias nested expansion works properly", %{user: user} do
     send_message(user, "@bot: operable:alias new my-alias \"echo my alias\"")
     send_message(user, "@bot: operable:alias new my-other-alias \"my-alias\"")
-    response = send_message(user, "@bot: my-other-alias")
+    response = send_message(user, "@bot: my-other-alias") |> Map.fetch!("response")
 
-    assert response["data"]["response"] == "my alias"
+    assert response == "my alias"
   end
 
   test "alias expansion fails on infinite expansion", %{user: user} do
     send_message(user, "@bot: operable:alias new my-alias \"my-alias\"")
-    response = send_message(user, "@bot: my-alias")
-    assert "@vanstee Alias expansion limit (5) exceeded starting with alias 'my-alias'." = response["data"]["response"]
+    response = send_message(user, "@bot: my-alias") |> Map.fetch!("response")
+    assert "@vanstee Alias expansion limit (5) exceeded starting with alias 'my-alias'." = response
   end
 
   test "alias using slack emoji works", %{user: user} do
     send_message(user, "@bot: alias new \":boom:\" \"echo BOOM\"")
-    response = send_message(user, "@bot: :boom:")
-    assert Regex.match?(~r/BOOM/, response["data"]["response"])
+    response = send_message(user, "@bot: :boom:") |> Map.fetch!("response")
+    assert Regex.match?(~r/BOOM/, response)
   end
 
 end

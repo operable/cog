@@ -189,13 +189,12 @@ defmodule Integration.RuleTest do
   # so, go ahead and transform that into an Elixir data structures.
   #
   # Otherwise, it'll be an error message; if so, return _that_.
-  defp parsed_response(response) do
-    raw_response = response["data"]["response"]
-    case Poison.decode(raw_response) do
+  defp parsed_response(%{"response" => response}) do
+    case Poison.decode(response) do
       {:ok, map} ->
         map
       {:error, _} ->
-        raw_response
+        response
     end
   end
 

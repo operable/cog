@@ -14,9 +14,9 @@ defmodule Integration.Commands.WhichTest do
 
     send_message(user, "@bot: operable:alias new my-new-alias \"echo My New Alias\"")
 
-    response = send_message(user, "@bot: operable:which my-new-alias")
+    response = send_message(user, "@bot: operable:which my-new-alias") |> Map.fetch!("response")
     expected_response = Helpers.render_template("which", expected_map)
-    assert response["data"]["response"] == expected_response
+    assert response == expected_response
   end
 
   test "an alias in the 'site' visibility", %{user: user} do
@@ -25,25 +25,25 @@ defmodule Integration.Commands.WhichTest do
     send_message(user, "@bot: operable:alias new my-new-alias \"echo My New Alias\"")
     send_message(user, "@bot: operable:alias mv my-new-alias site")
 
-    response = send_message(user, "@bot: operable:which my-new-alias")
+    response = send_message(user, "@bot: operable:which my-new-alias") |> Map.fetch!("response")
     expected_response = Helpers.render_template("which", expected_map)
-    assert response["data"]["response"] == expected_response
+    assert response == expected_response
   end
 
   test "a command", %{user: user} do
     expected_map = %{type: "command", scope: "operable", name: "alias"}
 
-    response = send_message(user, "@bot: operable:which alias")
+    response = send_message(user, "@bot: operable:which alias") |> Map.fetch!("response")
     expected_response = Helpers.render_template("which", expected_map)
-    assert response["data"]["response"] == expected_response
+    assert response == expected_response
   end
 
   test "an unknown", %{user: user} do
     expected_map = %{not_found: true}
 
-    response = send_message(user, "@bot: operable:which foo")
+    response = send_message(user, "@bot: operable:which foo") |> Map.fetch!("response")
     expected_response = Helpers.render_template("which", expected_map)
-    assert response["data"]["response"] == expected_response
+    assert response == expected_response
   end
 
 end

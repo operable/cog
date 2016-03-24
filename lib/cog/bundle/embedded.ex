@@ -50,10 +50,10 @@ defmodule Cog.Bundle.Embedded do
     Logger.info("Announcing embedded bundle")
     {:ok, %Credentials{id: relay_id}} = CredentialManager.get()
     bundle = embedded_bundle
-    message = %{"data" => %{"announce" => %{"relay" => relay_id,
-                                            "online" => true,
-                                            "snapshot" => true,
-                                            "bundles" => [bundle]}}}
+    message = %{"announce" => %{"relay" => relay_id,
+                                "online" => true,
+                                "snapshot" => true,
+                                "bundles" => [bundle]}}
     :ok = GenServer.call(Cog.Relay.Relays, {:announce_embedded_relay, message})
   end
 

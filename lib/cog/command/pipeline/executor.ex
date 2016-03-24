@@ -268,7 +268,7 @@ defmodule Cog.Command.Pipeline.Executor do
     reply_topic = "#{state.topic}/reply" # TODO: bake this into state for easier pattern-matching?
     case topic do
       ^reply_topic ->
-        %{"data" => payload} = Poison.decode!(message)
+        payload = Poison.decode!(message)
         resp = Spanner.Command.Response.decode!(payload)
         case resp.status do
           "error" ->
