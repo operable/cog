@@ -9,6 +9,7 @@
   "credo": {:hex, :credo, "0.3.7"},
   "db_connection": {:hex, :db_connection, "0.2.4"},
   "decimal": {:hex, :decimal, "1.1.1"},
+  "dialyxir": {:hex, :dialyxir, "0.3.3"},
   "earmark": {:hex, :earmark, "0.2.1"},
   "ecto": {:hex, :ecto, "1.1.4"},
   "emqttc": {:git, "https://github.com/operable/emqttc.git", "dc36f593822f8e01771a7edc780441fdfb2f7b15", [tag: "cog-0.2"]},
