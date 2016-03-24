@@ -109,19 +109,17 @@ defmodule Cog.Relay.Relays do
   end
 
   defp process_introduction(%{"relay" => id,
-                              "public_key" => pub_key,
                               "reply_to" => reply_to}, state) do
     case CredentialManager.get(id, by: :id) do
       {:ok, nil} ->
-        creds = %Credentials{id: id, public: Base.decode16!(pub_key, case: :lower)}
+        creds = %Credentials{id: id}
         CredentialManager.store(creds)
-        Logger.info("Stored public key for Relay #{id}")
+        Logger.info("Stored credentials for Relay #{id}")
       {:ok, _} ->
         :ok
     end
     {:ok, my_creds} = CredentialManager.get()
     Messaging.Connection.publish(state.mq_conn, %{intro: %{id: my_creds.id,
-                                                           public_key: Base.encode16(my_creds.public, case: :lower),
                                                            role: "bot"}}, routed_by: reply_to)
     state
   end
