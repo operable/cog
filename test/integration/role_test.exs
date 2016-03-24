@@ -13,16 +13,16 @@ defmodule Integration.RoleTest do
 
   test "granting a role to a user", %{user: user} do
     send_message(user, "@bot: operable:role --grant --user=#{user.username} cheer")
-    |> assert_message("@belf Whoops! An error occurred. ERROR! Could not find role `cheer`")
+    |> assert_error_message_contains("Whoops! An error occurred. ERROR! Could not find role `cheer`")
 
     send_message(user, "@bot: operable:role --create cheer")
     |> assert_message("The role `cheer` has been created.")
 
     send_message(user, "@bot: operable:role --grant --user=papa_elf cheer")
-    |> assert_message("@belf Whoops! An error occurred. ERROR! Could not find user `papa_elf`")
+    |> assert_error_message_contains("Whoops! An error occurred. ERROR! Could not find user `papa_elf`")
 
     send_message(user, "@bot: operable:role --grant cheer")
-    |> assert_message("@belf Whoops! An error occurred. ERROR! Must specify a target to act upon. See `operable:help operable:role` for more details.")
+    |> assert_error_message_contains("Whoops! An error occurred. ERROR! Must specify a target to act upon. See `operable:help operable:role` for more details.")
 
     send_message(user, "@bot: operable:role --grant --user=belf cheer")
     |> assert_message("Granted role `cheer` to user `belf`")
@@ -33,20 +33,20 @@ defmodule Integration.RoleTest do
     |> assert_message("The role `test` has been created.")
 
     send_message(user, "@bot: operable:role --create test")
-    |> assert_message("@belf Whoops! An error occurred. ERROR! The role `test` already exists.")
+    |> assert_error_message_contains("Whoops! An error occurred. ERROR! The role `test` already exists.")
   end
 
   test "granting a role to a group", %{user: user} do
     group = group("elves")
 
     send_message(user, "@bot: operable:role --grant --group=#{group.name} cheer")
-    |> assert_message("@belf Whoops! An error occurred. ERROR! Could not find role `cheer`")
+    |> assert_error_message_contains("Whoops! An error occurred. ERROR! Could not find role `cheer`")
 
     send_message(user, "@bot: operable:role --create cheer")
     |> assert_message("The role `cheer` has been created.")
 
     send_message(user, "@bot: operable:role --grant --group=humbug cheer")
-    |> assert_message("@belf Whoops! An error occurred. ERROR! Could not find group `humbug`")
+    |> assert_error_message_contains("Whoops! An error occurred. ERROR! Could not find group `humbug`")
 
     send_message(user, "@bot: operable:role --grant --group=#{group.name} cheer")
     |> assert_message("Granted role `cheer` to group `elves`")
@@ -54,10 +54,10 @@ defmodule Integration.RoleTest do
 
   test "errors using the role command", %{user: user} do
     send_message(user, "@bot: operable:role --create ")
-    |> assert_message("@belf Whoops! An error occurred. ERROR! Unable to create ``:\nMissing name")
+    |> assert_error_message_contains("Whoops! An error occurred. ERROR! Unable to create ``:\nMissing name")
 
     send_message(user, "@bot: operable:role --grant --user=belf")
-    |> assert_message("@belf Whoops! An error occurred. ERROR! Must specify a role to modify.")
+    |> assert_error_message_contains("Whoops! An error occurred. ERROR! Must specify a role to modify.")
   end
 
   test "dropping a role", %{user: user} do
@@ -66,7 +66,7 @@ defmodule Integration.RoleTest do
     |> assert_message("Granted role `cheer` to user `belf`")
 
     send_message(user, "@bot: operable:role --drop cheer")
-    |> assert_message("@belf Whoops! An error occurred. ERROR! Unable to delete role `cheer`. There are assignments to this role: \n* user: belf\n")
+    |> assert_error_message_contains("Whoops! An error occurred. ERROR! Unable to delete role `cheer`. There are assignments to this role: \n* user: belf\n")
 
     send_message(user, "@bot: operable:role --revoke --user=belf cheer")
     |> assert_message("Revoked role `cheer` from user `belf`")
@@ -75,7 +75,7 @@ defmodule Integration.RoleTest do
     |> assert_message("The role `cheer` has been deleted.")
 
     send_message(user, "@bot: operable:role --drop cheer")
-    |> assert_message("@belf Whoops! An error occurred. ERROR! The role `cheer` does not exist.")
+    |> assert_error_message_contains("Whoops! An error occurred. ERROR! The role `cheer` does not exist.")
   end
 
   test "revoking a role", %{user: user} do
@@ -103,6 +103,6 @@ defmodule Integration.RoleTest do
     |> assert_message("The following are the available roles: \n* cheer\n")
 
     send_message(user, "@bot: operable:role --drop cheer")
-    |> assert_message("@belf Whoops! An error occurred. ERROR! Unable to delete role `cheer`. There are assignments to this role: \n* user: belf\n* group: elves\n")
+    |> assert_error_message_contains("Whoops! An error occurred. ERROR! Unable to delete role `cheer`. There are assignments to this role: \n* user: belf\n* group: elves\n")
   end
 end

@@ -43,7 +43,7 @@ defmodule Integration.AliasExecutionTest do
   test "alias expansion fails on infinite expansion", %{user: user} do
     send_message(user, "@bot: operable:alias new my-alias \"my-alias\"")
     send_message(user, "@bot: my-alias")
-    |> assert_message("@vanstee Alias expansion limit (5) exceeded starting with alias 'my-alias'.")
+    |> assert_error_message_contains("An error occurred. Alias expansion limit (5) exceeded starting with alias 'my-alias'.")
   end
 
   test "alias using slack emoji works", %{user: user} do
