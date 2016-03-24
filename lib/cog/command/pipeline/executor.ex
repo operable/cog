@@ -564,7 +564,7 @@ defmodule Cog.Command.Pipeline.Executor do
     |> Cog.Queries.Permission.from_full_name
     |> Cog.Repo.one!
     |> Cog.Queries.User.with_permission
-    |> Cog.Queries.User.with_chat_handle_for(adapter)
+    |> Cog.Queries.User.for_chat_provider(adapter)
     |> Cog.Repo.all
     |> Enum.flat_map(&(&1.chat_handles))
     |> Enum.map(&(adapter_module.mention_name(&1.handle)))

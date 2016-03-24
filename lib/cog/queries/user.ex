@@ -46,7 +46,8 @@ defmodule Cog.Queries.User do
     from u in queryable,
     join: ch in assoc(u, :chat_handles),
     join: cp in assoc(ch, :chat_provider),
-    where: cp.name == ^chat_provider_name
+    where: cp.name == ^chat_provider_name,
+    preload: [chat_handles: ch]
   end
 
   def for_chat_provider_user_id(chat_provider_user_id, chat_provider_name) do
