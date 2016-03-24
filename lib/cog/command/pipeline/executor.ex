@@ -85,6 +85,7 @@ defmodule Cog.Command.Pipeline.Executor do
   alias Piper.Command.Ast
   alias Piper.Command.Parser
   alias Piper.Command.ParserOptions
+  alias Cog.Command.Pipeline.Plan
 
   use Adz
 
@@ -132,8 +133,7 @@ defmodule Cog.Command.Pipeline.Executor do
                                                raw_destinations: Ast.Pipeline.redirect_targets(pipeline),
                                                invocations: Enum.to_list(pipeline)}, 0}
       {:error, msg} ->
-        send_reply(msg, state)
-        fail_pipeline(state, :parse_error, "Error parsing command pipeline '#{state.request["text"]}': #{msg}")
+        fail_pipeline_with_error({:parse_error, msg}, state)
     end
   end
 
@@ -166,9 +166,7 @@ defmodule Cog.Command.Pipeline.Executor do
 
         {:next_state, :plan_next_invocation, %{state | destinations: destinations}, 0}
       {:error, invalid} ->
-        message = redirection_error_message(invalid)
-        send_error(message, state)
-        fail_pipeline(state, :redirect_error, "Invalid redirects were specified: #{inspect invalid}")
+        fail_pipeline_with_error({:redirect_error, invalid}, state)
     end
   end
 
@@ -176,6 +174,7 @@ defmodule Cog.Command.Pipeline.Executor do
                                                  output: previous_output,
                                                  user_permissions: permissions}=state) do
 
+    state = %{state | current_plan: nil}
     # If a previous command generated output, we don't need to retain
     # any templating information, because the current command now
     # controls how the output will be presented
@@ -188,31 +187,23 @@ defmodule Cog.Command.Pipeline.Executor do
                                        current_plan: nil,
                                        plans: plans,
                                        invocations: remaining}, 0}
-      {:error, {:missing_key, var}} ->
-        send_reply("I can't find the variable '$#{var}'.", state)
-        fail_pipeline(state, :binding_error, "Error preparing to execute command pipeline '#{state.request["text"]}': Unknown variable '#{var}'")
+      {:error, {:missing_key, _}=error} ->
+        fail_pipeline_with_error({:binding_error, error}, state)
       {:error, :no_rule} ->
-        why = "No rules match the supplied invocation of '#{current_invocation}'. Check your args and options, then confirm that the proper rules are in place."
-        send_denied(current_invocation, why, state)
-        fail_pipeline(state, :missing_rules, "No rule matching '#{current_invocation}'")
-      {:error, {:denied, rule}} ->
-        why = "You will need the '#{rule.permission_selector.perms.value}' permission to run this command."
-        send_denied(current_invocation, why, state)
-        fail_pipeline(state, :permission_denied, "User #{state.request["sender"]["handle"]} denied access to '#{current_invocation}'")
-      {:error, msg} ->
-        # TODO: what is this error case?
-        send_error(msg, state)
-        fail_pipeline(state, :binding_error, "Error preparing to execute command pipeline '#{state.request["text"]}': #{msg}")
-      error ->
-        {:error, msg} = error
-        send_error(msg, state)
-        fail_pipeline(state, :option_interpreter_error, "Error parsing options: #{inspect error}")
+        fail_pipeline_with_error({:no_rule, current_invocation}, state)
+      {:error, {:denied, _}=error} ->
+        fail_pipeline_with_error(error, state)
+      {:error, msg} when is_binary(msg) ->
+        # These are error strings that are generated from within the
+        # binding infrastructure... should probably pull those strings
+        # up to here instead
+        fail_pipeline_with_error({:binding_error, msg}, state)
     end
   end
   def plan_next_invocation(:timeout, %__MODULE__{invocations: [], output: []}=state),
-    do: respond(%{state | output: [{"Pipeline executed successfully, but no output was returned", nil}]})
+    do: succeed_with_response(%{state | output: [{"Pipeline executed successfully, but no output was returned", nil}]})
   def plan_next_invocation(:timeout, %__MODULE__{invocations: []}=state),
-    do: respond(state)
+    do: succeed_with_response(state)
 
   def execute_plan(:timeout, %__MODULE__{plans: [current_plan|remaining_plans], request: request, user: user}=state) do
     bundle = current_plan.command.bundle
@@ -221,9 +212,7 @@ defmodule Cog.Command.Pipeline.Executor do
     if bundle.enabled do
       case Cog.Relay.Relays.pick_one(bundle.name) do
         nil ->
-          msg = "No Cog Relays supporting the `#{bundle.name}` bundle are currently online"
-          send_error(msg, state)
-          fail_pipeline(state, :no_relays, msg)
+          fail_pipeline_with_error({:no_relays, bundle}, state)
         relay ->
           topic = "/bot/commands/#{relay}/#{bundle.name}/#{name}"
           reply_to_topic = "#{state.topic}/reply"
@@ -236,18 +225,14 @@ defmodule Cog.Command.Pipeline.Executor do
           {:next_state, :wait_for_command, updated_state, @command_timeout}
       end
     else
-      msg = "The #{inspect(bundle.name)} bundle is currently disabled"
-      send_error(msg, state)
-      fail_pipeline(state, :no_relays, msg)
+      fail_pipeline_with_error({:disabled_bundle, bundle}, state)
     end
   end
   def execute_plan(:timeout, %__MODULE__{plans: []}=state),
     do: {:next_state, :plan_next_invocation, state, 0}
 
-  def wait_for_command(:timeout, state) do
-    send_timeout(state)
-    fail_pipeline(state, :timeout, "Timed out waiting on #{state.current_plan.command} to reply")
-  end
+  def wait_for_command(:timeout, state),
+    do: fail_pipeline_with_error({:timeout, state.current_plan.command}, state)
 
   def handle_info({:publish, topic, message}, :wait_for_command, state) do
     reply_topic = "#{state.topic}/reply" # TODO: bake this into state for easier pattern-matching?
@@ -256,9 +241,6 @@ defmodule Cog.Command.Pipeline.Executor do
         payload = Poison.decode!(message)
         resp = Spanner.Command.Response.decode!(payload)
         case resp.status do
-          "error" ->
-            send_error(resp.status_message || resp.body["message"], state)
-            fail_pipeline(state, :command_error, resp.status_message || resp.body["message"])
           "ok" ->
             collected_output = case resp.body do
                                  nil ->
@@ -274,6 +256,8 @@ defmodule Cog.Command.Pipeline.Executor do
                                    # one flat list
                                end
             {:next_state, :execute_plan, %{state | output: collected_output}, 0}
+          "error" ->
+            fail_pipeline_with_error({:command_error, resp}, state)
         end
       _ ->
         {:next_state, :wait_for_command, state}
@@ -411,19 +395,21 @@ defmodule Cog.Command.Pipeline.Executor do
 
     case rendered do
       {:error, {error, template, adapter}} ->
-        msg = "There was an error rendering the template '#{template}' for the adapter '#{adapter}': #{inspect error}"
-        send_error(msg, state)
-        fail_pipeline(state, :template_rendering_error, "Error rendering template '#{template}' for '#{adapter}': #{inspect error}")
+        fail_pipeline_with_error({:template_rendering_error, {error, template, adapter}}, state)
       messages ->
         messages
         |> consolidate_by_adapter(destinations)
         |> Enum.each(fn({msg, adapter, destination}) ->
           publish_response(msg, destination, adapter, state)
         end)
-
-        {:stop, :shutdown, state}
     end
   end
+
+  defp succeed_with_response(state) do
+    respond(state)
+    {:stop, :shutdown, state}
+  end
+
 
   # Return a map of adapter -> rendered message
   @spec render_for_adapters(List.t, %Cog.Models.Command{}, [adapter_name]) ::
@@ -667,33 +653,158 @@ defmodule Cog.Command.Pipeline.Executor do
   ########################################################################
   # Error Handling Functions
 
-  defp send_error(error, state) when is_binary(error),
-    do: send_reply("Whoops! An error occurred. #{error}", state)
-  defp send_error(error, state) do
-    Logger.warn("The error message #{inspect error} should be in string format for displaying to the user")
-    send_reply("Whoops! An error occurred. #{inspect error}", state)
+  # Create a standard error message for pipeline-related
+  # errors. Eventually this will be templated.
+  defp user_error(error, state) do
+    id = state.id
+    started = Cog.Events.Util.ts_iso8601_utc(state.started)
+    initiator = sender_mention_name(state)
+    pipeline_text = state.request["text"]
+    error_message = format_user_error(error, state)
+    failing = case state.current_plan do
+                %Plan{}=plan ->
+                  # If it failed during execution, there will be a
+                  # plan we can point to
+                  plan
+                nil ->
+                  # If it happened during planning, there will be an
+                  # invocation to show
+                  case state.invocations do
+                    [current|_] ->
+                      current
+                    _ ->
+                      # Otherwise, it happened sometime during
+                      # parsing, and we already have the full pipeline
+                      # text to show
+                      nil
+                  end
+              end
+
+    # All error messages start with this prologue
+    base = """
+    An error has occurred.
+
+    At `#{started}`, #{initiator} initiated the following pipeline, assigned the unique ID `#{id}`:
+
+        `#{pipeline_text}`
+
+    """
+
+    # If the failure happened during planning or execution, we'll have
+    # a bit more information to show
+    command_text = case failing do
+                     %Ast.Invocation{} ->
+                     """
+                     The pipeline failed planning the invocation:
+
+                         `#{failing}`
+                     """
+                     %Plan{} ->
+                     """
+                     The pipeline failed executing the command:
+
+                         `#{failing.invocation_text}`
+
+                     """
+                     nil ->
+                       nil
+                   end
+
+    # Finally, the text of the specific error that occurred
+    error_text = """
+    The specific error was:
+
+        #{error_message}
+
+    """
+
+    [base, command_text, error_text]
+    |> Enum.reject(&is_nil/1)
+    |> Enum.join("\n")
   end
 
-  defp send_timeout(state) do
-    command = state.current_plan.command
-    send_reply("Hmmm. The #{command} command timed out.", state)
+  # Turn an error tuple into a textual message intended for chat users
+  defp format_user_error({:parse_error, msg}, _state) when is_binary(msg),
+    do: "Whoops! An error occurred. " <> msg
+  defp format_user_error({:redirect_error, invalid}, _state),
+    do: "Whoops! An error occurred. " <> redirection_error_message(invalid)
+  defp format_user_error({:binding_error, {:missing_key, var}}, _state),
+    do: "I can't find the variable '$#{var}'."
+  defp format_user_error({:binding_error, msg}, _state) when is_binary(msg),
+    do: "Whoops! An error occurred. " <> msg
+  defp format_user_error({:no_rule, current_invocation}, _state),
+    do: "No rules match the supplied invocation of '#{current_invocation}'. Check your args and options, then confirm that the proper rules are in place."
+  defp format_user_error({:denied, %Piper.Permissions.Ast.Rule{}=rule}, %__MODULE__{invocations: [current_invocation|_]}),
+    do: "Sorry, you aren't allowed to execute '#{current_invocation}' :(\n You will need the '#{rule.permission_selector.perms.value}' permission to run this command."
+  defp format_user_error({:no_relays, %Cog.Models.Bundle{name: name}}, _state),
+    do: "Whoops! An error occurred. No Cog Relays supporting the `#{name}` bundle are currently online"
+  defp format_user_error({:disabled_bundle, %Cog.Models.Bundle{name: name}}, _state),
+    do: "Whoops! An error occurred. The #{name} bundle is currently disabled"
+  defp format_user_error({:timeout, %Cog.Models.Command{}=command}, _state) do
+    name = Cog.Models.Command.full_name(command)
+    "The #{name} command timed out"
   end
+  defp format_user_error({:template_rendering_error, {error, template, adapter}}, _state),
+    do: "Whoops! An error occurred. There was an error rendering the template '#{template}' for the adapter '#{adapter}': #{inspect error}"
+  defp format_user_error({:command_error, response}, _state),
+    do: "Whoops! An error occurred. " <> (response.status_message || response.body["message"])
 
-  defp send_denied(which, why, state),
-    do: send_reply("Sorry, you aren't allowed to execute '#{which}' :(\n #{why}", state)
-
-  defp send_reply(message, state) do
+  defp send_error(message, state) do
     request = state.request
 
     message = if request["room"]["name"] != "direct" do
-      "@#{request["sender"]["handle"]} " <> message
+      "#{sender_mention_name(state)} #{message}"
     else
       message
     end
     publish_response(message,
                      request["room"],
-                     request["adapter"], # TODO: respect redirects?
+                     request["adapter"],
                      state)
+  end
+
+  # Turn an error tuple into a message intended for the audit log
+  defp format_audit_message({:parse_error, msg}, state) when is_binary(msg),
+    do: "Error parsing command pipeline '#{state.request["text"]}': #{msg}"
+  defp format_audit_message({:redirect_error, invalid}, _state),
+    do: "Invalid redirects were specified: #{inspect invalid}"
+  defp format_audit_message({:binding_error, {:missing_key, var}}, state),
+    do: "Error preparing to execute command pipeline '#{state.request["text"]}': Unknown variable '#{var}'"
+  defp format_audit_message({:binding_error, msg}, state) when is_binary(msg) do
+    # TODO: Pretty sure this is not what we want, ultimately... this
+    # is coming from plan_next_invocation, not some top-level place
+    "Error preparing to execute command pipeline '#{state.request["text"]}': #{msg}"
+  end
+  defp format_audit_message({:denied, _}, %__MODULE__{invocations: [current_invocation|_]}=state),
+    do: "User #{state.request["sender"]["handle"]} denied access to '#{current_invocation}'"
+  defp format_audit_message({:no_relays, bundle}, state),
+    do: format_user_error({:no_relays, bundle}, state) # Uses same user message for now
+  defp format_audit_message({:disabled_bundle, %Cog.Models.Bundle{name: name}}, _state),
+    do: "The #{name} bundle is currently disabled"
+  defp format_audit_message({:command_error, response}, _state),
+    do: response.status_message || response.body["message"]
+  defp format_audit_message({:template_rendering_error, {error, template, adapter}}, _state),
+    do: "Error rendering template '#{template}' for '#{adapter}': #{inspect error}"
+  defp format_audit_message({:timeout, %Cog.Models.Command{}=command}, _state) do
+    name = Cog.Models.Command.full_name(command)
+    "Timed out waiting on #{name} to reply"
+  end
+  defp format_audit_message({:no_rule, current_invocation}, _state),
+    do: "No rule matching '#{current_invocation}'"
+
+  # Catch-all function that sends an error message back to the user,
+  # emits a pipeline failure audit event, and terminates the pipeline.
+  defp fail_pipeline_with_error({reason, _detail}=error, state) do
+    user_message = user_error(error, state)
+    send_error(user_message, state)
+
+    audit_message = format_audit_message(error, state)
+    fail_pipeline(state, reason, audit_message)
+  end
+
+  defp sender_mention_name(state) do
+    adapter = originating_adapter(state)
+    adapter.mention_name(state.request["sender"]["handle"])
   end
 
   ########################################################################

@@ -13,6 +13,7 @@ defmodule Cog.AdapterCase do
       import unquote(__MODULE__)
       import Cog.Support.ModelUtilities
       import ExUnit.Assertions
+      import Cog.AdapterAssertions
 
       setup_all do
         adapter = replace_adapter(unquote(adapter))
@@ -33,9 +34,6 @@ defmodule Cog.AdapterCase do
         :ok
       end
 
-      defp assert_message(%{"response" => response}, expected_message) do
-        assert response == expected_message
-      end
     end
   end
 

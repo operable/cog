@@ -23,4 +23,16 @@ defmodule Cog.Adapters.HipChat.Helpers do
 
     Assertions.polling_assert(message, last_message_func, @interval, @timeout)
   end
+
+  def assert_response_contains(message, after: %{"id" => id}) do
+    :timer.sleep(@interval)
+
+    last_message_func = fn ->
+      {:ok, message} = HipChat.API.retrieve_last_message(@room, id)
+      message
+    end
+
+    Assertions.polling_assert_in(message, last_message_func, @interval, @timeout)
+  end
+
 end
