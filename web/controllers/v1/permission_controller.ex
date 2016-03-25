@@ -1,7 +1,6 @@
 defmodule Cog.V1.PermissionController do
   use Cog.Web, :controller
 
-  alias Cog.Models.EctoJson
   alias Cog.Models.Permission
   alias Cog.Models.Permission.Namespace
   alias Cog.Queries
@@ -18,7 +17,7 @@ defmodule Cog.V1.PermissionController do
     |> Repo.all
     |> Repo.preload(:namespace)
 
-    json(conn, EctoJson.render(permissions, envelope: :permissions, policy: :summary))
+    render(conn, "index.json", permissions: permissions)
   end
 
   @doc """
@@ -37,7 +36,7 @@ defmodule Cog.V1.PermissionController do
         conn
         |> put_status(:created)
         |> put_resp_header("location", permission_path(conn, :show, permission))
-        |> json(EctoJson.render(permission, envelope: :permission, policy: :detail))
+        |> render("show.json", permission: permission)
      {:error, changeset} ->
         conn
         |> put_status(:unprocessable_entity)
@@ -53,7 +52,7 @@ defmodule Cog.V1.PermissionController do
     |> Repo.get!(id)
     |> Repo.preload(:namespace)
 
-    json(conn, EctoJson.render(permission, envelope: :permission, policy: :detail))
+    render(conn, "show.json", permission: permission)
   end
 
   @doc """
@@ -107,7 +106,7 @@ defmodule Cog.V1.PermissionController do
   defp update_permission(conn, changeset) do
     case Repo.update(changeset) do
       {:ok, permission} ->
-        json(conn, EctoJson.render(permission, envelope: :permission, policy: :detail))
+        render(conn, "show.json", permission: permission)
       {:error, changeset} ->
         conn
         |> put_status(:unprocessable_entity)

@@ -89,5 +89,4 @@ defmodule Cog.Models.EctoJson do
     non_struct
   end
 
-
 end

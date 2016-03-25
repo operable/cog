@@ -54,11 +54,10 @@ defmodule Cog.V1.PermissionControllerTest do
   test "creates and renders resource when data is valid", %{user: user} do
     conn = api_request(user, :post, "/v1/permissions",
                        body: %{"permission" => %{name: "test_perm"}})
-    recv_perm = json_response(conn, 201)
-    assert recv_perm["permission"]["name"] == "test_perm"
-    id = recv_perm["permission"]["id"]
-    assert id != nil
-    assert Repo.get_by(Permission, id: id)
+    recv_perm = json_response(conn, 201)["permission"]
+    assert recv_perm["name"] == "test_perm"
+    assert recv_perm["id"] != nil
+    assert Repo.get(Permission, recv_perm["id"])
   end
 
   test "does not create resource and renders errors when attempting to create an existing permission", %{user: user} do
@@ -71,49 +70,34 @@ defmodule Cog.V1.PermissionControllerTest do
   test "shows chosen resource regardless of namespace", %{user: user} do
     # random namespace
     rand_perm = permission("joe:test_perm") |> Repo.preload(:namespace)
-    rand_namespace = rand_perm.namespace
     conn = api_request(user, :get, "/v1/permissions/#{rand_perm.id}")
     assert json_response(conn, 200) == %{
-      "permission" => %{
-        "id" => rand_perm.id,
-        "name" => rand_perm.name,
-        "namespace" => %{
-          "id" => rand_namespace.id,
-          "name" => rand_namespace.name
-        }
-      },
-    }
+      "permission" =>
+        %{"namespace" => rand_perm.namespace.name,
+          "id" => rand_perm.id,
+          "name" => rand_perm.name}
+      }
 
     # site namespace
     site_perm = permission("site:test_perm") |> Repo.preload(:namespace)
-    site_namespace = site_perm.namespace
     conn = api_request(user, :get, "/v1/permissions/#{site_perm.id}")
     assert json_response(conn, 200) == %{
-      "permission" => %{
-        "id" => site_perm.id,
-        "name" => site_perm.name,
-        "namespace" => %{
-          "id" => site_namespace.id,
-          "name" => site_namespace.name
-        }
-      },
-    }
+      "permission" =>
+        %{"namespace" => site_perm.namespace.name,
+          "id" => site_perm.id,
+          "name" => site_perm.name}
+      }
 
 
     # embedded bundle namespace
     embedded_perm = permission("#{Cog.embedded_bundle}:test_perm") |> Repo.preload(:namespace)
-    embedded_namespace = embedded_perm.namespace
     conn = api_request(user, :get, "/v1/permissions/#{embedded_perm.id}")
     assert json_response(conn, 200) == %{
-      "permission" => %{
-        "id" => embedded_perm.id,
-        "name" => embedded_perm.name,
-        "namespace" => %{
-          "id" => embedded_namespace.id,
-          "name" => embedded_namespace.name
-        }
-      },
-    }
+      "permission" =>
+        %{"namespace" => embedded_perm.namespace.name,
+          "id" => embedded_perm.id,
+          "name" => embedded_perm.name}
+      }
 
   end
 

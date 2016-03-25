@@ -81,7 +81,8 @@ defmodule Cog.V1.RoleGrantController.Test do
                            body: %{"roles" => %{"grant" => ["admin"]}})
 
         assert %{"roles" => [%{"id" => role.id,
-                               "name" => role.name}]} == json_response(conn, 200)
+                               "name" => role.name,
+                               "permissions" => []}]} == json_response(conn, 200)
 
         assert_role_is_granted(target, role)
       end
@@ -103,11 +104,14 @@ defmodule Cog.V1.RoleGrantController.Test do
         # Verify the response body
         [admin, dev, ops] = roles
         assert [%{"id" => admin.id,
-                  "name" => admin.name},
+                  "name" => admin.name,
+                  "permissions" => []},
                 %{"id" => dev.id,
-                  "name" => dev.name},
+                  "name" => dev.name,
+                  "permissions" => []},
                 %{"id" => ops.id,
-                  "name" => ops.name}] == granted_roles |> sort_by("name")
+                  "name" => ops.name,
+                  "permissions" => []}] == granted_roles |> sort_by("name")
 
         # Ensure grants are persisted in the database
         assert_role_is_granted(target, roles)
@@ -129,9 +133,11 @@ defmodule Cog.V1.RoleGrantController.Test do
 
         # You should see both roles in the response body
         assert [%{"id" => pre_existing.id,
-                  "name" => pre_existing.name},
+                  "name" => pre_existing.name,
+                  "permissions" => []},
                 %{"id" => new_role.id,
-                  "name" => new_role.name}] == granted_roles |> sort_by("name")
+                  "name" => new_role.name,
+                  "permissions" => []}] == granted_roles |> sort_by("name")
 
         # Verify they're both in the database
         assert_role_is_granted(target, [pre_existing, new_role])
@@ -163,7 +169,8 @@ defmodule Cog.V1.RoleGrantController.Test do
                            body: %{"roles" => %{"grant" => [role.name]}})
 
         assert %{"roles" => [%{"id" => role.id,
-                               "name" => role.name}]} == json_response(conn, 200)
+                               "name" => role.name,
+                               "permissions" => []}]} == json_response(conn, 200)
 
         # Still got it!
         assert_role_is_granted(target, role)
@@ -237,7 +244,8 @@ defmodule Cog.V1.RoleGrantController.Test do
 
         # only the revoked role is, um, revoked
         assert %{"roles" => [%{"id" => remaining_role.id,
-                               "name" => remaining_role.name}]} == json_response(conn, 200)
+                               "name" => remaining_role.name,
+                               "permissions" => []}]} == json_response(conn, 200)
 
         assert_role_is_granted(target, remaining_role)
         refute_role_is_granted(target, to_be_revoked_role)

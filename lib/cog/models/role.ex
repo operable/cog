@@ -12,8 +12,8 @@ defmodule Cog.Models.Role do
     has_many :permissions, through: [:permission_grants, :permission]
   end
 
-  summary_fields [:id, :name]
-  detail_fields [:id, :name]
+  summary_fields [:id, :name, :permissions]
+  detail_fields [:id, :name, :permissions]
 
   @required_fields ~w(name)
   @optional_fields ~w()
