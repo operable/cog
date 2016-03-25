@@ -32,6 +32,10 @@ defmodule Cog.AdapterCase do
         Cog.Command.UserPermissionsCache.reset_cache
         :ok
       end
+
+      defp assert_message(%{"response" => response}, expected_message) do
+        assert response == expected_message
+      end
     end
   end
 

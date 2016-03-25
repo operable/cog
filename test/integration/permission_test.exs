@@ -18,85 +18,85 @@ defmodule Integration.PermissionTest do
   end
 
   test "granting a permission to a user", %{user: user} do
-    response = send_message(user, "@bot: operable:st-echo test") |> Map.fetch!("response")
-    assert response == "@vanstee Sorry, you aren't allowed to execute 'operable:st-echo test' :(\n You will need the 'operable:st-echo' permission to run this command."
+    send_message(user, "@bot: operable:st-echo test")
+    |> assert_message("@vanstee Sorry, you aren't allowed to execute 'operable:st-echo test' :(\n You will need the 'operable:st-echo' permission to run this command.")
 
-    response = send_message(user, "@bot: operable:permissions --grant --user=vanstee --permission=operable:st-echo") |> Map.fetch!("response")
-    assert response == "Granted permission `operable:st-echo` to user `vanstee`"
+    send_message(user, "@bot: operable:permissions --grant --user=vanstee --permission=operable:st-echo")
+    |> assert_message("Granted permission `operable:st-echo` to user `vanstee`")
 
-    response = send_message(user, "@bot: operable:st-echo test") |> Map.fetch!("response")
-    assert response == "test"
+    send_message(user, "@bot: operable:st-echo test")
+    |> assert_message("test")
   end
 
   test "granting a permission to a group", %{user: user} do
-    response = send_message(user, "@bot: operable:st-echo test") |> Map.fetch!("response")
-    assert response == "@vanstee Sorry, you aren't allowed to execute 'operable:st-echo test' :(\n You will need the 'operable:st-echo' permission to run this command."
+    send_message(user, "@bot: operable:st-echo test")
+    |> assert_message("@vanstee Sorry, you aren't allowed to execute 'operable:st-echo test' :(\n You will need the 'operable:st-echo' permission to run this command.")
 
-    response = send_message(user, "@bot: operable:permissions --grant --group=ops --permission=operable:st-echo") |> Map.fetch!("response")
-    assert response == "Granted permission `operable:st-echo` to group `ops`"
+    send_message(user, "@bot: operable:permissions --grant --group=ops --permission=operable:st-echo")
+    |> assert_message("Granted permission `operable:st-echo` to group `ops`")
 
-    response = send_message(user, "@bot: operable:st-echo test") |> Map.fetch!("response")
-    assert response == "test"
+    send_message(user, "@bot: operable:st-echo test")
+    |> assert_message("test")
   end
 
   test "granting a permission to a role", %{user: user} do
-    response = send_message(user, "@bot: operable:st-echo test") |> Map.fetch!("response")
-    assert response == "@vanstee Sorry, you aren't allowed to execute 'operable:st-echo test' :(\n You will need the 'operable:st-echo' permission to run this command."
+    send_message(user, "@bot: operable:st-echo test")
+    |> assert_message("@vanstee Sorry, you aren't allowed to execute 'operable:st-echo test' :(\n You will need the 'operable:st-echo' permission to run this command.")
 
-    response = send_message(user, "@bot: operable:permissions --grant --role=admin --permission=operable:st-echo") |> Map.fetch!("response")
-    assert response == "Granted permission `operable:st-echo` to role `admin`"
+    send_message(user, "@bot: operable:permissions --grant --role=admin --permission=operable:st-echo")
+    |> assert_message("Granted permission `operable:st-echo` to role `admin`")
 
-    response = send_message(user, "@bot: operable:st-echo test") |> Map.fetch!("response")
-    assert response == "test"
+    send_message(user, "@bot: operable:st-echo test")
+    |> assert_message("test")
   end
 
   test "granting a permission to a user without the grant permission" do
     mctesterson = user("mctesterson", first_name: "Testy", last_name: "McTesterson")
     |> with_chat_handle_for("test")
 
-    response = send_message(mctesterson, "@bot: operable:permissions --grant --user=mctesterson --permission=operable:st-echo") |> Map.fetch!("response")
-    assert response == "@mctesterson Sorry, you aren't allowed to execute 'operable:permissions --grant --user=mctesterson --permission=operable:st-echo' :(\n You will need the 'operable:manage_users' permission to run this command."
+    send_message(mctesterson, "@bot: operable:permissions --grant --user=mctesterson --permission=operable:st-echo")
+    |> assert_message("@mctesterson Sorry, you aren't allowed to execute 'operable:permissions --grant --user=mctesterson --permission=operable:st-echo' :(\n You will need the 'operable:manage_users' permission to run this command.")
   end
 
   test "revoking a permission from a user", %{user: user} do
-    response = send_message(user, "@bot: operable:permissions --grant --user=vanstee --permission=operable:st-echo") |> Map.fetch!("response")
-    assert response == "Granted permission `operable:st-echo` to user `vanstee`"
+    send_message(user, "@bot: operable:permissions --grant --user=vanstee --permission=operable:st-echo")
+    |> assert_message("Granted permission `operable:st-echo` to user `vanstee`")
 
-    response = send_message(user, "@bot: operable:st-echo good_test") |> Map.fetch!("response")
-    assert response == "good_test"
+    send_message(user, "@bot: operable:st-echo good_test")
+    |> assert_message("good_test")
 
-    response = send_message(user, "@bot: operable:permissions --revoke --user=vanstee --permission=operable:st-echo") |> Map.fetch!("response")
-    assert response == "Revoked permission `operable:st-echo` from user `vanstee`"
+    send_message(user, "@bot: operable:permissions --revoke --user=vanstee --permission=operable:st-echo")
+    |> assert_message("Revoked permission `operable:st-echo` from user `vanstee`")
 
-    response = send_message(user, "@bot: operable:st-echo fail_test") |> Map.fetch!("response")
-    assert response == "@vanstee Sorry, you aren't allowed to execute 'operable:st-echo fail_test' :(\n You will need the 'operable:st-echo' permission to run this command."
+    send_message(user, "@bot: operable:st-echo fail_test")
+    |> assert_message("@vanstee Sorry, you aren't allowed to execute 'operable:st-echo fail_test' :(\n You will need the 'operable:st-echo' permission to run this command.")
   end
 
   test "revoking a permission from a group", %{user: user} do
-    response = send_message(user, "@bot: operable:permissions --grant --group=ops --permission=operable:st-echo") |> Map.fetch!("response")
-    assert response == "Granted permission `operable:st-echo` to group `ops`"
+    send_message(user, "@bot: operable:permissions --grant --group=ops --permission=operable:st-echo")
+    |> assert_message("Granted permission `operable:st-echo` to group `ops`")
 
-    response = send_message(user, "@bot: operable:st-echo test") |> Map.fetch!("response")
-    assert response == "test"
+    send_message(user, "@bot: operable:st-echo test")
+    |> assert_message("test")
 
-    response = send_message(user, "@bot: operable:permissions --revoke --group=ops --permission=operable:st-echo") |> Map.fetch!("response")
-    assert response == "Revoked permission `operable:st-echo` from group `ops`"
+    send_message(user, "@bot: operable:permissions --revoke --group=ops --permission=operable:st-echo")
+    |> assert_message("Revoked permission `operable:st-echo` from group `ops`")
 
-    response = send_message(user, "@bot: operable:st-echo test") |> Map.fetch!("response")
-    assert response == "@vanstee Sorry, you aren't allowed to execute 'operable:st-echo test' :(\n You will need the 'operable:st-echo' permission to run this command."
+    send_message(user, "@bot: operable:st-echo test")
+    |> assert_message("@vanstee Sorry, you aren't allowed to execute 'operable:st-echo test' :(\n You will need the 'operable:st-echo' permission to run this command.")
   end
 
   test "revoking a permission from a role", %{user: user} do
-    response = send_message(user, "@bot: operable:permissions --grant --role=admin --permission=operable:st-echo") |> Map.fetch!("response")
-    assert response == "Granted permission `operable:st-echo` to role `admin`"
+    send_message(user, "@bot: operable:permissions --grant --role=admin --permission=operable:st-echo")
+    |> assert_message("Granted permission `operable:st-echo` to role `admin`")
 
-    response = send_message(user, "@bot: operable:st-echo test") |> Map.fetch!("response")
-    assert response == "test"
+    send_message(user, "@bot: operable:st-echo test")
+    |> assert_message("test")
 
-    response = send_message(user, "@bot: operable:permissions --revoke --role=admin --permission=operable:st-echo") |> Map.fetch!("response")
-    assert response == "Revoked permission `operable:st-echo` from role `admin`"
+    send_message(user, "@bot: operable:permissions --revoke --role=admin --permission=operable:st-echo")
+    |> assert_message("Revoked permission `operable:st-echo` from role `admin`")
 
-    response = send_message(user, "@bot: operable:st-echo test") |> Map.fetch!("response")
-    assert response == "@vanstee Sorry, you aren't allowed to execute 'operable:st-echo test' :(\n You will need the 'operable:st-echo' permission to run this command."
+    send_message(user, "@bot: operable:st-echo test")
+    |> assert_message("@vanstee Sorry, you aren't allowed to execute 'operable:st-echo test' :(\n You will need the 'operable:st-echo' permission to run this command.")
   end
 end
