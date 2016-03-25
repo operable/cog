@@ -16,8 +16,7 @@ defmodule Cog.Bundle.Install do
   require Logger
 
   @command_attrs ["name", "options", "enforcing",
-                  "calling_convention", "execution",
-                  "documentation"]
+                  "execution", "documentation"]
 
   @doc """
   Given a map of bundle parameters, fully installs the bundle into the
@@ -80,7 +79,6 @@ defmodule Cog.Bundle.Install do
   #
   #     create_command(bundle, %{"name" => "ec2-tag",
   #                              "enforcing" => true,
-  #                              "calling_convention" => "bound",
   #                              "execution" => "multiple",
   #                              "options": [%{"name" => "instance-id", "type" => "string", "required" => true}],
   #                              "module" => "Cog.Commands.EC2Tag"})
