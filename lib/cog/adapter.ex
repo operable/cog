@@ -1,6 +1,6 @@
 defmodule Cog.Adapter do
   defmacro __using__(opts) do
-    quote bind_quoted: [opts: opts] do
+    quote bind_quoted: [opts: opts], location: :keep do
       use GenServer
       require Logger
 
@@ -29,12 +29,8 @@ defmodule Cog.Adapter do
 
       def handle_info({:publish, topic, message}, state) do
         if topic == reply_topic() do
-          case Carrier.CredentialManager.verify_signed_message(message) do
-            {true, payload} ->
-              send_message(payload["room"], payload["response"])
-            false ->
-              Logger.error("Message signature not verified! #{inspect message}")
-          end
+          payload = Poison.decode!(message)
+          send_message(payload["room"], payload["response"])
         end
 
         {:noreply, state}

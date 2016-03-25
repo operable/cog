@@ -13,9 +13,9 @@ defmodule Integration.Commands.AliasTest do
   test "creating a new alias", %{user: user} do
     expected_map = %{"name" => "my-new-alias", "pipeline" => "echo My New Alias", "visibility" => "user"}
 
-    response = send_message(user, "@bot: operable:alias new my-new-alias \"echo My New Alias\"")
+    response = send_message(user, "@bot: operable:alias new my-new-alias \"echo My New Alias\"") |> Map.fetch!("response")
     expected_response = Helpers.render_template("alias-new", expected_map)
-    assert response["data"]["response"] == expected_response
+    assert response == expected_response
 
     new_alias = Repo.get_by(Cog.Models.UserCommandAlias, name: "my-new-alias", user_id: user.id)
     assert new_alias.name == expected_map["name"]
@@ -26,24 +26,24 @@ defmodule Integration.Commands.AliasTest do
   test "creating a new alias with an existing name", %{user: user} do
     send_message(user, "@bot: operable:alias new my-new-alias \"echo My New Alias\"")
 
-    response = send_message(user, "@bot: operable:alias new my-new-alias \"echo My New Alias\"")
-    assert response["data"]["response"] == "@vanstee Whoops! An error occurred. name: The alias name is already in use."
+    response = send_message(user, "@bot: operable:alias new my-new-alias \"echo My New Alias\"") |> Map.fetch!("response")
+    assert response == "@vanstee Whoops! An error occurred. name: The alias name is already in use."
   end
 
   test "removing an alias", %{user: user} do
     expected_map = %{"name" => "my-new-alias", "pipeline" => "echo My New Alias", "visibility" => "user"}
     send_message(user, "@bot: operable:alias new my-new-alias \"echo My New Alias\"")
 
-    response = send_message(user, "@bot: operable:alias rm my-new-alias")
+    response = send_message(user, "@bot: operable:alias rm my-new-alias") |> Map.fetch!("response")
     expected_response = Helpers.render_template("alias-rm", expected_map)
-    assert response["data"]["response"] == expected_response
+    assert response == expected_response
 
     assert Repo.get_by(Cog.Models.UserCommandAlias, name: "my-new-alias", user_id: user.id) == nil
   end
 
   test "removing an alias that does not exist", %{user: user} do
-    response = send_message(user, "@bot: operable:alias rm my-new-alias")
-    assert response["data"]["response"] == "@vanstee Whoops! An error occurred. I can't find 'my-new-alias'. Please try again"
+    response = send_message(user, "@bot: operable:alias rm my-new-alias") |> Map.fetch!("response")
+    assert response == "@vanstee Whoops! An error occurred. I can't find 'my-new-alias'. Please try again"
   end
 
   test "moving an alias to site using full visibility syntax", %{user: user} do
@@ -56,9 +56,9 @@ defmodule Integration.Commands.AliasTest do
 
     send_message(user, "@bot: operable:alias new my-new-alias \"echo My New Alias\"")
 
-    response = send_message(user, "@bot: operable:alias mv user:my-new-alias site")
+    response = send_message(user, "@bot: operable:alias mv user:my-new-alias site") |> Map.fetch!("response")
     expected_response = Helpers.render_template("alias-mv", expected_map)
-    assert response["data"]["response"] == expected_response
+    assert response == expected_response
 
     command_alias = Repo.get_by(Cog.Models.SiteCommandAlias, name: "my-new-alias")
     assert command_alias.name == "my-new-alias"
@@ -74,9 +74,9 @@ defmodule Integration.Commands.AliasTest do
 
     send_message(user, "@bot: operable:alias new my-new-alias \"echo My New Alias\"")
 
-    response = send_message(user, "@bot: operable:alias mv user:my-new-alias site:my-renamed-alias")
+    response = send_message(user, "@bot: operable:alias mv user:my-new-alias site:my-renamed-alias") |> Map.fetch!("response")
     expected_response = Helpers.render_template("alias-mv", expected_map)
-    assert response["data"]["response"] == expected_response
+    assert response == expected_response
 
     command_alias = Repo.get_by(Cog.Models.SiteCommandAlias, name: "my-renamed-alias")
     assert command_alias.name == "my-renamed-alias"
@@ -92,9 +92,9 @@ defmodule Integration.Commands.AliasTest do
 
     send_message(user, "@bot: operable:alias new my-new-alias \"echo My New Alias\"")
 
-    response = send_message(user, "@bot: operable:alias mv my-new-alias site")
+    response = send_message(user, "@bot: operable:alias mv my-new-alias site") |> Map.fetch!("response")
     expected_response = Helpers.render_template("alias-mv", expected_map)
-    assert response["data"]["response"] == expected_response
+    assert response == expected_response
 
     command_alias = Repo.get_by(Cog.Models.SiteCommandAlias, name: "my-new-alias")
     assert command_alias.name == "my-new-alias"
@@ -110,9 +110,9 @@ defmodule Integration.Commands.AliasTest do
 
     send_message(user, "@bot: operable:alias new my-new-alias \"echo My New Alias\"")
 
-    response = send_message(user, "@bot: operable:alias mv my-new-alias site:my-renamed-alias")
+    response = send_message(user, "@bot: operable:alias mv my-new-alias site:my-renamed-alias") |> Map.fetch!("response")
     expected_response = Helpers.render_template("alias-mv", expected_map)
-    assert response["data"]["response"] == expected_response
+    assert response == expected_response
 
     command_alias = Repo.get_by(Cog.Models.SiteCommandAlias, name: "my-renamed-alias")
     assert command_alias.name == "my-renamed-alias"
@@ -129,9 +129,9 @@ defmodule Integration.Commands.AliasTest do
     send_message(user, "@bot: operable:alias new my-new-alias \"echo My New Alias\"")
     send_message(user, "@bot: operable:alias mv my-new-alias site")
 
-    response = send_message(user, "@bot: operable:alias mv site:my-new-alias user")
+    response = send_message(user, "@bot: operable:alias mv site:my-new-alias user") |> Map.fetch!("response")
     expected_response = Helpers.render_template("alias-mv", expected_map)
-    assert response["data"]["response"] == expected_response
+    assert response == expected_response
 
     command_alias = Repo.get_by(Cog.Models.UserCommandAlias, name: "my-new-alias")
     assert command_alias.name == "my-new-alias"
@@ -148,9 +148,9 @@ defmodule Integration.Commands.AliasTest do
     send_message(user, "@bot: operable:alias new my-new-alias \"echo My New Alias\"")
     send_message(user, "@bot: operable:alias mv my-new-alias site")
 
-    response = send_message(user, "@bot: operable:alias mv site:my-new-alias user:my-renamed-alias")
+    response = send_message(user, "@bot: operable:alias mv site:my-new-alias user:my-renamed-alias") |> Map.fetch!("response")
     expected_response = Helpers.render_template("alias-mv", expected_map)
-    assert response["data"]["response"] == expected_response
+    assert response == expected_response
 
     command_alias = Repo.get_by(Cog.Models.UserCommandAlias, name: "my-renamed-alias")
     assert command_alias.name == "my-renamed-alias"
@@ -167,9 +167,9 @@ defmodule Integration.Commands.AliasTest do
     send_message(user, "@bot: operable:alias new my-new-alias \"echo My New Alias\"")
     send_message(user, "@bot: operable:alias mv my-new-alias site")
 
-    response = send_message(user, "@bot: operable:alias mv my-new-alias user")
+    response = send_message(user, "@bot: operable:alias mv my-new-alias user") |> Map.fetch!("response")
     expected_response = Helpers.render_template("alias-mv", expected_map)
-    assert response["data"]["response"] == expected_response
+    assert response == expected_response
 
     command_alias = Repo.get_by(Cog.Models.UserCommandAlias, name: "my-new-alias")
     assert command_alias.name == "my-new-alias"
@@ -186,9 +186,9 @@ defmodule Integration.Commands.AliasTest do
     send_message(user, "@bot: operable:alias new my-new-alias \"echo My New Alias\"")
     send_message(user, "@bot: operable:alias mv my-new-alias site")
 
-    response = send_message(user, "@bot: operable:alias mv my-new-alias user:my-renamed-alias")
+    response = send_message(user, "@bot: operable:alias mv my-new-alias user:my-renamed-alias") |> Map.fetch!("response")
     expected_response = Helpers.render_template("alias-mv", expected_map)
-    assert response["data"]["response"] == expected_response
+    assert response == expected_response
 
     command_alias = Repo.get_by(Cog.Models.UserCommandAlias, name: "my-renamed-alias")
     assert command_alias.name == "my-renamed-alias"
@@ -204,9 +204,9 @@ defmodule Integration.Commands.AliasTest do
 
     send_message(user, "@bot: operable:alias new my-new-alias \"echo My New Alias\"")
 
-    response = send_message(user, "@bot: operable:alias mv my-new-alias my-renamed-alias")
+    response = send_message(user, "@bot: operable:alias mv my-new-alias my-renamed-alias") |> Map.fetch!("response")
     expected_response = Helpers.render_template("alias-mv", expected_map)
-    assert response["data"]["response"] == expected_response
+    assert response == expected_response
 
     command_alias = Repo.get_by(Cog.Models.UserCommandAlias, name: "my-renamed-alias")
     assert command_alias.name == "my-renamed-alias"
@@ -223,9 +223,9 @@ defmodule Integration.Commands.AliasTest do
     send_message(user, "@bot: operable:alias new my-new-alias \"echo My New Alias\"")
     send_message(user, "@bot: operable:alias mv my-new-alias site")
 
-    response = send_message(user, "@bot: operable:alias mv my-new-alias my-renamed-alias")
+    response = send_message(user, "@bot: operable:alias mv my-new-alias my-renamed-alias") |> Map.fetch!("response")
     expected_response = Helpers.render_template("alias-mv", expected_map)
-    assert response["data"]["response"] == expected_response
+    assert response == expected_response
 
     command_alias = Repo.get_by(Cog.Models.SiteCommandAlias, name: "my-renamed-alias")
     assert command_alias.name == "my-renamed-alias"
@@ -236,8 +236,8 @@ defmodule Integration.Commands.AliasTest do
     send_message(user, "@bot: operable:alias mv my-new-alias site")
     send_message(user, "@bot: operable:alias new my-new-alias \"echo My New Alias\"")
 
-    response = send_message(user, "@bot: operable:alias mv user:my-new-alias site")
-    assert response["data"]["response"] == "@vanstee Whoops! An error occurred. name: The alias name is already in use."
+    response = send_message(user, "@bot: operable:alias mv user:my-new-alias site") |> Map.fetch!("response")
+    assert response == "@vanstee Whoops! An error occurred. name: The alias name is already in use."
   end
 
   test "moving an alias to user when an alias with that name already exists in user", %{user: user} do
@@ -245,8 +245,8 @@ defmodule Integration.Commands.AliasTest do
     send_message(user, "@bot: operable:alias mv my-new-alias site")
     send_message(user, "@bot: operable:alias new my-new-alias \"echo My New Alias\"")
 
-    response = send_message(user, "@bot: operable:alias mv site:my-new-alias user")
-    assert response["data"]["response"] == "@vanstee Whoops! An error occurred. name: The alias name is already in use."
+    response = send_message(user, "@bot: operable:alias mv site:my-new-alias user") |> Map.fetch!("response")
+    assert response == "@vanstee Whoops! An error occurred. name: The alias name is already in use."
   end
 
   test "list all aliases", %{user: user} do
@@ -269,9 +269,9 @@ defmodule Integration.Commands.AliasTest do
                     "pipeline" => "echo My New Alias",
                     "name" => "my-new-alias"}]
 
-    response = send_message(user, "@bot: operable:alias ls")
+    response = send_message(user, "@bot: operable:alias ls") |> Map.fetch!("response")
     expected_response = Helpers.render_template("alias-ls", Enum.sort(alias_list))
-    assert response["data"]["response"] == expected_response
+    assert response == expected_response
   end
 
   test "list all aliases matching a pattern", %{user: user} do
@@ -288,54 +288,54 @@ defmodule Integration.Commands.AliasTest do
                     "pipeline" => "echo My New Alias",
                     "name" => "my-new-alias1"}]
 
-    response = send_message(user, "@bot: operable:alias ls \"my-*\"")
+    response = send_message(user, "@bot: operable:alias ls \"my-*\"") |> Map.fetch!("response")
     expected_response = Helpers.render_template("alias-ls", Enum.sort(alias_list))
-    assert response["data"]["response"] == expected_response
+    assert response == expected_response
   end
 
   test "list all aliases with no matching aliases", %{user: user} do
-    response = send_message(user, "@bot: operable:alias ls \"my-*\"")
-    assert response["data"]["response"] == "Pipeline executed successfully, but no output was returned"
+    response = send_message(user, "@bot: operable:alias ls \"my-*\"") |> Map.fetch!("response")
+    assert response == "Pipeline executed successfully, but no output was returned"
   end
 
   test "list all aliases with no aliases", %{user: user} do
-    response = send_message(user, "@bot: operable:alias ls")
-    assert response["data"]["response"] == "Pipeline executed successfully, but no output was returned"
+    response = send_message(user, "@bot: operable:alias ls") |> Map.fetch!("response")
+    assert response == "Pipeline executed successfully, but no output was returned"
   end
 
   test "list aliases with an invalid pattern", %{user: user} do
-    response = send_message(user, "@bot: operable:alias ls \"% &my#-*\"")
-    assert response["data"]["response"] == "@vanstee Whoops! An error occurred. Invalid alias name. Only emoji, letters, numbers, and the following special characters are allowed: *, -, _"
+    response = send_message(user, "@bot: operable:alias ls \"% &my#-*\"") |> Map.fetch!("response")
+    assert response == "@vanstee Whoops! An error occurred. Invalid alias name. Only emoji, letters, numbers, and the following special characters are allowed: *, -, _"
   end
 
   test "list aliases with too many wildcards", %{user: user} do
-    response = send_message(user, "@bot: operable:alias ls \"*my-*\"")
-    assert response["data"]["response"] == "@vanstee Whoops! An error occurred. Too many wildcards. You can only include one wildcard in a query"
+    response = send_message(user, "@bot: operable:alias ls \"*my-*\"") |> Map.fetch!("response")
+    assert response == "@vanstee Whoops! An error occurred. Too many wildcards. You can only include one wildcard in a query"
   end
 
   test "list aliases with a bad pattern and too many wildcards", %{user: user} do
-    response = send_message(user, "@bot: operable:alias ls \"*m++%y-*\"")
-    assert response["data"]["response"] == "@vanstee Whoops! An error occurred. Too many wildcards. You can only include one wildcard in a query\nInvalid alias name. Only emoji, letters, numbers, and the following special characters are allowed: *, -, _"
+    response = send_message(user, "@bot: operable:alias ls \"*m++%y-*\"") |> Map.fetch!("response")
+    assert response == "@vanstee Whoops! An error occurred. Too many wildcards. You can only include one wildcard in a query\nInvalid alias name. Only emoji, letters, numbers, and the following special characters are allowed: *, -, _"
   end
 
   test "passing too many args", %{user: user} do
-    response = send_message(user, "@bot: operable:alias new my-invalid-alias \"echo foo\" invalid-arg")
-    assert response["data"]["response"] == "@vanstee Whoops! An error occurred. Too many args. Arguments required: exactly 2."
+    response = send_message(user, "@bot: operable:alias new my-invalid-alias \"echo foo\" invalid-arg") |> Map.fetch!("response")
+    assert response == "@vanstee Whoops! An error occurred. Too many args. Arguments required: exactly 2."
   end
 
   test "passing too few args", %{user: user} do
-    response = send_message(user, "@bot: operable:alias new my-invalid-alias")
-    assert response["data"]["response"] == "@vanstee Whoops! An error occurred. Not enough args. Arguments required: exactly 2."
+    response = send_message(user, "@bot: operable:alias new my-invalid-alias") |> Map.fetch!("response")
+    assert response == "@vanstee Whoops! An error occurred. Not enough args. Arguments required: exactly 2."
   end
 
   test "passing an unknown subcommand", %{user: user} do
-    response = send_message(user, "@bot: operable:alias foo")
-    assert response["data"]["response"] == "@vanstee Whoops! An error occurred. Unknown subcommand 'foo'"
+    response = send_message(user, "@bot: operable:alias foo") |> Map.fetch!("response")
+    assert response == "@vanstee Whoops! An error occurred. Unknown subcommand 'foo'"
   end
 
   test "passing now subcommand", %{user: user} do
-    response = send_message(user, "@bot: operable:alias")
-    assert response["data"]["response"] == "@vanstee Whoops! An error occurred. I don't what to do, please specify a subcommand"
+    response = send_message(user, "@bot: operable:alias") |> Map.fetch!("response")
+    assert response == "@vanstee Whoops! An error occurred. I don't what to do, please specify a subcommand"
   end
 
 end

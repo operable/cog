@@ -10,7 +10,6 @@ defmodule Cog.Command.Pipeline.Initializer do
 
   require Logger
 
-  alias Carrier.CredentialManager
   alias Carrier.Messaging.Connection
   alias Cog.Command.Pipeline.ExecutorSup
 
@@ -30,17 +29,12 @@ defmodule Cog.Command.Pipeline.Initializer do
   end
 
   def handle_info({:publish, "/bot/commands", message}, state) do
-    case CredentialManager.verify_signed_message(message) do
-      {true, payload} ->
-        case check_history(payload, state) do
-          {true, payload, state} ->
-            {:ok, _} = ExecutorSup.run(payload)
-            {:noreply, state}
-          {false, _, state} ->
-            {:noreply, state}
-        end
-      false ->
-        Logger.error("Message signature not verified! #{inspect message}")
+    payload = Poison.decode!(message)
+    case check_history(payload, state) do
+      {true, payload, state} ->
+        {:ok, _} = ExecutorSup.run(payload)
+        {:noreply, state}
+      {false, _, state} ->
         {:noreply, state}
     end
   end

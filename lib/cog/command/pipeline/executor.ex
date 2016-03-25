@@ -268,31 +268,27 @@ defmodule Cog.Command.Pipeline.Executor do
     reply_topic = "#{state.topic}/reply" # TODO: bake this into state for easier pattern-matching?
     case topic do
       ^reply_topic ->
-        case Carrier.CredentialManager.verify_signed_message(message) do
-          {true, payload} ->
-            resp = Spanner.Command.Response.decode!(payload)
-            case resp.status do
-              "error" ->
-                Helpers.send_error(resp.status_message || resp.body["message"], state.request, state.mq_conn)
-                fail_pipeline(state, :command_error, resp.status_message || resp.body["message"])
-              "ok" ->
-                collected_output = case resp.body do
-                                     nil ->
-                                       # If there wasn't any output,
-                                       # there's nothing to collect
-                                       state.output
-                                     body ->
-                                       state.output ++ Enum.map(List.wrap(body),
-                                                                &store_with_template(&1, resp.template))
-                                       # body may be a map or a list
-                                       # of maps; if the latter, we
-                                       # want to accumulate it into
-                                       # one flat list
-                                   end
-                {:next_state, :execute_plan, %{state | output: collected_output}, 0}
-            end
-          false ->
-            fail_pipeline(state, :message_authenticity, "Message signature not verified! #{inspect message}")
+        payload = Poison.decode!(message)
+        resp = Spanner.Command.Response.decode!(payload)
+        case resp.status do
+          "error" ->
+            Helpers.send_error(resp.status_message || resp.body["message"], state.request, state.mq_conn)
+            fail_pipeline(state, :command_error, resp.status_message || resp.body["message"])
+          "ok" ->
+            collected_output = case resp.body do
+                                 nil ->
+                                   # If there wasn't any output,
+                                   # there's nothing to collect
+                                   state.output
+                                 body ->
+                                   state.output ++ Enum.map(List.wrap(body),
+                                                            &store_with_template(&1, resp.template))
+                                   # body may be a map or a list
+                                   # of maps; if the latter, we
+                                   # want to accumulate it into
+                                   # one flat list
+                               end
+            {:next_state, :execute_plan, %{state | output: collected_output}, 0}
         end
       _ ->
         {:next_state, :wait_for_command, state}

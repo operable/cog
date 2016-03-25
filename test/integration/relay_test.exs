@@ -32,8 +32,8 @@ defmodule Integration.RelayTest do
   end
 
   test "running command from newly installed bundle", %{user: user} do
-    response = send_message(user, "@bot: help mist:ec2-find")
-    assert response["data"]["response"] == """
+    response = send_message(user, "@bot: help mist:ec2-find") |> Map.get("response")
+    assert response == """
     {
       "documentation": "mist:ec2-find --region=<region> [--state | --tags | --ami | --return=(id,pubdns,privdns,state,keyname,ami,kernel,arch,vpc,pubip,privip,az,tags)]",
       "command": "mist:ec2-find"
@@ -88,7 +88,7 @@ defmodule Integration.RelayTest do
       {:publish, @relays_discovery_topic, message} ->
         message = Poison.decode!(message)
 
-        case match?(%{"data" => %{"intro" => _relay}}, message) do
+        case match?(%{"intro" => _relay}, message) do
           true  -> true
           false -> wait_for_relay(conn)
         end
@@ -103,7 +103,7 @@ defmodule Integration.RelayTest do
       {:publish, @relays_discovery_topic, message} ->
         message = Poison.decode!(message)
 
-        case match?(%{"data" => %{"announce" => %{"bundles" => [%{"bundle" => %{"name" => "mist"}}]}}}, message) do
+        case match?(%{"announce" => %{"bundles" => [%{"bundle" => %{"name" => "mist"}}]}}, message) do
           true  -> true
           false -> wait_for_mist(conn)
         end
