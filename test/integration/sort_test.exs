@@ -11,22 +11,22 @@ defmodule Integration.SortTest do
   end
 
   test "sorting numbers", %{user: user} do
-    response = send_message(user, "@bot: operable:sort 7 3 6 4 5 9") |> Map.fetch!("response")
-    assert response == "3\n4\n5\n6\n7\n9"
+    send_message(user, "@bot: operable:sort 7 3 6 4 5 9")
+    |> assert_message("3\n4\n5\n6\n7\n9")
 
-    response = send_message(user, "@bot: operable:sort -desc 7 3 6 4 5 9") |> Map.fetch!("response")
-    assert response == "9\n7\n6\n5\n4\n3"
+    send_message(user, "@bot: operable:sort -desc 7 3 6 4 5 9")
+    |> assert_message("9\n7\n6\n5\n4\n3")
 
-    response = send_message(user, "@bot: operable:sort --asc 7 3 6 4 5 9") |> Map.fetch!("response")
-    assert response == "3\n4\n5\n6\n7\n9"
+    send_message(user, "@bot: operable:sort --asc 7 3 6 4 5 9")
+    |> assert_message("3\n4\n5\n6\n7\n9")
   end
 
   test "sorting strings", %{user: user} do
-    response = send_message(user, "@bot: operable:sort --desc Life goes on") |> Map.fetch!("response")
-    assert response == "on\ngoes\nLife"
+    send_message(user, "@bot: operable:sort --desc Life goes on")
+    |> assert_message("on\ngoes\nLife")
 
-    response = send_message(user, "@bot: operable:sort Life is 10 percent what happens to us and 90% how we react to it") |> Map.fetch!("response")
-    assert response == "10\n90%\nLife\nand\nhappens\nhow\nis\nit\npercent\nreact\nto\nto\nus\nwe\nwhat"
+    send_message(user, "@bot: operable:sort Life is 10 percent what happens to us and 90% how we react to it")
+    |> assert_message("10\n90%\nLife\nand\nhappens\nhow\nis\nit\npercent\nreact\nto\nto\nus\nwe\nwhat")
   end
 
   test "sorting in a pipeline", %{user: user} do
