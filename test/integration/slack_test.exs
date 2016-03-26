@@ -26,7 +26,7 @@ defmodule Integration.SlackTest do
 
   test "running the st-echo command without permission", %{user: user} do
     message = send_message user, "@deckard: operable:st-echo test"
-    assert_response "@botci Sorry, you aren't allowed to execute 'operable:st-echo test' :(\n You will need the 'operable:st-echo' permission to run this command.", after: message
+    assert_response_contains "Sorry, you aren't allowed to execute 'operable:st-echo test' :(\n You will need the 'operable:st-echo' permission to run this command.", after: message
   end
 
   test "running commands in a pipeline", %{user: user} do
@@ -42,7 +42,7 @@ defmodule Integration.SlackTest do
     user |> with_permission("operable:st-echo")
 
     message = send_message user, ~s(@deckard: operable:st-echo "this is a test" | operable:st-thorn $body)
-    assert_response "@botci Sorry, you aren't allowed to execute 'operable:st-thorn $body' :(\n You will need the 'operable:st-thorn' permission to run this command.", after: message
+    assert_response_contains "Sorry, you aren't allowed to execute 'operable:st-thorn $body' :(\n You will need the 'operable:st-thorn' permission to run this command.", after: message
   end
 
   test "an ambiguous redirect fails", %{user: user} do
@@ -50,7 +50,7 @@ defmodule Integration.SlackTest do
                            ~s(@deckard: operable:echo foo > am_i_user_or_room))
 
     expected_response = """
-    @botci Whoops! An error occurred. 
+    Whoops! An error occurred.
     No commands were executed because the following redirects are invalid:
 
     am_i_user_or_room
@@ -63,6 +63,6 @@ defmodule Integration.SlackTest do
     am_i_user_or_room
     """
 
-    assert_response expected_response, after: message
+    assert_response_contains expected_response, after: message
   end
 end

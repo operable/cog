@@ -18,6 +18,17 @@ defmodule Cog.Adapters.Slack.Helpers do
     Assertions.polling_assert(message, last_message_func, @interval, @timeout)
   end
 
+  def assert_response_contains(message, [after: %{"ts" => ts}]) do
+    :timer.sleep(@interval)
+
+    last_message_func = fn ->
+      {:ok, last_message} = retrieve_last_message(room: @room, oldest: ts)
+      last_message
+    end
+
+    Assertions.polling_assert_in(message, last_message_func, @interval, @timeout)
+  end
+
   def assert_edited_response(message, [after: %{"ts" => ts}]) do
     :timer.sleep(@interval)
 
