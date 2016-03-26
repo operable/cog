@@ -6,8 +6,10 @@ defmodule Cog.Adapters.Test.Helpers do
 
   def send_message(%User{username: username}, "@bot: " <> message) do
     {:ok, mq_conn} = Connection.connect
-    reply_topic = "/bot/adapters/test/#{:erlang.unique_integer([:positive, :monotonic])}"
-    payload = %{id: UUID.uuid4(:hex),
+    reply_topic = "/bot/adapters/test/send_message"
+    id = UUID.uuid4(:hex)
+
+    payload = %{id: id,
                 sender: %{id: username, handle: username},
                 room: %{id: "general", name: "general"},
                 text: message,
@@ -17,12 +19,22 @@ defmodule Cog.Adapters.Test.Helpers do
     Connection.subscribe(mq_conn, reply_topic)
     Connection.publish(mq_conn, payload, routed_by: "/bot/commands")
 
+    loop_until_received(mq_conn, reply_topic, id)
+  end
+
+  defp loop_until_received(mq_conn, reply_topic, id) do
     receive do
       {:publish, ^reply_topic, msg} ->
-        :emqttc.disconnect(mq_conn)
-        Poison.decode!(msg)
+        message = Poison.decode!(msg)
+        case Map.get(message, "id") do
+          ^id ->
+            :emqttc.disconnect(mq_conn)
+            message
+          _ ->
+            loop_until_received(mq_conn, reply_topic, id)
+        end
     after @timeout ->
-      :emqttc.disconnect(mq_conn)
+        :emqttc.disconnect(mq_conn)
         raise(RuntimeError, "Connection timed out waiting for a response")
     end
   end

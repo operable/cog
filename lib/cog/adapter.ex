@@ -54,7 +54,7 @@ defmodule Cog.Adapter do
         "/bot/adapters/" <> name() <> "/+"
       end
 
-      defp reply_topic() do
+      def reply_topic do
         "/bot/adapters/" <> name() <> "/send_message"
       end
     end
@@ -80,4 +80,6 @@ defmodule Cog.Adapter do
   @callback name() :: String.t
 
   @callback display_name() :: String.t
+
+  @callback reply_topic() :: String.t
 end

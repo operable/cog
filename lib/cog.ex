@@ -4,6 +4,12 @@ defmodule Cog do
 
   import Supervisor.Spec, warn: false
 
+  @adapters %{"slack"   => Cog.Adapters.Slack,
+              "hipchat" => Cog.Adapters.HipChat,
+              "irc"     => Cog.Adapters.IRC,
+              "null"    => Cog.Adapters.Null,
+              "test"    => Cog.Adapters.Test}
+
   def start(_type, _args) do
     adapter_supervisor = get_adapter_supervisor!()
     children = build_children(Mix.env, System.get_env("NOCHAT"), adapter_supervisor)
@@ -30,6 +36,36 @@ defmodule Cog do
   @doc "The name of the site namespace."
   def site_namespace, do: "site"
 
+  @doc """
+  Returns the currently configured chat adapter module, if found.
+  """
+  @spec adapter_module :: {:ok, module} | {:error, {:bad_adapter, String.t}}
+  def adapter_module do
+    configured = Application.get_env(:cog, :adapter)
+    case adapter_module(configured) do
+      {:ok, adapter} ->
+        {:ok, adapter}
+      {:error, {:bad_adapter, _}} ->
+        {:error, {:bad_adapter, configured}}
+    end
+  end
+
+  @doc """
+  For a given adapter name return the implementing module, if it
+  exists.
+  """
+  @spec adapter_module(String.t) :: {:ok, module} | {:error, {:bad_adapter, String.t}}
+  def adapter_module(name) do
+    case Map.fetch(@adapters, name) do
+      {:ok, module} ->
+        {:ok, module}
+      :error ->
+        {:error, {:bad_adapter, name}}
+    end
+  end
+
+  ########################################################################
+
   defp build_children(:dev, nochat, _) when nochat != nil do
     [worker(Cog.Repo, []),
      worker(Cog.TokenReaper, []),
@@ -48,31 +84,20 @@ defmodule Cog do
   end
 
   defp get_adapter_supervisor!() do
-    adapter = Application.get_env(:cog, :adapter)
-    Logger.info "Using #{adapter} chat adapter"
-
-    case adapter_module(String.downcase(adapter)) do
-      {:ok, module} ->
-        supervisor = Module.concat(module, "Supervisor")
+    case adapter_module do
+      {:ok, adapter} ->
+        Logger.info "Using #{inspect adapter} chat adapter"
+        supervisor = Module.concat(adapter, "Supervisor")
 
         case Code.ensure_loaded(supervisor) do
-          {:module, module} ->
-            module
+          {:module, ^supervisor} ->
+            supervisor
           {:error, _} ->
-            raise RuntimeError, "#{inspect(supervisor)} was not found. Please define a supervisor for the #{adapter} adapter"
+            raise RuntimeError, "#{inspect(supervisor)} was not found. Please define a supervisor for the #{inspect(adapter)} adapter"
         end
-      {:error, msg} ->
-        raise RuntimeError, "Please configure a chat adapter before starting cog. #{msg}"
+      {:error, {:bad_adapter, bad_adapter}} ->
+        raise RuntimeError, "The adapter is set to #{inspect(bad_adapter)}, but I don't know what that is. Try one of the following values instead: #{Enum.map_join(Map.keys(@adapters), ", ", &inspect/1)}"
     end
-  end
-
-  def adapter_module("slack"), do: {:ok, Cog.Adapters.Slack}
-  def adapter_module("hipchat"), do: {:ok, Cog.Adapters.HipChat}
-  def adapter_module("irc"), do: {:ok, Cog.Adapters.IRC}
-  def adapter_module("null"), do: {:ok, Cog.Adapters.Null}
-  def adapter_module("test"), do: {:ok, Cog.Adapters.Test}
-  def adapter_module(bad_adapter) do
-    {:error, "The adapter is set to '#{bad_adapter}', but I don't know what that is. Try 'slack' or 'hipchat' instead."}
   end
 
   defp log_message(:ok, message), do: Logger.info(message)
