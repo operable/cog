@@ -1,22 +1,21 @@
 defmodule Cog.V1.GroupMembershipController do
   use Cog.Web, :controller
 
-  alias Cog.Models.EctoJson
   alias Cog.Models.User
   alias Cog.Models.Group
+  alias Cog.Models.Role
 
   plug Cog.Plug.Authentication
   plug Cog.Plug.Authorization, permission: "#{Cog.embedded_bundle}:manage_groups"
 
+  plug :put_view, Cog.V1.GroupView
+
   def index(conn, %{"id" => id}) do
     group = Group
     |> Repo.get!(id)
-    |> Repo.preload([:direct_user_members, :direct_group_members])
+    |> Repo.preload([:direct_user_members, :direct_group_members, :roles])
 
-    users  = EctoJson.render(group.direct_user_members, policy: :detail)
-    groups = EctoJson.render(group.direct_group_members, policy: :detail)
-
-    json(conn, %{members: %{users: users, groups: groups}})
+    render(conn, "show.json", group: group)
   end
 
   # Manage the membership of a group. Users and groups can be added
@@ -26,6 +25,8 @@ defmodule Cog.V1.GroupMembershipController do
   #
   # %{"members" => %{"users" => %{"add" => ["user_to_add_1", "user_to_add_2"],
   #                               "remove" => ["user_to_remove"]},
+  #                  "roles" => %{"add" => ["role_to_add_1", "role_to_add_2"],
+  #                               "remove" => ["role_to_remove"]},
   #                  "groups" => %{"add" => ["group_to_add_1", "group_to_add_2"],
   #                                "remove" => ["group_to_remove"]}}}
   #
@@ -54,21 +55,23 @@ defmodule Cog.V1.GroupMembershipController do
 
       users_to_add     = lookup_or_fail(member_spec, ["users", "add"])
       groups_to_add    = lookup_or_fail(member_spec, ["groups", "add"])
+      roles_to_add    = lookup_or_fail(member_spec, ["roles", "grant"])
       users_to_remove  = lookup_or_fail(member_spec, ["users", "remove"])
       groups_to_remove = lookup_or_fail(member_spec, ["groups", "remove"])
+      roles_to_remove = lookup_or_fail(member_spec, ["roles", "revoke"])
 
       group
       |> add(users_to_add ++ groups_to_add)
+      |> grant(roles_to_add)
       |> remove(users_to_remove ++ groups_to_remove)
-      |> Repo.preload(:direct_user_members)
-      |> Repo.preload(:direct_group_members)
+      |> revoke(roles_to_remove)
+      |> Repo.preload([:direct_user_members, :direct_group_members, :roles])
     end)
 
     case result do
       {:ok, group} ->
         conn
-        |> json(%{members: %{users: EctoJson.render(group.direct_user_members, policy: :detail),
-                             groups: EctoJson.render(group.direct_group_members, policy: :detail)}})
+        |> render("show.json", group: group)
 
       # TODO: Aargh, can't (yet!) use variables as map keys! Wait for Elixir 1.2
       {:error, {:not_found, {"users", names}}} ->
@@ -119,7 +122,7 @@ defmodule Cog.V1.GroupMembershipController do
   #     {:error, {:not_found, {"users", ["not_a_user", "badguy"]}}}
   #
   defp lookup_all(_, []), do: {:ok, []} # Don't bother with a DB lookup
-  defp lookup_all(kind, names) when kind in ["users", "groups"] do
+  defp lookup_all(kind, names) when kind in ["users", "groups", "roles"] do
 
     type = kind_to_type(kind) # e.g. "users" -> User
     unique_name_field = unique_name_field(type) # e.g. User -> :username
@@ -149,6 +152,11 @@ defmodule Cog.V1.GroupMembershipController do
     group
   end
 
+  defp grant(group, members) do
+    Enum.each(members, &Permittable.grant_to(group, &1))
+    group
+  end
+
   # Remove multiple `%User{}` or `%Group{}` members from `group`, returning
   # `group`.
   #
@@ -158,13 +166,20 @@ defmodule Cog.V1.GroupMembershipController do
     group
   end
 
+  defp revoke(group, members) do
+    Enum.each(members, &Permittable.revoke_from(group, &1))
+    group
+  end
+
   # Given a member_spec key, return the underlying type
   defp kind_to_type("users"), do: User
   defp kind_to_type("groups"), do: Group
+  defp kind_to_type("roles"), do: Role
 
   # Given a type, return the field for its unique name
   defp unique_name_field(User), do: :username
   defp unique_name_field(Group), do: :name
+  defp unique_name_field(Role), do: :name
 
 end
 
