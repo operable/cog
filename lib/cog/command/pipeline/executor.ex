@@ -77,7 +77,7 @@ defmodule Cog.Command.Pipeline.Executor do
 
   alias Carrier.Messaging.Connection
   alias Cog.Command.CommandResolver
-  alias Cog.Command.UserPermissionsCache
+  alias Cog.Command.PermissionsCache
   alias Cog.Events.PipelineEvent
   alias Cog.Queries
   alias Cog.Repo
@@ -102,7 +102,7 @@ defmodule Cog.Command.Pipeline.Executor do
       {:ok, initial_context} ->
         case fetch_user_from_request(request) do
           {:ok, user} ->
-            {:ok, perms} = UserPermissionsCache.fetch(user)
+            {:ok, perms} = PermissionsCache.fetch(user)
             loop_data = %__MODULE__{id: id, topic: topic, request: request,
                                     mq_conn: conn,
                                     user: user,

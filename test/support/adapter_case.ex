@@ -29,7 +29,7 @@ defmodule Cog.AdapterCase do
       setup do
         Ecto.Adapters.SQL.restart_test_transaction(Repo, [])
         bootstrap
-        Cog.Command.UserPermissionsCache.reset_cache
+        Cog.Command.PermissionsCache.reset_cache
         :ok
       end
 

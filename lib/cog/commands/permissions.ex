@@ -80,11 +80,11 @@ defmodule Cog.Commands.Permissions do
               {:delete, result.permission}
             :grant ->
               Permittable.grant_to(result.permittable, result.permission)
-              Cog.Command.UserPermissionsCache.reset_cache
+              Cog.Command.PermissionsCache.reset_cache
               {:grant, result.permittable, req.options["permission"]}
             :revoke ->
               Permittable.revoke_from(result.permittable, result.permission)
-              Cog.Command.UserPermissionsCache.reset_cache
+              Cog.Command.PermissionsCache.reset_cache
               {:revoke, result.permittable, req.options["permission"]}
           end
         %__MODULE__{errors: errors} ->

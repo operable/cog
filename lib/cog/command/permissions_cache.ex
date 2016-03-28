@@ -1,9 +1,9 @@
-defmodule Cog.Command.UserPermissionsCache do
+defmodule Cog.Command.PermissionsCache do
   defstruct [:ttl, :tref]
   use GenServer
   require Logger
 
-  @ets_table :cog_userperms_cache
+  @ets_table :cog_perms_cache
 
   def start_link() do
     GenServer.start_link(__MODULE__, [], name: __MODULE__)
