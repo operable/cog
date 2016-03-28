@@ -22,10 +22,11 @@ defmodule Cog.Commands.Alias.Rm do
   Returns {:ok, <msg>} on success and {:error, <err>} on failure.
   """
   def rm_command_alias(req, arg_list) do
+    user_id = req.user["id"]
+
     case Helpers.get_args(arg_list, 1) do
       {:ok, [alias]} ->
-        user = Helpers.get_user(req.requestor)
-        case Helpers.get_command_alias(user, alias) do
+        case Helpers.get_command_alias(user_id, alias) do
           nil ->
             {:error, {:alias_not_found, alias}}
           command_alias ->

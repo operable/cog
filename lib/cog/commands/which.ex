@@ -29,9 +29,9 @@ defmodule Cog.Commands.Which do
   """
 
   def handle_message(req, state) do
-    results = with {:ok, user} <- get_user(req.requestor),
-                   {:ok, [arg]} <- Helpers.get_args(req.args, count: 1),
-                     do: which(user, arg)
+    results = with {:ok, [arg]} <- Helpers.get_args(req.args, count: 1),
+                   user_id = req.user["id"],
+                   do: which(user_id, arg)
 
     case results do
       {:ok, data} ->
@@ -45,8 +45,8 @@ defmodule Cog.Commands.Which do
   # immediately. If it isn't we check to see if the input is a command.
   # Note: If an alias shadows a command the alias will be returned, not the
   # command.
-  defp which(user, arg) do
-    case Helpers.get_command_alias(user, arg) do
+  defp which(user_id, arg) do
+    case Helpers.get_command_alias(user_id, arg) do
       nil ->
         case Repo.get_by(Command, name: arg) do
           nil ->
@@ -60,17 +60,6 @@ defmodule Cog.Commands.Which do
         {:ok, %{type: "alias", scope: "user", name: arg, pipeline: pipeline}}
       %SiteCommandAlias{pipeline: pipeline} ->
         {:ok, %{type: "alias", scope: "site", name: arg, pipeline: pipeline}}
-    end
-  end
-
-  # A simple wrapper around Helpers.get_user/1. So we can get output like we
-  # want it.
-  defp get_user(requestor) do
-    case Helpers.get_user(requestor) do
-      nil ->
-        {:error, {:no_user, requestor["handle"], requestor["provider"]}}
-      user ->
-        {:ok, user}
     end
   end
 end

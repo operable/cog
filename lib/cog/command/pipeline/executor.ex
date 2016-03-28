@@ -77,8 +77,10 @@ defmodule Cog.Command.Pipeline.Executor do
 
   alias Carrier.Messaging.Connection
   alias Cog.Command.CommandResolver
-  alias Cog.Command.UserPermissionsCache
+  alias Cog.Command.PermissionsCache
   alias Cog.Events.PipelineEvent
+  alias Cog.Queries
+  alias Cog.Repo
   alias Cog.TemplateCache
   alias Piper.Command.Ast
   alias Piper.Command.Parser
@@ -94,18 +96,13 @@ defmodule Cog.Command.Pipeline.Executor do
     {:ok, conn} = Connection.connect()
     id = Map.fetch!(request, "id")
     topic = "/bot/pipelines/#{id}"
-
     Connection.subscribe(conn, topic <> "/+")
+
     case create_initial_context(request) do
       {:ok, initial_context} ->
-        adapter = request["adapter"]
-        handle = request["sender"]["handle"]
-        # We resolve users and permissions at this stage so that we can
-        # include the Cog user (and not just their adapter-specific
-        # handle) in event logs (and also to prevent us doing unnecessary
-        # work for users that don't have Cog accounts)
-        case UserPermissionsCache.fetch(username: handle, adapter: adapter) do
-          {:ok, {user, perms}} ->
+        case fetch_user_from_request(request) do
+          {:ok, user} ->
+            {:ok, perms} = PermissionsCache.fetch(user)
             loop_data = %__MODULE__{id: id, topic: topic, request: request,
                                     mq_conn: conn,
                                     user: user,
@@ -217,7 +214,7 @@ defmodule Cog.Command.Pipeline.Executor do
   def plan_next_invocation(:timeout, %__MODULE__{invocations: []}=state),
     do: respond(state)
 
-  def execute_plan(:timeout, %__MODULE__{plans: [current_plan|remaining_plans], request: request}=state) do
+  def execute_plan(:timeout, %__MODULE__{plans: [current_plan|remaining_plans], request: request, user: user}=state) do
     bundle = current_plan.command.bundle
     name   = current_plan.command.name
 
@@ -230,19 +227,12 @@ defmodule Cog.Command.Pipeline.Executor do
         relay ->
           topic = "/bot/commands/#{relay}/#{bundle.name}/#{name}"
           reply_to_topic = "#{state.topic}/reply"
-
-          req = request_for_plan(current_plan,
-                                       # TODO: Just send the request in?
-                                       request["sender"],
-                                       request["room"],
-                                       request["adapter"],
-                                       reply_to_topic)
-
+          req = request_for_plan(current_plan, request, user, reply_to_topic)
           updated_state =  %{state | current_plan: current_plan, plans: remaining_plans}
 
           dispatch_event(updated_state, relay)
-
           Connection.publish(updated_state.mq_conn, Spanner.Command.Request.encode!(req), routed_by: topic)
+
           {:next_state, :wait_for_command, updated_state, @command_timeout}
       end
     else
@@ -709,15 +699,20 @@ defmodule Cog.Command.Pipeline.Executor do
   ########################################################################
   # Miscellaneous Functions
 
-  defp request_for_plan(plan, requestor, room, provider, reply_to) do
+  defp request_for_plan(plan, request, user, reply_to) do
     # TODO: stuffing the provider into requestor here is a bit
     # code-smelly; investigate and fix
-    requestor = Map.put_new(requestor, "provider", provider)
+    provider  = request["adapter"]
+    requestor = request["sender"] |> Map.put_new("provider", provider)
+    room      = request["room"]
+    user      = Cog.Models.EctoJson.render(user)
+
     %Spanner.Command.Request{command: Cog.Models.Command.full_name(plan.command),
                              options: plan.options,
                              args: plan.args,
                              cog_env: plan.cog_env,
                              requestor: requestor,
+                             user: user,
                              room: room,
                              reply_to: reply_to}
   end
@@ -741,4 +736,18 @@ defmodule Cog.Command.Pipeline.Executor do
     Map.put(request, "text", text)
   end
 
+  def fetch_user_from_request(request) do
+    adapter   = request["adapter"]
+    sender_id = request["sender"]["id"]
+
+    user = Queries.User.for_chat_provider_user_id(sender_id, adapter)
+    |> Repo.one
+
+    case user do
+      nil ->
+        {:error, :not_found}
+      user ->
+        {:ok, user}
+    end
+  end
 end
