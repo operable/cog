@@ -19,8 +19,21 @@ defmodule Cog.Events.Util do
 
   """
   @spec now_iso8601_utc() :: binary()
-  def now_iso8601_utc do
-    {{year, month, day}, {hour, min, sec}} = :calendar.universal_time
+  def now_iso8601_utc,
+    do: ts_iso8601_utc(now)
+
+  @doc """
+  Formats a given timestamp as an ISO-8601 formatted string.
+
+  Example:
+
+      iex> Cog.Events.Util.ts_iso8691_utc(:os.timestamp())
+      "2016-01-15T01:48:20Z"
+
+  """
+  @spec ts_iso8601_utc(:erlang.timestamp) :: binary()
+  def ts_iso8601_utc(ts) do
+    {{year, month, day}, {hour, min, sec}} = :calendar.now_to_universal_time(ts)
     :io_lib.format(@date_format, [year, month, day, hour, min, sec])
     |> IO.iodata_to_binary
   end
