@@ -201,4 +201,35 @@ defmodule Cog.Support.ModelUtilities do
     Supervisor.terminate_child(Cog.Relay.RelaySup, Cog.Bundle.Embedded)
   end
 
+  @doc """
+  Creates a relay record
+  """
+  def relay(name, token, opts \\ []) do
+    relay = %Relay{}
+    |> Relay.changeset(%{name: name,
+                         token: token,
+                         desc: Keyword.get(opts, :desc, nil)})
+    |> Repo.insert!
+    %{relay | token: nil}
+  end
+
+  @doc """
+  Creates a relay group record
+  """
+  def relay_group(name, opts \\ []) do
+    %RelayGroup{}
+    |> RelayGroup.changeset(%{name: name})
+    |> Repo.insert!
+  end
+
+  @doc """
+  Adds a relay to a relay group
+  """
+  def add_relay_to_group(group_id, relay_id) do
+    %RelayGroupMembership{}
+    |> RelayGroupMembership.changeset(%{group_id: group_id,
+                                        relay_id: relay_id})
+    |> Repo.insert!
+  end
+
 end
