@@ -1,7 +1,7 @@
 use Mix.Config
 
 config :emqttd, :access,
-  auth: [anonymous: []],
+  auth: [cog_internal: []],
   acl: [internal: [file: 'config/acl.conf', nomatch: :allow]]
 
 config :emqttd, :broker,
