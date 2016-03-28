@@ -1,7 +1,6 @@
 defmodule Cog.V1.UserController do
   use Cog.Web, :controller
 
-  alias Cog.Models.EctoJson
   alias Cog.Models.User
 
   plug Cog.Plug.Authentication
@@ -11,7 +10,8 @@ defmodule Cog.V1.UserController do
 
   def index(conn, _params) do
     users = Repo.all(User)
-    json(conn, EctoJson.render(users, envelope: :users, policy: :summary))
+    |> Repo.preload(:direct_group_memberships)
+    render(conn, "index.json", users: users)
   end
 
   def create(conn, %{"user" => user_params}) do
@@ -22,7 +22,7 @@ defmodule Cog.V1.UserController do
         conn
         |> put_status(:created)
         |> put_resp_header("location", user_path(conn, :show, user))
-        |> json(EctoJson.render(user, envelope: :user, policy: :detail))
+        |> render("show.json", user: user)
       {:error, changeset} ->
         conn
         |> put_status(:unprocessable_entity)
@@ -32,8 +32,8 @@ defmodule Cog.V1.UserController do
 
   def show(conn, %{"id" => id}) do
     user = Repo.get!(User, id)
-    #user = Repo.preload user, :chat_handles
-    json(conn, EctoJson.render(user, envelope: :user, policy: :detail))
+    |> Repo.preload(:direct_group_memberships)
+    render(conn, "show.json", user: user)
   end
 
   def update(conn, %{"id" => id, "user" => user_params}) do
@@ -42,7 +42,8 @@ defmodule Cog.V1.UserController do
 
     case Repo.update(changeset) do
       {:ok, user} ->
-        json(conn, EctoJson.render(user, envelope: :user, policy: :detail))
+        updated = Repo.preload(user, :direct_group_memberships)
+        render(conn, "show.json", user: updated)
       {:error, changeset} ->
         conn
         |> put_status(:unprocessable_entity)

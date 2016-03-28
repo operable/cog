@@ -39,11 +39,13 @@ defmodule Cog.V1.UserControllerTest do
               "first_name" => "Cog",
               "last_name" => "McCog",
               "email_address" => "cog@operable.io",
+              "groups" => [],
               "username" => "cog"},
             %{"id" => other.id,
               "first_name" => "Sadpanda",
               "last_name" => "McSadpanda",
               "email_address" => "sadpanda@operable.io",
+              "groups" => [],
               "username" => "sadpanda"}] == users_json |> sort_by("username")
   end
 
@@ -54,6 +56,7 @@ defmodule Cog.V1.UserControllerTest do
                          "username" => "tester",
                          "first_name" => "Tester",
                          "last_name" => "McTester",
+                         "groups" => [],
                          "email_address" => "tester@operable.io"}} == json_response(conn, 200)
   end
 
@@ -81,6 +84,7 @@ defmodule Cog.V1.UserControllerTest do
                                                  "username" => @valid_attrs.username,
                                                  "first_name" => @valid_attrs.first_name,
                                                  "email_address" => @valid_attrs.email_address,
+                                                 "groups" => [],
                                                  "last_name" => @valid_attrs.last_name}
   end
 
@@ -135,6 +139,30 @@ defmodule Cog.V1.UserControllerTest do
     conn = api_request(requestor, :delete, "/v1/users/#{user.id}")
     assert conn.halted
     assert conn.status == 403
+  end
+
+  test "retrieving groups for each user", %{authed: requestor, unauthed: other} do
+    group = group("robots")
+    Groupable.add_to(requestor, group)
+    conn = api_request(requestor, :get, "/v1/users")
+    users_json = json_response(conn, 200)["users"]
+    [first | _] = users_json
+    assert length(first["groups"]) == 1
+    [groups | _] = first["groups"]
+    assert Map.fetch!(groups, "name") == group.name
+    assert Map.fetch!(groups, "id") == group.id
+  end
+
+  test "retrieving groups a specific user belongs in", %{authed: requestor, unauthed: other} do
+    group = group("robots")
+    Groupable.add_to(requestor, group)
+
+    conn = api_request(requestor, :get, "/v1/users/#{requestor.id}")
+    user_json = json_response(conn, 200)["user"]
+    assert length(user_json["groups"]) == 1
+    [groups | _] = user_json["groups"]
+    assert Map.fetch!(groups, "name") == group.name
+    assert Map.fetch!(groups, "id") == group.id
   end
 
 end
