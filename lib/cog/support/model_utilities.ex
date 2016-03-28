@@ -216,7 +216,7 @@ defmodule Cog.Support.ModelUtilities do
   @doc """
   Creates a relay group record
   """
-  def relay_group(name, opts \\ []) do
+  def relay_group(name) do
     %RelayGroup{}
     |> RelayGroup.changeset(%{name: name})
     |> Repo.insert!

@@ -1,7 +1,6 @@
 defmodule Cog.V1.RelayGroupMembershipController do
   use Cog.Web, :controller
 
-  alias Cog.Models.Relay
   alias Cog.Models.RelayGroup
   alias Cog.Queries
 
