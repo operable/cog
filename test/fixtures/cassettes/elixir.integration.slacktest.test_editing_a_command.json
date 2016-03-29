@@ -1,0 +1,192 @@
+[
+  {
+    "request": {
+      "body": "",
+      "headers": {
+        "Accept": "application/json"
+      },
+      "method": "get",
+      "options": [],
+      "request_body": "",
+      "url": "https://slack.com/api/chat.postMessage?as_user=botci&channel=C0FPGDW9X&text=FOO3rjha92&token=xoxp-3434814464-15888677107-15886148468-8caee5f825"
+    },
+    "response": {
+      "body": "{\"ok\":true,\"channel\":\"C0FPGDW9X\",\"ts\":\"1459282412.000247\",\"message\":{\"type\":\"message\",\"user\":\"U0FS4KX35\",\"text\":\"FOO3rjha92\",\"ts\":\"1459282412.000247\"}}",
+      "headers": {
+        "Content-Type": "application/json; charset=utf-8",
+        "Transfer-Encoding": "chunked",
+        "Connection": "keep-alive",
+        "Access-Control-Allow-Origin": "*",
+        "Cache-Control": "private, no-cache, no-store, must-revalidate",
+        "Content-Security-Policy": "referrer no-referrer;",
+        "Date": "Tue, 29 Mar 2016 20:13:32 GMT",
+        "Expires": "Mon, 26 Jul 1997 05:00:00 GMT",
+        "Pragma": "no-cache",
+        "Server": "Apache",
+        "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+        "Vary": "Accept-Encoding",
+        "X-Accepted-OAuth-Scopes": "chat:write:user,client",
+        "X-Content-Type-Options": "nosniff",
+        "X-OAuth-Scopes": "identify,read,post,client",
+        "X-XSS-Protection": "0",
+        "X-Cache": "Miss from cloudfront",
+        "Via": "1.1 13f1bd5052463002bbb5c8cf3e59b157.cloudfront.net (CloudFront)",
+        "X-Amz-Cf-Id": "FMeGONgH-3OzU40jlMR0oKWjS5b8ypnVS5nzJTwuRIkMzD6oSJ2h2w=="
+      },
+      "status_code": 200,
+      "type": "ok"
+    }
+  },
+  {
+    "request": {
+      "body": "",
+      "headers": {
+        "Accept": "application/json"
+      },
+      "method": "get",
+      "options": [],
+      "request_body": "",
+      "url": "https://slack.com/api/chat.update?as_user=botci&channel=C0FPGDW9X&text=%40deckard%3A+operable%3Ast-echo+test&token=xoxp-3434814464-15888677107-15886148468-8caee5f825&ts=1459282412.000247"
+    },
+    "response": {
+      "body": "{\"ok\":true,\"channel\":\"C0FPGDW9X\",\"ts\":\"1459282412.000247\",\"text\":\"@deckard: operable:st-echo test\",\"message\":{\"type\":\"message\",\"user\":\"U0FS4KX35\",\"text\":\"@deckard: operable:st-echo test\"}}",
+      "headers": {
+        "Content-Type": "application/json; charset=utf-8",
+        "Transfer-Encoding": "chunked",
+        "Connection": "keep-alive",
+        "Access-Control-Allow-Origin": "*",
+        "Cache-Control": "private, no-cache, no-store, must-revalidate",
+        "Content-Security-Policy": "referrer no-referrer;",
+        "Date": "Tue, 29 Mar 2016 20:13:33 GMT",
+        "Expires": "Mon, 26 Jul 1997 05:00:00 GMT",
+        "Pragma": "no-cache",
+        "Server": "Apache",
+        "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+        "Vary": "Accept-Encoding",
+        "X-Accepted-OAuth-Scopes": "chat:write:user,post",
+        "X-Content-Type-Options": "nosniff",
+        "X-OAuth-Scopes": "identify,read,post,client",
+        "X-XSS-Protection": "0",
+        "X-Cache": "Miss from cloudfront",
+        "Via": "1.1 f6ea932c4737d64ad2a25ff58b14d9f2.cloudfront.net (CloudFront)",
+        "X-Amz-Cf-Id": "BeoGA_fZkOYxo59bZFXFJ4sN6tJ0gal7rP7cK2nxSulTT44YonQOnA=="
+      },
+      "status_code": 200,
+      "type": "ok"
+    }
+  },
+  {
+    "request": {
+      "body": "",
+      "headers": {
+        "Accept": "application/json"
+      },
+      "method": "get",
+      "options": [],
+      "request_body": "",
+      "url": "https://slack.com/api/chat.postMessage?as_user=true&channel=C0FPGDW9X&parse=full&text=%40botci+Executing+edited+command+%27operable%3Ast-echo+test%27&token=xoxb-12667445729-ldkNWf3hayJ17jgvkO50hqUt"
+    },
+    "response": {
+      "body": "{\"ok\":true,\"channel\":\"C0FPGDW9X\",\"ts\":\"1459282413.000249\",\"message\":{\"type\":\"message\",\"user\":\"U0CKMD3MF\",\"text\":\"<@U0FS4KX35|botci> Executing edited command 'operable:st-echo test'\",\"ts\":\"1459282413.000249\"}}",
+      "headers": {
+        "Content-Type": "application/json; charset=utf-8",
+        "Transfer-Encoding": "chunked",
+        "Connection": "keep-alive",
+        "Access-Control-Allow-Origin": "*",
+        "Cache-Control": "private, no-cache, no-store, must-revalidate",
+        "Content-Security-Policy": "referrer no-referrer;",
+        "Date": "Tue, 29 Mar 2016 20:13:33 GMT",
+        "Expires": "Mon, 26 Jul 1997 05:00:00 GMT",
+        "Pragma": "no-cache",
+        "Server": "Apache",
+        "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+        "Vary": "Accept-Encoding",
+        "X-Accepted-OAuth-Scopes": "chat:write:user,client",
+        "X-Content-Type-Options": "nosniff",
+        "X-OAuth-Scopes": "identify,read,post,client",
+        "X-XSS-Protection": "0",
+        "X-Cache": "Miss from cloudfront",
+        "Via": "1.1 1f8fd8fe691277c1d2a58ff2ca95912f.cloudfront.net (CloudFront)",
+        "X-Amz-Cf-Id": "HMBzSppybRuOuYx4mN5My_fM9XHFxEzWbL73KJCy2_jjo3toNv2XKA=="
+      },
+      "status_code": 200,
+      "type": "ok"
+    }
+  },
+  {
+    "request": {
+      "body": "",
+      "headers": {
+        "Accept": "application/json"
+      },
+      "method": "get",
+      "options": [],
+      "request_body": "",
+      "url": "https://slack.com/api/chat.postMessage?as_user=true&channel=C0FPGDW9X&parse=full&text=test&token=xoxb-12667445729-ldkNWf3hayJ17jgvkO50hqUt"
+    },
+    "response": {
+      "body": "{\"ok\":true,\"channel\":\"C0FPGDW9X\",\"ts\":\"1459282413.000250\",\"message\":{\"type\":\"message\",\"user\":\"U0CKMD3MF\",\"text\":\"test\",\"ts\":\"1459282413.000250\"}}",
+      "headers": {
+        "Content-Type": "application/json; charset=utf-8",
+        "Transfer-Encoding": "chunked",
+        "Connection": "keep-alive",
+        "Access-Control-Allow-Origin": "*",
+        "Cache-Control": "private, no-cache, no-store, must-revalidate",
+        "Content-Security-Policy": "referrer no-referrer;",
+        "Date": "Tue, 29 Mar 2016 20:13:33 GMT",
+        "Expires": "Mon, 26 Jul 1997 05:00:00 GMT",
+        "Pragma": "no-cache",
+        "Server": "Apache",
+        "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+        "Vary": "Accept-Encoding",
+        "X-Accepted-OAuth-Scopes": "chat:write:user,client",
+        "X-Content-Type-Options": "nosniff",
+        "X-OAuth-Scopes": "identify,read,post,client",
+        "X-XSS-Protection": "0",
+        "X-Cache": "Miss from cloudfront",
+        "Via": "1.1 426511a4e4e7baa481e8afd19c8e8bad.cloudfront.net (CloudFront)",
+        "X-Amz-Cf-Id": "oalWNI1z3oCWMbV8-5l6so1eTcBbdQI1--ZuUwvIkH4vh5ba4EgWwA=="
+      },
+      "status_code": 200,
+      "type": "ok"
+    }
+  },
+  {
+    "request": {
+      "body": "",
+      "headers": {
+        "Accept": "application/json"
+      },
+      "method": "get",
+      "options": [],
+      "request_body": "",
+      "url": "https://slack.com/api/channels.history?channel=C0FPGDW9X&count=2&oldest=1459282412.000247&token=xoxp-3434814464-15888677107-15886148468-8caee5f825"
+    },
+    "response": {
+      "body": "{\"ok\":true,\"oldest\":\"1459282412.000247\",\"messages\":[{\"type\":\"message\",\"user\":\"U0CKMD3MF\",\"text\":\"test\",\"ts\":\"1459282413.000250\"},{\"type\":\"message\",\"user\":\"U0CKMD3MF\",\"text\":\"<@U0FS4KX35|botci> Executing edited command 'operable:st-echo test'\",\"ts\":\"1459282413.000249\"}],\"has_more\":false}",
+      "headers": {
+        "Content-Type": "application/json; charset=utf-8",
+        "Transfer-Encoding": "chunked",
+        "Connection": "keep-alive",
+        "Access-Control-Allow-Origin": "*",
+        "Cache-Control": "private, no-cache, no-store, must-revalidate",
+        "Content-Security-Policy": "referrer no-referrer;",
+        "Date": "Tue, 29 Mar 2016 20:13:35 GMT",
+        "Expires": "Mon, 26 Jul 1997 05:00:00 GMT",
+        "Pragma": "no-cache",
+        "Server": "Apache",
+        "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+        "Vary": "Accept-Encoding",
+        "X-Accepted-OAuth-Scopes": "channels:history,read",
+        "X-Content-Type-Options": "nosniff",
+        "X-OAuth-Scopes": "identify,read,post,client",
+        "X-XSS-Protection": "0",
+        "X-Cache": "Miss from cloudfront",
+        "Via": "1.1 e79368abba2ad21f1116209a83f7d54c.cloudfront.net (CloudFront)",
+        "X-Amz-Cf-Id": "LcgA8CTF0PGRZiSw6qj_Tu-q5rmsvhQR_otiwJMQhgaexuqBbLJ3nA=="
+      },
+      "status_code": 200,
+      "type": "ok"
+    }
+  }
+]

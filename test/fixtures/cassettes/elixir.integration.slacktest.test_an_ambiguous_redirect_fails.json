@@ -1,0 +1,116 @@
+[
+  {
+    "request": {
+      "body": "",
+      "headers": {
+        "Accept": "application/json"
+      },
+      "method": "get",
+      "options": [],
+      "request_body": "",
+      "url": "https://slack.com/api/chat.postMessage?as_user=botci&channel=C0FPGDW9X&text=%40deckard%3A+operable%3Aecho+foo+%3E+am_i_user_or_room&token=xoxp-3434814464-15888677107-15886148468-8caee5f825"
+    },
+    "response": {
+      "body": "{\"ok\":true,\"channel\":\"C0FPGDW9X\",\"ts\":\"1459282400.000245\",\"message\":{\"type\":\"message\",\"user\":\"U0FS4KX35\",\"text\":\"@deckard: operable:echo foo &gt; am_i_user_or_room\",\"ts\":\"1459282400.000245\"}}",
+      "headers": {
+        "Content-Type": "application/json; charset=utf-8",
+        "Transfer-Encoding": "chunked",
+        "Connection": "keep-alive",
+        "Access-Control-Allow-Origin": "*",
+        "Cache-Control": "private, no-cache, no-store, must-revalidate",
+        "Content-Security-Policy": "referrer no-referrer;",
+        "Date": "Tue, 29 Mar 2016 20:13:20 GMT",
+        "Expires": "Mon, 26 Jul 1997 05:00:00 GMT",
+        "Pragma": "no-cache",
+        "Server": "Apache",
+        "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+        "Vary": "Accept-Encoding",
+        "X-Accepted-OAuth-Scopes": "chat:write:user,client",
+        "X-Content-Type-Options": "nosniff",
+        "X-OAuth-Scopes": "identify,read,post,client",
+        "X-XSS-Protection": "0",
+        "X-Cache": "Miss from cloudfront",
+        "Via": "1.1 ab171ddf1266582609db318bfa0b92d2.cloudfront.net (CloudFront)",
+        "X-Amz-Cf-Id": "chFm0kyviCnCLkWWzEXoAz3qH2vQoBYBuYzvrcFvnQX3Z3VWRFhT8Q=="
+      },
+      "status_code": 200,
+      "type": "ok"
+    }
+  },
+  {
+    "request": {
+      "body": "",
+      "headers": {
+        "Accept": "application/json"
+      },
+      "method": "get",
+      "options": [],
+      "request_body": "",
+      "url": "https://slack.com/api/chat.postMessage?as_user=true&channel=C0FPGDW9X&parse=full&text=%40botci+Whoops%21+An+error+occurred.+%0ANo+commands+were+executed+because+the+following+redirects+are+invalid%3A%0A%0Aam_i_user_or_room%0A%0A%0AThe+following+redirects+are+ambiguous%3B+please+refer+to+users+and%0Arooms+according+to+the+conventions+of+your+chat+provider%0A%28e.g.+%60%40user%60%2C+%60%23room%60%29%3A%0A%0Aam_i_user_or_room%0A&token=xoxb-12667445729-ldkNWf3hayJ17jgvkO50hqUt"
+    },
+    "response": {
+      "body": "{\"ok\":true,\"channel\":\"C0FPGDW9X\",\"ts\":\"1459282401.000246\",\"message\":{\"type\":\"message\",\"user\":\"U0CKMD3MF\",\"text\":\"<@U0FS4KX35|botci> Whoops! An error occurred. \\nNo commands were executed because the following redirects are invalid:\\n\\nam_i_user_or_room\\n\\n\\nThe following redirects are ambiguous; please refer to users and\\nrooms according to the conventions of your chat provider\\n(e.g. `@user`, `#room`):\\n\\nam_i_user_or_room\\n\",\"ts\":\"1459282401.000246\"}}",
+      "headers": {
+        "Content-Type": "application/json; charset=utf-8",
+        "Transfer-Encoding": "chunked",
+        "Connection": "keep-alive",
+        "Access-Control-Allow-Origin": "*",
+        "Cache-Control": "private, no-cache, no-store, must-revalidate",
+        "Content-Security-Policy": "referrer no-referrer;",
+        "Date": "Tue, 29 Mar 2016 20:13:21 GMT",
+        "Expires": "Mon, 26 Jul 1997 05:00:00 GMT",
+        "Pragma": "no-cache",
+        "Server": "Apache",
+        "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+        "Vary": "Accept-Encoding",
+        "X-Accepted-OAuth-Scopes": "chat:write:user,client",
+        "X-Content-Type-Options": "nosniff",
+        "X-OAuth-Scopes": "identify,read,post,client",
+        "X-XSS-Protection": "0",
+        "X-Cache": "Miss from cloudfront",
+        "Via": "1.1 ea768b6198c0f73b6fb05e3625d27a5d.cloudfront.net (CloudFront)",
+        "X-Amz-Cf-Id": "E0AiRDe0826oc0jRe5GNz7HpzCldQF9VNDhJUwnUMMmK4yVdXloPow=="
+      },
+      "status_code": 200,
+      "type": "ok"
+    }
+  },
+  {
+    "request": {
+      "body": "",
+      "headers": {
+        "Accept": "application/json"
+      },
+      "method": "get",
+      "options": [],
+      "request_body": "",
+      "url": "https://slack.com/api/channels.history?channel=C0FPGDW9X&count=1&oldest=1459282400.000245&token=xoxp-3434814464-15888677107-15886148468-8caee5f825"
+    },
+    "response": {
+      "body": "{\"ok\":true,\"oldest\":\"1459282400.000245\",\"messages\":[{\"type\":\"message\",\"user\":\"U0CKMD3MF\",\"text\":\"<@U0FS4KX35|botci> Whoops! An error occurred. \\nNo commands were executed because the following redirects are invalid:\\n\\nam_i_user_or_room\\n\\n\\nThe following redirects are ambiguous; please refer to users and\\nrooms according to the conventions of your chat provider\\n(e.g. `@user`, `#room`):\\n\\nam_i_user_or_room\\n\",\"ts\":\"1459282401.000246\"}],\"has_more\":false}",
+      "headers": {
+        "Content-Type": "application/json; charset=utf-8",
+        "Transfer-Encoding": "chunked",
+        "Connection": "keep-alive",
+        "Access-Control-Allow-Origin": "*",
+        "Cache-Control": "private, no-cache, no-store, must-revalidate",
+        "Content-Security-Policy": "referrer no-referrer;",
+        "Date": "Tue, 29 Mar 2016 20:13:22 GMT",
+        "Expires": "Mon, 26 Jul 1997 05:00:00 GMT",
+        "Pragma": "no-cache",
+        "Server": "Apache",
+        "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+        "Vary": "Accept-Encoding",
+        "X-Accepted-OAuth-Scopes": "channels:history,read",
+        "X-Content-Type-Options": "nosniff",
+        "X-OAuth-Scopes": "identify,read,post,client",
+        "X-XSS-Protection": "0",
+        "X-Cache": "Miss from cloudfront",
+        "Via": "1.1 37e522d6aeb50ea6586f8de0abe1d0ef.cloudfront.net (CloudFront)",
+        "X-Amz-Cf-Id": "jWzyTUcaFZA9Ku7s9eJOjJXX_R9ikhT909euPjyfTyWNdFLN0Y89Zw=="
+      },
+      "status_code": 200,
+      "type": "ok"
+    }
+  }
+]

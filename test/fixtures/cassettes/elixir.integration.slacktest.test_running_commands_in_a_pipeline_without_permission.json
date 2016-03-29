@@ -1,0 +1,116 @@
+[
+  {
+    "request": {
+      "body": "",
+      "headers": {
+        "Accept": "application/json"
+      },
+      "method": "get",
+      "options": [],
+      "request_body": "",
+      "url": "https://slack.com/api/chat.postMessage?as_user=botci&channel=C0FPGDW9X&text=%40deckard%3A+operable%3Ast-echo+%22this+is+a+test%22+%7C+operable%3Ast-thorn+%24body&token=xoxp-3434814464-15888677107-15886148468-8caee5f825"
+    },
+    "response": {
+      "body": "{\"ok\":true,\"channel\":\"C0FPGDW9X\",\"ts\":\"1459282425.000251\",\"message\":{\"type\":\"message\",\"user\":\"U0FS4KX35\",\"text\":\"@deckard: operable:st-echo \\\"this is a test\\\" | operable:st-thorn $body\",\"ts\":\"1459282425.000251\"}}",
+      "headers": {
+        "Content-Type": "application/json; charset=utf-8",
+        "Transfer-Encoding": "chunked",
+        "Connection": "keep-alive",
+        "Access-Control-Allow-Origin": "*",
+        "Cache-Control": "private, no-cache, no-store, must-revalidate",
+        "Content-Security-Policy": "referrer no-referrer;",
+        "Date": "Tue, 29 Mar 2016 20:13:45 GMT",
+        "Expires": "Mon, 26 Jul 1997 05:00:00 GMT",
+        "Pragma": "no-cache",
+        "Server": "Apache",
+        "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+        "Vary": "Accept-Encoding",
+        "X-Accepted-OAuth-Scopes": "chat:write:user,client",
+        "X-Content-Type-Options": "nosniff",
+        "X-OAuth-Scopes": "identify,read,post,client",
+        "X-XSS-Protection": "0",
+        "X-Cache": "Miss from cloudfront",
+        "Via": "1.1 a4fb796933ab128dd782f77ae96cd30d.cloudfront.net (CloudFront)",
+        "X-Amz-Cf-Id": "JybgsrVkoYdP0IZXK0UqCvMwRgwqQilGlGWgKFE7GnNSPwQPikx8WQ=="
+      },
+      "status_code": 200,
+      "type": "ok"
+    }
+  },
+  {
+    "request": {
+      "body": "",
+      "headers": {
+        "Accept": "application/json"
+      },
+      "method": "get",
+      "options": [],
+      "request_body": "",
+      "url": "https://slack.com/api/chat.postMessage?as_user=true&channel=C0FPGDW9X&parse=full&text=%40botci+Sorry%2C+you+aren%27t+allowed+to+execute+%27operable%3Ast-thorn+%24body%27+%3A%28%0A+You+will+need+the+%27operable%3Ast-thorn%27+permission+to+run+this+command.&token=xoxb-12667445729-ldkNWf3hayJ17jgvkO50hqUt"
+    },
+    "response": {
+      "body": "{\"ok\":true,\"channel\":\"C0FPGDW9X\",\"ts\":\"1459282425.000252\",\"message\":{\"type\":\"message\",\"user\":\"U0CKMD3MF\",\"text\":\"<@U0FS4KX35|botci> Sorry, you aren't allowed to execute 'operable:st-thorn $body' :(\\n You will need the 'operable:st-thorn' permission to run this command.\",\"ts\":\"1459282425.000252\"}}",
+      "headers": {
+        "Content-Type": "application/json; charset=utf-8",
+        "Transfer-Encoding": "chunked",
+        "Connection": "keep-alive",
+        "Access-Control-Allow-Origin": "*",
+        "Cache-Control": "private, no-cache, no-store, must-revalidate",
+        "Content-Security-Policy": "referrer no-referrer;",
+        "Date": "Tue, 29 Mar 2016 20:13:45 GMT",
+        "Expires": "Mon, 26 Jul 1997 05:00:00 GMT",
+        "Pragma": "no-cache",
+        "Server": "Apache",
+        "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+        "Vary": "Accept-Encoding",
+        "X-Accepted-OAuth-Scopes": "chat:write:user,client",
+        "X-Content-Type-Options": "nosniff",
+        "X-OAuth-Scopes": "identify,read,post,client",
+        "X-XSS-Protection": "0",
+        "X-Cache": "Miss from cloudfront",
+        "Via": "1.1 426511a4e4e7baa481e8afd19c8e8bad.cloudfront.net (CloudFront)",
+        "X-Amz-Cf-Id": "cDKrDaxr_hgMfVVR2fSAjKc7RclLOp-BN1TtYF4mZjmnIXbQNiVYuQ=="
+      },
+      "status_code": 200,
+      "type": "ok"
+    }
+  },
+  {
+    "request": {
+      "body": "",
+      "headers": {
+        "Accept": "application/json"
+      },
+      "method": "get",
+      "options": [],
+      "request_body": "",
+      "url": "https://slack.com/api/channels.history?channel=C0FPGDW9X&count=1&oldest=1459282425.000251&token=xoxp-3434814464-15888677107-15886148468-8caee5f825"
+    },
+    "response": {
+      "body": "{\"ok\":true,\"oldest\":\"1459282425.000251\",\"messages\":[{\"type\":\"message\",\"user\":\"U0CKMD3MF\",\"text\":\"<@U0FS4KX35|botci> Sorry, you aren't allowed to execute 'operable:st-thorn $body' :(\\n You will need the 'operable:st-thorn' permission to run this command.\",\"ts\":\"1459282425.000252\"}],\"has_more\":false}",
+      "headers": {
+        "Content-Type": "application/json; charset=utf-8",
+        "Transfer-Encoding": "chunked",
+        "Connection": "keep-alive",
+        "Access-Control-Allow-Origin": "*",
+        "Cache-Control": "private, no-cache, no-store, must-revalidate",
+        "Content-Security-Policy": "referrer no-referrer;",
+        "Date": "Tue, 29 Mar 2016 20:13:46 GMT",
+        "Expires": "Mon, 26 Jul 1997 05:00:00 GMT",
+        "Pragma": "no-cache",
+        "Server": "Apache",
+        "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+        "Vary": "Accept-Encoding",
+        "X-Accepted-OAuth-Scopes": "channels:history,read",
+        "X-Content-Type-Options": "nosniff",
+        "X-OAuth-Scopes": "identify,read,post,client",
+        "X-XSS-Protection": "0",
+        "X-Cache": "Miss from cloudfront",
+        "Via": "1.1 7ef235b15de4e58ab9a3bf065ac17d86.cloudfront.net (CloudFront)",
+        "X-Amz-Cf-Id": "w-RyjLMykpj_ppdwKrJL3GI7YgcxmReds1nv6EuSR8948YGiWOVumg=="
+      },
+      "status_code": 200,
+      "type": "ok"
+    }
+  }
+]
