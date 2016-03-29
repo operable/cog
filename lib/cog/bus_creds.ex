@@ -18,7 +18,7 @@ defmodule Cog.BusCredentials do
       {{127, 0, 0, 1}, _} ->
         true
       _ ->
-        validate_creds(mqtt_client(client, :username), password)
+        validate_creds(client, password)
     end
   end
 
@@ -32,7 +32,7 @@ defmodule Cog.BusCredentials do
             false
         end
       username ->
-        case Queries.Relays.exists?(username) do
+        case Queries.Relay.exists?(username) do
           false ->
             false
           true ->
@@ -42,16 +42,34 @@ defmodule Cog.BusCredentials do
     end
   end
 
-  defp validate_creds(username, password) do
+  defp validate_creds(client, password) do
+    username = mqtt_client(client, :username)
+    addr = format_address(mqtt_client(client, :peername))
     if username == :undefined or password == :undefined do
       false
     else
-      case Repo.one(Queries.Relay.from_id(username)) do
+      case Repo.one(Queries.Relay.for_id(username)) do
         nil ->
+          Logger.info("Denied connect attempt for unknown client #{username} from #{addr}")
           false
         relay ->
-          Passwords.matches?(password, relay.token)
+          if Passwords.matches?(password, relay.token_digest) do
+            Logger.info("Allowed connection for Relay #{username}")
+            true
+          else
+            Logger.info("Denied connection for Relay #{username} (bad token)")
+            false
+          end
       end
+    end
+  end
+
+  defp format_address({addr, _}) do
+    addr = Tuple.to_list(addr)
+    if length(addr) == 4 do
+      Enum.join(addr, ".")
+    else
+      Enum.join(addr, ":")
     end
   end
 
