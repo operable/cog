@@ -12,8 +12,16 @@
 init(_) ->
   {ok, []}.
 
-check_acl({_Client, _PubSub, _Topic}, _State) ->
-  allow.
+%% Publish is always allowed
+check_acl({_Client, publish, _}, _State) ->
+  allow;
+check_acl({Client, subscribe, Topic}, _State) ->
+  case 'Elixir.Cog.BusCredentials':'subscription_allowed?'(Client, Topic) of
+    false ->
+      deny;
+    true ->
+      allow
+  end.
 
 reload_acl(_) ->
   ok.

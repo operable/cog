@@ -15,5 +15,10 @@ description() ->
   "MQTT authentication for Cog's internal traffic".
 
 
-check(_, _, _) ->
-  ok.
+check(Client, Password, _) ->
+  case 'Elixir.Cog.BusCredentials':'connect_allowed?'(Client, Password) of
+    true ->
+      ok;
+    false ->
+      {error, bad_credentials}
+  end.
