@@ -167,3 +167,4 @@ defmodule Cog.V1.GroupMembershipController do
   defp unique_name_field(Group), do: :name
 
 end
+

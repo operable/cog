@@ -29,6 +29,9 @@ defmodule Cog.Models do
       alias Cog.Models.GroupPermission
       alias Cog.Models.UserGroupMembership
       alias Cog.Models.GroupGroupMembership
+      alias Cog.Models.Relay
+      alias Cog.Models.RelayGroup
+      alias Cog.Models.RelayGroupMembership
       alias Cog.Models.Role
       alias Cog.Models.UserRole
       alias Cog.Models.Command

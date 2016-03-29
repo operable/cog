@@ -52,6 +52,11 @@ defmodule Cog.Router do
     get "/v1/users/:id/chat_handles", V1.ChatHandleController, :index
     post "/v1/users/:id/chat_handles", V1.ChatHandleController, :create
 
+    # Relay management
+    resources "/v1/relays", V1.RelayController
+    resources "/v1/relay_groups", V1.RelayGroupController
+    get "/v1/relay_groups/:id/relays", V1.RelayGroupMembershipController, :index
+    post "/v1/relay_groups/:id/membership", V1.RelayGroupMembershipController, :manage_membership
   end
 
   scope "/", Cog do

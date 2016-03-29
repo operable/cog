@@ -41,6 +41,7 @@ defmodule Cog.Commands.Permissions do
   permission "manage_users"
   permission "manage_roles"
   permission "manage_groups"
+  permission "manage_relays"
 
   rule "when command is #{Cog.embedded_bundle}:permissions with option[create] == true must have #{Cog.embedded_bundle}:manage_permissions"
   rule "when command is #{Cog.embedded_bundle}:permissions with option[delete] == true must have #{Cog.embedded_bundle}:manage_permissions"
