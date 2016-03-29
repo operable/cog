@@ -49,7 +49,7 @@ defmodule Cog.Mixfile do
     [{:slack, "~> 0.4.2"},
      {:websocket_client, github: "jeremyong/websocket_client", ref: "f6892c8b55004008ce2d52be7d98b156f3e34569"},
      {:poison, "~> 1.5.2"},
-     {:ibrowse, "~> 4.2.2"},
+     {:ibrowse, "~> 4.2.2", override: true},
      {:uuid, "~> 1.1.3"},
      {:httpotion, "~> 2.2.0"},
      {:jsx, "~> 2.8.0", override: true},
@@ -80,7 +80,7 @@ defmodule Cog.Mixfile do
      {:ex_doc, "~> 0.10", only: :dev},
      {:mix_test_watch, "~> 0.1.1", only: [:test, :dev]},
      {:excoveralls, "~> 0.5", only: :test},
-     {:exvcr, "~> 0.7", only: :test}
+     {:exvcr, github: "vanstee/exvcr", branch: "fix-cached-status-code", only: [:dev, :test]}
     ]
   end
 
