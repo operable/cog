@@ -1,8 +1,6 @@
 defmodule Cog.V1.RelayView do
   use Cog.Web, :view
 
-  alias Ecto.Association
-
   def render("relay.json", %{relay: relay}) do
     %{id: relay.id,
       name: relay.name,
@@ -19,9 +17,6 @@ defmodule Cog.V1.RelayView do
     %{relay: render_one(relay, __MODULE__, "relay.json")}
   end
 
-  defp render_groups(%Association.NotLoaded{}) do
-    []
-  end
   defp render_groups(groups) do
     for group <- groups do
       %{id: group.id,

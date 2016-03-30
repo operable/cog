@@ -31,6 +31,7 @@ defmodule Cog.Models do
       alias Cog.Models.GroupGroupMembership
       alias Cog.Models.Relay
       alias Cog.Models.RelayGroup
+      alias Cog.Models.RelayGroupAssignment
       alias Cog.Models.RelayGroupMembership
       alias Cog.Models.Role
       alias Cog.Models.UserRole

@@ -3,6 +3,7 @@ defmodule Cog.V1.RelayController do
 
   alias Cog.Models.Relay
   alias Cog.Queries
+  alias Cog.Repo
 
   plug Cog.Plug.Authentication
   plug Cog.Plug.Authorization, permission: "#{Cog.embedded_bundle}:manage_relays"
@@ -10,7 +11,7 @@ defmodule Cog.V1.RelayController do
   plug :scrub_params, "relay" when action in [:create, :update]
 
   def index(conn, _params) do
-    relays = Repo.all(Queries.Relay.all())
+    relays = Repo.all(Queries.Relay.all)
     render(conn, "index.json", relays: relays)
   end
 
@@ -41,7 +42,7 @@ defmodule Cog.V1.RelayController do
   end
 
   def update(conn, %{"id" => id, "relay" => relay_params}) do
-    relay = Repo.get!(Relay, id)
+    relay = Repo.one!(Queries.Relay.for_id(id))
     changeset = Relay.changeset(relay, relay_params)
     case Repo.update(changeset) do
       {:ok, relay} ->

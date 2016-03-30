@@ -13,7 +13,7 @@ defmodule Cog.Models.RelayGroupMembership do
   def changeset(model, params) do
     model
     |> cast(params, @required_fields, @optional_fields)
-    |> unique_constraint(:membership, name: "relay_group_memberships_relay_id_group_id_index")
+    |> unique_constraint(:relay_id, name: :relay_group_memberships_relay_id_group_id_index)
   end
 
 end

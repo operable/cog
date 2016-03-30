@@ -3,6 +3,7 @@ defmodule Cog.V1.RelayGroupController do
 
   alias Cog.Models.RelayGroup
   alias Cog.Queries
+  alias Cog.Repo
 
   plug Cog.Plug.Authentication
   plug Cog.Plug.Authorization, permission: "#{Cog.embedded_bundle}:manage_relays"
@@ -10,7 +11,7 @@ defmodule Cog.V1.RelayGroupController do
   plug :scrub_params, "relay_group" when action in [:create, :update]
 
   def index(conn, _params) do
-     groups = Repo.all(RelayGroup)
+     groups = Repo.all(Queries.RelayGroup.all)
      render(conn, "index.json", relay_groups: groups)
   end
 

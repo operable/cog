@@ -4,21 +4,14 @@ defmodule Cog.Queries.Bundles do
 
   alias Cog.Models.Bundle
 
-  def bundle_details(id) do
+  def all do
     from b in Bundle,
-    where: b.id == ^id,
-    preload: [:commands, :namespace]
+    preload: [:commands, :relay_groups, :namespace]
   end
 
-  def bundle_summary(id) do
-    from b in Bundle,
-    where: b.id == ^id,
-    preload: [:namespace]
-  end
-
-  def bundle_summaries() do
-    from b in Bundle,
-    preload: [:namespace]
+  def for_id(id) do
+    all
+    |> where([b], b.id == ^id)
   end
 
   def bundle_id_from_name(name) do
@@ -27,4 +20,5 @@ defmodule Cog.Queries.Bundles do
     select: b.id,
     limit: 1
   end
+
 end

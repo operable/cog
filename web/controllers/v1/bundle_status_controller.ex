@@ -31,13 +31,13 @@ defmodule Cog.V1.BundleStatusController do
   require Logger
   alias Cog.Repo
   alias Cog.Models.Bundle
-  alias Cog.Queries.Bundles
+  alias Cog.Queries
 
   plug Cog.Plug.Authentication
   plug Cog.Plug.Authorization, permission: "#{Cog.embedded_bundle}:manage_commands"
 
   def show(conn, %{"id" => id}) do
-    case Repo.one(Bundles.bundle_details(id)) do
+    case Repo.one(Queries.Bundles.for_id(id)) do
       nil ->
         send_resp(conn, 404, Poison.encode!(%{error: "Bundle #{id} not found"}))
       bundle ->
@@ -45,7 +45,7 @@ defmodule Cog.V1.BundleStatusController do
     end
   end
   def manage_status(conn, %{"id" => id, "status" => desired_status}) when desired_status in ["enabled", "disabled"] do
-    case Repo.one(Bundles.bundle_details(id)) do
+    case Repo.one(Queries.Bundles.for_id(id)) do
       %Bundle{}=bundle ->
         case Bundle.Status.set(bundle, String.to_existing_atom(desired_status)) do
           {:ok, bundle} ->

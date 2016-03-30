@@ -3,28 +3,28 @@ defmodule Cog.V1.BundlesController do
 
   alias Cog.Relay.Relays
   alias Cog.Models.Bundle
-  alias Cog.Models.EctoJson
-  alias Cog.Queries.Bundles
+  alias Cog.Queries
+  alias Cog.Repo
 
   plug Cog.Plug.Authentication
   plug Cog.Plug.Authorization, permission: "#{Cog.embedded_bundle}:manage_commands"
 
   def index(conn, _params) do
-    installed = Repo.all(Bundles.bundle_summaries())
-    json(conn, EctoJson.render(installed, envelope: :bundles, policy: :summary))
+    installed = Repo.all(Queries.Bundles.all)
+    render(conn, "index.json", %{bundles: installed})
   end
 
   def show(conn, %{"id" => id}) do
-    case Repo.one(Bundles.bundle_details(id)) do
+    case Repo.one(Queries.Bundles.for_id(id)) do
       nil ->
         send_resp(conn, 404, Poison.encode!(%{error: "Bundle #{id} not found"}))
       bundle ->
-        json(conn, EctoJson.render(bundle, envelope: :bundle,  policy: :detail))
+        render(conn, "show.json", %{bundle: bundle})
     end
   end
 
   def delete(conn, %{"id" => id}) do
-    case Repo.one(Bundles.bundle_summary(id)) do
+    case Repo.one(Queries.Bundles.for_id(id)) do
       nil ->
         send_resp(conn, 404, Poison.encode!(%{error: "Bundle #{id} not found"}))
       %Bundle{name: "operable"} ->
