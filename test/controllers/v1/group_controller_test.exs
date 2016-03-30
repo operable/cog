@@ -35,6 +35,9 @@ defmodule Cog.V1.GroupControllerTest do
     group = group("aliens")
     conn = api_request(user, :get, "/v1/groups/#{group.id}")
     assert json_response(conn, 200)["group"] == %{"id" => group.id,
+                                                  "members" => %{"roles" => [],
+                                                                 "groups" => [],
+                                                                 "users" => []},
                                                   "name" => group.name}
   end
 

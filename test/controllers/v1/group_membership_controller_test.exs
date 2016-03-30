@@ -59,12 +59,15 @@ defmodule Cog.V1.GroupMembershipController.Test do
     conn = api_request(requestor, :post, "/v1/groups/#{group.id}/membership",
                        body: %{"members" => %{"users" => %{"add" => [user.username]}}})
 
-    assert %{"members" => %{"users" => [%{"id" => user.id,
-                                          "username" => user.username,
-                                          "first_name" => user.first_name,
-                                          "last_name" => user.last_name,
-                                          "email_address" => user.email_address}],
-                            "groups" => []}} == json_response(conn, 200)
+    assert %{"group" => %{"id" => group.id,
+                          "name" => group.name,
+                          "members" => %{"users" => [%{"id" => user.id,
+                                                       "username" => user.username,
+                                                       "first_name" => user.first_name,
+                                                       "last_name" => user.last_name,
+                                                       "email_address" => user.email_address}],
+                                         "roles" => [],
+                                         "groups" => []}}} == json_response(conn, 200)
 
     assert [user] == Repo.preload(group, :direct_user_members).direct_user_members
     assert [group] == Repo.preload(user, :direct_group_memberships).direct_group_memberships
@@ -84,8 +87,10 @@ defmodule Cog.V1.GroupMembershipController.Test do
                        body: %{"members" => %{"users" => %{"add" => usernames}}})
 
     # # Verify the response body
-    %{"members" => %{"users" => users_from_api,
-                     "groups" => []}} = json_response(conn, 200)
+    response = json_response(conn, 200)
+    %{"users" => users_from_api,
+      "roles" => [],
+      "groups" => []} = response["group"]["members"]
 
     # doing this indirect approach for now because Ecto doesn't like
     # to order `has_many through` preloads right now, apparently :(
@@ -121,8 +126,10 @@ defmodule Cog.V1.GroupMembershipController.Test do
     conn = api_request(requestor, :post, "/v1/groups/#{group.id}/membership",
                        body: %{"members" => %{"users" => %{"add" => [new_user.username]}}})
 
-    %{"members" => %{"users" => users_from_api,
-                     "groups" => []}} = json_response(conn, 200)
+    response = json_response(conn, 200)
+    %{"users" => users_from_api,
+      "roles" => [],
+      "groups" => []} = response["group"]["members"]
 
     assert length(users_from_api) == 2
     assert %{"id" => original_user.id,
@@ -157,12 +164,15 @@ defmodule Cog.V1.GroupMembershipController.Test do
     conn = api_request(requestor, :post, "/v1/groups/#{group.id}/membership",
                        body: %{"members" => %{"users" => %{"add" => [already_a_member.username]}}})
 
-    assert %{"members" => %{"users" => [%{"id" => already_a_member.id,
-                                          "username" => already_a_member.username,
-                                          "first_name" => already_a_member.first_name,
-                                          "last_name" => already_a_member.last_name,
-                                          "email_address" => already_a_member.email_address}],
-                            "groups" => []}} == json_response(conn, 200)
+    assert %{"group" => %{"id" => group.id,
+                          "name" => group.name,
+                          "members" => %{"users" => [%{"id" => already_a_member.id,
+                                                       "username" => already_a_member.username,
+                                                       "first_name" => already_a_member.first_name,
+                                                       "last_name" => already_a_member.last_name,
+                                                       "email_address" => already_a_member.email_address}],
+                                         "roles" => [],
+                                         "groups" => []}}} == json_response(conn, 200)
   end
 
   # Add Groups
@@ -175,9 +185,12 @@ defmodule Cog.V1.GroupMembershipController.Test do
     conn = api_request(requestor, :post, "/v1/groups/#{group.id}/membership",
                        body: %{"members" => %{"groups" => %{"add" => [member.name]}}})
 
-    assert %{"members" => %{"users" => [],
-                            "groups" => [%{"id" => member.id,
-                                           "name" => member.name}]}} == json_response(conn, 200)
+    assert %{"group" => %{"id" => group.id,
+                          "name" => group.name,
+                          "members" => %{"users" => [],
+                                         "roles" => [],
+                                         "groups" => [%{"id" => member.id,
+                                                        "name" => member.name}]}}} == json_response(conn, 200)
 
     assert [member] == Repo.preload(group, :direct_group_members).direct_group_members
   end
@@ -193,8 +206,10 @@ defmodule Cog.V1.GroupMembershipController.Test do
                        body: %{"members" => %{"groups" => %{"add" => groupnames}}})
 
     # # Verify the response body
-    %{"members" => %{"users" => [],
-                     "groups" => groups_from_api}} = json_response(conn, 200)
+    response = json_response(conn, 200)
+    %{"users" => [],
+      "roles" => [],
+      "groups" => groups_from_api} = response["group"]["members"]
 
     # doing this indirect approach for now because Ecto doesn't like
     # to order `has_many through` preloads right now, apparently :(
@@ -216,8 +231,10 @@ defmodule Cog.V1.GroupMembershipController.Test do
     conn = api_request(requestor, :post, "/v1/groups/#{group.id}/membership",
                        body: %{"members" => %{"groups" => %{"add" => [new_member.name]}}})
 
-    %{"members" => %{"users" => [],
-                     "groups" => groups_from_api}} = json_response(conn, 200)
+    response = json_response(conn, 200)
+    %{"users" => [],
+      "roles" => [],
+      "groups" => groups_from_api} = response["group"]["members"]
 
     assert length(groups_from_api) == 2
     assert %{"id" => original_member.id,
@@ -248,8 +265,11 @@ defmodule Cog.V1.GroupMembershipController.Test do
 
     conn = api_request(requestor, :post, "/v1/groups/#{group.id}/membership",
                        body: %{"members" => %{"users" => %{"remove" => [user.username]}}})
-    assert %{"members" => %{"users" => [],
-                            "groups" => []}} == json_response(conn, 200)
+    assert %{"group" => %{"id" => group.id,
+                          "name" => group.name,
+                          "members" => %{"users" => [],
+                                         "roles" => [],
+                                         "groups" => []}}} == json_response(conn, 200)
 
     assert [] == Repo.preload(group, :direct_user_members).direct_user_members
   end
@@ -266,8 +286,10 @@ defmodule Cog.V1.GroupMembershipController.Test do
                        body: %{"members" => %{"users" => %{"remove" => usernames}}})
 
     # # Verify the response body
-    %{"members" => %{"users" => [],
-                     "groups" => []}} = json_response(conn, 200)
+    response = json_response(conn, 200)
+    %{"users" => [],
+      "roles" => [],
+      "groups" => []} = response["group"]["members"]
 
     # Each user should also have this group membership reflected
     Enum.each(users, fn(u) ->
@@ -288,12 +310,15 @@ defmodule Cog.V1.GroupMembershipController.Test do
                        body: %{"members" => %{"users" => %{"remove" => [user_to_be_deleted.username]}}})
 
     # only the removed user is, um, removed
-    assert %{"members" => %{"users" => [%{"id" => remaining_user.id,
-                                          "username" => remaining_user.username,
-                                          "first_name" => remaining_user.first_name,
-                                          "last_name" => remaining_user.last_name,
-                                          "email_address" => remaining_user.email_address}],
-                            "groups" => []}} == json_response(conn, 200)
+    assert %{"group" => %{"id" => group.id,
+                          "name" => group.name,
+                          "members" => %{"users" => [%{"id" => remaining_user.id,
+                                                       "username" => remaining_user.username,
+                                                       "first_name" => remaining_user.first_name,
+                                                       "last_name" => remaining_user.last_name,
+                                                       "email_address" => remaining_user.email_address}],
+                                         "roles" => [],
+                                         "groups" => []}}} == json_response(conn, 200)
   end
 
   test "fails all removals if any user does not exist", %{authed: requestor} do
@@ -317,8 +342,11 @@ defmodule Cog.V1.GroupMembershipController.Test do
     conn = api_request(requestor, :post, "/v1/groups/#{group.id}/membership",
                        body: %{"members" => %{"users" => %{"remove" => [not_a_member.username]}}})
 
-    assert %{"members" => %{"users" => [],
-                            "groups" => []}} == json_response(conn, 200)
+    assert %{"group" => %{"id" => group.id,
+                          "name" => group.name,
+                          "members" => %{"users" => [],
+                                         "roles" => [],
+                                         "groups" => []}}} == json_response(conn, 200)
   end
 
   # Remove groups
@@ -332,8 +360,11 @@ defmodule Cog.V1.GroupMembershipController.Test do
     conn = api_request(requestor, :post, "/v1/groups/#{group.id}/membership",
                        body: %{"members" => %{"groups" => %{"remove" => [member.name]}}})
 
-    assert %{"members" => %{"users" => [],
-                            "groups" => []}} == json_response(conn, 200)
+    assert %{"group" => %{"id" => group.id,
+                          "name" => group.name,
+                          "members" => %{"users" => [],
+                                         "roles" => [],
+                                         "groups" => []}}} == json_response(conn, 200)
 
     assert [] == Repo.preload(group, :direct_group_members).direct_group_members
   end
@@ -350,8 +381,9 @@ defmodule Cog.V1.GroupMembershipController.Test do
                        body: %{"members" => %{"groups" => %{"remove" => groupnames}}})
 
     # # Verify the response body
-    %{"members" => %{"users" => [],
-                     "groups" => []}} = json_response(conn, 200)
+    %{"users" => [],
+      "roles" => [],
+      "groups" => []} = json_response(conn, 200)["group"]["members"]
 
     assert [] == Repo.preload(group, :direct_group_members).direct_group_members
   end
@@ -369,9 +401,12 @@ defmodule Cog.V1.GroupMembershipController.Test do
                        body: %{"members" => %{"groups" => %{"remove" => [group_to_be_deleted.name]}}})
 
     # only the removed group is, um, removed
-    assert %{"members" => %{"users" => [],
-                            "groups" => [%{"id" => remaining_group.id,
-                                           "name" => remaining_group.name}]}} == json_response(conn, 200)
+    assert %{"group" => %{"id" => group.id,
+                          "name" => group.name,
+                          "members" => %{"users" => [],
+                                         "roles" => [],
+                                         "groups" => [%{"id" => remaining_group.id,
+                                                        "name" => remaining_group.name}]}}} == json_response(conn, 200)
 
     assert [remaining_group] == Repo.preload(group, :direct_group_members).direct_group_members
   end
@@ -397,8 +432,11 @@ defmodule Cog.V1.GroupMembershipController.Test do
     conn = api_request(requestor, :post, "/v1/groups/#{group.id}/membership",
                        body: %{"members" => %{"groups" => %{"remove" => [not_a_member.name]}}})
 
-    assert %{"members" => %{"users" => [],
-                            "groups" => []}} == json_response(conn, 200)
+    assert %{"group" => %{"id" => group.id,
+                          "name" => group.name,
+                          "members" => %{"users" => [],
+                                         "roles" => [],
+                                         "groups" => []}}} == json_response(conn, 200)
   end
 
   test "retrieving user and group memberships for a group", %{authed: requestor} do
@@ -416,8 +454,9 @@ defmodule Cog.V1.GroupMembershipController.Test do
 
     conn = api_request(requestor, :get, "/v1/groups/#{robots.id}/memberships")
 
-    assert %{"members" => %{"users" => [user1, user2],
-                            "groups" => [group]}} = json_response(conn, 200)
+    assert %{"users" => [user1, user2],
+             "roles" => [],
+             "groups" => [group]} = json_response(conn, 200)["group"]["members"]
 
     assert user1 == %{"id" => hal.id,
                       "username" => hal.username,

@@ -1,7 +1,6 @@
 defmodule Cog.V1.GroupController do
   use Cog.Web, :controller
 
-  alias Cog.Models.EctoJson
   alias Cog.Models.Group
 
   plug Cog.Plug.Authentication
@@ -11,7 +10,8 @@ defmodule Cog.V1.GroupController do
 
   def index(conn, _params) do
     groups = Repo.all(Group)
-    json(conn, EctoJson.render(groups, envelope: :groups, policy: :summary))
+    |> Repo.preload([:direct_user_members, :direct_group_members, :roles])
+    render(conn, "index.json", groups: groups)
   end
 
   def create(conn, %{"group" => group_params}) do
@@ -19,10 +19,11 @@ defmodule Cog.V1.GroupController do
 
     case Repo.insert(changeset) do
       {:ok, group} ->
+        new_group = Repo.preload(group, [:direct_user_members, :direct_group_members, :roles])
         conn
         |> put_status(:created)
         |> put_resp_header("location", group_path(conn, :show, group))
-        |> json(EctoJson.render(group, envelope: :group, policy: :detail))
+        |> render("show.json", group: new_group)
       {:error, changeset} ->
         conn
         |> put_status(:unprocessable_entity)
@@ -32,7 +33,8 @@ defmodule Cog.V1.GroupController do
 
   def show(conn, %{"id" => id}) do
     group = Repo.get!(Group, id)
-    json(conn, EctoJson.render(group, envelope: :group, policy: :detail))
+    |> Repo.preload([:direct_user_members, :direct_group_members, :roles])
+    render(conn, "show.json", group: group)
   end
 
   def update(conn, %{"id" => id, "group" => group_params}) do
@@ -41,7 +43,7 @@ defmodule Cog.V1.GroupController do
 
     case Repo.update(changeset) do
       {:ok, group} ->
-        json(conn, EctoJson.render(group, envelope: :group, policy: :detail))
+        render(conn, "show.json", group: group)
       {:error, changeset} ->
         conn
         |> put_status(:unprocessable_entity)
