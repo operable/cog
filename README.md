@@ -52,9 +52,11 @@ Cog will be run on `http://localhost:4000`.
 
     $ make test
 
-HTTP requests in integration tests are recorded and stubbed out in
-future test runs. To regenerate these stubs by making actual HTTP
-requests delete the files you wish to regenerate and run the tests.
+HTTP requests in integration tests are recorded and stubbed out for future test
+runs. Recording new cassettes, json files of serialized requests and responses,
+happens automatically when using the `Cog.VCR.use_cassette` macro. To
+regenerate these stubs by making actual HTTP requests delete the files you wish
+to regenerate and run the tests.
 
 For instance, to update all tests you could run this:
 
