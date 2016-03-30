@@ -1,5 +1,5 @@
 use Mix.Config
-use Cog.Config.Helpers
+import Cog.Config.Helpers
 
 # ========================================================================
 # Chat Adapters
