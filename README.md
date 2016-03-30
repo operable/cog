@@ -48,6 +48,23 @@ With those installed, setup your computer with:
 
 Cog will be run on `http://localhost:4000`.
 
+## Testing
+
+    $ make test
+
+HTTP requests in integration tests are recorded and stubbed out for future test
+runs. Recording new cassettes, json files of serialized requests and responses,
+happens automatically when using the `Cog.VCR.use_cassette` macro. To
+regenerate these stubs by making actual HTTP requests delete the files you wish
+to regenerate and run the tests.
+
+For instance, to update all tests you could run this:
+
+    $ rm test/fixtures/cassettes/* && make test
+
+Just make sure you have the `TEST_SLACK=1` and `TEST_HIPCHAT=1`
+environment variables set.
+
 ## Resources
 
 * [Cog Wiki](https://github.com/operable/cog/wiki)

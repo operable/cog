@@ -25,10 +25,11 @@ defmodule Cog.VCR do
         |> Map.to_list
         |> List.last
         |> elem(0)
-        |> to_string
+
+        module = __CALLER__.module
 
         quote do
-          use_cassette(unquote(test_name)) do
+          use_cassette("#{unquote(module)}.#{unquote(test_name)}", match_requests_on: [:query, :request_body]) do
             unquote(context)
           end
         end

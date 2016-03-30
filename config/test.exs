@@ -31,3 +31,6 @@ config :ex_unit,
   timeout: 180000 # 3 minutes
   # The increased timeout allows integration tests enough time to properly
   # timeout on their own after 2 minutes.
+
+config :cog, Cog.Adapters.Slack,
+  api_cache_ttl: -1
