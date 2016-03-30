@@ -90,12 +90,6 @@ defmodule Cog.AdapterCase do
 
     ExVCR.Mock.mock_methods(recorder, @vcr_adapter)
 
-    # This is awful, but there's something async happening here and requests
-    # made in the `setup` function were not being recorded causing sequentail
-    # requests to fail with a missing request exception. Some of the casts to
-    # the ExVCR.Actor.Responses process seem suspicious.
-    :timer.sleep(1000)
-
     recorder
   end
 
