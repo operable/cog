@@ -141,7 +141,7 @@ defmodule Cog.V1.UserControllerTest do
     assert conn.status == 403
   end
 
-  test "retrieving groups for each user", %{authed: requestor, unauthed: other} do
+  test "retrieving groups for each user", %{authed: requestor} do
     group = group("robots")
     Groupable.add_to(requestor, group)
     conn = api_request(requestor, :get, "/v1/users")
@@ -153,7 +153,7 @@ defmodule Cog.V1.UserControllerTest do
     assert Map.fetch!(groups, "id") == group.id
   end
 
-  test "retrieving groups a specific user belongs in", %{authed: requestor, unauthed: other} do
+  test "retrieving groups a specific user belongs in", %{authed: requestor} do
     group = group("robots")
     Groupable.add_to(requestor, group)
 
