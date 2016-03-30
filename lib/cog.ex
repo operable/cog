@@ -18,13 +18,18 @@ defmodule Cog do
     case Supervisor.start_link(children, opts) do
       {:ok, top_sup} ->
         # Verify the latest schema migration after starting the database worker
-        {sm_status, sm_message} = verify_schema_migration()
-        log_message(sm_status, sm_message)
-        if sm_status == :error do
-          abort_cog()
-        else
-          {:ok, top_sup}
-        end
+        #
+        # NOTE: This _may_ cause issues in the future, since we
+        # currently announce and install the embedded bundle during
+        # startup (i.e., before doing the schema migration check). If
+        # at some point we were to automatically upgrade the embedded
+        # bundle in such a way that required a database migration
+        # beforehand, the resulting error might be confusing.
+        #
+        # Consider doing this in a process that runs after the Repo
+        # comes up, but before anything else is done
+        :ok = verify_schema_migration!
+        {:ok, top_sup}
       error ->
         error
     end
@@ -100,39 +105,43 @@ defmodule Cog do
     end
   end
 
-  defp log_message(:ok, message), do: Logger.info(message)
-  defp log_message(:error, message), do: Logger.error(message)
-  defp log_message(_status, message), do: Logger.warn(message)
-
-  defp verify_schema_migration() do
-    cond do
-      migration_needed? and Mix.env == :dev ->
-        {:dev, "The migration schema is not synchronized. Allowing to continue in the development environment."}
-      migration_needed? ->
-        {:error, "The migration schema is not up-to-date. Please perform a migration and restart Cog."}
-      true ->
-        {:ok, "Schema is at the current version"}
+  defp verify_schema_migration! do
+    case migration_status do
+      :ok ->
+        Logger.info("Database schema is up-to-date")
+      {:error, have, want} ->
+        case Mix.env do
+          :dev ->
+            Logger.warn("The database schema is at version #{have}, but the latest schema is #{want}. Allowing to continue in the development environment.")
+          _ ->
+            raise RuntimeError, "The database schema is at version #{have}, but the latest schema is #{want}. Please perform a migration and restart Cog."
+        end
     end
   end
 
-  defp migration_needed?() do
-    [last_file_version, _] = Path.join([:code.priv_dir(:cog), "repo", "migrations"])
+  # Determine if the database has had all migrations applied. If not,
+  # return the currently applied version and the latest unapplied version
+  @spec migration_status :: :ok | {:error, have, want} when have: pos_integer,
+                                                            want: pos_integer
+  defp migration_status do
+    # Migration file names are like `20150923192906_create_users.exs`;
+    # take the leading date portion of the most recent migration as
+    # the version
+    latest_migration = Path.join([:code.priv_dir(:cog), "repo", "migrations"])
     |> File.ls!
     |> Enum.max
     |> String.split("_", parts: 2)
+    |> List.first
+    |> String.to_integer
 
-    last_db_version = Enum.max(Ecto.Migration.SchemaMigration.migrated_versions(Cog.Repo, "public"))
+    # Perform similar logic to see what's latest in the database
+    latest_applied_migration = Enum.max(Ecto.Migration.SchemaMigration.migrated_versions(Cog.Repo, "public"))
 
-    if last_db_version != String.to_integer(last_file_version) do
-      true
+    if latest_applied_migration == latest_migration do
+      :ok
     else
-      false
+      {:error, latest_applied_migration, latest_migration}
     end
   end
 
-  defp abort_cog() do
-    Logger.error("Application start aborted.")
-    Logger.flush()
-    :init.stop()
-  end
 end
