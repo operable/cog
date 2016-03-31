@@ -24,7 +24,7 @@
   "exml": {:git, "https://github.com/paulgray/exml.git", "4ae6dea65f97764663c43d0bafb177dc702b5c3f", [tag: "2.2.1"]},
   "exvcr": {:git, "https://github.com/operable/exvcr.git", "f64a59aeaf5e4b07bc2ba560786abb6e3bea12dc", [branch: "fix-cached-status-code"]},
   "fs": {:hex, :fs, "0.9.2"},
-  "fumanchu": {:git, "https://github.com/operable/fumanchu.git", "e467958d720cbc91c46b486046e598fcff3f60f9", [ref: "cog-0.2"]},
+  "fumanchu": {:git, "https://github.com/operable/fumanchu.git", "d16846a508a419460fdac31cb9a3327e0c8d5036", []},
   "gen_logger": {:git, "git://github.com/emqtt/gen_logger.git", "f985723843926f1814818bf63646b3dedf5c9fb3", [branch: "master"]},
   "getopt": {:git, "https://github.com/jcomellas/getopt.git", "626698975e63866156159661d100785d65eab6f9", [branch: "master"]},
   "goldrush": {:hex, :goldrush, "0.1.7"},

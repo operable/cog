@@ -70,7 +70,7 @@ defmodule Cog.Mixfile do
      {:spanner, github: "operable/spanner"},
      {:probe, github: "operable/probe", tag: "0.2"},
      {:exml, github: "paulgray/exml", tag: "2.2.1"},
-     {:fumanchu, github: "operable/fumanchu", ref: "cog-0.2"},
+     {:fumanchu, github: "operable/fumanchu"},
      {:exirc, "~> 0.9.2"},
      {:exjsx, "~> 3.2", override: true},
 
