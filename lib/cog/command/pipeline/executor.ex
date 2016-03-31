@@ -388,10 +388,10 @@ defmodule Cog.Command.Pipeline.Executor do
   # adapter/destination it is to be sent to, and send it to each.
   defp respond(%__MODULE__{}=state) do
     output = state.output
-    command = state.current_plan.command
+    bundle = state.current_plan.command.bundle
     destinations = state.destinations
     adapters = Map.keys(destinations)
-    rendered = render_for_adapters(output, command, adapters)
+    rendered = render_for_adapters(output, bundle, adapters)
 
     case rendered do
       {:error, {error, template, adapter}} ->
@@ -412,12 +412,12 @@ defmodule Cog.Command.Pipeline.Executor do
 
 
   # Return a map of adapter -> rendered message
-  @spec render_for_adapters(List.t, %Cog.Models.Command{}, [adapter_name]) ::
+  @spec render_for_adapters(List.t, %Cog.Models.Bundle{}, [adapter_name]) ::
                            %{adapter_name => String.t} |
                            {:error, {term, term, term}} # {error, template, adapter}
-  defp render_for_adapters(data, command, adapters) do
+  defp render_for_adapters(data, bundle, adapters) do
     Enum.reduce_while(adapters, %{}, fn(adapter, acc) ->
-      case render_templates(data, command, adapter) do
+      case render_templates(data, bundle, adapter) do
         {:error, _}=error ->
           {:halt, error}
         message ->
@@ -428,10 +428,10 @@ defmodule Cog.Command.Pipeline.Executor do
 
   # For a specific adapter, render each output, concatenating all
   # results into a single response string
-  defp render_templates(command_output, command, adapter) do
+  defp render_templates(command_output, bundle, adapter) do
     rendered_templates = Enum.reduce_while(command_output, [], fn({data, template}, acc) ->
       try do
-        rendered_template = render_template(command, adapter, template, data)
+        rendered_template = render_template(bundle, adapter, template, data)
         {:cont, [rendered_template | acc]}
       rescue
         error ->
@@ -449,21 +449,21 @@ defmodule Cog.Command.Pipeline.Executor do
   end
 
   # Render a single output
-  defp render_template(command, adapter, nil, context),
-    do: render_template(command, adapter, default_template(context), context)
-  defp render_template(command, adapter, template, context) do
+  defp render_template(bundle, adapter, nil, context),
+    do: render_template(bundle, adapter, default_template(context), context)
+  defp render_template(bundle, adapter, template, context) do
     # If `TemplateCache.lookup/3` returns nil instead of a function,
     # we know that the adapter doesn't have a template with the given
     # name. In this case, we can fall back to no template and run
     # through render_template again to pick up a default
     #
     # This is *NOT* a long-term solution.
-    case TemplateCache.lookup(command.bundle.id, adapter, template) do
+    case TemplateCache.lookup(bundle.id, adapter, template) do
       fun when is_function(fun) ->
         fun.(context)
       nil ->
-        Logger.warn("The template `#{template}` was not found for adapter `#{adapter}` in bundle `#{command.bundle.name}`; falling back to the default")
-        render_template(command, adapter, nil, context)
+        Logger.warn("The template `#{template}` was not found for adapter `#{adapter}` in bundle `#{bundle.name}`; falling back to the default")
+        render_template(bundle, adapter, nil, context)
     end
   end
 
