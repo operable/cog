@@ -2,7 +2,7 @@ defmodule Cog.Queries.Template do
   use Cog.Queries
   alias Cog.Models.Template
 
-  def template_source(bundle_id, adapter, name) do
+  def template_source(adapter, bundle_id, name) do
     from t in Template,
     where: t.bundle_id == ^bundle_id and
       t.adapter == ^adapter and

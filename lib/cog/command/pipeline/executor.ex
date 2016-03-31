@@ -81,7 +81,7 @@ defmodule Cog.Command.Pipeline.Executor do
   alias Cog.Events.PipelineEvent
   alias Cog.Queries
   alias Cog.Repo
-  alias Cog.TemplateCache
+  alias Cog.Template
   alias Piper.Command.Ast
   alias Piper.Command.Parser
   alias Piper.Command.ParserOptions
@@ -430,11 +430,10 @@ defmodule Cog.Command.Pipeline.Executor do
   # results into a single response string
   defp render_templates(adapter, bundle, output) do
     rendered_templates = Enum.reduce_while(output, [], fn({context, template}, acc) ->
-      try do
-        rendered_template = render_template(adapter, bundle, template, context)
-        {:cont, [rendered_template | acc]}
-      rescue
-        error ->
+      case render_template(adapter, bundle, template, context) do
+        {:ok, result} ->
+          {:cont, [result|acc]}
+        {:error, error} ->
           {:halt, {:error, {error, template, adapter}}}
       end
     end)
@@ -449,29 +448,17 @@ defmodule Cog.Command.Pipeline.Executor do
     end
   end
 
-  # Render a single output
-  defp render_template(adapter, bundle, nil, context),
-    do: render_template(adapter, bundle, default_template(context), context)
   defp render_template(adapter, bundle, template, context) do
-    # If `TemplateCache.lookup/3` returns nil instead of a function,
-    # we know that the adapter doesn't have a template with the given
-    # name. In this case, we can fall back to no template and run
-    # through render_template again to pick up a default
-    #
-    # This is *NOT* a long-term solution.
-    case TemplateCache.lookup(bundle.id, adapter, template) do
-      fun when is_function(fun) ->
-        fun.(context)
-      nil ->
+    case Template.render(adapter, bundle.id, template, context) do
+      {:ok, output} ->
+        {:ok, output}
+      {:error, :template_not_found} ->
         Logger.warn("The template `#{template}` was not found for adapter `#{adapter}` in bundle `#{bundle.name}`; falling back to the default")
-        render_template(adapter, bundle, nil, context)
+        Template.render("any", bundle.id, template, context)
+      {:error, error} ->
+        {:error, error}
     end
   end
-
-  defp default_template(%{"body" => _}),                  do: "text"
-  defp default_template(context) when is_binary(context), do: "text"
-  defp default_template(context) when is_map(context),    do: "json"
-  defp default_template(_),                               do: "raw"
 
   # make a list of {msg, adapter, dest}... slightly easier to process
   # in the end this way.
