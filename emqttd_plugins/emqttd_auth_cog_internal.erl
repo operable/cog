@@ -16,7 +16,7 @@ description() ->
 
 
 check(Client, Password, _) ->
-  case 'Elixir.Cog.BusCredentials':'connect_allowed?'(Client, Password) of
+  case 'Elixir.Cog.BusEnforcer':'connect_allowed?'(Client, Password) of
     true ->
       ok;
     false ->

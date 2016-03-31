@@ -16,7 +16,7 @@ init(_) ->
 check_acl({_Client, publish, _}, _State) ->
   allow;
 check_acl({Client, subscribe, Topic}, _State) ->
-  case 'Elixir.Cog.BusCredentials':'subscription_allowed?'(Client, Topic) of
+  case 'Elixir.Cog.BusEnforcer':'subscription_allowed?'(Client, Topic) of
     false ->
       deny;
     true ->
