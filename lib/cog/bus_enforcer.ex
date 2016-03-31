@@ -1,4 +1,4 @@
-defmodule Cog.BusCredentials do
+defmodule Cog.BusEnforcer do
   @moduledoc """
   Checks credentials for connecting MQTT clients and
   enforces subscription ACLs for Relays
@@ -9,6 +9,7 @@ defmodule Cog.BusCredentials do
 
   alias Cog.Repo
   alias Cog.Queries
+  alias Cog.Models.Relay
   alias Cog.Passwords
 
   Record.defrecord :mqtt_client, Record.extract(:mqtt_client, from_lib: "emqttd/include/emqttd.hrl")
@@ -32,7 +33,7 @@ defmodule Cog.BusCredentials do
             false
         end
       username ->
-        case Queries.Relay.exists?(username) do
+        case Repo.exists?(Relay, username) do
           false ->
             false
           true ->
