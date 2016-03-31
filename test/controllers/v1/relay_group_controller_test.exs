@@ -46,6 +46,7 @@ defmodule Cog.V1.RelayGroupControllerTest do
     assert %{"relay_group" => %{"id" => relay_group.id,
                                 "name" => relay_group.name,
                                 "relays" => [],
+                                "bundles" => [],
                                 "inserted_at" => "#{DateTime.to_iso8601(relay_group.inserted_at)}",
                                 "updated_at" => "#{DateTime.to_iso8601(relay_group.updated_at)}"}} == json_response(conn, 200)
   end

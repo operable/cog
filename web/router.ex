@@ -57,6 +57,8 @@ defmodule Cog.Router do
     resources "/v1/relay_groups", V1.RelayGroupController
     get "/v1/relay_groups/:id/relays", V1.RelayGroupMembershipController, :index
     post "/v1/relay_groups/:id/membership", V1.RelayGroupMembershipController, :manage_membership
+    get "/v1/relay_groups/:id/bundles", V1.RelayGroupMembershipController, :index
+    post "/v1/relay_groups/:id/assignment", V1.RelayGroupMembershipController, :manage_assignment
   end
 
   scope "/", Cog do

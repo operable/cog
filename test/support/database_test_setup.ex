@@ -1,5 +1,8 @@
 defmodule DatabaseTestSetup do
   use Cog.Models
+
+  import Cog.Support.ModelUtilities, only: [namespace: 2]
+
   alias Cog.Repo
 
   @doc """
@@ -38,13 +41,47 @@ defmodule DatabaseTestSetup do
   end
 
   @doc """
-  Create a bundle with the given name
+  Creates a bundle record
   """
-  #  TODO: FIXME
-  def bundle(name) do
-    %Bundle{}
-    |> Bundle.changeset(%{name: name, config_file: %{}, manifest_file: %{}})
-    |> Repo.insert!
+  def bundle(name, commands \\ [%{"name": "echo"}], opts \\ []) do
+    command_template = %{
+      "version" => "0.0.1",
+      "options" => [],
+      "name" => "echo",
+      "executable" => "/bin/echo",
+      "execution" => "multiple",
+      "enforcing" => false,
+      "documentation" => "does stuff",
+      "calling_convention" => "bound"
+    }
+
+    bundle_template = %{
+      "bundle" => %{"name" => "bundle_name"},
+      "templates" => [],
+      "rules" => [],
+      "permissions" => [],
+      "commands" => []
+    }
+
+    command_config = for command <- commands do
+      Map.merge(command_template, command)
+    end
+
+    bundle_config = bundle_template
+    |> Map.put("name", name)
+    |> Map.put("commands", command_config)
+    |> Map.merge(Enum.into(opts, %{}))
+
+    bundle =
+      %Bundle{}
+      |> Bundle.changeset(%{name: name,
+                            config_file: bundle_config,
+                            manifest_file: %{}})
+      |> Repo.insert!
+
+    namespace(name, bundle.id)
+
+    bundle
   end
 
   @doc """

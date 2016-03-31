@@ -131,11 +131,11 @@ defmodule Cog.Support.ModelUtilities do
   end
 
   @doc "Create or retrieve a permission namespace with the given `name`"
-  def namespace(name) do
+  def namespace(name, bundle_id \\ nil) do
     namespace = Repo.get_by(Namespace, name: name)
     case namespace do
       nil ->
-        Repo.insert! %Namespace{name: name}
+        Repo.insert! %Namespace{name: name, bundle_id: bundle_id}
       _ ->
         namespace
     end
@@ -188,20 +188,6 @@ defmodule Cog.Support.ModelUtilities do
   end
 
   @doc """
-  Remove everything from the database.
-
-  As this removes bundles, too, we want to terminate any running
-  bundle processes, so they won't interfere with anything you might
-  reload later.
-  """
-  def clean_db! do
-    [Bundle, User, Group, Role, Namespace]
-    |> Enum.each(&Repo.delete_all/1)
-
-    Supervisor.terminate_child(Cog.Relay.RelaySup, Cog.Bundle.Embedded)
-  end
-
-  @doc """
   Creates a relay record
   """
   def relay(name, token, opts \\ []) do
@@ -230,6 +216,30 @@ defmodule Cog.Support.ModelUtilities do
     |> RelayGroupMembership.changeset(%{group_id: group_id,
                                         relay_id: relay_id})
     |> Repo.insert!
+  end
+
+  @doc """
+  Assigns a bundle to a relay group
+  """
+  def assign_bundle_to_group(group_id, bundle_id) do
+    %RelayGroupAssignment{}
+    |> RelayGroupAssignment.changeset(%{group_id: group_id,
+                                        bundle_id: bundle_id})
+    |> Repo.insert!
+  end
+
+  @doc """
+  Remove everything from the database.
+
+  As this removes bundles, too, we want to terminate any running
+  bundle processes, so they won't interfere with anything you might
+  reload later.
+  """
+  def clean_db! do
+    [Bundle, User, Group, Relay, Role, Namespace]
+    |> Enum.each(&Repo.delete_all/1)
+
+    Supervisor.terminate_child(Cog.Relay.RelaySup, Cog.Bundle.Embedded)
   end
 
 end

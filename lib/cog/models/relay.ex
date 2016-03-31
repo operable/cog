@@ -16,35 +16,37 @@ defmodule Cog.Models.Relay do
 
     timestamps
   end
-    @required_fields ~w(name)
-    @optional_fields ~w(token enabled desc)
 
-    def changeset(model, params \\ :empty) do
-      model
-      |> cast(params, @required_fields, @optional_fields)
-      |> validate_presence_on_insert(:token)
-      |> encode_token
-      |> unique_constraint(:name)
-    end
+  @required_fields ~w(name)
+  @optional_fields ~w(token enabled desc)
 
-    def validate_presence_on_insert(changeset, :token) do
-      case {get_field(changeset, :id), get_field(changeset, :token)} do
-        {nil, nil} ->
-          changeset
-          |> add_error(:token, "can't be blank")
-        _ ->
-          changeset
-      end
-    end
+  def changeset(model, params \\ :empty) do
+    model
+    |> Repo.preload(:groups)
+    |> cast(params, @required_fields, @optional_fields)
+    |> validate_presence_on_insert(:token)
+    |> encode_token
+    |> unique_constraint(:name)
+  end
 
-    def encode_token(changeset) do
-      case fetch_change(changeset, :token) do
-        {:ok, token} ->
-          changeset
-          |> put_change(:token_digest, Passwords.encode(token))
-        :error ->
-          changeset
-      end
+  def validate_presence_on_insert(changeset, :token) do
+    case {get_field(changeset, :id), get_field(changeset, :token)} do
+      {nil, nil} ->
+        changeset
+        |> add_error(:token, "can't be blank")
+      _ ->
+        changeset
     end
+  end
+
+  def encode_token(changeset) do
+    case fetch_change(changeset, :token) do
+      {:ok, token} ->
+        changeset
+        |> put_change(:token_digest, Passwords.encode(token))
+      :error ->
+        changeset
+    end
+  end
 
 end

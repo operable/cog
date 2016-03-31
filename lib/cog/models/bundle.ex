@@ -12,6 +12,9 @@ defmodule Cog.Models.Bundle do
     has_many :templates, Template
     has_one :namespace, Namespace
 
+    has_many :group_assignments, RelayGroupAssignment, foreign_key: :bundle_id
+    has_many :relay_groups, through: [:group_assignments, :group]
+
     timestamps
   end
 
@@ -23,6 +26,7 @@ defmodule Cog.Models.Bundle do
 
   def changeset(model, params \\ :empty) do
     model
+    |> Repo.preload(:relay_groups)
     |> cast(params, @required_fields, @optional_fields)
     |> validate_format(:name, ~r/\A[A-Za-z0-9\_\-\.]+\z/)
     |> unique_constraint(:name, name: :bundles_name_index)
