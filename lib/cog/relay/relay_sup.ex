@@ -6,6 +6,7 @@ defmodule Cog.Relay.RelaySup do
 
   def init([]) do
     children = [worker(Cog.Relay.Relays, []),
+                worker(Cog.Relay.Info, []),
                 supervisor(Cog.Bundle.Embedded, [])]
     supervise(children, strategy: :rest_for_one)
   end

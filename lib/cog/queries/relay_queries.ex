@@ -3,7 +3,7 @@ defmodule Cog.Queries.Relay do
 
   def all() do
     from r in Relay,
-    preload: [:groups]
+    preload: [groups: :bundles]
   end
 
   def for_id(id) do
