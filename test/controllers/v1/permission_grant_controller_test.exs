@@ -2,6 +2,9 @@ defmodule Cog.V1.PermissionGrantController.Test do
   use Cog.ModelCase
   use Cog.ConnCase
 
+  # TODO: Clean this up when the underlying data model is simplified
+  #       to match what's exposed in the API.
+
   # When these tests were written, permissions were allowed to be
   # associated with users, groups, or roles. This model has been
   # simplified to only allow permissions to be associated with roles,
