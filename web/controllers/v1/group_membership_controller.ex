@@ -18,6 +18,13 @@ defmodule Cog.V1.GroupMembershipController do
     render(conn, "show.json", group: group)
   end
 
+  def manage_group_users(conn, %{"users" => user_spec}=params) do
+    params
+    |> Map.put("members", %{"users" => user_spec})
+    |> Map.delete("users")
+    |> fn(param) -> manage_membership(conn, param) end.()
+  end
+
   # Manage the membership of a group. Users and groups can be added
   # and removed (multiples of each, all at the same time!) using this
   # function. Everything is governed by the request body, which we'll
@@ -30,7 +37,7 @@ defmodule Cog.V1.GroupMembershipController do
   #                  "groups" => %{"add" => ["group_to_add_1", "group_to_add_2"],
   #                                "remove" => ["group_to_remove"]}}}
   #
-  # Provide the usernames of Users, and the names of Groups that you
+  # Provide the email addresses of Users, and the names of Groups that you
   # want to be members (or not) of the target group (as specified by
   # `id`). All changes are made transactionally, so if any given names
   # don't refer to a database entity, no changes in membership are
@@ -96,7 +103,7 @@ defmodule Cog.V1.GroupMembershipController do
   #     > lookup_or_fail(%{"users" => %{"add" => ["cog"]}},
   #                         ["users", "add"],
   #                         User)
-  #     [%User{username: "cog", ...}]
+  #     [%User{email_address: "cog", ...}]
   #
   defp lookup_or_fail(member_spec, [kind, _operation]=path) do
     names = get_in(member_spec, path) || []
@@ -116,7 +123,7 @@ defmodule Cog.V1.GroupMembershipController do
   # Example:
   #
   #     > lookup_all("users", ["cog"])
-  #     {:ok, [%User{username: "cog", ...}]}
+  #     {:ok, [%User{email_address: "cog", ...}]}
   #
   #     > lookup_all("users", ["not_a_user", "cog", "badguy"])
   #     {:error, {:not_found, {"users", ["not_a_user", "badguy"]}}}
@@ -125,7 +132,7 @@ defmodule Cog.V1.GroupMembershipController do
   defp lookup_all(kind, names) when kind in ["users", "groups", "roles"] do
 
     type = kind_to_type(kind) # e.g. "users" -> User
-    unique_name_field = unique_name_field(type) # e.g. User -> :username
+    unique_name_field = unique_name_field(type) # e.g. User -> :email_address
 
     results = Repo.all(from t in type, where: field(t, ^unique_name_field) in ^names)
 
@@ -177,7 +184,7 @@ defmodule Cog.V1.GroupMembershipController do
   defp kind_to_type("roles"), do: Role
 
   # Given a type, return the field for its unique name
-  defp unique_name_field(User), do: :username
+  defp unique_name_field(User), do: :email_address
   defp unique_name_field(Group), do: :name
   defp unique_name_field(Role), do: :name
 

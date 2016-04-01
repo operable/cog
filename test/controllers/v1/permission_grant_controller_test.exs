@@ -2,6 +2,12 @@ defmodule Cog.V1.PermissionGrantController.Test do
   use Cog.ModelCase
   use Cog.ConnCase
 
+  # When these tests were written, permissions were allowed to be
+  # associated with users, groups, or roles. This model has been
+  # simplified to only allow permissions to be associated with roles,
+  # but the parameterized test scaffolding has been retained for
+  # the time being. More information about this structure is below.
+  #
   # All the permission granting/revoking API endpoints share similar
   # structure, and are all implemented by the same code. As such, the
   # tests for granting permissions to users and granting them to roles
@@ -67,7 +73,7 @@ defmodule Cog.V1.PermissionGrantController.Test do
   # For each kind of entity we want to test, we'll generate a whole
   # series of tests focused around testing the manipulation of
   # permissions on that kind of entity.
-  [:user, :role, :group] |> Enum.each(
+  [:role] |> Enum.each(
     fn(base) ->
 
       # Grant
