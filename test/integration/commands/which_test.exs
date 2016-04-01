@@ -1,6 +1,5 @@
 defmodule Integration.Commands.WhichTest do
   use Cog.AdapterCase, adapter: "test"
-  alias Cog.Integration.Helpers
 
   setup do
     user = user("vanstee", first_name: "Patrick", last_name: "Van Stee")
@@ -10,40 +9,46 @@ defmodule Integration.Commands.WhichTest do
   end
 
   test "an alias in the 'user' visibility", %{user: user} do
-    expected_map = %{type: "alias", scope: "user", name: "my-new-alias", pipeline: "echo My New Alias"}
-
     send_message(user, "@bot: operable:alias new my-new-alias \"echo My New Alias\"")
 
-    expected_response = Helpers.render_template("which", expected_map)
-    send_message(user, "@bot: operable:which my-new-alias")
-    |> assert_message(expected_response)
+    response = send_message(user, "@bot: operable:which my-new-alias")
+
+    assert_payload(response, %{
+      type: "alias",
+      scope: "user",
+      name: "my-new-alias",
+      pipeline: "echo My New Alias"
+    })
   end
 
   test "an alias in the 'site' visibility", %{user: user} do
-    expected_map = %{type: "alias", scope: "site", name: "my-new-alias", pipeline: "echo My New Alias"}
-
     send_message(user, "@bot: operable:alias new my-new-alias \"echo My New Alias\"")
     send_message(user, "@bot: operable:alias mv my-new-alias site")
 
-    expected_response = Helpers.render_template("which", expected_map)
-    send_message(user, "@bot: operable:which my-new-alias")
-    |> assert_message(expected_response)
+    response = send_message(user, "@bot: operable:which my-new-alias")
+
+    assert_payload(response, %{
+      type: "alias",
+      scope: "site",
+      name: "my-new-alias",
+      pipeline: "echo My New Alias"
+    })
   end
 
   test "a command", %{user: user} do
-    expected_map = %{type: "command", scope: "operable", name: "alias"}
+    response = send_message(user, "@bot: operable:which alias")
 
-    expected_response = Helpers.render_template("which", expected_map)
-    send_message(user, "@bot: operable:which alias")
-    |> assert_message(expected_response)
+    assert_payload(response, %{
+      type: "command",
+      scope: "operable",
+      name: "alias"
+    })
   end
 
   test "an unknown", %{user: user} do
-    expected_map = %{not_found: true}
+    response = send_message(user, "@bot: operable:which foo")
 
-    expected_response = Helpers.render_template("which", expected_map)
-    send_message(user, "@bot: operable:which foo")
-    |> assert_message(expected_response)
+    assert_payload(response, %{not_found: true})
   end
 
 end

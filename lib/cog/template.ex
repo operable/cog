@@ -18,6 +18,10 @@ defmodule Cog.Template do
     fetch_source(adapter, bundle_id, default_template(context), context)
   end
 
+  def fetch_source("test", _bundle_id, _template, context) do
+    fetch_source("any", nil, "raw", context)
+  end
+
   # That extra newline is there for a reason. Mustache spec strips newlines
   # following a standalone partial. No idea why.
   def fetch_source("slack", _bundle_id, "json", _context) do
@@ -56,8 +60,8 @@ defmodule Cog.Template do
     {:ok, source}
   end
 
-  def fetch_source("any", bundle_id, template, _context) do
-    case fetch("any", bundle_id, template) do
+  def fetch_source("any", _bundle_id, template, _context) do
+    case fetch("any", nil, template) do
       nil ->
         {:error, :template_not_found}
       source ->
@@ -65,10 +69,10 @@ defmodule Cog.Template do
     end
   end
 
-  def fetch_source(adapter, bundle_id, template, context) do
+  def fetch_source(adapter, bundle_id, template, _context) do
     case fetch(adapter, bundle_id, template) do
       nil ->
-        fetch_source("any", bundle_id, template, context)
+        {:error, :template_not_found}
       source ->
         {:ok, source}
     end

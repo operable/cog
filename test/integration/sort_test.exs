@@ -23,10 +23,10 @@ defmodule Integration.SortTest do
 
   test "sorting strings", %{user: user} do
     send_message(user, "@bot: operable:sort --desc Life goes on")
-    |> assert_message("on\ngoes\nLife")
+    |> assert_message("\"on\"\n\"goes\"\n\"Life\"")
 
     send_message(user, "@bot: operable:sort Life is 10 percent what happens to us and 90% how we react to it")
-    |> assert_message("10\n90%\nLife\nand\nhappens\nhow\nis\nit\npercent\nreact\nto\nto\nus\nwe\nwhat")
+    |> assert_message("10\n\"90%\"\n\"Life\"\n\"and\"\n\"happens\"\n\"how\"\n\"is\"\n\"it\"\n\"percent\"\n\"react\"\n\"to\"\n\"to\"\n\"us\"\n\"we\"\n\"what\"")
   end
 
   test "sorting in a pipeline", %{user: user} do
