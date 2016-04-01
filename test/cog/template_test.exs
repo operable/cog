@@ -10,7 +10,7 @@ defmodule Cog.TemplateTest do
       }
     }
 
-    {:ok, output} = Template.render("slack", 1, "json", context)
+    {:ok, output} = Template.render("slack", nil, "json", context)
 
     assert output == """
     ```

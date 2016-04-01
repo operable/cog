@@ -18,64 +18,17 @@ defmodule Cog.Template do
     fetch_source(adapter, bundle_id, default_template(context), context)
   end
 
+  # Always use the raw template when responding to the test adapter.
+  # Used in integration tests.
   def fetch_source("test", _bundle_id, _template, context) do
     fetch_source("any", nil, "raw", context)
   end
 
-  # That extra newline is there for a reason. Mustache spec strips newlines
-  # following a standalone partial. No idea why.
-  def fetch_source("slack", _bundle_id, "json", _context) do
-    source = """
-    ```
-    {{> json}}
-
-    ```
-    """
-
-    {:ok, source}
-  end
-
-  def fetch_source("hipchat", _bundle_id, "json", _context) do
-    source = """
-    /code
-    {{> json}}
-    """
-
-    {:ok, source}
-  end
-
-  def fetch_source(_adapter, _bundle_id, template, _contenxt) when template in ["raw", "json"] do
-    source = """
-    {{> json}}
-    """
-
-    {:ok, source}
-  end
-
-  def fetch_source(_adapter, _bundle_id, "text", _contenxt) do
-    source = """
-    {{> text}}
-    """
-
-    {:ok, source}
-  end
-
-  def fetch_source("any", _bundle_id, template, _context) do
-    case fetch("any", nil, template) do
-      nil ->
-        {:error, :template_not_found}
-      source ->
-        {:ok, source}
-    end
-  end
-
   def fetch_source(adapter, bundle_id, template, _context) do
-    case fetch(adapter, bundle_id, template) do
-      nil ->
-        {:error, :template_not_found}
-      source ->
-        {:ok, source}
-    end
+    with {:error, :template_not_found} <- fetch(adapter, bundle_id, template),
+         {:error, :template_not_found} <- fetch(adapter, nil, template),
+         {:error, :template_not_found} <- fetch("raw", nil, template),
+     do: {:error, :template_not_found}
   end
 
   def compile(source) do
@@ -83,8 +36,15 @@ defmodule Cog.Template do
   end
 
   defp fetch(adapter, bundle_id, template) do
-    Queries.Template.template_source(adapter, bundle_id, template)
+    source = Queries.Template.template_source(adapter, bundle_id, template)
     |> Repo.one
+
+    case source do
+      nil ->
+        {:error, :template_not_found}
+      source ->
+        {:ok, source}
+    end
   end
 
   defp partials do

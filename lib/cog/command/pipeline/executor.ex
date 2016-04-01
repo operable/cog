@@ -453,8 +453,8 @@ defmodule Cog.Command.Pipeline.Executor do
       {:ok, output} ->
         {:ok, output}
       {:error, :template_not_found} ->
-        Logger.warn("The template `#{template}` was not found for adapter `#{adapter}` in bundle `#{bundle.name}`; falling back to the default")
-        Template.render("any", bundle.id, template, context)
+        Logger.warn("The template `#{template}` was not found for adapter `#{adapter}` in bundle `#{bundle.name}`; falling back to the json template")
+        Template.render(adapter, nil, "json", context)
       {:error, error} ->
         {:error, error}
     end
