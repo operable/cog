@@ -6,7 +6,7 @@ defmodule Cog.V1.RoleGrantController do
 
   plug Cog.Plug.Authentication
 
-  plug Cog.Plug.Authorization, [permission: "#{Cog.embedded_bundle}:manage_groups"] when action == :manage_group_roles
+  plug Cog.Plug.Authorization, [permission: "#{Cog.embedded_bundle}:manage_groups"]
 
   plug :put_view, Cog.V1.RoleView
 

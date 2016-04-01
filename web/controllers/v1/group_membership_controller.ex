@@ -33,15 +33,12 @@ defmodule Cog.V1.GroupMembershipController do
   # %{"members" => %{"users" => %{"add" => ["user_to_add_1", "user_to_add_2"],
   #                               "remove" => ["user_to_remove"]},
   #                  "roles" => %{"add" => ["role_to_add_1", "role_to_add_2"],
-  #                               "remove" => ["role_to_remove"]},
-  #                  "groups" => %{"add" => ["group_to_add_1", "group_to_add_2"],
-  #                                "remove" => ["group_to_remove"]}}}
+  #                               "remove" => ["role_to_remove"]}}
   #
-  # Provide the email addresses of Users, and the names of Groups that you
-  # want to be members (or not) of the target group (as specified by
-  # `id`). All changes are made transactionally, so if any given names
-  # don't refer to a database entity, no changes in membership are
-  # made.
+  # Provide the email addresses of Users, that you want to be members (or not)
+  # of the target group (as specified by `id`). All changes are made
+  # transactionally, so if any given names don't refer to a database entity,
+  # no changes in membership are made.
   #
   # NOTE: As currently coded, this API endpoint is a bit too "chatty"
   # from a database interaction perspective. The resolution of names to
@@ -61,16 +58,14 @@ defmodule Cog.V1.GroupMembershipController do
       group = Repo.get!(Group, id)
 
       users_to_add     = lookup_or_fail(member_spec, ["users", "add"])
-      groups_to_add    = lookup_or_fail(member_spec, ["groups", "add"])
       roles_to_add    = lookup_or_fail(member_spec, ["roles", "grant"])
       users_to_remove  = lookup_or_fail(member_spec, ["users", "remove"])
-      groups_to_remove = lookup_or_fail(member_spec, ["groups", "remove"])
       roles_to_remove = lookup_or_fail(member_spec, ["roles", "revoke"])
 
       group
-      |> add(users_to_add ++ groups_to_add)
+      |> add(users_to_add)
       |> grant(roles_to_add)
-      |> remove(users_to_remove ++ groups_to_remove)
+      |> remove(users_to_remove)
       |> revoke(roles_to_remove)
       |> Repo.preload([:direct_user_members, :direct_group_members, :roles])
     end)
