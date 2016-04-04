@@ -828,18 +828,16 @@ defmodule Cog.Command.Pipeline.Executor do
                              reply_to: reply_to}
   end
 
-  # Removes the command prefix, replaces OS X's smart quotes and dashes, and
-  # decodes html entities
   defp sanitize_request(request) do
     prefix = Application.get_env(:cog, :command_prefix, "!")
 
     Map.update!(request, "text", fn text ->
       text
-      |> String.replace(~r/^#{prefix}/, "")
-      |> String.replace(~r/“|”/, "\"")
+      |> String.replace(~r/^#{prefix}/, "") # Remove command prefix
+      |> String.replace(~r/“|”/, "\"")      # Replace OS X's smart quotes and dashes with ascii equivalent
       |> String.replace(~r/‘|’/, "'")
       |> String.replace(~r/—/, "--")
-      |> HtmlEntities.decode
+      |> HtmlEntities.decode                # Decode html entities
     end)
   end
 
