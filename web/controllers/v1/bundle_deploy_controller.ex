@@ -2,6 +2,8 @@ defmodule Cog.V1.BundleDeployController do
   use Cog.Web, :controller
 
   alias Spanner.Config
+  alias Cog.Bundle.Install
+
 
   plug Cog.Plug.Authentication
   plug Cog.Plug.Authorization, permission: "#{Cog.embedded_bundle}:manage_commands"
@@ -61,7 +63,8 @@ defmodule Cog.V1.BundleDeployController do
   end
 
   # Create a new record in the DB for the deploy
-  defp persist(_config) do
+  defp persist(config) do
+    Install.install_bundle(config)
     {:ok, "WOOT! WOOT!"}
   end
 
