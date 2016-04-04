@@ -62,18 +62,13 @@ defmodule Cog.V1.UserController do
   ###############################################
   # Plug function - local only to user controller
   ###############################################
-  @spec check_self_updating(Plug.Conn.t, Plug.Conn.t) :: Plug.Conn.t
+  @spec check_self_updating(Plug.Conn.t, []) :: Plug.Conn.t
   def check_self_updating(conn, opts \\ []) do
     if determine_self_updating(conn) do
       conn
     else
       plug_opts = Cog.Plug.Authorization.init(opts)
-      case Cog.Plug.Authorization.call(conn, plug_opts) do
-        {:error, error} ->
-          error
-        updated_conn ->
-          updated_conn
-      end
+      Cog.Plug.Authorization.call(conn, plug_opts)
     end
   end
 
