@@ -3,6 +3,8 @@ defmodule Cog.Template do
   alias Cog.Repo
   alias Cog.TemplateCache
 
+  @fallback_adapter "any"
+
   def render(adapter, bundle_id, template, context) do
     with {:ok, template_fun} <- fetch_compiled_fun(adapter, bundle_id, template, context) do
       template_fun.(context)
@@ -24,13 +26,13 @@ defmodule Cog.Template do
   # Always use the raw template when responding to the test adapter.
   # Used in integration tests.
   def fetch_source("test", _bundle_id, _template, context) do
-    fetch_source("any", nil, "raw", context)
+    fetch_source(@fallback_adapter, nil, "raw", context)
   end
 
   def fetch_source(adapter, bundle_id, template, _context) do
     with {:error, :template_not_found} <- fetch(adapter, bundle_id, template),
          {:error, :template_not_found} <- fetch(adapter, nil, template),
-         {:error, :template_not_found} <- fetch("raw", nil, template),
+         {:error, :template_not_found} <- fetch(@fallback_adapter, nil, template),
          do: {:error, :template_not_found}
   end
 
