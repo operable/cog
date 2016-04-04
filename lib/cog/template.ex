@@ -1,17 +1,20 @@
 defmodule Cog.Template do
   alias Cog.Queries
   alias Cog.Repo
+  alias Cog.TemplateCache
 
   def render(adapter, bundle_id, template, context) do
-    try do
-      with {:ok, source} <- fetch_source(adapter, bundle_id, template, context),
-           {:ok, function} <- compile(source),
-           output = function.(%{context: context, partials: partials}),
-           do: {:ok, output}
-    rescue
-      error ->
-        {:error, error}
+    with {:ok, template_fun} <- fetch_compiled_fun(adapter, bundle_id, template, context) do
+      template_fun.(context)
     end
+  end
+
+  def fetch_compiled_fun(adapter, bundle_id, template, context) do
+    with :error              <- TemplateCache.lookup(adapter, bundle_id, template),
+         {:ok, source}       <- fetch_source(adapter, bundle_id, template, context),
+         {:ok, template_fun} <- compile(source),
+         :ok                 <- TemplateCache.insert(adapter, bundle_id, template, template_fun),
+         do: {:ok, template_fun}
   end
 
   def fetch_source(adapter, bundle_id, nil, context) do
@@ -28,11 +31,16 @@ defmodule Cog.Template do
     with {:error, :template_not_found} <- fetch(adapter, bundle_id, template),
          {:error, :template_not_found} <- fetch(adapter, nil, template),
          {:error, :template_not_found} <- fetch("raw", nil, template),
-     do: {:error, :template_not_found}
+         do: {:error, :template_not_found}
   end
 
   def compile(source) do
-    FuManchu.Compiler.compile(source)
+    case FuManchu.Compiler.compile(source) do
+      {:ok, template_fun} ->
+        {:ok, wrap_template_fun(template_fun)}
+      error ->
+        error
+    end
   end
 
   defp fetch(adapter, bundle_id, template) do
@@ -44,6 +52,18 @@ defmodule Cog.Template do
         {:error, :template_not_found}
       source ->
         {:ok, source}
+    end
+  end
+
+  defp wrap_template_fun(fun) do
+    fn context ->
+      try do
+        output = fun.(%{context: context, partials: partials})
+        {:ok, output}
+      rescue
+        error ->
+          {:error, error}
+      end
     end
   end
 
