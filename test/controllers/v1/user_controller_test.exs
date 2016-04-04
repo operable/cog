@@ -165,4 +165,18 @@ defmodule Cog.V1.UserControllerTest do
     assert Map.fetch!(groups, "id") == group.id
   end
 
+  test "user updates their own information without manage_users permission" do
+    tester = user("tester")
+    |> with_token
+    conn = api_request(tester, :put, "/v1/users/#{tester.id}",
+                       body: %{"user" => @valid_attrs})
+    new_user = json_response(conn, 200)["user"]
+    assert new_user == %{"id" => tester.id,
+                         "username" => @valid_attrs.username,
+                         "first_name" => @valid_attrs.first_name,
+                         "email_address" => @valid_attrs.email_address,
+                         "groups" => [],
+                         "last_name" => @valid_attrs.last_name}
+  end
+
 end

@@ -1,10 +1,12 @@
 defmodule Cog.V1.UserController do
+  import Plug.Conn
+
   use Cog.Web, :controller
 
   alias Cog.Models.User
 
   plug Cog.Plug.Authentication
-  plug Cog.Plug.Authorization, permission: "#{Cog.embedded_bundle}:manage_users"
+  plug :check_self_updating, [permission: "#{Cog.embedded_bundle}:manage_users"]
 
   plug :scrub_params, "user" when action in [:create, :update]
 
@@ -56,4 +58,34 @@ defmodule Cog.V1.UserController do
     Repo.delete!(user)
     send_resp(conn, :no_content, "")
   end
+
+  ###############################################
+  # Plug function - local only to user controller
+  ###############################################
+  @spec check_self_updating(Plug.Conn.t, Plug.Conn.t) :: Plug.Conn.t
+  def check_self_updating(conn, opts \\ []) do
+    if determine_self_updating(conn) do
+      conn
+    else
+      plug_opts = Cog.Plug.Authorization.init(opts)
+      case Cog.Plug.Authorization.call(conn, plug_opts) do
+        {:error, error} ->
+          error
+        updated_conn ->
+          updated_conn
+      end
+    end
+  end
+
+    @doc """
+  Store the self updating user flag in the `conn`.
+  """
+  @spec determine_self_updating(%Plug.Conn{}) :: true | false
+  def determine_self_updating(conn) do
+    Map.has_key?(conn.private, :phoenix_action) and
+        conn.private.phoenix_action == :update and
+        conn.assigns.user.id == conn.params["id"]
+  end
+
 end
+
