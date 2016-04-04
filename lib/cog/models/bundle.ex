@@ -5,7 +5,6 @@ defmodule Cog.Models.Bundle do
   schema "bundles" do
     field :name, :string
     field :config_file, :map
-    field :manifest_file, :map
     field :enabled, :boolean, default: false
 
     has_many :commands, Command
@@ -18,7 +17,7 @@ defmodule Cog.Models.Bundle do
     timestamps
   end
 
-  @required_fields ~w(name config_file manifest_file)
+  @required_fields ~w(name config_file)
   @optional_fields ~w(enabled)
 
   summary_fields [:id, :name, :namespace, :inserted_at, :enabled]
