@@ -8,7 +8,7 @@ defmodule Cog.Models.CommandTest do
   alias Piper.Permissions.Parser
 
   setup do
-    {:ok, bundle} = Repo.insert(%Bundle{name: "test_bundle", config_file: %{}, manifest_file: %{}})
+    {:ok, bundle} = Repo.insert(%Bundle{name: "test_bundle", config_file: %{}})
     {:ok, command} = Command.insert_new(%{name: "drop_database", bundle_id: bundle.id})
     {:ok, expr, _} = Parser.parse("when command is operable:drop_database must have drop_database:write")
     {:ok, rule} = Rule.insert_new(command, expr)

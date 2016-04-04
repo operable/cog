@@ -7,7 +7,7 @@ defmodule Cog.Queries.Command.Test do
   alias Cog.Repo
 
   setup do
-    {:ok, bundle} = Repo.insert(%Bundle{name: "test_bundle", config_file: %{}, manifest_file: %{}})
+    {:ok, bundle} = Repo.insert(%Bundle{name: "test_bundle", config_file: %{}})
     {:ok, qualified_command} = Command.insert_new(%{name: "drop_database", bundle_id: bundle.id})
     {:ok, shorthand_command} = Command.insert_new(%{name: "test_bundle", bundle_id: bundle.id})
     {:ok, [bundle: bundle.name,
