@@ -35,14 +35,10 @@ defmodule Cog.Bundle.Install do
   ## Parameters
 
   * `name`: the name of the bundle
-  * `manifest_file`: the JSON map of the bundle manifest
   * `config_file`: the JSON map of the configuration file
 
   """
-  # TODO: consider removing manifest until we're actually doing
-  # something with them
   def install_bundle(bundle_params) do
-    # TODO: Validate bundle (e.g., check manifest, etc)
 
     Repo.transaction(fn ->
       bundle = %Bundle{}

@@ -188,11 +188,7 @@ defmodule Cog.Relay.Relays do
         {:ok, bundle}
       nil ->
         Logger.info("Installing bundle: #{name}")
-        # TODO: Eventually the manifest can go away, as it's not really
-        # needed on the bot side of things. Until then, we can fake it
-        # with an empty map
-        case Cog.Bundle.Install.install_bundle(%{name: name, config_file: config,
-                                                 manifest_file: %{}}) do
+        case Cog.Bundle.Install.install_bundle(%{name: name, config_file: config}) do
           {:ok, bundle} ->
             {:ok, bundle}
           {:error, error} ->
