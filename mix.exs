@@ -69,7 +69,8 @@ defmodule Cog.Mixfile do
      {:html_entities, "~> 0.3.0"},
 
      {:piper, github: "operable/piper", branch: "cm/return-full-redirect", override: true},
-     {:spanner, github: "operable/spanner"},
+#     {:spanner, github: "operable/spanner"},
+     {:spanner, github: "operable/spanner", branch: "cm/hook-metadata", override: true},
      {:probe, github: "operable/probe", tag: "0.2"},
      {:exml, github: "paulgray/exml", tag: "2.2.1"},
      {:fumanchu, github: "operable/fumanchu"},
