@@ -183,10 +183,6 @@ defmodule Cog.V1.EventHookExecutionControllerTest do
     {:ok, executor_snoop} = Snoop.start_link("/bot/commands")
     conn = api_request(tokened_user, :post, "/v1/event_hooks/#{hook.id}", body: %{}, endpoint: Cog.EventHookEndpoint)
     assert ["token " <> _] = Plug.Conn.get_req_header(conn, "authorization")
-    require Logger
-
-    Logger.warn(">>>>>>> conn = #{inspect conn}")
-
     assert response(conn, 200)
 
     # And we verify that the pipeline executed as the requestor
@@ -221,6 +217,36 @@ defmodule Cog.V1.EventHookExecutionControllerTest do
     [message] = Snoop.messages(executor_snoop)
     hook_user_name = hook_user.username
     assert %{"sender" => %{"id" => ^hook_user_name}} = message
+  end
+
+  test "execution that goes beyond the specified timeout returns 202, but continues processing", %{conn: conn} do
+    assert {:ok, Cog.Adapters.Test} = Cog.chat_adapter_module
+    {:ok, test_snoop} = Snoop.start_link("/bot/adapters/test/send_message")
+
+    user("cog")
+
+    # Our hook will timeout before the pipeline finishes
+    timeout_sec = 1
+    sleep_sec = timeout_sec + 1
+    hook = hook(%{name: "sleepytime",
+                  pipeline: "echo Hello | sleep #{sleep_sec} | echo $body > chat://#general",
+                  as_user: "cog",
+                  timeout_sec: timeout_sec})
+
+    # Make the request
+    conn = post(conn, "/v1/event_hooks/#{hook.id}", Poison.encode!(%{}))
+
+    %{"id" => pipeline_id,
+      "status" => status} = json_response(conn, 202)
+    assert "Request accepted and still processing after #{timeout_sec} seconds" == status
+
+    # Wait to ensure that processing finishes and check that the chat
+    # adapter got it
+    :timer.sleep sleep_sec * 1000
+    [message] = Snoop.messages(test_snoop)
+    expected_response = Poison.encode!(%{body: ["Hello"]}, pretty: true)
+    assert %{"id" => ^pipeline_id,
+             "response" => ^expected_response} = message
   end
 
 end

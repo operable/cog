@@ -29,14 +29,14 @@ defmodule Cog.V1.EventHookExecutionController do
                         query_params: conn.query_params,
                         body: conn.body_params}
 
-            # TODO: need to pass the timeout into the
-            # executor... otherwise the controller could time out, but the
-            # executor just keeps going
             case AdapterBridge.submit_request(as_user, request_id, context, hook.pipeline, timeout) do
               %{"status" => "ok"} ->
                 conn |> send_resp(:no_content, "")
               {:error, :timeout} ->
-                conn |> put_status(:internal_server_error) |> json(%{errors: "timeout"})
+                conn
+                |> put_status(:accepted)
+                |> json(%{status: "Request accepted and still processing after #{hook.timeout_sec} seconds",
+                          id: request_id})
               response ->
                 # TODO: FIIIIIIIIILTHY HACK
                 # Until we have proper error templates, the easiest
@@ -64,7 +64,7 @@ defmodule Cog.V1.EventHookExecutionController do
         conn
         |> put_status(:bad_request)
         |> json(%{errors: "Bad ID format"})
-        end
+    end
   end
 
   ########################################################################
