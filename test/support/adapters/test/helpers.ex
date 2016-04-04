@@ -8,12 +8,13 @@ defmodule Cog.Adapters.Test.Helpers do
     {:ok, mq_conn} = Connection.connect
     reply_topic = "/bot/adapters/test/send_message"
     id = UUID.uuid4(:hex)
-
+    initial_context = %{}
     payload = %{id: id,
                 sender: %{id: username, handle: username},
                 room: %{id: "general", name: "general"},
                 text: message,
                 adapter: "test",
+                initial_context: initial_context,
                 module: Cog.Adapters.Test,
                 reply: reply_topic}
     Connection.subscribe(mq_conn, reply_topic)

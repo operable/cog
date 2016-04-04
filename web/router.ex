@@ -59,6 +59,9 @@ defmodule Cog.Router do
     post "/v1/relay_groups/:id/membership", V1.RelayGroupMembershipController, :manage_membership
     get "/v1/relay_groups/:id/bundles", V1.RelayGroupMembershipController, :index
     post "/v1/relay_groups/:id/assignment", V1.RelayGroupMembershipController, :manage_assignment
+
+    # Event Hooks CRUD; for execution, see Cog.EventHookRouter
+    resources "/v1/event_hooks", V1.EventHookController, only: [:index, :show, :create, :update, :delete]
   end
 
   scope "/", Cog do

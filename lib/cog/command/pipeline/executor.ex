@@ -1,7 +1,19 @@
 defmodule Cog.Command.Pipeline.Executor do
 
+  alias Carrier.Messaging.Connection
+  alias Cog.Command.CommandResolver
+  alias Cog.Command.PermissionsCache
+  alias Cog.Events.PipelineEvent
+  alias Cog.Queries
+  alias Cog.Repo
+  alias Cog.Template
+  alias Piper.Command.Ast
+  alias Piper.Command.Parser
+  alias Piper.Command.ParserOptions
+  alias Cog.Command.Pipeline.Destination
+  alias Cog.Command.Pipeline.Plan
+
   @type adapter_name :: String.t
-  @type redirect_destination :: map
 
   @typedoc """
   Custom State for executor
@@ -13,8 +25,6 @@ defmodule Cog.Command.Pipeline.Executor do
   * `:started` - Timestamp for the start of the pipeline.
   * `:mq_conn` - The message queue connection.
   * `:request` - The original request from the adapter.
-  * `:raw_destinations` - redirect destinations as typed by the user,
-    prior to any processing
   * `:destinations` - Destinations to which pipeline output will be
     returned.
   * `:invocations` - list of all the invocation ASTs for the
@@ -41,8 +51,7 @@ defmodule Cog.Command.Pipeline.Executor do
     started: :erlang.timestamp(),
     mq_conn: Carrier.Messaging.Connection.connection(),
     request: %Spanner.Command.Request{}, # TODO: needs to be a type
-    raw_destinations: [String.t],
-    destinations: %{adapter_name => [redirect_destination]},
+    destinations: [Destination.t],
     invocations: [%Piper.Command.Ast.Invocation{}], # TODO: needs to be a type
     current_plan: Cog.Command.Pipeline.Plan.t,
     plans: [Cog.Command.Pipeline.Plan.t],
@@ -57,8 +66,7 @@ defmodule Cog.Command.Pipeline.Executor do
     topic: nil,
     mq_conn: nil,
     request: nil,
-    raw_destinations: [],
-    destinations: %{},
+    destinations: [],
     invocations: [],
     current_plan: nil,
     plans: [],
@@ -74,18 +82,6 @@ defmodule Cog.Command.Pipeline.Executor do
 
   # Timeout for commands once they are in the `run_command` state
   @command_timeout 60000
-
-  alias Carrier.Messaging.Connection
-  alias Cog.Command.CommandResolver
-  alias Cog.Command.PermissionsCache
-  alias Cog.Events.PipelineEvent
-  alias Cog.Queries
-  alias Cog.Repo
-  alias Cog.Template
-  alias Piper.Command.Ast
-  alias Piper.Command.Parser
-  alias Piper.Command.ParserOptions
-  alias Cog.Command.Pipeline.Plan
 
   use Adz
 
@@ -113,7 +109,7 @@ defmodule Cog.Command.Pipeline.Executor do
             initialization_event(loop_data)
             {:ok, :parse, loop_data, 0}
           {:error, :not_found} ->
-            alert_unregistered_user(%__MODULE__{mq_conn: conn, request: request})
+            alert_unregistered_user(%__MODULE__{id: id, mq_conn: conn, request: request})
             :ignore
         end
       :error ->
@@ -129,51 +125,26 @@ defmodule Cog.Command.Pipeline.Executor do
     options = %ParserOptions{resolver: CommandResolver.command_resolver_fn(state.user)}
     case Parser.scan_and_parse(state.request["text"], options) do
       {:ok, %Ast.Pipeline{}=pipeline} ->
-        {:next_state, :resolve_destinations, %{state |
-                                               raw_destinations: Ast.Pipeline.redirect_targets(pipeline),
-                                               invocations: Enum.to_list(pipeline)}, 0}
+        case Destination.process(Ast.Pipeline.redirect_targets(pipeline),
+                                 state.request["sender"],
+                                 state.request["room"],
+                                 originating_adapter(state)) do
+          {:ok, destinations} ->
+            {:next_state,
+             :plan_next_invocation, %{state |
+                                      destinations: destinations,
+                                      invocations: Enum.to_list(pipeline)}, 0}
+          {:error, invalid} ->
+            fail_pipeline_with_error({:redirect_error, invalid}, state)
+        end
       {:error, msg} ->
         fail_pipeline_with_error({:parse_error, msg}, state)
-    end
-  end
-
-  def resolve_destinations(:timeout, %__MODULE__{raw_destinations: destinations}=state) do
-    redirs = case destinations do
-               [] ->
-                 # If no redirects were given, we default to the
-                 # current room; this keeps things uniform later on.
-                 {:ok, [{state.request["adapter"], state.request["room"]}]}
-               _ ->
-                 {ok, errors} = destinations
-                 |> Enum.map(&lookup_room(&1, state))
-                 |> Enum.partition(&match?({:ok, _}, &1))
-
-                 case errors do
-                   [] ->
-                     destinations = Enum.map(ok, fn({:ok, val}) -> val end)
-                     {:ok, destinations}
-                   _ ->
-                     errors = Enum.map(errors, fn({:error, val}) -> val end)
-                     {:error, errors}
-                 end
-             end
-    case redirs do
-      {:ok, destinations} ->
-        destinations = Enum.reduce(destinations, %{},
-          fn({adapter, destination}, acc) ->
-            Map.update(acc, adapter, [destination], &([destination|&1]))
-          end)
-
-        {:next_state, :plan_next_invocation, %{state | destinations: destinations}, 0}
-      {:error, invalid} ->
-        fail_pipeline_with_error({:redirect_error, invalid}, state)
     end
   end
 
   def plan_next_invocation(:timeout, %__MODULE__{invocations: [current_invocation|remaining],
                                                  output: previous_output,
                                                  user_permissions: permissions}=state) do
-
     state = %{state | current_plan: nil}
     # If a previous command generated output, we don't need to retain
     # any templating information, because the current command now
@@ -286,47 +257,6 @@ defmodule Cog.Command.Pipeline.Executor do
   ########################################################################
   # Redirection Resolution Functions
 
-  # Returns {:ok, {adapter, room}} or {:error, invalid_redirect}
-  defp lookup_room("me", state) do
-    user_id = state.request["sender"]["id"]
-    adapter = originating_adapter(state)
-    case adapter.lookup_direct_room(user_id: user_id) do
-      {:ok, direct_chat} ->
-        {:ok, {state.request["adapter"], direct_chat}}
-      error ->
-        Logger.error("Error resolving redirect 'me' with adapter #{adapter}: #{inspect error}")
-        {:error, "me"}
-    end
-  end
-  defp lookup_room("here", state),
-    do: {:ok, {state.request["adapter"], state.request["room"]}}
-  defp lookup_room(redir, state) do
-    {adapter, destination} = adapter_destination(redir, state)
-    case adapter.lookup_room(destination) do
-      {:ok, room} ->
-        if adapter.room_writeable?(id: room.id) == true do
-          {:ok, {adapter.name, room}}
-        else
-          {:error, {:not_a_member, redir}}
-        end
-      {:error, reason} ->
-        Logger.error("Error resolving redirect '#{redir}' with adapter #{adapter}: #{inspect reason}")
-        {:error, {reason, redir}}
-    end
-  end
-
-  # Redirect destinations may be targeted to an adapter different from
-  # where they originated from.
-  #
-  # Destinations prefixed with "chat://" will be routed through the
-  # active chat adapter module. Anything else will be routed through
-  # the adapter that initially serviced the request.
-  defp adapter_destination("chat://" <> destination, _state) do
-    {:ok, adapter} = Cog.adapter_module
-    {adapter, destination}
-  end
-  defp adapter_destination(destination, state),
-    do: {originating_adapter(state), destination}
 
   # Return the adapter module that initially handled the
   # request. Won't always be the chat adapter!
@@ -387,26 +317,39 @@ defmodule Cog.Command.Pipeline.Executor do
   # Given pipeline output, apply templating as appropriate for each
   # adapter/destination it is to be sent to, and send it to each.
   defp respond(%__MODULE__{}=state) do
-    destinations = state.destinations
-    adapters = Map.keys(destinations)
-    bundle = state.current_plan.command.bundle
     output = state.output
-    rendered = render_for_adapters(adapters, bundle, output)
+    bundle = state.current_plan.command.bundle
+    by_output_level = Enum.group_by(state.destinations, &(&1.output_level))
 
-    case rendered do
+    # Render full output first
+    full = Map.get(by_output_level, :full, [])
+    adapters = full |> Enum.map(&(&1.adapter)) |> Enum.uniq
+
+    case render_for_adapters(adapters, bundle, output) do
       {:error, {error, template, adapter}} ->
+        # TODO: need to send error, THEN fail at the end, since we may
+        # need to do it for status-only destinations
         fail_pipeline_with_error({:template_rendering_error, {error, template, adapter}}, state)
       messages ->
-        messages
-        |> consolidate_by_adapter(destinations)
-        |> Enum.each(fn({msg, adapter, destination}) ->
-          publish_response(msg, destination, adapter, state)
+        Enum.each(full, fn(dest) ->
+          msg = Map.fetch!(messages, dest.adapter)
+          publish_response(msg, dest.room, dest.adapter, state)
         end)
     end
+
+    # Now for status only
+    # No rendering, just status map
+    by_output_level
+    |> Map.get(:status_only, [])
+    |> Enum.each(fn(dest) ->
+      publish_response(%{status: "ok"}, dest.room, dest.adapter, state)
+    end)
+
   end
 
   defp succeed_with_response(state) do
     respond(state)
+    # TODO: what happens if we fail due to a template error?
     {:stop, :shutdown, state}
   end
 
@@ -460,20 +403,11 @@ defmodule Cog.Command.Pipeline.Executor do
     end
   end
 
-  # make a list of {msg, adapter, dest}... slightly easier to process
-  # in the end this way.
-  @spec consolidate_by_adapter(%{adapter_name => String.t},
-                               %{adapter_name => [redirect_destination]}) :: [{String.t, adapter_name, redirect_destination}]
-  defp consolidate_by_adapter(adapter_msg, adapter_dest) do
-    Enum.flat_map(adapter_dest, fn({adapter, dests}) ->
-      Enum.map(dests, &({Map.fetch!(adapter_msg, adapter), adapter, &1}))
-    end)
-  end
-
   defp publish_response(message, room, adapter, state) do
     response = %{response: message,
                  id: state.id,
                  room: room}
+    # Remember, it might not be a *chat* adapter we're responding to
     {:ok, adapter_mod} = Cog.adapter_module(adapter)
     reply_topic = adapter_mod.reply_topic
     Connection.publish(state.mq_conn, response, routed_by: reply_topic)
@@ -527,6 +461,7 @@ defmodule Cog.Command.Pipeline.Executor do
                      state)
   end
 
+  # TODO: needs to be different for non-chat adapters
   defp unregistered_user_message(request) do
     adapter = String.to_existing_atom(request["module"])
     handle = request["sender"]["handle"]
@@ -572,6 +507,7 @@ defmodule Cog.Command.Pipeline.Executor do
   # necessarily have a chat handle registered for the chat provider
   # being used (most notably, the bootstrap admin user).
   defp user_creator_handles(request) do
+
     adapter = request["adapter"]
     adapter_module = String.to_existing_atom(request["module"])
 
@@ -610,7 +546,7 @@ defmodule Cog.Command.Pipeline.Executor do
   # with an initial context.
   defp create_initial_context(request) do
     context = request
-    |> Map.get("initial_context", [%{}])
+    |> Map.fetch!("initial_context")
     |> List.wrap
 
     if Enum.all?(context, &is_map/1) do
@@ -646,7 +582,7 @@ defmodule Cog.Command.Pipeline.Executor do
   defp user_error(error, state) do
     id = state.id
     started = Cog.Events.Util.ts_iso8601_utc(state.started)
-    initiator = sender_mention_name(state)
+    initiator = sender_name(state)
     pipeline_text = state.request["text"]
     error_message = format_user_error(error, state)
     failing = case state.current_plan do
@@ -737,20 +673,6 @@ defmodule Cog.Command.Pipeline.Executor do
   defp format_user_error({:command_error, response}, _state),
     do: "Whoops! An error occurred. " <> (response.status_message || response.body["message"])
 
-  defp send_error(message, state) do
-    request = state.request
-
-    message = if request["room"]["name"] != "direct" do
-      "#{sender_mention_name(state)} #{message}"
-    else
-      message
-    end
-    publish_response(message,
-                     request["room"],
-                     request["adapter"],
-                     state)
-  end
-
   # Turn an error tuple into a message intended for the audit log
   defp format_audit_message({:parse_error, msg}, state) when is_binary(msg),
     do: "Error parsing command pipeline '#{state.request["text"]}': #{msg}"
@@ -784,15 +706,22 @@ defmodule Cog.Command.Pipeline.Executor do
   # emits a pipeline failure audit event, and terminates the pipeline.
   defp fail_pipeline_with_error({reason, _detail}=error, state) do
     user_message = user_error(error, state)
-    send_error(user_message, state)
+    publish_response(user_message,
+                     state.request["room"],
+                     state.request["adapter"],
+                     state)
 
     audit_message = format_audit_message(error, state)
     fail_pipeline(state, reason, audit_message)
   end
 
-  defp sender_mention_name(state) do
+  defp sender_name(state) do
     adapter = originating_adapter(state)
-    adapter.mention_name(state.request["sender"]["handle"])
+    if adapter.chat_adapter? do
+      adapter.mention_name(state.request["sender"]["handle"])
+    else
+      state.request["sender"]["id"]
+    end
   end
 
   ########################################################################
@@ -830,17 +759,29 @@ defmodule Cog.Command.Pipeline.Executor do
   end
 
   def fetch_user_from_request(request) do
-    adapter   = request["adapter"]
-    sender_id = request["sender"]["id"]
+    adapter_module = request["module"] |> String.to_existing_atom
 
-    user = Queries.User.for_chat_provider_user_id(sender_id, adapter)
-    |> Repo.one
+    if adapter_module.chat_adapter? do
+      adapter   = request["adapter"]
+      sender_id = request["sender"]["id"]
 
-    case user do
-      nil ->
-        {:error, :not_found}
-      user ->
-        {:ok, user}
+      user = Queries.User.for_chat_provider_user_id(sender_id, adapter)
+      |> Repo.one
+
+      case user do
+        nil ->
+          {:error, :not_found}
+        user ->
+          {:ok, user}
+      end
+    else
+      cog_name = request["sender"]["id"]
+      case Repo.get_by(Cog.Models.User, username: cog_name) do
+        %Cog.Models.User{}=user ->
+          {:ok, user}
+        nil ->
+          {:error, :not_found}
+      end
     end
   end
 end

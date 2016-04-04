@@ -5,9 +5,18 @@ defmodule Cog.Adapter do
       require Logger
 
       @behaviour Cog.Adapter
+      @default_initial_context %{}
 
-      def receive_message(sender, room, message) do
-        GenServer.call(__MODULE__, {:receive_message, sender, room, message})
+      def receive_message(sender, room, message),
+        do: receive_message(sender, room, message, UUID.uuid4(:hex), @default_initial_context)
+
+      def receive_message(sender, room, message, id, initial_context) do
+        GenServer.call(__MODULE__, {:receive_message,
+                                    sender,
+                                    room,
+                                    message,
+                                    id,
+                                    initial_context})
       end
 
       def start_link() do
@@ -21,8 +30,8 @@ defmodule Cog.Adapter do
         {:ok, %{conn: conn}}
       end
 
-      def handle_call({:receive_message, sender, room, message}, _from, state) do
-        message = payload(sender, room, message)
+      def handle_call({:receive_message, sender, room, message, id, initial_context}, _from, state) do
+        message = payload(sender, room, message, id, initial_context)
         Carrier.Messaging.Connection.publish(state.conn, message, routed_by: "/bot/commands")
         {:reply, :ok, state}
       end
@@ -40,11 +49,12 @@ defmodule Cog.Adapter do
         {:noreply, state}
       end
 
-      defp payload(sender, room, text) do
-        %{id: UUID.uuid4(:hex),
+      defp payload(sender, room, text, id, initial_context) do
+        %{id: id,
           sender: sender,
           room: room,
           text: text,
+          initial_context: initial_context,
           adapter: name(),
           module: __MODULE__,
           reply: reply_topic()}
@@ -57,6 +67,10 @@ defmodule Cog.Adapter do
       def reply_topic do
         "/bot/adapters/" <> name() <> "/send_message"
       end
+
+      def chat_adapter?,
+        do: true
+      defoverridable [chat_adapter?: 0]
     end
   end
 
@@ -64,6 +78,11 @@ defmodule Cog.Adapter do
   @type lookup_opts() :: [id: String.t] | [name: String.t]
 
   @callback receive_message(sender :: Map.t, room :: Map.t, message :: String.t) :: :ok | :error
+  @callback receive_message(sender :: Map.t,
+                            room :: Map.t,
+                            message :: String.t,
+                            id :: String.t,
+                            initial_context :: Map.t) :: :ok | :error
 
   @callback send_message(room :: Map.t, message :: String.t) :: :ok | :error
 
@@ -82,4 +101,6 @@ defmodule Cog.Adapter do
   @callback display_name() :: String.t
 
   @callback reply_topic() :: String.t
+
+  @callback chat_adapter?() :: boolean
 end

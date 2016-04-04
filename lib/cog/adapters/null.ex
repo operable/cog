@@ -5,13 +5,10 @@ defmodule Cog.Adapters.Null do
     {:error, :not_implemented}
   end
 
-  def lookup_room([id: id]) do
-    Cog.Chat.Room.from_map(%{"id" => id, "name" => "Test room",
-                                "topic" => "Test topic"}, :test)
-  end
-  def lookup_room([name: name]) do
-    Cog.Chat.Room.from_map(%{"id" => "R12345", "name" => name,
-                                "topic" => "#{name} topic"}, :test)
+  def lookup_room(name) do
+    {:ok, %{id: "R12345",
+            name: name,
+            topic: "#{name} topic"}}
   end
 
   def lookup_direct_room(_opts) do
@@ -22,7 +19,7 @@ defmodule Cog.Adapters.Null do
     true
   end
 
-  def lookup_user(handle: "admininator") do
+  def lookup_user("admininator") do
     {:ok, %{id: "admininator", handle: "admininator"}}
   end
 

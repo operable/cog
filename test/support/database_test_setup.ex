@@ -103,4 +103,12 @@ defmodule DatabaseTestSetup do
     {:ok, rule} = Cog.RuleIngestion.ingest(rule_text)
     rule
   end
+
+  def hook(params \\ %{}) do
+    alias Cog.Models.EventHook
+    attrs = Map.merge(%{name: "echo",
+                        pipeline: "echo $body.message > chat://#general"}, params)
+    EventHook.changeset(%EventHook{}, attrs) |> Repo.insert!
+  end
+
 end

@@ -89,7 +89,7 @@ defmodule Cog.V1.ChatHandleController do
       nil ->
         {:error, :invalid_provider}
       chat_provider ->
-        case Cog.adapter_module(chat_provider.name) do
+        case Cog.chat_adapter_module(chat_provider.name) do
           {:ok, adapter} ->
             case adapter.lookup_user(handle: handle) do
               {:ok, %{id: chat_provider_user_id}} ->

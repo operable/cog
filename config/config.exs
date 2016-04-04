@@ -118,6 +118,18 @@ config :cog, Cog.Endpoint,
            adapter: Phoenix.PubSub.PG2],
   secret_key_base: System.get_env("COG_COOKIE_SECRET")
 
+
+config :cog, Cog.EventHookEndpoint,
+  http: [port: System.get_env("COG_EVENT_HOOK_PORT") || 4001],
+  root: Path.dirname(__DIR__),
+  debug_errors: false,
+  cache_static_lookup: false,
+  check_origin: true,
+  render_errors: [accepts: ~w(json)],
+  # pubsub: [name: Carrier.Messaging.Connection,
+  #          adapter: Phoenix.PubSub.PG2],
+  secret_key_base: System.get_env("COG_COOKIE_SECRET")
+
 config :cog, :token_lifetime, {1, :week}
 config :cog, :token_reap_period, {1, :day}
 
