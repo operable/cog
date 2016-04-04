@@ -29,7 +29,9 @@ defmodule Cog.V1.EventHookExecutionController do
                         query_params: conn.query_params,
                         body: conn.body_params}
 
-            case AdapterBridge.submit_request(as_user, request_id, context, hook.pipeline, timeout) do
+            requestor = requestor_map(hook_id, as_user, hook.name)
+
+            case AdapterBridge.submit_request(requestor, request_id, context, hook.pipeline, timeout) do
               %{"status" => "ok"} ->
                 conn |> send_resp(:no_content, "")
               {:error, :timeout} ->
@@ -68,6 +70,16 @@ defmodule Cog.V1.EventHookExecutionController do
   end
 
   ########################################################################
+
+  # This is the requestor map that will eventually make its way into
+  # the executor and subsequently to commands. It's how we'll expose
+  # hook metadata to commands, for instance.
+  defp requestor_map(hook_id, hook_user, hook_name) do
+    %{id: hook_user,
+      hook_user: hook_user,
+      hook_id: hook_id,
+      hook_name: hook_name}
+  end
 
   # Convert a header list into a map, accumulating multiple values
   # into lists. Single values remain as single values.

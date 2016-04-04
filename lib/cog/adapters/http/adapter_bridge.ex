@@ -29,11 +29,9 @@ defmodule Cog.Adapters.Http.AdapterBridge do
     do: {:ok, %{}}
 
   # TODO: pass timeout in order to queue up clearing the data from the map?
-  def handle_call({:submit_request, cog_user, id, initial_context, pipeline}, from, state) do
-    sender = %{"id" => cog_user}
+  def handle_call({:submit_request, requestor, id, initial_context, pipeline}, from, state) do
     room = %{"id" => id}
-
-    Cog.Adapters.Http.receive_message(sender, room, pipeline, id, initial_context)
+    Cog.Adapters.Http.receive_message(requestor, room, pipeline, id, initial_context)
     {:noreply, Map.put(state, id, from)}
   end
   def handle_call({:finish_request, room, response}, _from, state) do
