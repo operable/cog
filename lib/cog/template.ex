@@ -11,7 +11,7 @@ defmodule Cog.Template do
     end
   end
 
-  def fetch_compiled_fun(adapter, bundle_id, template, context) do
+  defp fetch_compiled_fun(adapter, bundle_id, template, context) do
     with :error              <- TemplateCache.lookup(adapter, bundle_id, template),
          {:ok, source}       <- fetch_source(adapter, bundle_id, template, context),
          {:ok, template_fun} <- compile(source),
@@ -19,24 +19,24 @@ defmodule Cog.Template do
          do: {:ok, template_fun}
   end
 
-  def fetch_source(adapter, bundle_id, nil, context) do
+  defp fetch_source(adapter, bundle_id, nil, context) do
     fetch_source(adapter, bundle_id, default_template(context), context)
   end
 
   # Always use the raw template when responding to the test adapter.
   # Used in integration tests.
-  def fetch_source("test", _bundle_id, _template, context) do
+  defp fetch_source("test", _bundle_id, _template, context) do
     fetch_source(@fallback_adapter, nil, "raw", context)
   end
 
-  def fetch_source(adapter, bundle_id, template, _context) do
+  defp fetch_source(adapter, bundle_id, template, _context) do
     with {:error, :template_not_found} <- fetch(adapter, bundle_id, template),
          {:error, :template_not_found} <- fetch(adapter, nil, template),
          {:error, :template_not_found} <- fetch(@fallback_adapter, nil, template),
          do: {:error, :template_not_found}
   end
 
-  def compile(source) do
+  defp compile(source) do
     case FuManchu.Compiler.compile(source) do
       {:ok, template_fun} ->
         {:ok, wrap_template_fun(template_fun)}
@@ -74,14 +74,14 @@ defmodule Cog.Template do
       text: &render_text/1}
   end
 
-  def render_json(context),
+  defp render_json(context),
     do: Poison.encode!(context, pretty: true)
 
-  def render_text(%{"body" => body}) when is_list(body),
+  defp render_text(%{"body" => body}) when is_list(body),
     do: Enum.join(body, "\n")
-  def render_text(%{"body" => body}) when is_binary(body),
+  defp render_text(%{"body" => body}) when is_binary(body),
     do: body
-  def render_text(text) when is_binary(text),
+  defp render_text(text) when is_binary(text),
     do: text
 
   defp default_template(%{"body" => _}),                  do: "text"
