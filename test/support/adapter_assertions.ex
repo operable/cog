@@ -5,6 +5,24 @@ defmodule Cog.AdapterAssertions do
     assert response == expected_message
   end
 
+  # Because the raw template returns encoded json joined by newlines we have to
+  # add in newlines and then pull out the single result or return a list of
+  # result for those cases.
+  def assert_payload(%{"response" => response}, expected_payload) do
+    response = response
+    |> String.replace(~r/^}/m, "},")
+    |> String.rstrip(?,)
+
+    payload = case Poison.decode!("[#{response}]", keys: :atoms) do
+      [payload] ->
+        payload
+      payload ->
+        payload
+    end
+
+    assert payload == expected_payload
+  end
+
   @doc """
   Temporary helper assertion to compare a fragment of an error message
   from a chat adapter to the complete textual response given.

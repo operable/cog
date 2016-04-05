@@ -1,7 +1,8 @@
 defmodule Integration.Commands.AliasTest do
   use Cog.AdapterCase, adapter: "test"
+  alias Cog.Models.UserCommandAlias
+  alias Cog.Models.SiteCommandAlias
   alias Cog.Repo
-  alias Cog.Integration.Helpers
 
   setup do
     user = user("vanstee", first_name: "Patrick", last_name: "Van Stee")
@@ -11,225 +12,281 @@ defmodule Integration.Commands.AliasTest do
   end
 
   test "creating a new alias", %{user: user} do
-    expected_map = %{"name" => "my-new-alias", "pipeline" => "echo My New Alias", "visibility" => "user"}
+    response = send_message(user, "@bot: operable:alias new my-new-alias \"echo My New Alias\"")
 
-    expected_response = Helpers.render_template("alias-new", expected_map)
+    assert_payload(response, %{
+      name: "my-new-alias",
+      pipeline: "echo My New Alias",
+      visibility: "user"
+    })
 
-    send_message(user, "@bot: operable:alias new my-new-alias \"echo My New Alias\"")
-    |> assert_message(expected_response)
+    created_alias = Repo.get_by(UserCommandAlias, name: "my-new-alias", user_id: user.id)
 
-    new_alias = Repo.get_by(Cog.Models.UserCommandAlias, name: "my-new-alias", user_id: user.id)
-    assert new_alias.name == expected_map["name"]
-    assert new_alias.pipeline == expected_map["pipeline"]
-    assert new_alias.visibility == expected_map["visibility"]
+    assert %{
+      name: "my-new-alias",
+      pipeline: "echo My New Alias",
+      visibility: "user"
+    } = created_alias
   end
 
   test "creating a new alias with an existing name", %{user: user} do
     send_message(user, "@bot: operable:alias new my-new-alias \"echo My New Alias\"")
 
-    send_message(user, "@bot: operable:alias new my-new-alias \"echo My New Alias\"")
-    |> assert_error_message_contains("Whoops! An error occurred. name: The alias name is already in use.")
+    response = send_message(user, "@bot: operable:alias new my-new-alias \"echo My New Alias\"")
+
+    assert_error_message_contains(response, "Whoops! An error occurred. name: The alias name is already in use.")
   end
 
   test "removing an alias", %{user: user} do
-    expected_map = %{"name" => "my-new-alias", "pipeline" => "echo My New Alias", "visibility" => "user"}
     send_message(user, "@bot: operable:alias new my-new-alias \"echo My New Alias\"")
 
-    expected_response = Helpers.render_template("alias-rm", expected_map)
+    response = send_message(user, "@bot: operable:alias rm my-new-alias")
 
-    send_message(user, "@bot: operable:alias rm my-new-alias")
-    |> assert_message(expected_response)
+    assert_payload(response, %{
+      name: "my-new-alias",
+      pipeline: "echo My New Alias",
+      visibility: "user"
+    })
 
-    assert Repo.get_by(Cog.Models.UserCommandAlias, name: "my-new-alias", user_id: user.id) == nil
+    deleted_alias = Repo.get_by(UserCommandAlias, name: "my-new-alias", user_id: user.id)
+
+    refute deleted_alias
   end
 
   test "removing an alias that does not exist", %{user: user} do
-    send_message(user, "@bot: operable:alias rm my-new-alias")
-    |> assert_error_message_contains("Whoops! An error occurred. I can't find 'my-new-alias'. Please try again")
+    response = send_message(user, "@bot: operable:alias rm my-new-alias")
+
+    assert_error_message_contains(response, "Whoops! An error occurred. I can't find 'my-new-alias'. Please try again")
   end
 
   test "moving an alias to site using full visibility syntax", %{user: user} do
-    expected_map = %{"source" => %{"name" => "my-new-alias",
-                                   "pipeline" => "echo My New Alias",
-                                   "visibility" => "user"},
-                "destination" => %{"name" => "my-new-alias",
-                                   "pipeline" => "echo My New Alias",
-                                   "visibility" => "site"}}
-
     send_message(user, "@bot: operable:alias new my-new-alias \"echo My New Alias\"")
 
-    expected_response = Helpers.render_template("alias-mv", expected_map)
-    send_message(user, "@bot: operable:alias mv user:my-new-alias site")
-    |> assert_message(expected_response)
+    response = send_message(user, "@bot: operable:alias mv user:my-new-alias site")
 
-    command_alias = Repo.get_by(Cog.Models.SiteCommandAlias, name: "my-new-alias")
+    assert_payload(response, %{
+      source: %{
+        name: "my-new-alias",
+        pipeline: "echo My New Alias",
+        visibility: "user"
+      },
+      destination: %{
+        name: "my-new-alias",
+        pipeline: "echo My New Alias",
+        visibility: "site"
+      }
+    })
+
+    command_alias = Repo.get_by(SiteCommandAlias, name: "my-new-alias")
+
     assert command_alias.name == "my-new-alias"
   end
 
   test "moving an alias to site using full visibility syntax and rename", %{user: user} do
-    expected_map = %{"source" => %{"name" => "my-new-alias",
-                                   "pipeline" => "echo My New Alias",
-                                   "visibility" => "user"},
-                "destination" => %{"name" => "my-renamed-alias",
-                                   "pipeline" => "echo My New Alias",
-                                   "visibility" => "site"}}
-
     send_message(user, "@bot: operable:alias new my-new-alias \"echo My New Alias\"")
 
-    expected_response = Helpers.render_template("alias-mv", expected_map)
-    send_message(user, "@bot: operable:alias mv user:my-new-alias site:my-renamed-alias")
-    |> assert_message(expected_response)
+    response = send_message(user, "@bot: operable:alias mv user:my-new-alias site:my-renamed-alias")
 
-    command_alias = Repo.get_by(Cog.Models.SiteCommandAlias, name: "my-renamed-alias")
+    assert_payload(response, %{
+      source: %{
+        name: "my-new-alias",
+        pipeline: "echo My New Alias",
+        visibility: "user"
+      },
+      destination: %{
+        name: "my-renamed-alias",
+        pipeline: "echo My New Alias",
+        visibility: "site"
+      }
+    })
+
+    command_alias = Repo.get_by(SiteCommandAlias, name: "my-renamed-alias")
+
     assert command_alias.name == "my-renamed-alias"
   end
 
   test "moving an alias to site with short syntax", %{user: user} do
-    expected_map = %{"source" => %{"name" => "my-new-alias",
-                                   "pipeline" => "echo My New Alias",
-                                   "visibility" => "user"},
-                "destination" => %{"name" => "my-new-alias",
-                                   "pipeline" => "echo My New Alias",
-                                   "visibility" => "site"}}
-
     send_message(user, "@bot: operable:alias new my-new-alias \"echo My New Alias\"")
 
-    expected_response = Helpers.render_template("alias-mv", expected_map)
-    send_message(user, "@bot: operable:alias mv my-new-alias site")
-    |> assert_message(expected_response)
+    response = send_message(user, "@bot: operable:alias mv my-new-alias site")
 
-    command_alias = Repo.get_by(Cog.Models.SiteCommandAlias, name: "my-new-alias")
+    assert_payload(response, %{
+      source: %{
+        name: "my-new-alias",
+        pipeline: "echo My New Alias",
+        visibility: "user"
+      },
+      destination: %{
+        name: "my-new-alias",
+        pipeline: "echo My New Alias",
+        visibility: "site"
+      }
+    })
+
+    command_alias = Repo.get_by(SiteCommandAlias, name: "my-new-alias")
+
     assert command_alias.name == "my-new-alias"
   end
 
   test "moving an alias to site with short syntax and rename", %{user: user} do
-    expected_map = %{"source" => %{"name" => "my-new-alias",
-                                   "pipeline" => "echo My New Alias",
-                                   "visibility" => "user"},
-                "destination" => %{"name" => "my-renamed-alias",
-                                   "pipeline" => "echo My New Alias",
-                                   "visibility" => "site"}}
-
     send_message(user, "@bot: operable:alias new my-new-alias \"echo My New Alias\"")
 
-    expected_response = Helpers.render_template("alias-mv", expected_map)
-    send_message(user, "@bot: operable:alias mv my-new-alias site:my-renamed-alias")
-    |> assert_message(expected_response)
+    response = send_message(user, "@bot: operable:alias mv my-new-alias site:my-renamed-alias")
 
-    command_alias = Repo.get_by(Cog.Models.SiteCommandAlias, name: "my-renamed-alias")
+    assert_payload(response, %{
+      source: %{
+        name: "my-new-alias",
+        pipeline: "echo My New Alias",
+        visibility: "user"
+      },
+      destination: %{
+        name: "my-renamed-alias",
+        pipeline: "echo My New Alias",
+        visibility: "site"
+      }
+    })
+
+    command_alias = Repo.get_by(SiteCommandAlias, name: "my-renamed-alias")
+
     assert command_alias.name == "my-renamed-alias"
   end
 
   test "moving an alias to user with full visibility syntax", %{user: user} do
-    expected_map = %{"source" => %{"name" => "my-new-alias",
-                                   "pipeline" => "echo My New Alias",
-                                   "visibility" => "site"},
-                "destination" => %{"name" => "my-new-alias",
-                                   "pipeline" => "echo My New Alias",
-                                   "visibility" => "user"}}
-
     send_message(user, "@bot: operable:alias new my-new-alias \"echo My New Alias\"")
     send_message(user, "@bot: operable:alias mv my-new-alias site")
 
-    expected_response = Helpers.render_template("alias-mv", expected_map)
-    send_message(user, "@bot: operable:alias mv site:my-new-alias user")
-    |> assert_message(expected_response)
+    response = send_message(user, "@bot: operable:alias mv site:my-new-alias user")
 
-    command_alias = Repo.get_by(Cog.Models.UserCommandAlias, name: "my-new-alias")
+    assert_payload(response, %{
+      source: %{
+        name: "my-new-alias",
+        pipeline: "echo My New Alias",
+        visibility: "site"
+      },
+      destination: %{
+        name: "my-new-alias",
+        pipeline: "echo My New Alias",
+        visibility: "user"
+      }
+    })
+
+    command_alias = Repo.get_by(UserCommandAlias, name: "my-new-alias")
+
     assert command_alias.name == "my-new-alias"
   end
 
   test "moving an alias to user with full visibility syntax and rename", %{user: user} do
-    expected_map = %{"source" => %{"name" => "my-new-alias",
-                                   "pipeline" => "echo My New Alias",
-                                   "visibility" => "site"},
-                "destination" => %{"name" => "my-renamed-alias",
-                                   "pipeline" => "echo My New Alias",
-                                   "visibility" => "user"}}
-
     send_message(user, "@bot: operable:alias new my-new-alias \"echo My New Alias\"")
     send_message(user, "@bot: operable:alias mv my-new-alias site")
 
-    expected_response = Helpers.render_template("alias-mv", expected_map)
-    send_message(user, "@bot: operable:alias mv site:my-new-alias user:my-renamed-alias")
-    |> assert_message(expected_response)
+    response = send_message(user, "@bot: operable:alias mv site:my-new-alias user:my-renamed-alias")
 
-    command_alias = Repo.get_by(Cog.Models.UserCommandAlias, name: "my-renamed-alias")
+    assert_payload(response, %{
+      source: %{
+        name: "my-new-alias",
+        pipeline: "echo My New Alias",
+        visibility: "site"
+      },
+      destination: %{
+        name: "my-renamed-alias",
+        pipeline: "echo My New Alias",
+        visibility: "user"
+      }
+    })
+
+    command_alias = Repo.get_by(UserCommandAlias, name: "my-renamed-alias")
+
     assert command_alias.name == "my-renamed-alias"
   end
 
   test "moving an alias to user with short syntax", %{user: user} do
-    expected_map = %{"source" => %{"name" => "my-new-alias",
-                                   "pipeline" => "echo My New Alias",
-                                   "visibility" => "site"},
-                "destination" => %{"name" => "my-new-alias",
-                                   "pipeline" => "echo My New Alias",
-                                   "visibility" => "user"}}
-
     send_message(user, "@bot: operable:alias new my-new-alias \"echo My New Alias\"")
     send_message(user, "@bot: operable:alias mv my-new-alias site")
 
-    expected_response = Helpers.render_template("alias-mv", expected_map)
-    send_message(user, "@bot: operable:alias mv my-new-alias user")
-    |> assert_message(expected_response)
+    response = send_message(user, "@bot: operable:alias mv my-new-alias user")
 
-    command_alias = Repo.get_by(Cog.Models.UserCommandAlias, name: "my-new-alias")
+    assert_payload(response, %{
+      source: %{
+        name: "my-new-alias",
+        pipeline: "echo My New Alias",
+        visibility: "site"},
+      destination: %{
+        name: "my-new-alias",
+        pipeline: "echo My New Alias",
+        visibility: "user"
+      }
+    })
+
+    command_alias = Repo.get_by(UserCommandAlias, name: "my-new-alias")
+
     assert command_alias.name == "my-new-alias"
   end
 
   test "moving an alias to user with short syntax and rename", %{user: user} do
-    expected_map = %{"source" => %{"name" => "my-new-alias",
-                                   "pipeline" => "echo My New Alias",
-                                   "visibility" => "site"},
-                "destination" => %{"name" => "my-renamed-alias",
-                                   "pipeline" => "echo My New Alias",
-                                   "visibility" => "user"}}
-
     send_message(user, "@bot: operable:alias new my-new-alias \"echo My New Alias\"")
     send_message(user, "@bot: operable:alias mv my-new-alias site")
 
-    expected_response = Helpers.render_template("alias-mv", expected_map)
-    send_message(user, "@bot: operable:alias mv my-new-alias user:my-renamed-alias")
-    |> assert_message(expected_response)
+    response = send_message(user, "@bot: operable:alias mv my-new-alias user:my-renamed-alias")
 
-    command_alias = Repo.get_by(Cog.Models.UserCommandAlias, name: "my-renamed-alias")
+    assert_payload(response, %{
+      source: %{
+        name: "my-new-alias",
+        pipeline: "echo My New Alias",
+        visibility: "site"},
+      destination: %{
+        name: "my-renamed-alias",
+        pipeline: "echo My New Alias",
+        visibility: "user"
+      }
+    })
+
+    command_alias = Repo.get_by(UserCommandAlias, name: "my-renamed-alias")
+
     assert command_alias.name == "my-renamed-alias"
   end
 
   test "renaming an alias in the user visibility", %{user: user} do
-    expected_map = %{"source" => %{"name" => "my-new-alias",
-                                   "pipeline" => "echo My New Alias",
-                                   "visibility" => "user"},
-                "destination" => %{"name" => "my-renamed-alias",
-                                   "pipeline" => "echo My New Alias",
-                                   "visibility" => "user"}}
-
     send_message(user, "@bot: operable:alias new my-new-alias \"echo My New Alias\"")
 
-    expected_response = Helpers.render_template("alias-mv", expected_map)
-    send_message(user, "@bot: operable:alias mv my-new-alias my-renamed-alias")
-    |> assert_message(expected_response)
+    response = send_message(user, "@bot: operable:alias mv my-new-alias my-renamed-alias")
 
-    command_alias = Repo.get_by(Cog.Models.UserCommandAlias, name: "my-renamed-alias")
+    assert_payload(response, %{
+      source: %{
+        name: "my-new-alias",
+        pipeline: "echo My New Alias",
+        visibility: "user"},
+      destination: %{
+        name: "my-renamed-alias",
+        pipeline: "echo My New Alias",
+        visibility: "user"
+      }
+    })
+
+    command_alias = Repo.get_by(UserCommandAlias, name: "my-renamed-alias")
+
     assert command_alias.name == "my-renamed-alias"
   end
 
   test "renaming an alias in the site visibility", %{user: user} do
-    expected_map = %{"source" => %{"name" => "my-new-alias",
-                                   "pipeline" => "echo My New Alias",
-                                   "visibility" => "site"},
-                "destination" => %{"name" => "my-renamed-alias",
-                                   "pipeline" => "echo My New Alias",
-                                   "visibility" => "site"}}
-
     send_message(user, "@bot: operable:alias new my-new-alias \"echo My New Alias\"")
     send_message(user, "@bot: operable:alias mv my-new-alias site")
 
-    expected_response = Helpers.render_template("alias-mv", expected_map)
-    send_message(user, "@bot: operable:alias mv my-new-alias my-renamed-alias")
-    |> assert_message(expected_response)
+    response = send_message(user, "@bot: operable:alias mv my-new-alias my-renamed-alias")
 
-    command_alias = Repo.get_by(Cog.Models.SiteCommandAlias, name: "my-renamed-alias")
+    assert_payload(response, %{
+      source: %{
+        name: "my-new-alias",
+        pipeline: "echo My New Alias",
+        visibility: "site"},
+      destination: %{
+        name: "my-renamed-alias",
+        pipeline: "echo My New Alias",
+        visibility: "site"
+      }
+    })
+
+    command_alias = Repo.get_by(SiteCommandAlias, name: "my-renamed-alias")
+
     assert command_alias.name == "my-renamed-alias"
   end
 
@@ -238,8 +295,9 @@ defmodule Integration.Commands.AliasTest do
     send_message(user, "@bot: operable:alias mv my-new-alias site")
     send_message(user, "@bot: operable:alias new my-new-alias \"echo My New Alias\"")
 
-    send_message(user, "@bot: operable:alias mv user:my-new-alias site")
-    |> assert_error_message_contains("Whoops! An error occurred. name: The alias name is already in use.")
+    response = send_message(user, "@bot: operable:alias mv user:my-new-alias site")
+
+    assert_error_message_contains(response, "Whoops! An error occurred. name: The alias name is already in use.")
   end
 
   test "moving an alias to user when an alias with that name already exists in user", %{user: user} do
@@ -247,8 +305,9 @@ defmodule Integration.Commands.AliasTest do
     send_message(user, "@bot: operable:alias mv my-new-alias site")
     send_message(user, "@bot: operable:alias new my-new-alias \"echo My New Alias\"")
 
-    send_message(user, "@bot: operable:alias mv site:my-new-alias user")
-    |> assert_error_message_contains("Whoops! An error occurred. name: The alias name is already in use.")
+    response = send_message(user, "@bot: operable:alias mv site:my-new-alias user")
+
+    assert_error_message_contains(response, "Whoops! An error occurred. name: The alias name is already in use.")
   end
 
   test "list all aliases", %{user: user} do
@@ -258,22 +317,30 @@ defmodule Integration.Commands.AliasTest do
     send_message(user, "@bot: operable:alias new my-new-alias3 \"echo My New Alias\"")
     send_message(user, "@bot: operable:alias mv my-new-alias site")
 
-    alias_list = [%{"visibility" => "user",
-                    "pipeline" => "echo My New Alias",
-                    "name" => "my-new-alias1"},
-                  %{"visibility" => "user",
-                    "pipeline" => "echo My New Alias",
-                    "name" => "my-new-alias2"},
-                  %{"visibility" => "user",
-                    "pipeline" => "echo My New Alias",
-                    "name" => "my-new-alias3"},
-                  %{"visibility" => "site",
-                    "pipeline" => "echo My New Alias",
-                    "name" => "my-new-alias"}]
+    response = send_message(user, "@bot: operable:alias ls")
 
-    expected_response = Helpers.render_template("alias-ls", Enum.sort(alias_list))
-    send_message(user, "@bot: operable:alias ls")
-    |> assert_message(expected_response)
+    assert_payload(response, [
+      %{
+        visibility: "site",
+        pipeline: "echo My New Alias",
+        name: "my-new-alias"
+      },
+      %{
+        visibility: "user",
+        pipeline: "echo My New Alias",
+        name: "my-new-alias1"
+      },
+      %{
+        visibility: "user",
+        pipeline: "echo My New Alias",
+        name: "my-new-alias2"
+      },
+      %{
+        visibility: "user",
+        pipeline: "echo My New Alias",
+        name: "my-new-alias3"
+      }
+    ])
   end
 
   test "list all aliases matching a pattern", %{user: user} do
@@ -283,61 +350,74 @@ defmodule Integration.Commands.AliasTest do
     send_message(user, "@bot: operable:alias new new-alias1 \"echo My New Alias\"")
     send_message(user, "@bot: operable:alias mv my-new-alias site")
 
-    alias_list = [%{"visibility" => "site",
-                    "pipeline" => "echo My New Alias",
-                    "name" => "my-new-alias"},
-                  %{"visibility" => "user",
-                    "pipeline" => "echo My New Alias",
-                    "name" => "my-new-alias1"}]
+    response = send_message(user, "@bot: operable:alias ls \"my-*\"")
 
-    expected_response = Helpers.render_template("alias-ls", Enum.sort(alias_list))
-    send_message(user, "@bot: operable:alias ls \"my-*\"")
-    |> assert_message(expected_response)
+    assert_payload(response, [
+      %{
+        visibility: "site",
+        pipeline: "echo My New Alias",
+        name: "my-new-alias"
+      },
+      %{
+        visibility: "user",
+        pipeline: "echo My New Alias",
+        name: "my-new-alias1"
+      }
+    ])
   end
 
   test "list all aliases with no matching aliases", %{user: user} do
-    send_message(user, "@bot: operable:alias ls \"my-*\"")
-    |> assert_message("Pipeline executed successfully, but no output was returned")
+    response = send_message(user, "@bot: operable:alias ls \"my-*\"")
+
+    assert_payload(response, "Pipeline executed successfully, but no output was returned")
   end
 
   test "list all aliases with no aliases", %{user: user} do
-    send_message(user, "@bot: operable:alias ls")
-    |> assert_message("Pipeline executed successfully, but no output was returned")
+    response = send_message(user, "@bot: operable:alias ls")
+
+    assert_payload(response, "Pipeline executed successfully, but no output was returned")
   end
 
   test "list aliases with an invalid pattern", %{user: user} do
-    send_message(user, "@bot: operable:alias ls \"% &my#-*\"")
-    |> assert_error_message_contains("Whoops! An error occurred. Invalid alias name. Only emoji, letters, numbers, and the following special characters are allowed: *, -, _")
+    response = send_message(user, "@bot: operable:alias ls \"% &my#-*\"")
+
+    assert_error_message_contains(response, "Whoops! An error occurred. Invalid alias name. Only emoji, letters, numbers, and the following special characters are allowed: *, -, _")
   end
 
   test "list aliases with too many wildcards", %{user: user} do
-    send_message(user, "@bot: operable:alias ls \"*my-*\"")
-    |> assert_error_message_contains("Whoops! An error occurred. Too many wildcards. You can only include one wildcard in a query")
+    response = send_message(user, "@bot: operable:alias ls \"*my-*\"")
+
+    assert_error_message_contains(response, "Whoops! An error occurred. Too many wildcards. You can only include one wildcard in a query")
   end
 
   test "list aliases with a bad pattern and too many wildcards", %{user: user} do
-    send_message(user, "@bot: operable:alias ls \"*m++%y-*\"")
-    |> assert_error_message_contains("Whoops! An error occurred. Too many wildcards. You can only include one wildcard in a query\nInvalid alias name. Only emoji, letters, numbers, and the following special characters are allowed: *, -, _")
+    response = send_message(user, "@bot: operable:alias ls \"*m++%y-*\"")
+
+    assert_error_message_contains(response, "Whoops! An error occurred. Too many wildcards. You can only include one wildcard in a query\nInvalid alias name. Only emoji, letters, numbers, and the following special characters are allowed: *, -, _")
   end
 
   test "passing too many args", %{user: user} do
-    send_message(user, "@bot: operable:alias new my-invalid-alias \"echo foo\" invalid-arg")
-    |> assert_error_message_contains("Whoops! An error occurred. Too many args. Arguments required: exactly 2.")
+    response = send_message(user, "@bot: operable:alias new my-invalid-alias \"echo foo\" invalid-arg")
+
+    assert_error_message_contains(response, "Whoops! An error occurred. Too many args. Arguments required: exactly 2.")
   end
 
   test "passing too few args", %{user: user} do
-    send_message(user, "@bot: operable:alias new my-invalid-alias")
-    |> assert_error_message_contains("Whoops! An error occurred. Not enough args. Arguments required: exactly 2.")
+    response = send_message(user, "@bot: operable:alias new my-invalid-alias")
+
+    assert_error_message_contains(response, "Whoops! An error occurred. Not enough args. Arguments required: exactly 2.")
   end
 
   test "passing an unknown subcommand", %{user: user} do
-    send_message(user, "@bot: operable:alias foo")
-    |> assert_error_message_contains("Whoops! An error occurred. Unknown subcommand 'foo'")
+    response = send_message(user, "@bot: operable:alias foo")
+
+    assert_error_message_contains(response, "Whoops! An error occurred. Unknown subcommand 'foo'")
   end
 
   test "passing now subcommand", %{user: user} do
-    send_message(user, "@bot: operable:alias")
-    |> assert_error_message_contains("Whoops! An error occurred. I don't what to do, please specify a subcommand")
+    response = send_message(user, "@bot: operable:alias")
+
+    assert_error_message_contains(response, "Whoops! An error occurred. I don't what to do, please specify a subcommand")
   end
 
 end
