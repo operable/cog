@@ -75,8 +75,6 @@ defmodule Cog.Bundle.Install do
   defp create_command(%Bundle{}=bundle, {command_name, command_spec}) do
     command_spec = Map.take(command_spec, @command_attrs)
 
-    IO.inspect {command_name, command_spec}
-
     command = Command.build_new(bundle, Map.put(command_spec, "name", command_name))
     |> Repo.insert!
 
@@ -86,8 +84,14 @@ defmodule Cog.Bundle.Install do
     |> Enum.each(&create_option(command, &1))
   end
 
-  defp create_option(command, params) do
-    CommandOption.build_new(command, params) |> Repo.insert!
+  defp create_option(command, {option_name, params}) do
+    option = Map.merge(%{
+      "name" => option_name,
+      "long_flag" => option_name
+    }, params)
+
+    CommandOption.build_new(command, option)
+    |> Repo.insert!
   end
 
   # TODO: want a better API for this; given a NS and bare names,
@@ -99,14 +103,12 @@ defmodule Cog.Bundle.Install do
     |> Repo.insert!
   end
 
-  defp create_template(bundle, {name, %{"provider" => provider, "source" => source}}) do
+  defp create_template(bundle, {name, %{"provider" => provider, "contents" => contents}}) do
     params = %{
       adapter: provider,
       name: name,
-      source: source
+      source: contents
     }
-
-    IO.inspect {"HERE I AM"}
 
     bundle
     |> Ecto.Model.build(:templates)
