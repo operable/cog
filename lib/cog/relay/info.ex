@@ -60,7 +60,6 @@ defmodule Cog.Relay.Info do
     prepared_bundles = Enum.map(bundles, fn(bundle) ->
       %{name: bundle.name,
         config_file: bundle.config_file,
-        manifest_file: bundle.manifest_file,
         enabled: bundle.enabled}
     end)
 
