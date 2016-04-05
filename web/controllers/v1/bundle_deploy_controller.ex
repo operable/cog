@@ -64,15 +64,22 @@ defmodule Cog.V1.BundleDeployController do
 
   # Create a new record in the DB for the deploy
   defp persist(%{"name" => name} = config) do
-    Install.install_bundle(%{name: name, config_file: config})
-    {:ok, "WOOT! WOOT!"}
+    case Install.install_bundle(%{name: name, config_file: config}) do
+      {:ok, bundle} ->
+        response = Map.take(bundle, [:id, :name])
+        {:ok, %{bundle: response}}
+      {:error, error} ->
+        {:error, {:changeset_error, error}}
+    end
+
   end
 
   # Helper functions
 
   defp send_success(conn, response) do
     conn
-    |> send_resp(:created, response)
+    |> put_resp_content_type("application/json")
+    |> send_resp(:created, Poison.encode!(response))
   end
 
   defp send_failure(conn, err) do
@@ -80,25 +87,29 @@ defmodule Cog.V1.BundleDeployController do
 
     conn
     |> put_resp_content_type("application/json")
-    |> send_resp(status, msg)
+    |> send_resp(status, Poison.encode!(msg))
     |> halt
   end
 
   defp error(:no_config) do
-    {:bad_request, Poison.encode!(%{error: "'config_file' not specified."})}
+    {:bad_request, %{error: "'config_file' not specified."}}
   end
   defp error(:unsupported_format) do
     msg = ~s(Unsupported file format. Please upload a file in one of the following formats: #{Enum.join(Spanner.Config.config_extensions, ", ")})
-    {:unsupported_media_type, Poison.encode!(%{error: msg})}
+    {:unsupported_media_type, %{error: msg}}
   end
   defp error({:parse_error, errors}) do
     msg = "Unable to parse config file."
-    {:unprocessable_entity, Poison.encode!(%{error: msg, additional: errors})}
+    {:unprocessable_entity, %{error: msg, additional: errors}}
   end
   defp error({:validation_error, errors}) do
     msg = "Invalid config file."
     errors = Enum.map(errors, fn({msg, meta}) -> ~s(Error near #{meta}: #{msg}) end)
-    {:unprocessable_entity, Poison.encode!(%{error: msg, errors: errors})}
+    {:unprocessable_entity, %{error: msg, additional: errors}}
+  end
+  defp error({:changeset_error, error}) do
+    msg = "Could not save bundle."
+    {:unprocessable_entity, %{error: msg, additional: error}}
   end
 
 end
