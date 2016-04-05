@@ -48,7 +48,10 @@ defmodule Cog.V1.BundlesController do
 
     case result do
       {:ok, bundle} ->
-        render(conn, "show.json", %{bundle: bundle})
+        conn
+        |> put_status(:created)
+        |> put_resp_header("location", bundles_path(conn, :show, bundle))
+        |> render("show.json", %{bundle: bundle})
       {:error, err} ->
         send_failure(conn, err)
     end
