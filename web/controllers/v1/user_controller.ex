@@ -1,6 +1,4 @@
 defmodule Cog.V1.UserController do
-  import Plug.Conn
-
   use Cog.Web, :controller
 
   alias Cog.Models.User
@@ -61,10 +59,14 @@ defmodule Cog.V1.UserController do
 
   ###############################################
   # Plug function - local only to user controller
+  #
+  # This local plug allows a user to update and view
+  # thieir own user information without needing
+  # the "manage_users" permission.
   ###############################################
-  @spec check_self_updating(Plug.Conn.t, []) :: Plug.Conn.t
-  def check_self_updating(conn, opts \\ []) do
-    if determine_self_updating(conn) do
+  @spec check_self_updating(Plug.Conn.t, [Keyword.t]) :: Plug.Conn.t
+  defp check_self_updating(conn, opts) do
+    if self_updating?(conn) do
       conn
     else
       plug_opts = Cog.Plug.Authorization.init(opts)
@@ -72,13 +74,9 @@ defmodule Cog.V1.UserController do
     end
   end
 
-    @doc """
-  Store the self updating user flag in the `conn`.
-  """
-  @spec determine_self_updating(%Plug.Conn{}) :: true | false
-  def determine_self_updating(conn) do
-    Map.has_key?(conn.private, :phoenix_action) and
-        conn.private.phoenix_action == :update and
+  @spec self_updating?(%Plug.Conn{}) :: true | false
+  defp self_updating?(conn) do
+    conn.private.phoenix_action in [:update, :show] and
         conn.assigns.user.id == conn.params["id"]
   end
 

@@ -179,4 +179,17 @@ defmodule Cog.V1.UserControllerTest do
                          "last_name" => @valid_attrs.last_name}
   end
 
+  test "user can get their own information without manage_users permission" do
+    tester = user("tester")
+    |> with_token
+    conn = api_request(tester, :get, "/v1/users/#{tester.id}")
+    new_user = json_response(conn, 200)["user"]
+    assert new_user == %{"id" => tester.id,
+                         "username" => tester.username,
+                         "first_name" => tester.first_name,
+                         "email_address" => tester.email_address,
+                         "groups" => [],
+                         "last_name" => tester.last_name}
+  end
+
 end
