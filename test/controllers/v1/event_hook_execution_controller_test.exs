@@ -119,12 +119,15 @@ defmodule Cog.V1.EventHookExecutionControllerTest do
     hook_id = hook.id
 
     # Make the request
-    conn = post(conn, "/v1/event_hooks/#{hook_id}?thing=responds_to",
-                Poison.encode!(%{"message" => "this"}))
+    body = %{"message" => "this"}
+    json = Poison.encode!(body)
+
+    conn = post(conn, "/v1/event_hooks/#{hook_id}?thing=responds_to", json)
     assert "this responds_to application/json" = json_response(conn, 200)
 
     # Check that the executor got the context we expected
     [message] = Snoop.messages(executor_snoop)
+
     assert %{"id" => request_id,
              "adapter" => "http",
              "module" => "Elixir.Cog.Adapters.Http",
@@ -136,7 +139,8 @@ defmodule Cog.V1.EventHookExecutionControllerTest do
                            "hook_user" => ^username},
              "initial_context" => %{"hook_id" => ^hook_id,
                                     "headers" => %{"content-type" => "application/json"},
-                                    "body" => %{"message" => "this"},
+                                    "raw_body" => ^json,
+                                    "body" => ^body,
                                     "query_params" => %{"thing" => "responds_to"}},
              "text" => ^pipeline_text} = message
 
@@ -250,6 +254,33 @@ defmodule Cog.V1.EventHookExecutionControllerTest do
     expected_response = Poison.encode!(%{body: ["Hello"]}, pretty: true)
     assert %{"id" => ^pipeline_id,
              "response" => ^expected_response} = message
+  end
+
+  test "requires JSON content" do
+    user("cog")
+    hook = hook(%{name: "echo",
+                  pipeline: "echo foo",
+                  as_user: "cog"})
+    conn = conn()
+    |> put_req_header("content-type", "text/plain")
+    |> post("/v1/event_hooks/#{hook.id}", "Hello World")
+
+    assert conn.halted
+    assert 415 = conn.status
+  end
+
+  test "an empty body is treated as an empty JSON map", %{conn: conn} do
+    {:ok, executor_snoop} = Snoop.start_link("/bot/commands")
+    user("cog")
+    hook = hook(%{name: "echo",
+                  pipeline: "echo foo",
+                  as_user: "cog"})
+    conn = post(conn, "/v1/event_hooks/#{hook.id}")
+
+    assert "foo" = json_response(conn, 200)
+
+    [message] = Snoop.messages(executor_snoop)
+    assert %{} == get_in(message, ["initial_context", "body"])
   end
 
 end
