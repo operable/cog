@@ -830,21 +830,15 @@ defmodule Cog.Command.Pipeline.Executor do
 
   defp sanitize_request(request) do
     prefix = Application.get_env(:cog, :command_prefix, "!")
-    # Strip off command prefix before parsing
-    text = Regex.replace(~r/^#{prefix}/, request["text"], "")
-    # Replace '&amp;' with '&' (thanks Slack!)
-    text = Regex.replace(~r/&amp;/, text, "&")
-    # Replace unicode long dash with '--' to reverse OS X's replacement via the
-    # "Smart Dashes" substitution, which is enabled by default
-    text = Regex.replace(~r/—/, text, "--")
-    # Replace unicode quotes with '"' to reverse OS X's replacement via the
-    # "Smart Quotes" substitution, which is enabled by default
-    text = Regex.replace(~r/“|”/, text, "\"")
-    text = Regex.replace(~r/‘|’/, text, "'")
-    # Decode Html Entities
-    text = HtmlEntities.decode(text)
-    # Update request with sanitized input
-    Map.put(request, "text", text)
+
+    Map.update!(request, "text", fn text ->
+      text
+      |> String.replace(~r/^#{prefix}/, "") # Remove command prefix
+      |> String.replace(~r/“|”/, "\"")      # Replace OS X's smart quotes and dashes with ascii equivalent
+      |> String.replace(~r/‘|’/, "'")
+      |> String.replace(~r/—/, "--")
+      |> HtmlEntities.decode                # Decode html entities
+    end)
   end
 
   def fetch_user_from_request(request) do
