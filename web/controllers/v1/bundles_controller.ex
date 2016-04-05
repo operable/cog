@@ -48,6 +48,7 @@ defmodule Cog.V1.BundlesController do
 
     case result do
       {:ok, bundle} ->
+        bundle = Repo.preload(bundle, :commands)
         conn
         |> put_status(:created)
         |> put_resp_header("location", bundles_path(conn, :show, bundle))
@@ -102,10 +103,9 @@ defmodule Cog.V1.BundlesController do
   defp persist(%{"name" => name} = config) do
     try do
       Install.install_bundle(%{name: name, config_file: config})
-      |> Repo.preload(:commands)
     rescue
       err in [Ecto.InvalidChangesetError] ->
-        {:error, {:db_error, err.errors}}
+        {:error, {:db_error, err.changeset.errors}}
     end
   end
 
