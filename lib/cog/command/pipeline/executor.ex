@@ -465,35 +465,16 @@ defmodule Cog.Command.Pipeline.Executor do
   defp unregistered_user_message(request) do
     adapter = String.to_existing_atom(request["module"])
     handle = request["sender"]["handle"]
-    mention_name = adapter.mention_name(handle)
-    display_name = adapter.display_name()
-    user_creators = user_creator_handles(request)
 
-    # If no users that can help have chat handles registered (e.g.,
-    # the system was just bootstrapped and only the bootstrap
-    # administrator is wired up permission-wise yet), we'll output a
-    # basic message to ask for help.
-    #
-    # On the other hand, if there are people that can help that have
-    # chat presences, we'll further add their names to the message, so
-    # the user will some real people to ask
-    #
-    # I want error templates!
-    call_to_action = case user_creators do
-                       [] ->
-                         "You'll need to ask a Cog administrator to fix this situation and to register your #{display_name} handle."
-                       _ ->
-                         "You'll need to ask a Cog administrator to fix this situation and to register your #{display_name} handle; the following users can help you right here in chat: #{Enum.join(user_creators, ", ")} ."
-                     end
-    # Yes, that space between the last mention and the period is
-    # significant, at least for Slack; it won't format the mention as
-    # a mention otherwise, because periods are allowed in their handles.
+    context = %{
+      handle: handle,
+      mention_name: adapter.mention_name(handle),
+      display_name: adapter.display_name(),
+      user_creators: user_creator_handles(request)
+    }
 
-     """
-     #{mention_name}: I'm sorry, but either I don't have a Cog account for you, or your #{display_name} chat handle has not been registered. Currently, only registered users can interact with me.
-
-     #{call_to_action}
-     """
+    {:ok, output} = Template.render("any", nil, "unregistered_user", context)
+    output
   end
 
   # Returns a list of adapter-appropriate "mention names" of all Cog
