@@ -182,7 +182,7 @@ defmodule Cog.Relay.Relays do
   # If `config` exists in the database (by name), retrieves the
   # database record. If not, installs the bundle and returns the
   # database record.
-  defp lookup_or_install(%{"bundle" => %{"name" => name}} = config) do
+  defp lookup_or_install(%{"name" => name} = config) do
     case Repo.get_by(Bundle, name: name) do
       %Bundle{}=bundle ->
         {:ok, bundle}

@@ -36,11 +36,11 @@ defmodule Cog.Bundle.Embedded do
     bundle = Repo.get_by!(Bundle, name: Cog.embedded_bundle)
     Logger.info("Loading embedded `#{Cog.embedded_bundle}` bundle")
     config = bundle.config_file
-    children = for command <- config["commands"] do
-      name = command["name"]
+    children = Enum.map(config["commands"], fn({command_name, command}) ->
+      name = command_name
       module = Module.concat([command["module"]])
       worker(Spanner.GenCommand, [bundle.name, name, module, []], id: module)
-    end
+    end)
     supervise(children, strategy: :rest_for_one, max_restarts: 5, max_seconds: 60)
   end
 

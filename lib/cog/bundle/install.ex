@@ -15,8 +15,7 @@ defmodule Cog.Bundle.Install do
 
   require Logger
 
-  @command_attrs ["name", "options", "enforcing",
-                  "execution", "documentation"]
+  @command_attrs ["options", "rules", "documentation"]
 
   @doc """
   Given a map of bundle parameters, fully installs the bundle into the
@@ -57,10 +56,7 @@ defmodule Cog.Bundle.Install do
       bundle.config_file["commands"]
       |> Enum.each(&create_command(bundle, &1))
 
-      Map.get(bundle.config_file, "rules", [])
-      |> Enum.each(&(Cog.RuleIngestion.ingest(&1, false)))
-
-      Map.get(bundle.config_file, "templates", [])
+      Map.get(bundle.config_file, "templates", %{})
       |> Enum.each(&create_template(bundle, &1))
 
       bundle
@@ -73,20 +69,21 @@ defmodule Cog.Bundle.Install do
   #
   # ## Example
   #
-  #     create_command(bundle, %{"name" => "ec2-tag",
-  #                              "enforcing" => true,
-  #                              "execution" => "multiple",
-  #                              "options": [%{"name" => "instance-id", "type" => "string", "required" => true}],
+  #     create_command(bundle, %{"options": [%{"name" => "instance-id", "type" => "string", "required" => true}],
+  #                              "rules": ["When command is foo:bar must have foo:write"],
   #                              "module" => "Cog.Commands.EC2Tag"})
-  defp create_command(%Bundle{}=bundle, command_spec) do
+  defp create_command(%Bundle{}=bundle, {command_name, command_spec}) do
     command_spec = Map.take(command_spec, @command_attrs)
 
-    command = Command.build_new(bundle, command_spec)
+    IO.inspect {command_name, command_spec}
+
+    command = Command.build_new(bundle, Map.put(command_spec, "name", command_name))
     |> Repo.insert!
 
-    for option <- command_spec["options"] do
-      create_option(command, option)
-    end
+    Enum.each(command_spec["rules"], &(Cog.RuleIngestion.ingest(&1, false)))
+
+    Map.get(command_spec, "options", [])
+    |> Enum.each(&create_option(command, &1))
   end
 
   defp create_option(command, params) do
@@ -102,12 +99,14 @@ defmodule Cog.Bundle.Install do
     |> Repo.insert!
   end
 
-  defp create_template(bundle, %{"adapter" => adapter, "name" => command_name, "source" => source}) do
+  defp create_template(bundle, {name, %{"provider" => provider, "source" => source}}) do
     params = %{
-      adapter: adapter,
-      name: command_name,
+      adapter: provider,
+      name: name,
       source: source
     }
+
+    IO.inspect {"HERE I AM"}
 
     bundle
     |> Ecto.Model.build(:templates)

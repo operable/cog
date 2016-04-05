@@ -63,8 +63,8 @@ defmodule Cog.V1.BundleDeployController do
   end
 
   # Create a new record in the DB for the deploy
-  defp persist(config) do
-    Install.install_bundle(config)
+  defp persist(%{"name" => name} = config) do
+    Install.install_bundle(%{name: name, config_file: config})
     {:ok, "WOOT! WOOT!"}
   end
 
