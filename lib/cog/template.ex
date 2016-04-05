@@ -11,6 +11,8 @@ defmodule Cog.Template do
     end
   end
 
+  # First try to pull the template out of the cache and return it. If it's not
+  # found, fetch the source, compile and store the template before returning.
   defp fetch_compiled_fun(adapter, bundle_id, template, context) do
     with :error              <- TemplateCache.lookup(adapter, bundle_id, template),
          {:ok, source}       <- fetch_source(adapter, bundle_id, template, context),
@@ -19,16 +21,21 @@ defmodule Cog.Template do
          do: {:ok, template_fun}
   end
 
-  defp fetch_source(adapter, bundle_id, nil, context) do
-    fetch_source(adapter, bundle_id, default_template(context), context)
-  end
-
   # Always use the raw template when responding to the test adapter.
   # Used in integration tests.
   defp fetch_source("test", _bundle_id, _template, context) do
     fetch_source(@fallback_adapter, nil, "raw", context)
   end
 
+  defp fetch_source(adapter, bundle_id, nil, context) do
+    fetch_source(adapter, bundle_id, default_template(context), context)
+  end
+
+  # We check for fallback templates in the following order:
+  #
+  # 1. Fetch the exact template
+  # 2. Fetch a generic template for the adapter
+  # 3. Fetch a generic template for the "any" adapter
   defp fetch_source(adapter, bundle_id, template, _context) do
     with {:error, :template_not_found} <- fetch(adapter, bundle_id, template),
          {:error, :template_not_found} <- fetch(adapter, nil, template),
