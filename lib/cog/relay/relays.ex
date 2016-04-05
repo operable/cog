@@ -126,7 +126,7 @@ defmodule Cog.Relay.Relays do
 
   defp process_announcement(announcement, %__MODULE__{tracker: tracker}=state) do
     {success_bundles, failed_bundles} = announcement
-    |> Map.fetch!("bundles")
+    |> Map.get("bundles", [])
     |> Enum.map(&lookup_or_install/1)
     |> Enum.partition(&Util.is_ok?/1)
     |> Util.unwrap_partition_results
