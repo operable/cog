@@ -45,6 +45,35 @@ defmodule Cog.Template do
     {:ok, source}
   end
 
+  defp fetch_source("any", nil, "error", _context) do
+    source = """
+    An error has occured.
+
+    At `{{started}}`, {{initiator}} initiated the following pipeline, assigned the unique ID `{{id}}`:
+
+        `{{{pipeline_text}}}`
+
+    {{#planning_failure}}
+      The pipeline failed planning the invocation:
+
+          `{{{planning_failure}}}`
+
+    {{/planning_failure}}
+    {{#execution_failure}}
+      The pipeline failed executing the command:
+
+          `{{{execution_failure}}}`
+
+    {{/execution_failure}}
+    The specific error was:
+
+        {{{error_message}}}
+
+    """
+
+    {:ok, source}
+  end
+
   # We check for fallback templates in the following order:
   #
   # 1. Fetch the exact template

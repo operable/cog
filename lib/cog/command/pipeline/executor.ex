@@ -555,77 +555,34 @@ defmodule Cog.Command.Pipeline.Executor do
   defp strip_templates(accumulated_output),
     do: Enum.map(accumulated_output, &remove_template/1)
 
-  ########################################################################
-  # Error Handling Functions
-
-  # Create a standard error message for pipeline-related
-  # errors. Eventually this will be templated.
   defp user_error(error, state) do
     id = state.id
     started = Cog.Events.Util.ts_iso8601_utc(state.started)
     initiator = sender_name(state)
     pipeline_text = state.request["text"]
     error_message = format_user_error(error, state)
-    failing = case state.current_plan do
-                %Plan{}=plan ->
-                  # If it failed during execution, there will be a
-                  # plan we can point to
-                  plan
-                nil ->
-                  # If it happened during planning, there will be an
-                  # invocation to show
-                  case state.invocations do
-                    [current|_] ->
-                      current
-                    _ ->
-                      # Otherwise, it happened sometime during
-                      # parsing, and we already have the full pipeline
-                      # text to show
-                      nil
-                  end
-              end
 
-    # All error messages start with this prologue
-    base = """
-    An error has occurred.
+    {planning_failure, execution_failure} = case state do
+      %{current_plan: %Plan{invocation_text: planning_failure}} ->
+        {to_string(planning_failure), false}
+      %{invocations: [%Ast.Invocation{} = execution_failure|_]} ->
+        {false, to_string(execution_failure)}
+      _ ->
+        {false, false}
+    end
 
-    At `#{started}`, #{initiator} initiated the following pipeline, assigned the unique ID `#{id}`:
+    context = %{
+      id: id,
+      started: started,
+      initiator: initiator,
+      pipeline_text: pipeline_text,
+      error_message: error_message,
+      planning_failure: planning_failure,
+      execution_failure: execution_failure
+    }
 
-        `#{pipeline_text}`
-
-    """
-
-    # If the failure happened during planning or execution, we'll have
-    # a bit more information to show
-    command_text = case failing do
-                     %Ast.Invocation{} ->
-                     """
-                     The pipeline failed planning the invocation:
-
-                         `#{failing}`
-                     """
-                     %Plan{} ->
-                     """
-                     The pipeline failed executing the command:
-
-                         `#{failing.invocation_text}`
-
-                     """
-                     nil ->
-                       nil
-                   end
-
-    # Finally, the text of the specific error that occurred
-    error_text = """
-    The specific error was:
-
-        #{error_message}
-
-    """
-
-    [base, command_text, error_text]
-    |> Enum.reject(&is_nil/1)
-    |> Enum.join("\n")
+    {:ok, output} = Template.render("any", nil, "error", context)
+    output
   end
 
   # Turn an error tuple into a textual message intended for chat users
