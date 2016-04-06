@@ -48,10 +48,10 @@ defmodule Cog.Command.Pipeline.Destination do
   defp maybe_add_origin([], _origin_adapter),
     do: [make_destination("here")]
   defp maybe_add_origin(destinations, origin_adapter) do
-    if !originator_is_destination?(destinations) && !origin_adapter.chat_adapter? do
-      [%{make_destination("here") | output_level: :status_only} | destinations]
-    else
+    if originator_is_destination?(destinations) || origin_adapter.chat_adapter? do
       destinations
+    else
+      [%{make_destination("here") | output_level: :status_only} | destinations]
     end
   end
 
