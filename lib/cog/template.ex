@@ -33,45 +33,6 @@ defmodule Cog.Template do
     fetch_source(adapter, bundle_id, default_template(context), context)
   end
 
-  defp fetch_source("any", nil, "unregistered_user", _context) do
-    source = """
-    {{mention_name}}: I'm sorry, but either I don't have a Cog account for you, or your {{display_name}} chat handle has not been registered. Currently, only registered users can interact with me.
-
-    You'll need to ask a Cog administrator to fix this situation and to register your {{display_name}} handle. {{#user_creators?}}The following users can help you right here in chat:{{#user_creators}} {{.}}{{/user_creators}}{{/user_creators?}}
-    """
-
-    {:ok, source}
-  end
-
-  defp fetch_source("any", nil, "error", _context) do
-    source = """
-    An error has occured.
-
-    At `{{started}}`, {{initiator}} initiated the following pipeline, assigned the unique ID `{{id}}`:
-
-        `{{{pipeline_text}}}`
-
-    {{#planning_failure}}
-    The pipeline failed planning the invocation:
-
-        `{{{planning_failure}}}`
-
-    {{/planning_failure}}
-    {{#execution_failure}}
-    The pipeline failed executing the command:
-
-        `{{{execution_failure}}}`
-
-    {{/execution_failure}}
-    The specific error was:
-
-        {{{error_message}}}
-
-    """
-
-    {:ok, source}
-  end
-
   # We check for fallback templates in the following order:
   #
   # 1. Fetch the exact template
