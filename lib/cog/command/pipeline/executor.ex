@@ -397,7 +397,7 @@ defmodule Cog.Command.Pipeline.Executor do
         {:ok, output}
       {:error, :template_not_found} ->
         Logger.warn("The template `#{template}` was not found for adapter `#{adapter}` in bundle `#{bundle.name}`; falling back to the json template")
-        Template.render(adapter, nil, "json", context)
+        Template.render(adapter, "json", context)
       {:error, error} ->
         {:error, error}
     end
@@ -475,7 +475,7 @@ defmodule Cog.Command.Pipeline.Executor do
       user_creators: user_creator_handles(request)
     }
 
-    Template.render("any", nil, "unregistered_user", context)
+    Template.render("any", "unregistered_user", context)
   end
 
   # Returns a list of adapter-appropriate "mention names" of all Cog
@@ -582,7 +582,7 @@ defmodule Cog.Command.Pipeline.Executor do
       execution_failure: execution_failure
     }
 
-    Template.render("any", nil, "error", context)
+    Template.render("any", "error", context)
   end
 
   # Turn an error tuple into a textual message intended for chat users
