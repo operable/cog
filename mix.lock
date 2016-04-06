@@ -59,7 +59,7 @@
   "ranch": {:hex, :ranch, "1.2.1"},
   "ssl_verify_fun": {:hex, :ssl_verify_fun, "1.1.0"},
   "slack": {:hex, :slack, "0.4.2"},
-  "spanner": {:git, "https://github.com/operable/spanner.git", "22299038d2fc797eddb981e324bb0847fe7595fb", [ref: "22299038d2fc797eddb981e324bb0847fe7595fb"]},
+  "spanner": {:git, "https://github.com/operable/spanner.git", "34018db0e538cf6d4704df5c121ad66de5afcf3b", [ref: "34018db0e538cf6d4704df5c121ad66de5afcf3b"]},
   "ssl_verify_hostname": {:hex, :ssl_verify_hostname, "1.0.5"},
   "uuid": {:hex, :uuid, "1.1.3"},
   "websocket_client": {:git, "https://github.com/jeremyong/websocket_client.git", "f6892c8b55004008ce2d52be7d98b156f3e34569", []},
