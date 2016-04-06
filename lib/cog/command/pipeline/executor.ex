@@ -1,8 +1,12 @@
 defmodule Cog.Command.Pipeline.Executor do
 
   alias Carrier.Messaging.Connection
+  alias Cog.AuditMessage
   alias Cog.Command.CommandResolver
   alias Cog.Command.PermissionsCache
+  alias Cog.Command.Pipeline.Destination
+  alias Cog.Command.Pipeline.Plan
+  alias Cog.ErrorResponse
   alias Cog.Events.PipelineEvent
   alias Cog.Queries
   alias Cog.Repo
@@ -10,8 +14,6 @@ defmodule Cog.Command.Pipeline.Executor do
   alias Piper.Command.Ast
   alias Piper.Command.Parser
   alias Piper.Command.ParserOptions
-  alias Cog.Command.Pipeline.Destination
-  alias Cog.Command.Pipeline.Plan
 
   @type adapter_name :: String.t
 
@@ -162,8 +164,8 @@ defmodule Cog.Command.Pipeline.Executor do
         fail_pipeline_with_error({:binding_error, error}, state)
       {:error, :no_rule} ->
         fail_pipeline_with_error({:no_rule, current_invocation}, state)
-      {:error, {:denied, _}=error} ->
-        fail_pipeline_with_error(error, state)
+      {:error, {:denied, rule}} ->
+        fail_pipeline_with_error({:denied, {rule, current_invocation}}, state)
       {:error, msg} when is_binary(msg) ->
         # These are error strings that are generated from within the
         # binding infrastructure... should probably pull those strings
@@ -262,52 +264,6 @@ defmodule Cog.Command.Pipeline.Executor do
   # request. Won't always be the chat adapter!
   defp originating_adapter(state),
     do: String.to_existing_atom(state.request["module"])
-
-  # `errors` is a keyword list of [reason: name] for all bad redirect
-  # destinations that were found. `name` is the value as originally
-  # typed by the user.
-  defp redirection_error_message(errors) do
-    main_message = """
-
-    No commands were executed because the following redirects are invalid:
-
-    #{errors |> Keyword.values |> Enum.join(", ")}
-    """
-
-    not_a_member = Keyword.get_values(errors, :not_a_member)
-    not_a_member_message = unless Enum.empty?(not_a_member) do
-    """
-
-    Additionally, the bot must be invited to these rooms before it can
-    redirect to them:
-
-    #{Enum.join(not_a_member, ", ")}
-    """
-    end
-
-    # TODO: This is where I'd like to have error templates, so we can
-    # be specific about recommending the conventions the user use to
-    # refer to users and rooms
-    ambiguous = Keyword.get_values(errors, :ambiguous)
-    ambiguous_message = unless Enum.empty?(ambiguous) do
-    """
-
-    The following redirects are ambiguous; please refer to users and
-    rooms according to the conventions of your chat provider
-    (e.g. `@user`, `#room`):
-
-    #{Enum.join(ambiguous, ", ")}
-    """
-    end
-
-    # assemble final message
-    message_fragments = [main_message,
-                         not_a_member_message,
-                         ambiguous_message]
-    message_fragments
-    |> Enum.reject(&is_nil/1)
-    |> Enum.join("\n")
-  end
 
   ########################################################################
   # Response Rendering Functions
@@ -563,7 +519,7 @@ defmodule Cog.Command.Pipeline.Executor do
     started = Cog.Events.Util.ts_iso8601_utc(state.started)
     initiator = sender_name(state)
     pipeline_text = state.request["text"]
-    error_message = format_user_error(error, state)
+    error_message = ErrorResponse.render(error)
 
     {planning_failure, execution_failure} = case state do
       %{current_plan: %Plan{invocation_text: planning_failure}} ->
@@ -587,61 +543,6 @@ defmodule Cog.Command.Pipeline.Executor do
     Template.render("any", "error", context)
   end
 
-  # Turn an error tuple into a textual message intended for chat users
-  defp format_user_error({:parse_error, msg}, _state) when is_binary(msg),
-    do: "Whoops! An error occurred. " <> msg
-  defp format_user_error({:redirect_error, invalid}, _state),
-    do: "Whoops! An error occurred. " <> redirection_error_message(invalid)
-  defp format_user_error({:binding_error, {:missing_key, var}}, _state),
-    do: "I can't find the variable '$#{var}'."
-  defp format_user_error({:binding_error, msg}, _state) when is_binary(msg),
-    do: "Whoops! An error occurred. " <> msg
-  defp format_user_error({:no_rule, current_invocation}, _state),
-    do: "No rules match the supplied invocation of '#{current_invocation}'. Check your args and options, then confirm that the proper rules are in place."
-  defp format_user_error({:denied, %Piper.Permissions.Ast.Rule{}=rule}, %__MODULE__{invocations: [current_invocation|_]}),
-    do: "Sorry, you aren't allowed to execute '#{current_invocation}' :(\n You will need the '#{rule.permission_selector.perms.value}' permission to run this command."
-  defp format_user_error({:no_relays, %Cog.Models.Bundle{name: name}}, _state),
-    do: "Whoops! An error occurred. No Cog Relays supporting the `#{name}` bundle are currently online"
-  defp format_user_error({:disabled_bundle, %Cog.Models.Bundle{name: name}}, _state),
-    do: "Whoops! An error occurred. The #{name} bundle is currently disabled"
-  defp format_user_error({:timeout, %Cog.Models.Command{}=command}, _state) do
-    name = Cog.Models.Command.full_name(command)
-    "The #{name} command timed out"
-  end
-  defp format_user_error({:template_rendering_error, {error, template, adapter}}, _state),
-    do: "Whoops! An error occurred. There was an error rendering the template '#{template}' for the adapter '#{adapter}': #{inspect error}"
-  defp format_user_error({:command_error, response}, _state),
-    do: "Whoops! An error occurred. " <> (response.status_message || response.body["message"])
-
-  # Turn an error tuple into a message intended for the audit log
-  defp format_audit_message({:parse_error, msg}, state) when is_binary(msg),
-    do: "Error parsing command pipeline '#{state.request["text"]}': #{msg}"
-  defp format_audit_message({:redirect_error, invalid}, _state),
-    do: "Invalid redirects were specified: #{inspect invalid}"
-  defp format_audit_message({:binding_error, {:missing_key, var}}, state),
-    do: "Error preparing to execute command pipeline '#{state.request["text"]}': Unknown variable '#{var}'"
-  defp format_audit_message({:binding_error, msg}, state) when is_binary(msg) do
-    # TODO: Pretty sure this is not what we want, ultimately... this
-    # is coming from plan_next_invocation, not some top-level place
-    "Error preparing to execute command pipeline '#{state.request["text"]}': #{msg}"
-  end
-  defp format_audit_message({:denied, _}, %__MODULE__{invocations: [current_invocation|_]}=state),
-    do: "User #{state.request["sender"]["handle"]} denied access to '#{current_invocation}'"
-  defp format_audit_message({:no_relays, bundle}, state),
-    do: format_user_error({:no_relays, bundle}, state) # Uses same user message for now
-  defp format_audit_message({:disabled_bundle, %Cog.Models.Bundle{name: name}}, _state),
-    do: "The #{name} bundle is currently disabled"
-  defp format_audit_message({:command_error, response}, _state),
-    do: response.status_message || response.body["message"]
-  defp format_audit_message({:template_rendering_error, {error, template, adapter}}, _state),
-    do: "Error rendering template '#{template}' for '#{adapter}': #{inspect error}"
-  defp format_audit_message({:timeout, %Cog.Models.Command{}=command}, _state) do
-    name = Cog.Models.Command.full_name(command)
-    "Timed out waiting on #{name} to reply"
-  end
-  defp format_audit_message({:no_rule, current_invocation}, _state),
-    do: "No rule matching '#{current_invocation}'"
-
   # Catch-all function that sends an error message back to the user,
   # emits a pipeline failure audit event, and terminates the pipeline.
   defp fail_pipeline_with_error({reason, _detail}=error, state) do
@@ -651,7 +552,7 @@ defmodule Cog.Command.Pipeline.Executor do
                      state.request["adapter"],
                      state)
 
-    audit_message = format_audit_message(error, state)
+    audit_message = AuditMessage.render(error, state.request)
     fail_pipeline(state, reason, audit_message)
   end
 
