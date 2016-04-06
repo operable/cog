@@ -193,11 +193,11 @@ defmodule Cog.V1.BundlesControllerTest do
         - when command is test_bundle:time must have test_bundle:time
     templates:
       time:
-        provider: slack
-        contents: "{{time}}"
+        slack: "{{time}}"
+        hipchat: "{{time}}"
       date:
-        provider: slack
-        contents: "{{date}}"
+        slack: "{{date}}"
+        hipchat: "{{date}}"
     """
   end
 

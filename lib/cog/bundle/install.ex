@@ -70,7 +70,7 @@ defmodule Cog.Bundle.Install do
   #
   # ## Example
   #
-  #     create_command(bundle, %{"options": [%{"name" => "instance-id", "type" => "string", "required" => true}],
+  #     create_command(bundle, %{"options": %{"instance-id" => %{"type" => "string", "required" => true}},
   #                              "rules": ["When command is foo:bar must have foo:write"],
   #                              "module" => "Cog.Commands.EC2Tag"})
   defp create_command(%Bundle{}=bundle, {command_name, command_spec}) do
@@ -105,16 +105,18 @@ defmodule Cog.Bundle.Install do
     |> Repo.insert!
   end
 
-  defp create_template(bundle, {name, %{"provider" => provider, "contents" => contents}}) do
-    params = %{
-      adapter: provider,
-      name: name,
-      source: contents
-    }
+  defp create_template(bundle, {name, template}) do
+    Enum.each(template, fn({provider, contents}) ->
+      params = %{
+        adapter: provider,
+        name: name,
+        source: contents
+      }
 
-    bundle
-    |> Ecto.Model.build(:templates)
-    |> Template.changeset(params)
-    |> Repo.insert!
+      bundle
+      |> Ecto.Model.build(:templates)
+      |> Template.changeset(params)
+      |> Repo.insert!
+    end)
   end
 end
