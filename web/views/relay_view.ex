@@ -5,6 +5,7 @@ defmodule Cog.V1.RelayView do
     %{id: relay.id,
       name: relay.name,
       enabled: relay.enabled,
+      description: relay.description,
       groups: render_groups(relay.groups),
       inserted_at: relay.inserted_at,
       updated_at: relay.updated_at}

@@ -8,7 +8,7 @@ defmodule Cog.V1.RelayControllerTest do
   alias Cog.Queries
 
   @create_attrs %{name: "test-1", token: "foo"}
-  @update_attrs %{enabled: true}
+  @update_attrs %{enabled: true, description: "My test"}
 
   setup do
     # Requests handled by the role controller require this permission
@@ -49,6 +49,7 @@ defmodule Cog.V1.RelayControllerTest do
                           "name" => relay.name,
                           "enabled" => relay.enabled,
                           "groups" => [],
+                          "description" => nil,
                           "inserted_at" => "#{DateTime.to_iso8601(relay.inserted_at)}",
                           "updated_at" => "#{DateTime.to_iso8601(relay.updated_at)}"}} == json_response(conn, 200)
   end
@@ -82,6 +83,7 @@ defmodule Cog.V1.RelayControllerTest do
     assert updated["id"] == relay.id
     assert updated["name"] == relay.name
     assert updated["enabled"] == @update_attrs.enabled
+    assert updated["description"] == @update_attrs.description
   end
 
   test "updated token changes token digest", %{authed: requestor} do

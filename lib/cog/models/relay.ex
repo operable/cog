@@ -9,7 +9,7 @@ defmodule Cog.Models.Relay do
     field :token, :string, virtual: true
     field :token_digest, :string
     field :enabled, :boolean, default: false
-    field :desc, :string
+    field :description, :string
 
     has_many :group_memberships, RelayGroupMembership, foreign_key: :relay_id
     has_many :groups, through: [:group_memberships, :group]
@@ -18,7 +18,7 @@ defmodule Cog.Models.Relay do
   end
 
   @required_fields ~w(name)
-  @optional_fields ~w(token enabled desc)
+  @optional_fields ~w(token enabled description)
 
   def changeset(model, params \\ :empty) do
     model
