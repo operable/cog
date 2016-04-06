@@ -15,7 +15,8 @@ defmodule Cog.Bundle.Install do
 
   require Logger
 
-  @command_attrs ["options", "rules", "documentation"]
+  @command_attrs ["options", "rules", "documentation",
+                  "enforcing", "execution"]
 
   @doc """
   Given a map of bundle parameters, fully installs the bundle into the
@@ -78,7 +79,8 @@ defmodule Cog.Bundle.Install do
     command = Command.build_new(bundle, Map.put(command_spec, "name", command_name))
     |> Repo.insert!
 
-    Enum.each(command_spec["rules"], &(Cog.RuleIngestion.ingest(&1, false)))
+    Map.get(command_spec, "rules", [])
+    |> Enum.each(&(Cog.RuleIngestion.ingest(&1, false)))
 
     Map.get(command_spec, "options", [])
     |> Enum.each(&create_option(command, &1))

@@ -107,21 +107,14 @@ defmodule Cog.Command.CommandResolver.Test do
     # Create a new bundle with an "echo" command to be ambiguous with
     # the embedded "operable:echo" command
     config = %{
-      "bundle" => %{"name" => "test_bundle"},
-      "templates" => [],
-      "rules" => [],
-      "permissions" => [],
-      "commands" => [%{"version" => "0.0.1",
-                       "options" => [],
-                       "name" => "echo",
-                       "module" => "Cog.Commands.Echo",
-                       "execution" => "multiple",
-                       "enforcing" => false,
-                       "documentation" => "does stuff",
-                       "calling_convention" => "bound"}]}
+      "name" => "test_bundle",
+      "version" => "0.0.1",
+      "commands" => %{
+        "echo" => %{
+          "module" => "Cog.Commands.Echo",
+          "documentation" => "does stuff"}}}
     Cog.Bundle.Install.install_bundle(%{name: "test_bundle",
-                                        config_file: config,
-                                        manifest_file: %{}})
+                                        config_file: config})
     user = user("testuser")
 
     result = CommandResolver.lookup(nil, "echo", user)
