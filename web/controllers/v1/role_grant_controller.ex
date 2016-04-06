@@ -1,19 +1,14 @@
 defmodule Cog.V1.RoleGrantController do
   use Cog.Web, :controller
 
-  alias Cog.Models.User
   alias Cog.Models.Role
   alias Cog.Models.Group
 
   plug Cog.Plug.Authentication
 
-  plug Cog.Plug.Authorization, [permission: "#{Cog.embedded_bundle}:manage_users"] when action == :manage_user_roles
-  plug Cog.Plug.Authorization, [permission: "#{Cog.embedded_bundle}:manage_groups"] when action == :manage_group_roles
+  plug Cog.Plug.Authorization, [permission: "#{Cog.embedded_bundle}:manage_groups"]
 
   plug :put_view, Cog.V1.RoleView
-
-  def manage_user_roles(conn, params),
-    do: manage_roles(conn, User, params)
 
   def manage_group_roles(conn, params),
     do: manage_roles(conn, Group, params)

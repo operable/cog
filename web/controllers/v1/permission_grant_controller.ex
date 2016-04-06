@@ -1,28 +1,17 @@
 defmodule Cog.V1.PermissionGrantController do
   use Cog.Web, :controller
 
-  alias Cog.Models.User
   alias Cog.Models.Permission
   alias Cog.Models.Role
-  alias Cog.Models.Group
 
   plug Cog.Plug.Authentication
 
-  plug Cog.Plug.Authorization, [permission: "#{Cog.embedded_bundle}:manage_users"] when action == :manage_user_permissions
   plug Cog.Plug.Authorization, [permission: "#{Cog.embedded_bundle}:manage_roles"] when action == :manage_role_permissions
-  plug Cog.Plug.Authorization, [permission: "#{Cog.embedded_bundle}:manage_groups"] when action == :manage_group_permissions
 
   plug :put_view, Cog.V1.PermissionView
 
   def manage_role_permissions(conn, params),
     do: manage_permissions(conn, Role, params)
-
-  def manage_user_permissions(conn, params),
-    do: manage_permissions(conn, User, params)
-
-  def manage_group_permissions(conn, params),
-    do: manage_permissions(conn, Group, params)
-
 
   # Grant or revoke an arbitrary number of permissions (specified as
   # namespaced names) from the identified entity (i.e., the thing of

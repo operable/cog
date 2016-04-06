@@ -19,7 +19,11 @@ defmodule Cog.V1.PermissionControllerTest do
     # indeed required for requests
     unauthed_user = user("sadpanda") |> with_token
 
-    {:ok, [user: authed_user, unauthed: unauthed_user]}
+    # Role to use for permission grant/revoke tests
+    role = role("test-role")
+    |> with_permission(required_permission)
+
+    {:ok, [user: authed_user, unauthed: unauthed_user, role: role]}
   end
 
   test "lists all entries on index", %{user: user} do
@@ -38,10 +42,10 @@ defmodule Cog.V1.PermissionControllerTest do
                      "st-thorn"]
   end
 
-  test "lists permissions granted to user", %{user: user} do
-    :ok = Permittable.grant_to(user, permission("operable:manage_commands"))
+  test "lists permissions granted to role", %{user: user, role: role} do
+    :ok = Permittable.grant_to(role, permission("operable:manage_commands"))
 
-    conn = api_request(user, :get, "/v1/users/#{user.id}/permissions")
+    conn = api_request(user, :get, "/v1/roles/#{role.id}/permissions")
     permissions_list = json_response(conn, 200)["permissions"]
 
     names = permissions_list
