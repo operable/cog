@@ -63,7 +63,7 @@ defmodule Cog.V1.BundlesController do
   # First let's make sure we have a file to work with
   defp get_upload(conn) do
     case conn.params do
-      %{"config_file" => %Plug.Upload{}=upload} ->
+      %{"bundle_config" => %Plug.Upload{}=upload} ->
         {:ok, upload}
       _ ->
         {:error, :no_config}
@@ -121,7 +121,7 @@ defmodule Cog.V1.BundlesController do
   end
 
   defp error(:no_config) do
-    {:bad_request, %{error: "'config_file' not specified. Make sure to use a multipart form and to send your file in the 'config_file' field."}}
+    {:bad_request, %{error: "'bundle_config' not specified. Make sure to use a multipart form and to send your file in the 'bundle_config' field."}}
   end
   defp error(:unsupported_format) do
     msg = ~s(Unsupported file format. Please upload a file in one of the following formats: #{Enum.join(Spanner.Config.config_extensions, ", ")})
