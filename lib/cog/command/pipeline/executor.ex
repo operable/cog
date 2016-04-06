@@ -467,12 +467,14 @@ defmodule Cog.Command.Pipeline.Executor do
   defp unregistered_user_message(request) do
     adapter = String.to_existing_atom(request["module"])
     handle = request["sender"]["handle"]
+    creators = user_creator_handles(request)
 
     context = %{
       handle: handle,
       mention_name: adapter.mention_name(handle),
       display_name: adapter.display_name(),
-      user_creators: user_creator_handles(request)
+      user_creators: creators,
+      user_creators?: Enum.any?(creators)
     }
 
     Template.render("any", "unregistered_user", context)

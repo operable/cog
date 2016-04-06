@@ -35,13 +35,9 @@ defmodule Cog.Template do
 
   defp fetch_source("any", nil, "unregistered_user", _context) do
     source = """
-    {{mention_name}}: I'm sorry, but either I don't have a Cog account for you, or
-    your {{display_name}} chat handle has not been registered. Currently, only
-    registered users can interact with me.
+    {{mention_name}}: I'm sorry, but either I don't have a Cog account for you, or your {{display_name}} chat handle has not been registered. Currently, only registered users can interact with me.
 
-    You'll need to ask a Cog administrator to fix this situation and to register
-    your {{display_name}} handle. The following users can help you right here in
-    chat:{{#user_creators}} {{.}}{{/user_creators}}
+    You'll need to ask a Cog administrator to fix this situation and to register your {{display_name}} handle. {{#user_creators?}}The following users can help you right here in chat:{{#user_creators}} {{.}}{{/user_creators}}{{/user_creators?}}
     """
 
     {:ok, source}
@@ -56,15 +52,15 @@ defmodule Cog.Template do
         `{{{pipeline_text}}}`
 
     {{#planning_failure}}
-      The pipeline failed planning the invocation:
+    The pipeline failed planning the invocation:
 
-          `{{{planning_failure}}}`
+        `{{{planning_failure}}}`
 
     {{/planning_failure}}
     {{#execution_failure}}
-      The pipeline failed executing the command:
+    The pipeline failed executing the command:
 
-          `{{{execution_failure}}}`
+        `{{{execution_failure}}}`
 
     {{/execution_failure}}
     The specific error was:
