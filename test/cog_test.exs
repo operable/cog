@@ -1,5 +1,5 @@
 defmodule CogTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: false
 
   test "all chat adapters really are chat adapters" do
     for {_name, adapter_module} <- Cog.chat_adapters do
