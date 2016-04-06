@@ -25,9 +25,6 @@ defmodule Cog.Repository.EventHooks do
     end
   end
 
-  def hook_definition!(id),
-    do: Repo.get!(EventHook, id)
-
   @doc """
   Create a new event hook given a map of attributes.
   """

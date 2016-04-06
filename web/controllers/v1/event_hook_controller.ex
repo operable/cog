@@ -11,8 +11,6 @@ defmodule Cog.V1.EventHookController do
     do: render(conn, "index.json", event_hooks: EventHooks.all)
 
   def show(conn, %{"id" => id}) do
-    # hook = EventHooks.hook_definition!(id)
-    # render(conn, "show.json", event_hook: hook)
     case EventHooks.hook_definition(id) do
       {:ok, hook} ->
         conn
