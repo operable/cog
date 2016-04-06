@@ -455,7 +455,9 @@ defmodule Cog.Command.Pipeline.Executor do
   # Unregistered User Functions
 
   defp alert_unregistered_user(state) do
-    publish_response(unregistered_user_message(state.request),
+    {:ok, message} = unregistered_user_message(state.request)
+
+    publish_response(message,
                      state.request["room"],
                      state.request["adapter"],
                      state)
@@ -473,8 +475,7 @@ defmodule Cog.Command.Pipeline.Executor do
       user_creators: user_creator_handles(request)
     }
 
-    {:ok, output} = Template.render("any", nil, "unregistered_user", context)
-    output
+    Template.render("any", nil, "unregistered_user", context)
   end
 
   # Returns a list of adapter-appropriate "mention names" of all Cog
@@ -581,8 +582,7 @@ defmodule Cog.Command.Pipeline.Executor do
       execution_failure: execution_failure
     }
 
-    {:ok, output} = Template.render("any", nil, "error", context)
-    output
+    Template.render("any", nil, "error", context)
   end
 
   # Turn an error tuple into a textual message intended for chat users
@@ -643,7 +643,7 @@ defmodule Cog.Command.Pipeline.Executor do
   # Catch-all function that sends an error message back to the user,
   # emits a pipeline failure audit event, and terminates the pipeline.
   defp fail_pipeline_with_error({reason, _detail}=error, state) do
-    user_message = user_error(error, state)
+    {:ok, user_message} = user_error(error, state)
     publish_response(user_message,
                      state.request["room"],
                      state.request["adapter"],
