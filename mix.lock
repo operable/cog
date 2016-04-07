@@ -57,7 +57,7 @@
   "probe": {:git, "https://github.com/operable/probe.git", "c8ebf0877651b3cc5370e3f6ca7790a277106016", [tag: "0.2"]},
   "ranch": {:hex, :ranch, "1.2.1"},
   "slack": {:hex, :slack, "0.4.2"},
-  "spanner": {:git, "https://github.com/operable/spanner.git", "9d925fce38d3f11c0f261a9569c002f069b28fd6", [branch: "cm/hook-metadata"]},
+  "spanner": {:git, "https://github.com/operable/spanner.git", "d27d46d75e350de53b05d47991cb5efafbc2cf4f", [branch: "cm/hook-metadata"]},
   "ssl_verify_hostname": {:hex, :ssl_verify_hostname, "1.0.5"},
   "uuid": {:hex, :uuid, "1.1.3"},
   "websocket_client": {:git, "https://github.com/jeremyong/websocket_client.git", "f6892c8b55004008ce2d52be7d98b156f3e34569", [ref: "f6892c8b55004008ce2d52be7d98b156f3e34569"]},
