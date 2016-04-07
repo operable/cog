@@ -40,9 +40,7 @@ defmodule Cog.V1.BundlesController do
   end
 
   def create(conn, _) do
-    result = with {:ok, upload} <- get_upload(conn),
-                  :ok           <- validate_file_format(upload.filename),
-                  {:ok, config} <- parse_config(upload.path),
+    result = with {:ok, config} <- get_config(conn),
                   :ok           <- validate_config(config),
                do: persist(config)
 
@@ -60,18 +58,23 @@ defmodule Cog.V1.BundlesController do
 
   #### BUNDLE CREATION HELPERS ####
 
-  # First let's make sure we have a file to work with
-  defp get_upload(conn) do
+  # First let's grab the config
+  defp get_config(conn) do
     case conn.params do
+      # If we have an upload, validate the file format and parse it
       %{"bundle_config" => %Plug.Upload{}=upload} ->
-        {:ok, upload}
+        with :ok <- validate_file_format(upload) do
+          parse_config(upload)
+        end
+      config when is_map(config) and map_size(config) > 0 ->
+        {:ok, config}
       _ ->
         {:error, :no_config}
     end
   end
 
-  # Next we check to see that it's a config file
-  defp validate_file_format(filename) do
+  # If we have a file, check to see if the filename has the correct extension
+  defp validate_file_format(%Plug.Upload{filename: filename}) do
     if Config.config_extension?(filename) do
       :ok
     else
@@ -79,8 +82,8 @@ defmodule Cog.V1.BundlesController do
     end
   end
 
-  # If all is good we parse the file and stick in conn.assigns
-  defp parse_config(path) do
+  # If we have something to parse, parse it
+  defp parse_config(%Plug.Upload{path: path}) do
     case Config.Parser.read_from_file(path) do
       {:ok, config} ->
         {:ok, config}

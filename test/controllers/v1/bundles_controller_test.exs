@@ -42,9 +42,17 @@ defmodule Cog.V1.BundlesControllerTest do
       end
       upload = %Plug.Upload{path: config_path, filename: config_file_name}
 
+      # upload the config
       conn = api_request(requestor, :post, "/v1/bundles", body: %{bundle_config: upload})
 
+      bundle_id = Poison.decode!(conn.resp_body)
+                  |> get_in(["bundle", "id"])
+      bundle = Cog.Repo.get_by(Cog.Models.Bundle, id: bundle_id)
+      config = Spanner.Config.Parser.read_from_file!(config_path)
+
       assert conn.status == 201
+      assert bundle.config_file == config
+      assert bundle.name == config["name"]
     end
   end)
 
@@ -83,6 +91,25 @@ defmodule Cog.V1.BundlesControllerTest do
     upload = %Plug.Upload{path: config_path, filename: filename}
 
     conn = api_request(requestor, :post, "/v1/bundles", body: %{bundle_config: upload})
+
+    assert conn.status == 422
+  end
+
+  test "accepts a valid config passed as json", %{authed: requestor} do
+    config = config(:map)
+    conn = api_request(requestor, :post, "/v1/bundles", body: config)
+
+    bundle_id = Poison.decode!(conn.resp_body)
+                |> get_in(["bundle", "id"])
+    bundle = Cog.Repo.get_by(Cog.Models.Bundle, id: bundle_id)
+
+    assert conn.status == 201
+    assert bundle.config_file == config
+    assert bundle.name == config["name"]
+  end
+
+  test "rejects a bad config passed as json", %{authed: requestor} do
+    conn = api_request(requestor, :post, "/v1/bundles", body: %{"bad" => "config"})
 
     assert conn.status == 422
   end
@@ -150,11 +177,12 @@ defmodule Cog.V1.BundlesControllerTest do
   defp scratch_dir do
     path = Path.join([File.cwd!, "test", "scratch"])
     File.mkdir_p!(path)
-
     path
   end
 
   # simple config
+  defp config(:map),
+    do: Spanner.Config.Parser.read_from_string!(config())
   defp config(:yaml),
     do: config()
   defp config(:json) do
