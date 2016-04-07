@@ -57,7 +57,7 @@
   "postgrex": {:hex, :postgrex, "0.11.1"},
   "probe": {:git, "https://github.com/operable/probe.git", "c8ebf0877651b3cc5370e3f6ca7790a277106016", [tag: "0.2"]},
   "ranch": {:hex, :ranch, "1.2.1"},
-  "slack": {:git, "https://github.com/operable/Elixir-Slack.git", "60a68cb02b1e0c44c89db3721aac40035e8efaa7", [branch: "descriptive-errors"]},
+  "slack": {:git, "https://github.com/operable/Elixir-Slack.git", "196c412ca71b37eb1d061274179b49569e81b20f", []},
   "spanner": {:git, "https://github.com/operable/spanner.git", "e529355b027ec494adb1fb7073e9feb267d7be40", []},
   "ssl_verify_hostname": {:hex, :ssl_verify_hostname, "1.0.5"},
   "uuid": {:hex, :uuid, "1.1.3"},
