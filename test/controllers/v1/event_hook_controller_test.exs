@@ -1,14 +1,14 @@
-defmodule Cog.V1.EventHookControllerTest do
+defmodule Cog.V1.TriggerControllerTest do
   use Cog.ModelCase
   use Cog.ConnCase
 
-  alias Cog.Models.EventHook
+  alias Cog.Models.Trigger
 
   @bad_uuid "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
 
   setup do
     # Requests handled by the role controller require this permission
-    required_permission = permission("#{Cog.embedded_bundle}:manage_hooks")
+    required_permission = permission("#{Cog.embedded_bundle}:manage_triggers")
 
     # This user will be used to test the normal operation of the controller
     authed_user = user("cog")
@@ -23,18 +23,18 @@ defmodule Cog.V1.EventHookControllerTest do
            unauthed: unauthed_user]}
   end
 
-  test "index returns empty list when no hooks exist", %{authed: user} do
-    conn = api_request(user, :get, "/v1/event_hooks")
-    assert [] = json_response(conn, 200)["event_hooks"]
+  test "index returns empty list when no triggers exist", %{authed: user} do
+    conn = api_request(user, :get, "/v1/triggers")
+    assert [] = json_response(conn, 200)["triggers"]
   end
 
-  test "index returns multiple hooks when they exist", %{authed: user} do
+  test "index returns multiple triggers when they exist", %{authed: user} do
     names = ["a","b","c"]
-    hooks = names |> Enum.map(&hook(%{name: &1}))
+    triggers = names |> Enum.map(&trigger(%{name: &1}))
 
-    conn = api_request(user, :get, "/v1/event_hooks")
-    retrieved = json_response(conn, 200)["event_hooks"]
-    assert length(retrieved) == length(hooks)
+    conn = api_request(user, :get, "/v1/triggers")
+    retrieved = json_response(conn, 200)["triggers"]
+    assert length(retrieved) == length(triggers)
     retrieved_names = Enum.map(retrieved, &(&1["name"]))
 
     for name <- names do
@@ -42,106 +42,106 @@ defmodule Cog.V1.EventHookControllerTest do
     end
   end
 
-  test "can retrieve hook by ID", %{authed: user} do
-    hook = hook(%{name: "echo"})
-    conn = api_request(user, :get, "/v1/event_hooks/#{hook.id}")
-    retrieved = json_response(conn, 200)["event_hook"]
+  test "can retrieve trigger by ID", %{authed: user} do
+    trigger = trigger(%{name: "echo"})
+    conn = api_request(user, :get, "/v1/triggers/#{trigger.id}")
+    retrieved = json_response(conn, 200)["trigger"]
     assert %{"name" => "echo"} = retrieved
   end
 
   test "retrieval by non-existent ID results in not found", %{authed: user} do
-   conn = api_request(user, :get, "/v1/event_hooks/#{@bad_uuid}")
-   assert "Hook not found" = json_response(conn, 404)["errors"]
+   conn = api_request(user, :get, "/v1/triggers/#{@bad_uuid}")
+   assert "Trigger not found" = json_response(conn, 404)["errors"]
   end
 
   test "retrieval by non-UUID ID results in bad request", %{authed: user} do
-   conn = api_request(user, :get, "/v1/event_hooks/not-a-uuid")
+   conn = api_request(user, :get, "/v1/triggers/not-a-uuid")
    assert "Bad ID format" = json_response(conn, 400)["errors"]
   end
 
-  test "hook creation works", %{authed: user} do
-    conn = api_request(user, :post, "/v1/event_hooks",
-                       body: %{"hook" => %{"name" => "my_hook",
+  test "trigger creation works", %{authed: user} do
+    conn = api_request(user, :post, "/v1/triggers",
+                       body: %{"trigger" => %{"name" => "my_trigger",
                                            "pipeline" => "echo foo",
                                            "as_user" => "me"}})
-    api_hook = json_response(conn, 201)["event_hook"]
-    assert %{"name" => "my_hook"} = api_hook
+    api_trigger = json_response(conn, 201)["trigger"]
+    assert %{"name" => "my_trigger"} = api_trigger
 
     [location_header] = Plug.Conn.get_resp_header(conn, "location")
-    assert "/v1/event_hooks/#{api_hook["id"]}" == location_header
+    assert "/v1/triggers/#{api_trigger["id"]}" == location_header
   end
 
-  test "hook creation fails with bad parameters", %{authed: user} do
-    conn = api_request(user, :post, "/v1/event_hooks",
-                       body: %{"hook" => %{}})
+  test "trigger creation fails with bad parameters", %{authed: user} do
+    conn = api_request(user, :post, "/v1/triggers",
+                       body: %{"trigger" => %{}})
     assert json_response(conn, 422)["errors"]
   end
 
-  test "hook editing works", %{authed: user} do
-    %EventHook{id: id} = hook(%{name: "echo"})
-    conn = api_request(user, :put, "/v1/event_hooks/#{id}",
-                       body: %{"hook" => %{"name" => "foo"}})
-    updated = json_response(conn, 200)["event_hook"]
+  test "trigger editing works", %{authed: user} do
+    %Trigger{id: id} = trigger(%{name: "echo"})
+    conn = api_request(user, :put, "/v1/triggers/#{id}",
+                       body: %{"trigger" => %{"name" => "foo"}})
+    updated = json_response(conn, 200)["trigger"]
     assert %{"id" => ^id,
              "name" => "foo"} = updated
   end
 
-  test "hook editing fails with bad parameters", %{authed: user} do
-    %EventHook{id: id} = hook(%{name: "echo"})
-    conn = api_request(user, :put, "/v1/event_hooks/#{id}",
-                       body: %{"hook" => %{"timeout_sec" => -100}})
+  test "trigger editing fails with bad parameters", %{authed: user} do
+    %Trigger{id: id} = trigger(%{name: "echo"})
+    conn = api_request(user, :put, "/v1/triggers/#{id}",
+                       body: %{"trigger" => %{"timeout_sec" => -100}})
     assert json_response(conn, 422)["errors"]
   end
 
-  test "hook editing fails with bad ID", %{authed: user} do
-    conn = api_request(user, :put, "/v1/event_hooks/not-a-uuid",
-                       body: %{"hook" => %{"name" => "echooooo"}})
+  test "trigger editing fails with bad ID", %{authed: user} do
+    conn = api_request(user, :put, "/v1/triggers/not-a-uuid",
+                       body: %{"trigger" => %{"name" => "echooooo"}})
     assert "Bad ID format" = json_response(conn, 400)["errors"]
   end
 
-  test "hook editing fails with non-existent hook", %{authed: user} do
-    conn = api_request(user, :put, "/v1/event_hooks/#{@bad_uuid}",
-                       body: %{"hook" => %{"name" => "echooooo"}})
-    assert "Hook not found" = json_response(conn, 404)["errors"]
+  test "trigger editing fails with non-existent trigger", %{authed: user} do
+    conn = api_request(user, :put, "/v1/triggers/#{@bad_uuid}",
+                       body: %{"trigger" => %{"name" => "echooooo"}})
+    assert "Trigger not found" = json_response(conn, 404)["errors"]
   end
 
-  test "hook deletion works", %{authed: user} do
-    hook = hook(%{name: "echo"})
-    conn = api_request(user, :delete, "/v1/event_hooks/#{hook.id}")
+  test "trigger deletion works", %{authed: user} do
+    trigger = trigger(%{name: "echo"})
+    conn = api_request(user, :delete, "/v1/triggers/#{trigger.id}")
     assert response(conn, 204)
   end
 
-  test "cannot list hooks without permission", %{unauthed: user} do
-    conn = api_request(user, :get, "/v1/event_hooks")
+  test "cannot list triggers without permission", %{unauthed: user} do
+    conn = api_request(user, :get, "/v1/triggers")
     assert conn.halted
     assert conn.status == 403
   end
 
-  test "cannot create a hook without permission", %{unauthed: user} do
-    conn = api_request(user, :post, "/v1/event_hooks",
+  test "cannot create a trigger without permission", %{unauthed: user} do
+    conn = api_request(user, :post, "/v1/triggers",
                        body: %{})
     assert conn.halted
     assert conn.status == 403
   end
 
-  test "cannot retrieve a hook without permission", %{unauthed: user} do
-    hook = hook(%{name: "echo"})
-    conn = api_request(user, :get, "/v1/event_hooks/#{hook.id}")
+  test "cannot retrieve a trigger without permission", %{unauthed: user} do
+    trigger = trigger(%{name: "echo"})
+    conn = api_request(user, :get, "/v1/triggers/#{trigger.id}")
     assert conn.halted
     assert conn.status == 403
   end
 
-  test "cannot edit a hook without permission", %{unauthed: user} do
-    hook = hook(%{name: "echo"})
-    conn = api_request(user, :put, "/v1/event_hooks/#{hook.id}",
+  test "cannot edit a trigger without permission", %{unauthed: user} do
+    trigger = trigger(%{name: "echo"})
+    conn = api_request(user, :put, "/v1/triggers/#{trigger.id}",
                        body: %{})
     assert conn.halted
     assert conn.status == 403
   end
 
-  test "cannot delete a hook without permission", %{unauthed: user} do
-    hook = hook(%{name: "echo"})
-    conn = api_request(user, :delete, "/v1/event_hooks/#{hook.id}")
+  test "cannot delete a trigger without permission", %{unauthed: user} do
+    trigger = trigger(%{name: "echo"})
+    conn = api_request(user, :delete, "/v1/triggers/#{trigger.id}")
     assert conn.halted
     assert conn.status == 403
   end

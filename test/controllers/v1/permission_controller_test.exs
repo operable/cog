@@ -34,9 +34,12 @@ defmodule Cog.V1.PermissionControllerTest do
     # system startup
     assert names == ["manage_commands",
                      "manage_groups",
-                     "manage_hooks",
-                     "manage_permissions", "manage_relays",
-                     "manage_roles", "manage_users", "st-echo",
+                     "manage_permissions",
+                     "manage_relays",
+                     "manage_roles",
+                     "manage_triggers",
+                     "manage_users",
+                     "st-echo",
                      "st-thorn"]
   end
 

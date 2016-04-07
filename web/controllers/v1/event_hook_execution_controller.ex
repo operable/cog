@@ -1,4 +1,4 @@
-defmodule Cog.V1.EventHookExecutionController do
+defmodule Cog.V1.TriggerExecutionController do
   use Cog.Web, :controller
 
   import Cog.Plug.Util, only: [get_request_id: 1,
@@ -10,38 +10,38 @@ defmodule Cog.V1.EventHookExecutionController do
   alias Cog.Plug.Authentication
 
   alias Cog.Models.User
-  alias Cog.Models.EventHook
-  alias Cog.Repository.EventHooks
+  alias Cog.Models.Trigger
+  alias Cog.Repository.Triggers
   alias Cog.Adapters.Http.AdapterBridge
 
   plug :parse
 
-  def execute_hook(conn, %{"id" => hook_id}) do
-    case EventHooks.hook_definition(hook_id) do
-      {:ok, %EventHook{active: true}=hook} ->
-        conn = resolve_user(conn, hook)
+  def execute_trigger(conn, %{"id" => trigger_id}) do
+    case Triggers.trigger_definition(trigger_id) do
+      {:ok, %Trigger{active: true}=trigger} ->
+        conn = resolve_user(conn, trigger)
         case get_user(conn) do
           %User{username: as_user} ->
 
             conn = Plug.Conn.fetch_query_params(conn)
             request_id = get_request_id(conn)
-            timeout    = hook.timeout_sec * 1000
+            timeout    = trigger.timeout_sec * 1000
 
-            context = %{hook_id: hook_id,
+            context = %{trigger_id: trigger_id,
                         headers: headers_to_map(conn.req_headers),
                         query_params: conn.query_params,
                         raw_body: get_raw_body(conn),
                         body: get_parsed_body(conn)}
 
-            requestor = requestor_map(hook_id, as_user, hook.name)
+            requestor = requestor_map(trigger_id, as_user, trigger.name)
 
-            case AdapterBridge.submit_request(requestor, request_id, context, hook.pipeline, timeout) do
+            case AdapterBridge.submit_request(requestor, request_id, context, trigger.pipeline, timeout) do
               %{"status" => "ok"} ->
                 conn |> send_resp(:no_content, "")
               {:error, :timeout} ->
                 conn
                 |> put_status(:accepted)
-                |> json(%{status: "Request accepted and still processing after #{hook.timeout_sec} seconds",
+                |> json(%{status: "Request accepted and still processing after #{trigger.timeout_sec} seconds",
                           id: request_id})
               response ->
                 # TODO: FIIIIIIIIILTHY HACK
@@ -60,12 +60,12 @@ defmodule Cog.V1.EventHookExecutionController do
             # resolve_user/2 below
             conn
         end
-      {:ok, %EventHook{active: false}} ->
-        conn |> put_status(:unprocessable_entity) |> json(%{errors: "Hook is not active"})
+      {:ok, %Trigger{active: false}} ->
+        conn |> put_status(:unprocessable_entity) |> json(%{errors: "Trigger is not active"})
       {:error, :not_found} ->
         conn
         |> put_status(:not_found)
-        |> json(%{errors: "Hook not found"})
+        |> json(%{errors: "Trigger not found"})
       {:error, :bad_id} ->
         conn
         |> put_status(:bad_request)
@@ -77,12 +77,12 @@ defmodule Cog.V1.EventHookExecutionController do
 
   # This is the requestor map that will eventually make its way into
   # the executor and subsequently to commands. It's how we'll expose
-  # hook metadata to commands, for instance.
-  defp requestor_map(hook_id, hook_user, hook_name) do
-    %{id: hook_user,
-      hook_user: hook_user,
-      hook_id: hook_id,
-      hook_name: hook_name}
+  # trigger metadata to commands, for instance.
+  defp requestor_map(trigger_id, trigger_user, trigger_name) do
+    %{id: trigger_user,
+      trigger_user: trigger_user,
+      trigger_id: trigger_id,
+      trigger_name: trigger_name}
   end
 
   # Convert a header list into a map, accumulating multiple values
@@ -100,17 +100,17 @@ defmodule Cog.V1.EventHookExecutionController do
     end)
   end
 
-  # If a hook specifies a user, we use that. If it doesn't, we require
-  # an authentication token; the hook will execute as that user that
+  # If a trigger specifies a user, we use that. If it doesn't, we require
+  # an authentication token; the trigger will execute as that user that
   # ownd the token
-  defp resolve_user(conn, hook) do
-    case hook.as_user do
+  defp resolve_user(conn, trigger) do
+    case trigger.as_user do
       username when is_binary(username)->
         case Cog.Repo.get_by(User, username: username) do
           %User{}=user ->
             set_user(conn, user)
           nil ->
-            conn |> put_status(:unprocessable_entity) |> json(%{errors: "Configured hook user does not exist"})
+            conn |> put_status(:unprocessable_entity) |> json(%{errors: "Configured trigger user does not exist"})
         end
       nil ->
         Authentication.call(conn, Authentication.init(:argument_ignored))

@@ -1,13 +1,13 @@
-defmodule Cog.V1.EventHookViewTest do
+defmodule Cog.V1.TriggerViewTest do
   use Cog.ConnCase, async: true
   import Phoenix.View
 
-  alias Cog.Models.EventHook
+  alias Cog.Models.Trigger
 
   setup do
     uuid = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
 
-    model = %EventHook{id: uuid,
+    model = %Trigger{id: uuid,
                        name: "echo",
                        as_user: "user",
                        pipeline: "echo foo",
@@ -21,34 +21,34 @@ defmodule Cog.V1.EventHookViewTest do
              "timeout_sec" => 30,
              "active" => true,
              "description" => "Something really awesome",
-             "invocation_url" => "http://localhost:4001/v1/event_hooks/#{uuid}"}
+             "invocation_url" => "http://localhost:4001/v1/triggers/#{uuid}"}
     {:ok, %{model: model, json: json}}
   end
 
-  test "renders hook.json", %{model: model, json: json} do
-    content = render_to_string(Cog.V1.EventHookView,
-                               "hook.json",
-                               conn: conn(), event_hook: model)
+  test "renders trigger.json", %{model: model, json: json} do
+    content = render_to_string(Cog.V1.TriggerView,
+                               "trigger.json",
+                               conn: conn(), trigger: model)
     |> Poison.decode!
     assert json == content
   end
 
   test "renders index.json", %{model: model, json: json} do
-    content = render_to_string(Cog.V1.EventHookView,
+    content = render_to_string(Cog.V1.TriggerView,
                                "index.json",
-                               conn: conn(), event_hooks: [model])
+                               conn: conn(), triggers: [model])
     |> Poison.decode!
 
-    assert %{"event_hooks" => [json]} == content
+    assert %{"triggers" => [json]} == content
   end
 
   test "renders show.json", %{model: model, json: json} do
-    content = render_to_string(Cog.V1.EventHookView,
+    content = render_to_string(Cog.V1.TriggerView,
                                "show.json",
-                               conn: conn(), event_hook: model)
+                               conn: conn(), trigger: model)
     |> Poison.decode!
 
-    assert %{"event_hook" => json} == content
+    assert %{"trigger" => json} == content
   end
 
 end

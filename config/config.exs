@@ -119,7 +119,7 @@ config :cog, Cog.Endpoint,
   secret_key_base: System.get_env("COG_COOKIE_SECRET")
 
 
-config :cog, Cog.EventHookEndpoint,
+config :cog, Cog.TriggerEndpoint,
   http: [port: System.get_env("COG_EVENT_HOOK_PORT") || 4001],
   root: Path.dirname(__DIR__),
   debug_errors: false,

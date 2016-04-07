@@ -14,7 +14,7 @@ defmodule Cog do
                 supervisor(Cog.Command.CommandSup, []),
                 supervisor(adapter_supervisor, []),
                 supervisor(Cog.Endpoint, []),
-                supervisor(Cog.EventHookEndpoint, []),
+                supervisor(Cog.TriggerEndpoint, []),
                 supervisor(Cog.Adapters.Http.Supervisor,[])]
 
     opts = [strategy: :one_for_one, name: Cog.Supervisor]

@@ -1,25 +1,25 @@
-defmodule Cog.V1.EventHookController do
+defmodule Cog.V1.TriggerController do
   use Cog.Web, :controller
   require Logger
 
   plug Cog.Plug.Authentication
-  plug Cog.Plug.Authorization, permission: "#{Cog.embedded_bundle}:manage_hooks"
+  plug Cog.Plug.Authorization, permission: "#{Cog.embedded_bundle}:manage_triggers"
 
-  alias Cog.Repository.EventHooks
+  alias Cog.Repository.Triggers
 
   def index(conn, _params),
-    do: render(conn, "index.json", event_hooks: EventHooks.all)
+    do: render(conn, "index.json", triggers: Triggers.all)
 
   def show(conn, %{"id" => id}) do
-    case EventHooks.hook_definition(id) do
-      {:ok, hook} ->
+    case Triggers.trigger_definition(id) do
+      {:ok, trigger} ->
         conn
         |> put_status(:ok)
-        |> render("show.json", event_hook: hook)
+        |> render("show.json", trigger: trigger)
       {:error, :not_found} ->
         conn
         |> put_status(:not_found)
-        |> json(%{errors: "Hook not found"})
+        |> json(%{errors: "Trigger not found"})
       {:error, :bad_id} ->
         conn
         |> put_status(:bad_request)
@@ -27,13 +27,13 @@ defmodule Cog.V1.EventHookController do
     end
   end
 
-  def create(conn, %{"hook" => hook_params}) do
-    case EventHooks.new(hook_params) do
-      {:ok, hook} ->
+  def create(conn, %{"trigger" => trigger_params}) do
+    case Triggers.new(trigger_params) do
+      {:ok, trigger} ->
         conn
         |> put_status(:created)
-        |> put_resp_header("location", event_hook_path(conn, :show, hook))
-        |> render("show.json", event_hook: hook)
+        |> put_resp_header("location", trigger_path(conn, :show, trigger))
+        |> render("show.json", trigger: trigger)
       {:error, changeset} ->
         conn
         |> put_status(:unprocessable_entity)
@@ -41,13 +41,13 @@ defmodule Cog.V1.EventHookController do
     end
   end
 
-  def update(conn, %{"id" => id, "hook" => hook_params}) do
-    result = with {:ok, hook} <- EventHooks.hook_definition(id),
-      do: EventHooks.update(hook, hook_params)
+  def update(conn, %{"id" => id, "trigger" => trigger_params}) do
+    result = with {:ok, trigger} <- Triggers.trigger_definition(id),
+      do: Triggers.update(trigger, trigger_params)
 
     case result do
       {:ok, updated} ->
-        render(conn, "show.json", event_hook: updated)
+        render(conn, "show.json", trigger: updated)
       {:error, :bad_id} ->
         conn
         |> put_status(:bad_request)
@@ -55,7 +55,7 @@ defmodule Cog.V1.EventHookController do
       {:error, :not_found} ->
         conn
         |> put_status(:not_found)
-        |> json(%{errors: "Hook not found"})
+        |> json(%{errors: "Trigger not found"})
       {:error, changeset} ->
         conn
         |> put_status(:unprocessable_entity)
@@ -64,15 +64,15 @@ defmodule Cog.V1.EventHookController do
   end
 
   def delete(conn, %{"id" => id}) do
-    result = with {:ok, hook} <- EventHooks.hook_definition(id),
-      do: EventHooks.delete(hook)
+    result = with {:ok, trigger} <- Triggers.trigger_definition(id),
+      do: Triggers.delete(trigger)
     case result do
       {:ok, _} ->
         send_resp(conn, :no_content, "")
       {:error, :not_found} ->
         conn
         |> put_status(:not_found)
-        |> json(%{errors: "Hook not found"})
+        |> json(%{errors: "Trigger not found"})
       {:error, :bad_id} ->
         conn
         |> put_status(:bad_request)

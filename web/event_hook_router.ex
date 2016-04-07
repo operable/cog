@@ -1,14 +1,14 @@
-defmodule Cog.EventHookRouter do
+defmodule Cog.TriggerRouter do
   use Cog.Web, :router
 
-  pipeline :hook do
+  pipeline :trigger do
     plug Cog.Plug.Event
     plug :accepts, ["json"]
   end
 
   scope "/", Cog do
-    pipe_through :hook
+    pipe_through :trigger
 
-    post "/v1/event_hooks/:id", V1.EventHookExecutionController, :execute_hook
+    post "/v1/triggers/:id", V1.TriggerExecutionController, :execute_trigger
   end
 end

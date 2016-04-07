@@ -1,8 +1,8 @@
-defmodule Cog.Repo.Migrations.EventHooks do
+defmodule Cog.Repo.Migrations.Triggers do
   use Ecto.Migration
 
   def change do
-    create table(:event_hooks, primary_key: false) do
+    create table(:triggers, primary_key: false) do
       add :id, :uuid, primary_key: true
 
       add :name, :text, null: false
@@ -15,7 +15,7 @@ defmodule Cog.Repo.Migrations.EventHooks do
       timestamps
     end
 
-    create unique_index(:event_hooks, [:name])
+    create unique_index(:triggers, [:name])
   end
 
 end

@@ -1,7 +1,7 @@
-defmodule Cog.Models.EventHook do
+defmodule Cog.Models.Trigger do
   use Cog.Model
 
-  schema "event_hooks" do
+  schema "triggers" do
     field :name, :string
 
     field :pipeline, :string
@@ -22,7 +22,7 @@ defmodule Cog.Models.EventHook do
     |> cast(params, @required_fields, @optional_fields)
     |> validate_format(:name, ~r/\A[A-Za-z0-9\_\-\.]+\z/)
     |> validate_number(:timeout_sec, greater_than: 0)
-    |> unique_constraint(:name, name: :event_hooks_name_index)
+    |> unique_constraint(:name, name: :triggers_name_index)
   end
 
 end

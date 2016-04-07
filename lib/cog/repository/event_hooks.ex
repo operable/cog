@@ -1,22 +1,22 @@
-defmodule Cog.Repository.EventHooks do
+defmodule Cog.Repository.Triggers do
   @moduledoc """
-  Behavioral API for interacting with event hooks. Prefer these
+  Behavioral API for interacting with triggers. Prefer these
   functions over direct manipulation with `Cog.Repo`.
   """
 
   alias Cog.Repo
-  alias Cog.Models.EventHook
+  alias Cog.Models.Trigger
 
   @doc """
-  Retrieve the definition of the given event hook. The given id must
+  Retrieve the definition of the given trigger. The given id must
   be a valid UUID.
   """
-  @spec hook_definition(String.t) :: {:ok, %EventHook{}} | {:error, :not_found | :bad_id}
-  def hook_definition(id) do
+  @spec trigger_definition(String.t) :: {:ok, %Trigger{}} | {:error, :not_found | :bad_id}
+  def trigger_definition(id) do
     if Cog.UUID.is_uuid?(id) do
-      case Repo.get(EventHook, id) do
-        %EventHook{} = hook ->
-          {:ok, hook}
+      case Repo.get(Trigger, id) do
+        %Trigger{} = trigger ->
+          {:ok, trigger}
         nil ->
           {:error, :not_found}
       end
@@ -26,34 +26,34 @@ defmodule Cog.Repository.EventHooks do
   end
 
   @doc """
-  Create a new event hook given a map of attributes.
+  Create a new trigger given a map of attributes.
   """
-  @spec new(Map.t) :: {:ok, %EventHook{}} | {:error, Ecto.Changeset.t}
+  @spec new(Map.t) :: {:ok, %Trigger{}} | {:error, Ecto.Changeset.t}
   def new(attrs) do
-    %EventHook{}
-    |> EventHook.changeset(attrs)
+    %Trigger{}
+    |> Trigger.changeset(attrs)
     |> Repo.insert
   end
 
   @doc """
-  Retrieve all event hooks. Order is undefined.
+  Retrieve all triggers. Order is undefined.
   """
-  @spec all :: [%EventHook{}]
+  @spec all :: [%Trigger{}]
   def all,
-    do: Repo.all(EventHook)
+    do: Repo.all(Trigger)
 
-  def delete(%EventHook{}=hook) do
+  def delete(%Trigger{}=trigger) do
     try do
-      Repo.delete(hook)
+      Repo.delete(trigger)
     rescue
       Ecto.StaleModelError ->
         {:error, :not_found}
     end
   end
 
-  def update(%EventHook{}=hook, attrs) do
-    hook
-    |> EventHook.changeset(attrs)
+  def update(%Trigger{}=trigger, attrs) do
+    trigger
+    |> Trigger.changeset(attrs)
     |> Repo.update
   end
 
