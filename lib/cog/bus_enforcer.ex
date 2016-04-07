@@ -37,8 +37,10 @@ defmodule Cog.BusEnforcer do
           false ->
             false
           true ->
-            prefix = "bot/relays/#{username}"
-            String.starts_with?(topic, prefix)
+            relays_prefix = "bot/relays/#{username}"
+            commands_prefix = "/bot/commands/#{username}"
+            String.starts_with?(topic, relays_prefix) or
+              String.starts_with?(topic, commands_prefix)
         end
     end
   end
