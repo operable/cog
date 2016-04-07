@@ -10,7 +10,7 @@ defmodule Cog.V1.RelayGroupMembershipController do
 
   def index(conn, %{"id" => id}) do
     relay_group = Repo.one!(Queries.RelayGroup.for_id(id))
-    render(conn, Cog.V1.RelayGroupView, "relays.json", relay_group: relay_group)
+    render(conn, Cog.V1.RelayGroupView, "members.json", relay_group: relay_group)
   end
 
   def manage_membership(conn, %{"id" => id, "relays" => member_spec}),

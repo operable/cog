@@ -33,6 +33,27 @@ defmodule Cog.V1.BundlesControllerTest do
                            "updated_at" => "#{DateTime.to_iso8601(bundle.updated_at)}"}} == json_response(conn, 200)
   end
 
+  test "includes rules in bundle resource", %{authed: requestor} do
+    bundle = bundle("cog")
+    command = command("hola")
+    permission("cog:hola")
+    rule_text = "when command is cog:hola must have cog:hola"
+    rule = rule(rule_text)
+
+    bundle_id = bundle.id
+    command_id = command.id
+    rule_id = rule.id
+
+    conn = api_request(requestor, :get, "/v1/bundles/#{bundle.id}")
+    assert %{"bundle" => %{"id" => ^bundle_id,
+                           "commands" => [
+                             %{"id" => ^command_id,
+                               "rules" => [
+                                 %{"id" => ^rule_id,
+                                   "command" => "cog:hola",
+                                   "rule" => ^rule_text}]}]}} = json_response(conn, 200)
+  end
+
   test "cannot view bundle without permission", %{unauthed: requestor} do
     bundle = bundle("test-1")
     conn = api_request(requestor, :get, "/v1/bundles/#{bundle.id}")

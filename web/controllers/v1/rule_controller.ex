@@ -14,8 +14,7 @@ defmodule Cog.V1.RuleController do
       {:ok, rule} ->
         conn
         |> put_status(:created)
-        |> json(%{"id" => rule.id,
-                  "rule" => rule_text})
+        |> render("rule.json", rule: rule)
       {:error, errors} ->
         for error <- errors do
           Logger.error("Error ingesting \"#{rule_text}\": #{inspect error}")
@@ -28,15 +27,17 @@ defmodule Cog.V1.RuleController do
 
   def show(conn, %{"for-command" => command}) do
     rules = Repo.all(Cog.Queries.Command.rules_for_cmd(command))
-    case format_response(rules) do
-      {:ok, result} ->
-        json(conn, %{"rules" => result})
-      {:error, err} ->
+
+    case rules do
+      [] ->
         conn
         |> put_status(:unprocessable_entity)
-        |> json(%{"errors" => err})
+        |> json(%{errors: "No rules for command found"})
+      _ ->
+        render(conn, "index.json", rules: rules)
     end
   end
+
   def show(conn, params) do
     conn
     |> put_status(:unprocessable_entity)
@@ -72,27 +73,5 @@ defmodule Cog.V1.RuleController do
       Map.put(acc, Atom.to_string(k), Keyword.get_values(kw_list, k))
     end)
   end
-
-  defp build_permission_expressions(rules) do
-    build_permission_expressions(rules, [])
-  end
-
-  defp build_permission_expressions([rule | rest], strings) do
-    new_strings = [build_single_expr(rule)] ++ strings
-    build_permission_expressions(rest, new_strings)
-  end
-  defp build_permission_expressions([], strings) do
-    strings
-  end
-
-  defp build_single_expr(%Cog.Models.Rule{}=rule) do
-    ast = Piper.Permissions.Parser.json_to_rule!(rule.parse_tree)
-    %{id: rule.id,
-      command: ast.command,
-      rule: "#{ast}"}
-  end
-
-  defp format_response([]), do: {:error, "No rules for command found"}
-  defp format_response(response), do: {:ok, build_permission_expressions(response)}
 
 end

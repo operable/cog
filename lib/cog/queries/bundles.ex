@@ -6,7 +6,7 @@ defmodule Cog.Queries.Bundles do
 
   def all do
     from b in Bundle,
-    preload: [:commands, :relay_groups, :namespace]
+    preload: [:namespace, commands: [:rules], relay_groups: [:relays]]
   end
 
   def for_id(id) do
