@@ -39,8 +39,8 @@ defmodule Cog.V1.BundlesController do
     end
   end
 
-  def create(conn, _) do
-    result = with {:ok, config} <- get_config(conn),
+  def create(conn, params) do
+    result = with {:ok, config} <- get_config(params),
                   :ok           <- validate_config(config),
                do: persist(config)
 
@@ -59,8 +59,8 @@ defmodule Cog.V1.BundlesController do
   #### BUNDLE CREATION HELPERS ####
 
   # First let's grab the config
-  defp get_config(conn) do
-    case conn.params do
+  defp get_config(params) do
+    case params do
       # If we have an upload, validate the file format and parse it
       %{"bundle_config" => %Plug.Upload{}=upload} ->
         with :ok <- validate_file_format(upload) do
