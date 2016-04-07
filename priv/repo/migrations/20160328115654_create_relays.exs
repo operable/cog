@@ -7,7 +7,7 @@ defmodule Cog.Repo.Migrations.AddRelays do
       add :name, :text, null: false
       add :token_digest, :text, null: false
       add :enabled, :boolean, null: false
-      add :desc, :text, null: true
+      add :description, :text, null: true
 
       timestamps
     end
