@@ -66,7 +66,7 @@ defmodule Cog.V1.BundlesController do
         with :ok <- validate_file_format(upload) do
           parse_config(upload)
         end
-      config when is_map(config) and map_size(config) > 0 ->
+      %{"bundle" => config} when is_map(config) ->
         {:ok, config}
       _ ->
         {:error, :no_config}
