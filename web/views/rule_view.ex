@@ -8,10 +8,6 @@ defmodule Cog.V1.RuleView do
       rule: to_string(ast)}
   end
 
-  def render("rule_expression.json", %{rule: rule}) do
-    rule |> to_ast |> to_string
-  end
-
   def render("index.json", %{rules: rules}) do
     %{rules: render_many(rules, __MODULE__, "rule.json")}
   end
