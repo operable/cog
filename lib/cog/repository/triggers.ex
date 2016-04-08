@@ -7,6 +7,8 @@ defmodule Cog.Repository.Triggers do
   alias Cog.Repo
   alias Cog.Models.Trigger
 
+  import Ecto.Query, only: [from: 2]
+
   @doc """
   Retrieve the definition of the given trigger. The given id must
   be a valid UUID.
@@ -42,6 +44,9 @@ defmodule Cog.Repository.Triggers do
   def all,
     do: Repo.all(Trigger)
 
+  def by_name(name),
+    do: Repo.all(with_name(name))
+
   def delete(%Trigger{}=trigger) do
     try do
       Repo.delete(trigger)
@@ -55,6 +60,13 @@ defmodule Cog.Repository.Triggers do
     trigger
     |> Trigger.changeset(attrs)
     |> Repo.update
+  end
+
+  ########################################################################
+
+  defp with_name(queryable \\ Trigger, name) do
+    from t in queryable,
+    where: t.name == ^name
   end
 
 end

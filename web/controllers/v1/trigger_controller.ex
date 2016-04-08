@@ -7,6 +7,9 @@ defmodule Cog.V1.TriggerController do
 
   alias Cog.Repository.Triggers
 
+  # Search by name only for now; later we can expand
+  def index(conn, %{"name" => name}),
+    do: render(conn, "index.json", triggers: Triggers.by_name(name))
   def index(conn, _params),
     do: render(conn, "index.json", triggers: Triggers.all)
 

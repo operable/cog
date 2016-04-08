@@ -42,6 +42,13 @@ defmodule Cog.V1.TriggerControllerTest do
     end
   end
 
+  test "index with query parameters acts as search", %{authed: user} do
+    ["a","b","c"] |> Enum.map(&trigger(%{name: &1}))
+
+    conn = api_request(user, :get, "/v1/triggers?name=a")
+    assert [%{"name" => "a"}] = json_response(conn, 200)["triggers"]
+  end
+
   test "can retrieve trigger by ID", %{authed: user} do
     trigger = trigger(%{name: "echo"})
     conn = api_request(user, :get, "/v1/triggers/#{trigger.id}")
