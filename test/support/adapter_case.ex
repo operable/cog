@@ -6,7 +6,7 @@ defmodule Cog.AdapterCase do
   @vcr_adapter ExVCR.Adapter.IBrowse
 
   defmacro __using__([adapter: adapter]) do
-    {:ok, adapter_module} = Cog.adapter_module(String.downcase(adapter))
+    {:ok, adapter_module} = Cog.chat_adapter_module(String.downcase(adapter))
     adapter_helper = Module.concat([adapter_module, "Helpers"])
 
     quote do

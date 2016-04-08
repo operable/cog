@@ -14,6 +14,11 @@ defmodule Cog.Bundle.Embedded do
 
   @embedded_bundle_root "lib/cog"
 
+  # Permissions not required by any built-in commands yet, and thus
+  # not present in automatically generated config for the embedded
+  # bundle, unless we hack it in
+  @extra_permissions ["#{Cog.embedded_bundle}:manage_triggers"]
+
   @doc """
   Start up a supervisor for the embedded `#{Cog.embedded_bundle}` bundle.
 
@@ -57,8 +62,10 @@ defmodule Cog.Bundle.Embedded do
     :ok = GenServer.call(Cog.Relay.Relays, {:announce_embedded_relay, message})
   end
 
-  defp embedded_bundle,
-    do: Config.gen_config(Cog.embedded_bundle, cog_modules, @embedded_bundle_root)
+  defp embedded_bundle do
+    config = Config.gen_config(Cog.embedded_bundle, cog_modules, @embedded_bundle_root)
+    update_in(config, ["permissions"], &Enum.concat(&1, @extra_permissions))
+  end
 
   defp cog_modules,
     do: Keyword.fetch!(cog_app, :modules)

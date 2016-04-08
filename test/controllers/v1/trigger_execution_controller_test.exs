@@ -1,0 +1,286 @@
+defmodule Cog.V1.TriggerExecutionControllerTest do
+  use Cog.ModelCase
+  use Cog.ConnCase
+
+  alias Cog.Snoop
+
+  @endpoint Cog.TriggerEndpoint
+  @bad_uuid "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
+
+  setup do
+    conn = conn()
+    |> put_req_header("content-type", "application/json")
+    {:ok, conn: conn}
+  end
+
+  test "simple round trip works", %{conn: conn} do
+    assert {:ok, Cog.Adapters.Test} = Cog.chat_adapter_module
+    {:ok, snoop} = Snoop.start_link("/bot/adapters/test/send_message")
+
+    user("cog")
+    trigger = trigger(%{name: "echo",
+                  pipeline: "echo foo",
+                  as_user: "cog"})
+
+    conn = post(conn, "/v1/triggers/#{trigger.id}", Poison.encode!(%{}))
+    assert "foo" = json_response(conn, 200)
+
+    # The chat adapter shouldn't have gotten anything, since we didn't
+    # redirect to it.
+    assert [] = Snoop.messages(snoop)
+  end
+
+  test "executing a non-existent trigger fails", %{conn: conn} do
+    conn = post(conn, "/v1/triggers/#{@bad_uuid}", %{})
+    assert "Trigger not found" = json_response(conn, 404)["errors"]
+  end
+
+  test "passing a non-UUID ID fails fails", %{conn: conn} do
+    conn = post(conn, "/v1/triggers/not-a-uuid", %{})
+    assert "Bad ID format" = json_response(conn, 400)["errors"]
+  end
+
+  test "executing a trigger as a non-existent user fails", %{conn: conn} do
+    trigger = trigger(%{name: "echo",
+                  pipeline: "echo foo",
+                  as_user: "nobody_i_know"})
+
+    conn = post(conn, "/v1/triggers/#{trigger.id}", %{})
+    assert "Configured trigger user does not exist" = json_response(conn, 422)["errors"]
+  end
+
+  test "redirecting elsewhere results in 204 (OK, no content), as well as a message to the chat adapter", %{conn: conn} do
+    # Verify that we're using the "test" chat adapter, and then listen
+    # for responses sent to it
+    assert {:ok, Cog.Adapters.Test} = Cog.chat_adapter_module
+    {:ok, test_snoop} = Snoop.start_link("/bot/adapters/test/send_message")
+
+    # Set up initial data
+    user("cog")
+    trigger = trigger(%{name: "echo",
+                  pipeline: "echo foo > chat://#general",
+                  as_user: "cog"})
+
+    # Make the request
+    conn = post(conn, "/v1/triggers/#{trigger.id}", Poison.encode!(%{}))
+
+    # The HTTP response should be successful
+    assert response(conn, 204)
+
+    # And the adapter should get a message, too
+    [message] = Snoop.messages(test_snoop)
+    expected_response = Poison.encode!(%{body: ["foo"]}, pretty: true)
+    assert %{"response" => ^expected_response} = message
+  end
+
+  test "errors only go back to the request, not any chat adapters", %{conn: conn} do
+    assert {:ok, Cog.Adapters.Test} = Cog.chat_adapter_module
+    {:ok, test_snoop} = Snoop.start_link("/bot/adapters/test/send_message")
+
+    user("cog")
+    trigger = trigger(%{name: "echo",
+                  pipeline: "echo $body.not_a_key > chat://#general",
+                  as_user: "cog"})
+
+    # Make the request; the pipeline will fail because there isn't a
+    # `not_a_key` key in the body
+    conn = post(conn, "/v1/triggers/#{trigger.id}", Poison.encode!(%{}))
+
+    # The HTTP response should reflect an error
+    message = json_response(conn, 500)["errors"]
+    assert message =~ "An error has occurred"
+
+    # And the adapter should not get a message, even though we redirected
+    assert [] = Snoop.messages(test_snoop)
+  end
+
+  test "inactive triggers don't fire", %{conn: conn} do
+    user("cog")
+    trigger = trigger(%{name: "echo",
+                  pipeline: "echo foo",
+                  as_user: "cog",
+                  active: false})
+
+    conn = post(conn, "/v1/triggers/#{trigger.id}", Poison.encode!(%{}))
+    assert "Trigger is not active" = json_response(conn, 422)["errors"]
+  end
+
+  test "request sent to executor is correctly set up", %{conn: conn} do
+    # Snoop on messages sent to the executor
+    {:ok, executor_snoop} = Snoop.start_link("/bot/commands")
+
+    # Set up initial data
+    pipeline_text = "echo $body.message $query_params.thing $headers.content-type"
+    username = "cog"
+    user(username)
+    trigger = trigger(%{name: "echo",
+                  pipeline: pipeline_text,
+                  as_user: username})
+    trigger_id = trigger.id
+
+    # Make the request
+    body = %{"message" => "this"}
+    json = Poison.encode!(body)
+
+    conn = post(conn, "/v1/triggers/#{trigger_id}?thing=responds_to", json)
+    assert "this responds_to application/json" = json_response(conn, 200)
+
+    # Check that the executor got the context we expected
+    [message] = Snoop.messages(executor_snoop)
+
+    assert %{"id" => request_id,
+             "adapter" => "http",
+             "module" => "Elixir.Cog.Adapters.Http",
+             "reply" => "/bot/adapters/http/send_message",
+             "room" => %{"id" => request_id},
+             "sender" => %{"id" => ^username,
+                           "trigger_name" => "echo",
+                           "trigger_id" => ^trigger_id,
+                           "trigger_user" => ^username},
+             "initial_context" => %{"trigger_id" => ^trigger_id,
+                                    "headers" => %{"content-type" => "application/json"},
+                                    "raw_body" => ^json,
+                                    "body" => ^body,
+                                    "query_params" => %{"thing" => "responds_to"}},
+             "text" => ^pipeline_text} = message
+
+    # Just to be absolutely certain...
+    refute trigger_id == request_id
+  end
+
+  test "a trigger with no user executed without a token fails", %{conn: conn} do
+    trigger = trigger(%{name: "echo",
+                  pipeline: "echo foo",
+                  as_user: nil})
+    assert nil == trigger.as_user
+
+    # Make the request
+    conn = post(conn, "/v1/triggers/#{trigger.id}",
+                Poison.encode!(%{}))
+
+    # No trigger user, no authentication token => no execution
+    assert [] = Plug.Conn.get_req_header(conn, "authorization")
+    assert response(conn, 401)
+  end
+
+  test "a trigger with no user executes as the tokened user" do
+    tokened_user = user("cog") |> with_token
+
+    trigger = trigger(%{name: "list-permissions",
+                  pipeline: "permissions --list",
+                  as_user: nil})
+    assert nil == trigger.as_user
+
+    # Before the requestor has the necessary permission, execution of
+    # the trigger fails
+    conn = api_request(tokened_user, :post, "/v1/triggers/#{trigger.id}", body: %{}, endpoint: Cog.TriggerEndpoint)
+    assert ["token " <> _] = Plug.Conn.get_req_header(conn, "authorization")
+    message = json_response(conn, 500)["errors"]
+    assert message =~ "You will need the 'operable:manage_permissions' permission to run this command"
+
+    # Give the requestor the required permission
+    permission = permission("operable:manage_permissions")
+    tokened_user |> with_permission(permission)
+    assert Cog.Models.User.has_permission(tokened_user, permission)
+
+    # PURGE THE CACHE :(
+    Cog.Command.PermissionsCache.reset_cache
+
+    # Now that the requestor has the permission, trigger execution succeeds
+    {:ok, executor_snoop} = Snoop.start_link("/bot/commands")
+    conn = api_request(tokened_user, :post, "/v1/triggers/#{trigger.id}", body: %{}, endpoint: Cog.TriggerEndpoint)
+    assert ["token " <> _] = Plug.Conn.get_req_header(conn, "authorization")
+    assert response(conn, 200)
+
+    # And we verify that the pipeline executed as the requestor
+    [message] = Snoop.messages(executor_snoop)
+    requestor_username = tokened_user.username
+    assert %{"sender" => %{"id" => ^requestor_username}} = message
+  end
+
+  test "the trigger's specified user overrides any token there might be in a request", %{conn: _conn} do
+    {:ok, executor_snoop} = Snoop.start_link("/bot/commands")
+
+    permission = permission("operable:manage_permissions")
+    trigger_user = user("captain_hook") |> with_permission(permission)
+    requestor = user("mr_smee") |> with_token
+
+    refute Cog.Models.User.has_permission(requestor, permission)
+
+    # Create a trigger running a pipeline that requires the permission
+    trigger = trigger(%{name: "list-permissions",
+                  pipeline: "permissions --list",
+                  as_user: "captain_hook"})
+
+    conn = api_request(requestor, :post, "/v1/triggers/#{trigger.id}", body: %{}, endpoint: Cog.TriggerEndpoint)
+    assert ["token " <> _] = Plug.Conn.get_req_header(conn, "authorization")
+
+    # The requestor doesn't have the permission, but the trigger user
+    # does.
+    assert response(conn, 200)
+
+    # And we can verify that the pipeline was executed as the trigger
+    # user and not the requestor
+    [message] = Snoop.messages(executor_snoop)
+    trigger_user_name = trigger_user.username
+    assert %{"sender" => %{"id" => ^trigger_user_name}} = message
+  end
+
+  test "execution that goes beyond the specified timeout returns 202, but continues processing", %{conn: conn} do
+    assert {:ok, Cog.Adapters.Test} = Cog.chat_adapter_module
+    {:ok, test_snoop} = Snoop.start_link("/bot/adapters/test/send_message")
+
+    user("cog")
+
+    # Our trigger will timeout before the pipeline finishes
+    timeout_sec = 1
+    sleep_sec = timeout_sec + 1
+    trigger = trigger(%{name: "sleepytime",
+                  pipeline: "echo Hello | sleep #{sleep_sec} | echo $body > chat://#general",
+                  as_user: "cog",
+                  timeout_sec: timeout_sec})
+
+    # Make the request
+    conn = post(conn, "/v1/triggers/#{trigger.id}", Poison.encode!(%{}))
+
+    %{"id" => pipeline_id,
+      "status" => status} = json_response(conn, 202)
+    assert "Request accepted and still processing after #{timeout_sec} seconds" == status
+
+    # Wait to ensure that processing finishes and check that the chat
+    # adapter got it
+    :timer.sleep sleep_sec * 1000
+    [message] = Snoop.messages(test_snoop)
+    expected_response = Poison.encode!(%{body: ["Hello"]}, pretty: true)
+    assert %{"id" => ^pipeline_id,
+             "response" => ^expected_response} = message
+  end
+
+  test "requires JSON content" do
+    user("cog")
+    trigger = trigger(%{name: "echo",
+                  pipeline: "echo foo",
+                  as_user: "cog"})
+    conn = conn()
+    |> put_req_header("content-type", "text/plain")
+    |> post("/v1/triggers/#{trigger.id}", "Hello World")
+
+    assert conn.halted
+    assert 415 = conn.status
+  end
+
+  test "an empty body is treated as an empty JSON map", %{conn: conn} do
+    {:ok, executor_snoop} = Snoop.start_link("/bot/commands")
+    user("cog")
+    trigger = trigger(%{name: "echo",
+                  pipeline: "echo foo",
+                  as_user: "cog"})
+    conn = post(conn, "/v1/triggers/#{trigger.id}")
+
+    assert "foo" = json_response(conn, 200)
+
+    [message] = Snoop.messages(executor_snoop)
+    assert %{} == get_in(message, ["initial_context", "body"])
+  end
+
+end

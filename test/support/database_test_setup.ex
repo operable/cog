@@ -103,4 +103,12 @@ defmodule DatabaseTestSetup do
     {:ok, rule} = Cog.RuleIngestion.ingest(rule_text)
     rule
   end
+
+  def trigger(params \\ %{}) do
+    alias Cog.Models.Trigger
+    attrs = Map.merge(%{name: "echo",
+                        pipeline: "echo $body.message > chat://#general"}, params)
+    Trigger.changeset(%Trigger{}, attrs) |> Repo.insert!
+  end
+
 end
