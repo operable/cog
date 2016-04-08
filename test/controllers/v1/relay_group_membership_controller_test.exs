@@ -26,9 +26,11 @@ defmodule Cog.V1.RelayGroupMembershipControllerTest do
     relay_group = relay_group("test-relay-group-1")
     add_relay_to_group(relay_group.id, relay.id)
     conn = api_request(requestor, :get, "/v1/relay_groups/#{relay_group.id}/relays")
-    relays = json_response(conn, 200)["relays"]
-    assert relays == [%{"id" => relay.id,
-                        "name" => relay.name}]
+    relay_id = relay.id
+    relay_name = relay.name
+
+    assert [%{"id" => ^relay_id,
+              "name" => ^relay_name}] = json_response(conn, 200)["relays"]
   end
 
   test "relay group includes member relays", %{authed: requestor} do

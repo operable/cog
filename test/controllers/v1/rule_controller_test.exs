@@ -35,7 +35,8 @@ defmodule Cog.V1.RuleController.Test do
     id = body["id"]
 
     assert %{"id" => id,
-            "rule" => rule_text} == body
+             "command" => "cog:s3",
+             "rule" => rule_text} == body
 
     # TODO: we don't provide a GET for rules just yet
     # expected_location = "/v1/rules/#{id}"
