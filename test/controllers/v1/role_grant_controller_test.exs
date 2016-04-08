@@ -84,7 +84,10 @@ defmodule Cog.V1.RoleGrantController.Test do
       test "grant a single role to a #{base}", %{authed: requestor,
                                                  target: target,
                                                  path: path} do
+        role_permission = permission("site:deploy_test")
         role = role("admin")
+        Permittable.grant_to(role, role_permission)
+        assert_permission_is_granted(role, role_permission)
         refute_role_is_granted(target, role)
 
         conn = api_request(requestor, :post, path,
@@ -92,7 +95,9 @@ defmodule Cog.V1.RoleGrantController.Test do
 
         assert %{"roles" => [%{"id" => role.id,
                                "name" => role.name,
-                               "permissions" => []}]} == json_response(conn, 200)
+                               "permissions" => [%{"id" => role_permission.id,
+                                                 "name" => role_permission.name,
+                                                 "namespace" => "site"}]}]} == json_response(conn, 200)
 
         assert_role_is_granted(target, role)
       end
