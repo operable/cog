@@ -131,18 +131,18 @@ defmodule Cog.V1.BundlesController do
     {:unsupported_media_type, %{error: msg}}
   end
   defp error({:parse_error, errors}) do
-    msg = "Unable to parse config file."
-    {:unprocessable_entity, %{error: msg, additional: errors}}
+    msg = ["Unable to parse config file."]
+    {:unprocessable_entity, %{errors: msg ++ errors}}
   end
   defp error({:validation_error, errors}) do
-    msg = "Invalid config file."
+    msg = ["Invalid config file."]
     errors = Enum.map(errors, fn({msg, meta}) -> ~s(Error near #{meta}: #{msg}) end)
-    {:unprocessable_entity, %{error: msg, additional: errors}}
+    {:unprocessable_entity, %{errors: msg ++ errors}}
   end
   defp error({:db_error, errors}) do
-    msg = "Could not save bundle."
+    msg = ["Could not save bundle."]
     errors = Enum.map(errors, fn({_, message}) -> message end)
-    {:unprocessable_entity, %{error: msg, additional: errors}}
+    {:unprocessable_entity, %{errors: msg ++ errors}}
   end
   defp error(err) do
     msg = inspect(err)
