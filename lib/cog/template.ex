@@ -5,6 +5,8 @@ defmodule Cog.Template do
 
   @fallback_adapter "any"
 
+  def render(adapter, template, context),
+    do: render(adapter, nil, template, context)
   def render(adapter, bundle_id, template, context) do
     with {:ok, template_fun} <- fetch_compiled_fun(adapter, bundle_id, template, context) do
       template_fun.(context)
