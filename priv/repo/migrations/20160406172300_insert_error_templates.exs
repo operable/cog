@@ -18,7 +18,7 @@ defmodule Cog.Repo.Migrations.InsertErrorTemplates do
       name: "error",
       adapter: "any",
       source: """
-      An error has occured.
+      An error has occurred.
 
       At `{{started}}`, {{initiator}} initiated the following pipeline, assigned the unique ID `{{id}}`:
 
