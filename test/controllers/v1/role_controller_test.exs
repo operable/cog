@@ -33,7 +33,8 @@ defmodule Cog.V1.RoleController.Test do
     conn = api_request(user, :get, "/v1/roles")
     assert %{"roles" => [%{"id" => role.id,
                            "name" => "monkey",
-                           "permissions" => []}]} == json_response(conn, 200)
+                           "permissions" => [],
+                           "groups" => []}]} == json_response(conn, 200)
   end
 
   test "index returns multiple roles when multiple exist", %{authed: user} do
@@ -43,10 +44,12 @@ defmodule Cog.V1.RoleController.Test do
     conn = api_request(user, :get, "/v1/roles")
     assert [%{"id" => first.id,
               "name" => "first",
-              "permissions" => []},
+              "permissions" => [],
+              "groups" => []},
             %{"id" => second.id,
               "name" => "second",
-              "permissions" => []}] == json_response(conn, 200)["roles"] |> sort_by("name")
+              "permissions" => [],
+              "groups" => []}] == json_response(conn, 200)["roles"] |> sort_by("name")
   end
 
   test "create works on the happy path", %{authed: user} do
@@ -80,7 +83,8 @@ defmodule Cog.V1.RoleController.Test do
     conn = api_request(user, :get, "/v1/roles/#{role.id}")
     assert %{"role" => %{"id" => role.id,
                          "name" => "admin",
-                         "permissions" => []}} == json_response(conn, 200)
+                         "permissions" => [],
+                         "groups" => []}} == json_response(conn, 200)
   end
 
   test "show fails when the role doesn't exist", %{authed: user} do
@@ -99,7 +103,8 @@ defmodule Cog.V1.RoleController.Test do
                        body: %{"role" => %{"name" => "other"}})
     assert %{"role" => %{"id" => role.id,
                          "name" => "other",
-                         "permissions" => []}} == json_response(conn, 200)
+                         "permissions" => [],
+                         "groups" => []}} == json_response(conn, 200)
 
   end
 
@@ -173,4 +178,23 @@ defmodule Cog.V1.RoleController.Test do
     assert conn.status == 403
   end
 
+  test "retrieving groups for each role", %{authed: user} do
+    group = group("robots")
+    role = role("take-over")
+    Permittable.grant_to(group, role)
+    permission = permission("site:world")
+    Permittable.grant_to(role, permission)
+
+    conn = api_request(user, :get, "/v1/roles?name=#{role.name}")
+    role_json = json_response(conn, 200)
+
+    assert %{"id" => role.id,
+             "name" => role.name,
+             "groups" => [%{"id" => group.id,
+                            "name" => group.name}],
+             "permissions" => [%{"id" => permission.id,
+                                 "name" => "world",
+                                 "namespace" => "site"}]
+              } == role_json["role"]
+  end
 end
