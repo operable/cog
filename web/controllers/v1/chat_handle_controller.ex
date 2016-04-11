@@ -91,7 +91,7 @@ defmodule Cog.V1.ChatHandleController do
       chat_provider ->
         case Cog.chat_adapter_module(chat_provider.name) do
           {:ok, adapter} ->
-            case adapter.lookup_user(handle: handle) do
+            case adapter.lookup_user(handle) do
               {:ok, %{id: chat_provider_user_id}} ->
                 {:ok, %{"handle" => handle,
                         "provider_id" => chat_provider.id,

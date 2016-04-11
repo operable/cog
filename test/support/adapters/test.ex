@@ -15,15 +15,15 @@ defmodule Cog.Adapters.Test do
     {:ok, %{id: room_or_user, name: room_or_user}}
   end
 
-  def lookup_user(handle: "vansterminator") do
+  def lookup_user("vansterminator") do
     {:ok, %{id: "U024BE7LG", handle: "vansterminator"}}
   end
 
-  def lookup_user(handle: "updated-user") do
+  def lookup_user("updated-user") do
     {:ok, %{id: "U024BE7LK", handle: "updated-user"}}
   end
 
-  def lookup_user(handle: handle) do
+  def lookup_user(handle) do
     {:ok, %{id: handle, handle: handle}}
   end
 
@@ -36,7 +36,7 @@ defmodule Cog.Adapters.Test do
   end
 
   def mention_name(name) do
-    "@" <> name
+    name
   end
 
   def name() do

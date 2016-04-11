@@ -104,7 +104,8 @@ defmodule Cog.Support.ModelUtilities do
     provider =  ChatProvider |> Repo.get_by!(name: String.downcase(provider))
 
     {:ok, adapter} = Cog.chat_adapter_module(provider.name)
-    {:ok, external_user} = adapter.lookup_user(handle: internal_user.username)
+    handle = adapter.mention_name(internal_user.username)
+    {:ok, external_user} = adapter.lookup_user(handle)
 
     params = %{provider_id: provider.id,
                handle: external_user.handle,

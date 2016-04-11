@@ -38,6 +38,10 @@ defmodule Cog.Adapters.HipChat.API do
     end
   end
 
+  def lookup_user("@" <> handle),
+    do: lookup_user(handle: handle)
+  def lookup_user(handle) when is_binary(handle),
+    do: lookup_user(handle: handle)
   def lookup_user(id: user_id) do
     GenServer.call(__MODULE__, {:lookup_user, id: user_id})
   end
