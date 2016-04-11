@@ -19,6 +19,8 @@ defmodule Cog.Adapters.Slack.API do
     GenServer.call(@server_name, {:send_message, id, message}, :infinity)
   end
 
+  def lookup_user("@" <> handle),
+    do: lookup_user(handle: handle)
   def lookup_user(key) when is_tuple(hd(key)) do
     case query_cache(@user_cache, key) do
       nil ->
