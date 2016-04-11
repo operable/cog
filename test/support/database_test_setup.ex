@@ -45,7 +45,6 @@ defmodule DatabaseTestSetup do
   """
   def bundle(name, commands \\ [%{"name": "echo"}], opts \\ []) do
     command_template = %{
-      "version" => "0.0.1",
       "options" => [],
       "name" => "echo",
       "executable" => "/bin/echo",
@@ -56,7 +55,8 @@ defmodule DatabaseTestSetup do
     }
 
     bundle_template = %{
-      "bundle" => %{"name" => "bundle_name"},
+      "bundle" => %{"name" => "bundle_name",
+                    "version" => "0.0.1"},
       "templates" => [],
       "rules" => [],
       "permissions" => [],
@@ -75,6 +75,7 @@ defmodule DatabaseTestSetup do
     bundle =
       %Bundle{}
       |> Bundle.changeset(%{name: name,
+                            version: "0.0.1",
                             config_file: bundle_config,
                             manifest_file: %{}})
       |> Repo.insert!

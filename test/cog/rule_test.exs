@@ -5,7 +5,7 @@ defmodule RuleTest do
   alias Cog.Models.Rule
 
   setup do
-    bundle = Bundle.changeset(%Bundle{}, %{name: "test_bundle", config_file: %{}, manifest_file: %{}}) |> Repo.insert!
+    bundle = Bundle.changeset(%Bundle{}, %{name: "test_bundle", version: "0.0.1", config_file: %{}, manifest_file: %{}}) |> Repo.insert!
     {:ok, command} = Command.insert_new(%{name: "pugbomb", bundle_id: bundle.id})
     {:ok, [command: command]}
   end
@@ -27,7 +27,7 @@ defmodule RuleTest do
     use Cog.ModelCase
 
     setup do
-      bundle = Bundle.changeset(%Bundle{}, %{name: "test_bundle", config_file: %{}, manifest_file: %{}}) |> Repo.insert!
+      bundle = Bundle.changeset(%Bundle{}, %{name: "test_bundle", version: "0.0.1", config_file: %{}, manifest_file: %{}}) |> Repo.insert!
       rule_text = "when command is s3:list must have s3:delete"
       {:ok, expr, _} = Piper.Permissions.Parser.parse(rule_text)
       {:ok, command} = Command.insert_new(%{name: "pugbomb", bundle_id: bundle.id})

@@ -103,9 +103,9 @@ defmodule Cog.V1.BundlesController do
   end
 
   # Create a new record in the DB for the deploy
-  defp persist(%{"name" => name} = config) do
+  defp persist(%{"name" => name, "version" => version} = config) do
     try do
-      Install.install_bundle(%{name: name, config_file: config})
+      Install.install_bundle(%{name: name, version: version, config_file: config})
     rescue
       err in [Ecto.InvalidChangesetError] ->
         {:error, {:db_error, err.changeset.errors}}

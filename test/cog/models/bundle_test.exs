@@ -2,7 +2,7 @@ defmodule Cog.Models.BundleTest do
   use Cog.ModelCase
   alias Cog.Models.Bundle
 
-  @valid_attrs %{name: "test_bundle", config_file: %{}, manifest_file: %{}}
+  @valid_attrs %{name: "test_bundle", version: "0.0.1", config_file: %{}, manifest_file: %{}}
 
   test "bundle names must be made up of word characters and dashes" do
     invalid_attrs = Map.merge(@valid_attrs, %{name: "weird:name"})
