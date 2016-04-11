@@ -8,9 +8,15 @@ defmodule Cog.V1.UserController do
 
   plug :scrub_params, "user" when action in [:create, :update]
 
+  # Search by username only for now
+  def index(conn, %{"username" => name}) do
+    user = Repo.get_by!(User, username: name)
+    |> Repo.preload([direct_group_memberships: [roles: [permissions: :namespace]]])
+    render(conn, "show.json", user: user)
+  end
   def index(conn, _params) do
     users = Repo.all(User)
-    |> Repo.preload(:direct_group_memberships)
+    |> Repo.preload([direct_group_memberships: [roles: [permissions: :namespace]]])
     render(conn, "index.json", users: users)
   end
 
@@ -19,10 +25,11 @@ defmodule Cog.V1.UserController do
 
     case Repo.insert(changeset) do
       {:ok, user} ->
+        loaded_user = Repo.preload(user, [direct_group_memberships: [roles: [permissions: :namespace]]])
         conn
         |> put_status(:created)
-        |> put_resp_header("location", user_path(conn, :show, user))
-        |> render("show.json", user: user)
+        |> put_resp_header("location", user_path(conn, :show, loaded_user))
+        |> render("show.json", user: loaded_user)
       {:error, changeset} ->
         conn
         |> put_status(:unprocessable_entity)
@@ -32,7 +39,7 @@ defmodule Cog.V1.UserController do
 
   def show(conn, %{"id" => id}) do
     user = Repo.get!(User, id)
-    |> Repo.preload(:direct_group_memberships)
+    |> Repo.preload([direct_group_memberships: [roles: [permissions: :namespace]]])
     render(conn, "show.json", user: user)
   end
 
@@ -42,7 +49,7 @@ defmodule Cog.V1.UserController do
 
     case Repo.update(changeset) do
       {:ok, user} ->
-        updated = Repo.preload(user, :direct_group_memberships)
+        updated = Repo.preload(user, [direct_group_memberships: [roles: [permissions: :namespace]]])
         render(conn, "show.json", user: updated)
       {:error, changeset} ->
         conn
