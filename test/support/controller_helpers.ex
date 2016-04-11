@@ -47,7 +47,8 @@ defmodule Cog.Controller.Helpers do
   def api_request(requestor, method, path, options \\ []) do
     # Process all options
     defaults = [body: nil,
-                endpoint: Cog.Endpoint]
+                endpoint: Cog.Endpoint,
+                content_type: :json]
     options = Keyword.merge(defaults, options)
     body = Keyword.fetch!(options, :body)
     endpoint = Keyword.fetch!(options, :endpoint)
@@ -58,11 +59,20 @@ defmodule Cog.Controller.Helpers do
     token = hd(requestor.tokens).value
 
     # Route the request, with appropriate headers in place
-    ConnTest.conn()
-    |> Conn.put_req_header("accept", "application/json")
-    |> Conn.put_req_header("content-type", "application/json")
-    |> Conn.put_req_header("authorization", "token #{token}")
-    |> ConnTest.dispatch(endpoint, method, path, Poison.encode!(body))
+    case Keyword.fetch!(options, :content_type) do
+      :json ->
+        ConnTest.conn()
+        |> Conn.put_req_header("accept", "application/json")
+        |> Conn.put_req_header("content-type", "application/json")
+        |> Conn.put_req_header("authorization", "token #{token}")
+        |> ConnTest.dispatch(endpoint, method, path, Poison.encode!(body))
+      :multipart ->
+        ConnTest.conn()
+        |> Conn.put_req_header("accept", "application/json")
+        |> Conn.put_req_header("content-type", "multipart/form-data")
+        |> Conn.put_req_header("authorization", "token #{token}")
+        |> ConnTest.dispatch(endpoint, method, path, body)
+    end
   end
 
   @doc """
