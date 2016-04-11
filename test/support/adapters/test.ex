@@ -36,7 +36,7 @@ defmodule Cog.Adapters.Test do
   end
 
   def mention_name(name) do
-    "@" <> name
+    name
   end
 
   def name() do
