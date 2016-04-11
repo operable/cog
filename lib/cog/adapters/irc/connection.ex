@@ -24,6 +24,8 @@ defmodule Cog.Adapters.IRC.Connection do
     GenServer.call(__MODULE__, {:lookup_direct_room, options})
   end
 
+  def lookup_user(handle) when is_binary(handle),
+    do: lookup_user(handle: handle)
   def lookup_user([{_key, _value}] = options) do
     GenServer.call(__MODULE__, {:lookup_user, options})
   end

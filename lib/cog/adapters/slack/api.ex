@@ -21,6 +21,8 @@ defmodule Cog.Adapters.Slack.API do
 
   def lookup_user("@" <> handle),
     do: lookup_user(handle: handle)
+  def lookup_user(handle) when is_binary(handle),
+    do: lookup_user(handle: handle)
   def lookup_user(key) when is_tuple(hd(key)) do
     case query_cache(@user_cache, key) do
       nil ->
