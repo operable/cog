@@ -46,7 +46,7 @@ defmodule Cog.V1.BundlesController do
 
     case result do
       {:ok, bundle} ->
-        bundle = Repo.preload(bundle, :commands)
+        bundle = Repo.preload(bundle, commands: [:rules])
         conn
         |> put_status(:created)
         |> put_resp_header("location", bundles_path(conn, :show, bundle))
