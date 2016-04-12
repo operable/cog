@@ -182,17 +182,20 @@ defmodule Cog.Relay.Relays do
   # If `config` exists in the database (by name), retrieves the
   # database record. If not, installs the bundle and returns the
   # database record.
-  defp lookup_or_install(%{"name" => name} = config) do
+  defp lookup_or_install(%{"name" => name, "version" => version} = config) do
     case Repo.get_by(Bundle, name: name) do
-      %Bundle{}=bundle ->
+      %Bundle{version: ^version}=bundle ->
         {:ok, bundle}
+      %Bundle{version: installed_version} ->
+        Logger.error("Error! Unable to install bundle #{inspect name} because version #{installed_version} already installed")
+        {:error, name}
       nil ->
-        Logger.info("Installing bundle: #{name}")
-        case Cog.Bundle.Install.install_bundle(%{name: name, config_file: config}) do
+        Logger.info("Installing bundle: #{inspect name}")
+        case Cog.Bundle.Install.install_bundle(%{name: name, version: version, config_file: config}) do
           {:ok, bundle} ->
             {:ok, bundle}
           {:error, error} ->
-            Logger.error("Error! Unable to install bundle `#{name}`: #{inspect error}")
+            Logger.error("Error! Unable to install bundle #{inspect name}: #{inspect error}")
             {:error, name}
         end
     end

@@ -114,6 +114,7 @@ defmodule Cog.Command.CommandResolver.Test do
           "module" => "Cog.Commands.Echo",
           "documentation" => "does stuff"}}}
     Cog.Bundle.Install.install_bundle(%{name: "test_bundle",
+                                        version: "0.0.1",
                                         config_file: config})
     user = user("testuser")
 

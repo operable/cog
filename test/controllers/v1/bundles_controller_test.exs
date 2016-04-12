@@ -197,7 +197,7 @@ defmodule Cog.V1.BundlesControllerTest do
     cog_bundle_version: 2
 
     name: test_bundle
-    version: 0.1.0
+    version: "0.1.0"
     permissions:
     - test_bundle:date
     - test_bundle:time
