@@ -1,8 +1,8 @@
 use Mix.Config
 
 config :emqttd, :access,
-  auth: [anonymous: []],
-  acl: [internal: [file: 'config/acl.conf', nomatch: :allow]]
+  auth: [cog_internal: []],
+  acl: [cog_internal: []]
 
 config :emqttd, :broker,
   sys_interval: 60,

@@ -126,7 +126,7 @@ defmodule Cog.Relay.Relays do
 
   defp process_announcement(announcement, %__MODULE__{tracker: tracker}=state) do
     {success_bundles, failed_bundles} = announcement
-    |> Map.fetch!("bundles")
+    |> Map.get("bundles", [])
     |> Enum.map(&lookup_or_install/1)
     |> Enum.partition(&Util.is_ok?/1)
     |> Util.unwrap_partition_results
@@ -182,17 +182,13 @@ defmodule Cog.Relay.Relays do
   # If `config` exists in the database (by name), retrieves the
   # database record. If not, installs the bundle and returns the
   # database record.
-  defp lookup_or_install(%{"bundle" => %{"name" => name}} = config) do
+  defp lookup_or_install(%{"name" => name} = config) do
     case Repo.get_by(Bundle, name: name) do
       %Bundle{}=bundle ->
         {:ok, bundle}
       nil ->
         Logger.info("Installing bundle: #{name}")
-        # TODO: Eventually the manifest can go away, as it's not really
-        # needed on the bot side of things. Until then, we can fake it
-        # with an empty map
-        case Cog.Bundle.Install.install_bundle(%{name: name, config_file: config,
-                                                 manifest_file: %{}}) do
+        case Cog.Bundle.Install.install_bundle(%{name: name, config_file: config}) do
           {:ok, bundle} ->
             {:ok, bundle}
           {:error, error} ->

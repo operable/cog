@@ -36,8 +36,8 @@ defmodule Cog.Router do
     resources "/v1/rules", V1.RuleController, only: [:create, :delete]
 
     resources "/v1/bootstrap", V1.BootstrapController, only: [:index, :create]
+    resources "/v1/bundles", V1.BundlesController, only: [:index, :show, :delete, :create]
 
-    resources "/v1/bundles", V1.BundlesController, only: [:index, :show, :delete]
     get "/v1/bundles/:id/status", V1.BundleStatusController, :show
     post "/v1/bundles/:id/status", V1.BundleStatusController, :manage_status
 

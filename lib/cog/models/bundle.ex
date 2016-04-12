@@ -5,7 +5,6 @@ defmodule Cog.Models.Bundle do
   schema "bundles" do
     field :name, :string
     field :config_file, :map
-    field :manifest_file, :map
     field :enabled, :boolean, default: false
 
     has_many :commands, Command
@@ -18,7 +17,7 @@ defmodule Cog.Models.Bundle do
     timestamps
   end
 
-  @required_fields ~w(name config_file manifest_file)
+  @required_fields ~w(name config_file)
   @optional_fields ~w(enabled)
 
   summary_fields [:id, :name, :namespace, :inserted_at, :enabled]
@@ -29,7 +28,7 @@ defmodule Cog.Models.Bundle do
     |> Repo.preload(:relay_groups)
     |> cast(params, @required_fields, @optional_fields)
     |> validate_format(:name, ~r/\A[A-Za-z0-9\_\-\.]+\z/)
-    |> unique_constraint(:name, name: :bundles_name_index)
+    |> unique_constraint(:name, name: :bundles_name_index, message: "The bundle name is already in use.")
     |> enable_if_embedded
   end
 

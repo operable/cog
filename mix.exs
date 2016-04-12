@@ -7,7 +7,8 @@ defmodule Cog.Mixfile do
     [app: :cog,
      version: "0.4.0",
      elixir: "~> 1.2",
-     leex_options: [:warnings_as_errors],
+     erlc_paths: ["emqttd_plugins"],
+     erlc_options: [:debug_info, :warnings_as_errors],
      elixirc_options: [warnings_as_errors: System.get_env("ALLOW_WARNINGS") == nil],
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
@@ -67,7 +68,6 @@ defmodule Cog.Mixfile do
      {:hedwig, "~> 0.3.0"},
      {:gproc, "~> 0.5.0", override: true},
      {:html_entities, "~> 0.3.0"},
-
      {:spanner, github: "operable/spanner"},
      {:probe, github: "operable/probe", tag: "0.2"},
      {:exml, github: "paulgray/exml", tag: "2.2.1"},

@@ -21,6 +21,99 @@ defmodule Cog.V1.BundlesControllerTest do
            unauthed: unauthed_user]}
   end
 
+  setup_all do
+    scratch_dir = Path.join([File.cwd!(), "test", "scratch", "*"])
+    on_exit fn ->
+      for file <- Path.wildcard(scratch_dir), do: File.rm_rf(file)
+    end
+  end
+
+  # Test for the happy bundle config upload path
+  Enum.map(Spanner.Config.config_extensions, &("config#{&1}"))
+  |> Enum.each(fn(config_file) ->
+    test "accepts a good #{config_file} file", %{authed: requestor} do
+      config_file_name = unquote(config_file)
+      config_path = if String.ends_with?(config_file_name, ".json") do
+        # Make a json config if we have a file named config.json
+        make_config_file(config_file_name, type: :json)
+      else
+        # Otherwise we can make a yaml config
+        make_config_file(config_file_name, type: :yaml)
+      end
+      upload = %Plug.Upload{path: config_path, filename: config_file_name}
+
+      # upload the config
+      conn = api_request(requestor, :post, "/v1/bundles", body: %{bundle_config: upload}, content_type: :multipart)
+
+      bundle_id = Poison.decode!(conn.resp_body)
+                  |> get_in(["bundle", "id"])
+      bundle = Cog.Repo.get_by(Cog.Models.Bundle, id: bundle_id)
+      config = Spanner.Config.Parser.read_from_file!(config_path)
+
+      assert conn.status == 201
+      assert bundle.config_file == config
+      assert bundle.name == config["name"]
+    end
+  end)
+
+  test "rejects a file with an improper extension", %{authed: requestor} do
+    filename = "config.jpg"
+
+    config_path = make_config_file(filename)
+    upload = %Plug.Upload{path: config_path, filename: filename}
+
+    conn = api_request(requestor, :post, "/v1/bundles", body: %{bundle_config: upload}, content_type: :multipart)
+
+    assert conn.status == 415
+  end
+
+  test "rejects an empty body", %{authed: requestor} do
+    conn = api_request(requestor, :post, "/v1/bundles")
+
+    assert conn.status == 400
+  end
+
+  test "rejects a bad config file", %{authed: requestor} do
+    filename = "config.yaml"
+
+    config_path = make_config_file(filename, contents: "---\nfoo: bar")
+    upload = %Plug.Upload{path: config_path, filename: filename}
+
+    conn = api_request(requestor, :post, "/v1/bundles", body: %{bundle_config: upload}, content_type: :multipart)
+
+    assert conn.status == 422
+  end
+
+  test "rejects a malformed config file", %{authed: requestor} do
+    filename = "config.yaml"
+
+    config_path = make_config_file(filename, contents: "blah blah")
+    upload = %Plug.Upload{path: config_path, filename: filename}
+
+    conn = api_request(requestor, :post, "/v1/bundles", body: %{bundle_config: upload}, content_type: :multipart)
+
+    assert conn.status == 422
+  end
+
+  test "accepts a valid config passed as json", %{authed: requestor} do
+    config = config(:map)
+    conn = api_request(requestor, :post, "/v1/bundles", body: %{"bundle" => config})
+
+    bundle_id = Poison.decode!(conn.resp_body)
+                |> get_in(["bundle", "id"])
+    bundle = Cog.Repo.get_by(Cog.Models.Bundle, id: bundle_id)
+
+    assert conn.status == 201
+    assert bundle.config_file == config
+    assert bundle.name == config["name"]
+  end
+
+  test "rejects a bad config passed as json", %{authed: requestor} do
+    conn = api_request(requestor, :post, "/v1/bundles", body: %{"bad" => "config"})
+
+    assert conn.status == 400
+  end
+
   test "shows chosen resource", %{authed: requestor} do
     bundle = bundle("test-1")
     conn = api_request(requestor, :get, "/v1/bundles/#{bundle.id}")
@@ -59,6 +152,81 @@ defmodule Cog.V1.BundlesControllerTest do
     conn = api_request(requestor, :get, "/v1/bundles/#{bundle.id}")
     assert conn.halted
     assert conn.status == 403
+  end
+
+  defp make_config_file(filename, options \\ []) do
+    options = Keyword.merge([
+      type: :yaml,
+      contents: :nil
+    ], options)
+
+    config_path = Path.join([scratch_dir(), filename])
+    file = File.open!(config_path, [:write, :utf8])
+
+    if Keyword.get(options, :contents) do
+      IO.write(file, Keyword.get(options, :contents))
+    else
+      IO.write(file, config(Keyword.get(options, :type)))
+    end
+
+    File.close(file)
+
+    config_path
+  end
+
+  defp scratch_dir do
+    path = Path.join([File.cwd!, "test", "scratch"])
+    File.mkdir_p!(path)
+    path
+  end
+
+  # simple config
+  defp config(:map),
+    do: Spanner.Config.Parser.read_from_string!(config())
+  defp config(:yaml),
+    do: config()
+  defp config(:json) do
+    Spanner.Config.Parser.read_from_string!(config())
+    |> Poison.encode!
+  end
+
+  defp config do
+    """
+    ---
+    # Format version
+    cog_bundle_version: 2
+
+    name: test_bundle
+    version: 0.1.0
+    permissions:
+    - test_bundle:date
+    - test_bundle:time
+    docker:
+      image: operable-bundle/test_bundle
+      tag: v0.1.0
+    commands:
+      date:
+        executable: /usr/local/bin/date
+        options:
+          option1:
+            type: string
+            description: An option
+            required: false
+            short_flag: o
+        rules:
+        - when command is test_bundle:date must have test_bundle:date
+      time:
+        executable: /usr/local/bin/time
+        rules:
+        - when command is test_bundle:time must have test_bundle:time
+    templates:
+      time:
+        slack: "{{time}}"
+        hipchat: "{{time}}"
+      date:
+        slack: "{{date}}"
+        hipchat: "{{date}}"
+    """
   end
 
 end

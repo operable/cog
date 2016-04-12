@@ -15,8 +15,8 @@ defmodule Cog.Bundle.Install do
 
   require Logger
 
-  @command_attrs ["name", "options", "enforcing",
-                  "execution", "documentation"]
+  @command_attrs ["options", "rules", "documentation",
+                  "enforcing", "execution"]
 
   @doc """
   Given a map of bundle parameters, fully installs the bundle into the
@@ -35,14 +35,10 @@ defmodule Cog.Bundle.Install do
   ## Parameters
 
   * `name`: the name of the bundle
-  * `manifest_file`: the JSON map of the bundle manifest
   * `config_file`: the JSON map of the configuration file
 
   """
-  # TODO: consider removing manifest until we're actually doing
-  # something with them
   def install_bundle(bundle_params) do
-    # TODO: Validate bundle (e.g., check manifest, etc)
 
     Repo.transaction(fn ->
       bundle = %Bundle{}
@@ -61,10 +57,7 @@ defmodule Cog.Bundle.Install do
       bundle.config_file["commands"]
       |> Enum.each(&create_command(bundle, &1))
 
-      Map.get(bundle.config_file, "rules", [])
-      |> Enum.each(&(Cog.RuleIngestion.ingest(&1, false)))
-
-      Map.get(bundle.config_file, "templates", [])
+      Map.get(bundle.config_file, "templates", %{})
       |> Enum.each(&create_template(bundle, &1))
 
       bundle
@@ -77,24 +70,30 @@ defmodule Cog.Bundle.Install do
   #
   # ## Example
   #
-  #     create_command(bundle, %{"name" => "ec2-tag",
-  #                              "enforcing" => true,
-  #                              "execution" => "multiple",
-  #                              "options": [%{"name" => "instance-id", "type" => "string", "required" => true}],
+  #     create_command(bundle, %{"options": %{"instance-id" => %{"type" => "string", "required" => true}},
+  #                              "rules": ["When command is foo:bar must have foo:write"],
   #                              "module" => "Cog.Commands.EC2Tag"})
-  defp create_command(%Bundle{}=bundle, command_spec) do
+  defp create_command(%Bundle{}=bundle, {command_name, command_spec}) do
     command_spec = Map.take(command_spec, @command_attrs)
 
-    command = Command.build_new(bundle, command_spec)
+    command = Command.build_new(bundle, Map.put(command_spec, "name", command_name))
     |> Repo.insert!
 
-    for option <- command_spec["options"] do
-      create_option(command, option)
-    end
+    Map.get(command_spec, "rules", [])
+    |> Enum.each(&(Cog.RuleIngestion.ingest(&1, false)))
+
+    Map.get(command_spec, "options", [])
+    |> Enum.each(&create_option(command, &1))
   end
 
-  defp create_option(command, params) do
-    CommandOption.build_new(command, params) |> Repo.insert!
+  defp create_option(command, {option_name, params}) do
+    option = Map.merge(%{
+      "name" => option_name,
+      "long_flag" => option_name
+    }, params)
+
+    CommandOption.build_new(command, option)
+    |> Repo.insert!
   end
 
   # TODO: want a better API for this; given a NS and bare names,
@@ -106,16 +105,18 @@ defmodule Cog.Bundle.Install do
     |> Repo.insert!
   end
 
-  defp create_template(bundle, %{"adapter" => adapter, "name" => command_name, "source" => source}) do
-    params = %{
-      adapter: adapter,
-      name: command_name,
-      source: source
-    }
+  defp create_template(bundle, {name, template}) do
+    Enum.each(template, fn({provider, contents}) ->
+      params = %{
+        adapter: provider,
+        name: name,
+        source: contents
+      }
 
-    bundle
-    |> Ecto.Model.build(:templates)
-    |> Template.changeset(params)
-    |> Repo.insert!
+      bundle
+      |> Ecto.Model.build(:templates)
+      |> Template.changeset(params)
+      |> Repo.insert!
+    end)
   end
 end
