@@ -72,13 +72,9 @@ defmodule DatabaseTestSetup do
     |> Map.put("commands", command_config)
     |> Map.merge(Enum.into(opts, %{}))
 
-    bundle =
-      %Bundle{}
-      |> Bundle.changeset(%{name: name,
-                            version: "0.0.1",
-                            config_file: bundle_config,
-                            manifest_file: %{}})
-      |> Repo.insert!
+    bundle = %Bundle{}
+    |> Bundle.changeset(%{name: name, version: "0.0.1", config_file: bundle_config})
+    |> Repo.insert!
 
     namespace(name, bundle.id)
 
