@@ -5,24 +5,23 @@ defmodule Cog.Commands.Permissions do
   * Create permissions in the `site` namespace
   * Delete permissions in the `site` namespace
   * List all permissions in the system
-  * Grant and revoke permissions on users, roles, and groups.
+  * Grant and revoke permissions from roles.
 
   Format:
 
       --list
       --create --permission=site:<name>
       --delete --permission=site:<name>
-      --grant --permission=<namespace>:<permission> --[user|group|role]=<name>"
-      --revoke --permission=<namespace>:<permission> --[user|group|role]=<name>"
+      --grant --permission=<namespace>:<permission> --role=<name>"
+      --revoke --permission=<namespace>:<permission> --role=<name>"
 
   Examples:
 
   > !#{Cog.embedded_bundle}:permissions --list
   > !#{Cog.embedded_bundle}:permissions --create --permission=site:admin
   > !#{Cog.embedded_bundle}:permissions --delete --permission=site:admin
-  > !#{Cog.embedded_bundle}:permissions --grant --user=bob --permission=#{Cog.embedded_bundle}:manage_users
   > !#{Cog.embedded_bundle}:permissions --grant --role=dev --permission=site:write
-  > !#{Cog.embedded_bundle}:permissions --revoke --group=engineering --permission=giphy:giphy
+  > !#{Cog.embedded_bundle}:permissions --revoke --role=dev --permission=giphy:giphy
 
   """
   use Spanner.GenCommand.Base, bundle: Cog.embedded_bundle
@@ -32,23 +31,17 @@ defmodule Cog.Commands.Permissions do
   option "list", type: "bool"
   option "grant", type: "bool"
   option "revoke", type: "bool"
-  option "user", type: "string"
-  option "group", type: "string"
   option "role", type: "string"
   option "permission", type: "string"
 
   permission "manage_permissions"
-  permission "manage_users"
   permission "manage_roles"
-  permission "manage_groups"
-  permission "manage_relays"
 
   rule "when command is #{Cog.embedded_bundle}:permissions with option[create] == true must have #{Cog.embedded_bundle}:manage_permissions"
   rule "when command is #{Cog.embedded_bundle}:permissions with option[delete] == true must have #{Cog.embedded_bundle}:manage_permissions"
   rule "when command is #{Cog.embedded_bundle}:permissions with option[list] == true must have #{Cog.embedded_bundle}:manage_permissions"
-  rule "when command is #{Cog.embedded_bundle}:permissions with option[user] == /.*/ must have #{Cog.embedded_bundle}:manage_users"
-  rule "when command is #{Cog.embedded_bundle}:permissions with option[role] == /.*/ must have #{Cog.embedded_bundle}:manage_roles"
-  rule "when command is #{Cog.embedded_bundle}:permissions with option[group] == /.*/ must have #{Cog.embedded_bundle}:manage_groups"
+  rule "when command is #{Cog.embedded_bundle}:permissions with option[grant] == true must have #{Cog.embedded_bundle}:manage_roles"
+  rule "when command is #{Cog.embedded_bundle}:permissions with option[revoke] == true must have #{Cog.embedded_bundle}:manage_roles"
 
   alias Cog.Repo
   use Cog.Models
@@ -132,16 +125,6 @@ defmodule Cog.Commands.Permissions do
     do: input # nothing to validate in this case
   defp validate_permittable(%__MODULE__{req: req, errors: errors}=input) do
     case req.options do
-      %{"user" => username} ->
-        case Repo.get_by(User, username: username) do
-          %User{}=user -> %{input | permittable: user}
-          nil -> %{input | errors: errors ++ [{:unrecognized_user, username}]}
-        end
-      %{"group" => name} ->
-        case Repo.get_by(Group, name: name) do
-          %Group{}=group -> %{input | permittable: group}
-          nil -> %{input | errors: errors ++ [{:unrecognized_group, name}]}
-        end
       %{"role" => name} ->
         case Repo.get_by(Role, name: name) do
           %Role{}=role -> %{input | permittable: role}
@@ -215,28 +198,16 @@ defmodule Cog.Commands.Permissions do
   defp translate_success({:delete, permission_full_name}),
     do: "Deleted permission `#{permission_full_name}`"
   defp translate_success({:grant, permittable, permission_full_name}),
-    do: "Granted permission `#{permission_full_name}` to #{type(permittable)} `#{name(permittable)}`"
+    do: "Granted permission `#{permission_full_name}` to role `#{permittable.name}`"
   defp translate_success({:revoke, permittable, permission_full_name}),
-    do: "Revoked permission `#{permission_full_name}` from #{type(permittable)} `#{name(permittable)}`"
-
-  defp type(%User{}), do: "user"
-  defp type(%Group{}), do: "group"
-  defp type(%Role{}), do: "role"
-
-  defp name(%User{username: name}), do: name
-  defp name(%Group{name: name}), do: name
-  defp name(%Role{name: name}), do: name
+    do: "Revoked permission `#{permission_full_name}` from role `#{permittable.name}`"
 
   defp translate_error(:missing_action),
     do: "Must specify one of the following actions: `--grant` or `--revoke`"
-  defp translate_error({:unrecognized_user, name}),
-    do: "Could not find user `#{name}`"
-  defp translate_error({:unrecognized_group, name}),
-    do: "Could not find group `#{name}`"
   defp translate_error({:unrecognized_role, name}),
     do: "Could not find role `#{name}`"
   defp translate_error(:missing_permittable),
-    do: "Must specify a target to act upon with one of: `--user`, `--group`, or `--role`"
+    do: "Must specify a role to act upon with `--role`"
   defp translate_error({:unrecognized_permission, name}),
     do: "Could not find permission `#{name}`"
   defp translate_error(:missing_permission),

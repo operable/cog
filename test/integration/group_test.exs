@@ -35,22 +35,6 @@ defmodule Integration.GroupTest do
     assert_error_message_contains(response, "Whoops! An error occurred. ERROR! The group `test` already exists.")
   end
 
-  test "adding a group to a group", %{user: user} do
-    group = group("elves")
-
-    response = send_message(user, "@bot: operable:group --add --group=#{group.name} cheer")
-    assert_error_message_contains(response, "Whoops! An error occurred. ERROR! Could not find group `cheer`")
-
-    response = send_message(user, "@bot: operable:group --create cheer")
-    assert_payload(response, %{body: ["The group `cheer` has been created."]})
-
-    response = send_message(user, "@bot: operable:group --add --group=humbug cheer")
-    assert_error_message_contains(response, "Whoops! An error occurred. ERROR! Could not find group `humbug`")
-
-    response = send_message(user, "@bot: operable:group --add --group=#{group.name} cheer")
-    assert_payload(response, %{body: ["Added the group `elves` to the group `cheer`"]})
-  end
-
   test "errors using the group command", %{user: user} do
     response = send_message(user, "@bot: operable:group --create ")
     assert_error_message_contains(response, "Whoops! An error occurred. ERROR! Unable to create ``:\nMissing name")
@@ -72,27 +56,9 @@ defmodule Integration.GroupTest do
     assert_error_message_contains(response, "Whoops! An error occurred. ERROR! Could not find group `cheer`")
   end
 
-  test "removing a group", %{user: user} do
-    group("elves")
-
-    response = send_message(user, "@bot: operable:group --add --group=elves cheer")
-    assert_error_message_contains(response, "Whoops! An error occurred. ERROR! Could not find group `cheer`")
-
-    group("cheer")
-
-    response = send_message(user, "@bot: operable:group --add --group=elves cheer")
-    assert_payload(response, %{body: ["Added the group `elves` to the group `cheer`"]})
-
-    response = send_message(user, "@bot: operable:group --remove --group=elves cheer")
-    assert_payload(response, %{body: ["Removed the group `elves` from the group `cheer`"]})
-  end
-
   test "listing group", %{user: user} do
     group("elves")
     group("cheer")
-
-    response = send_message(user, "@bot: operable:group --add --group=elves cheer")
-    assert_payload(response, %{body: ["Added the group `elves` to the group `cheer`"]})
 
     response = send_message(user, "@bot: operable:group --add --user=belf cheer")
     assert_payload(response, %{body: ["Added the user `belf` to the group `cheer`"]})

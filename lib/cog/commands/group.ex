@@ -1,19 +1,17 @@
 defmodule Cog.Commands.Group do
   @moduledoc """
-  This command allows the user to manage groups. Groups can contain other groups
-  or users.
+  This command allows the user to manage groups of users.
 
   Usage:
       group --create <groupname>
       group --drop <groupname>
-      group --add [--user=<username> | --group=<groupname>] <groupname>
-      group --remove [--user=<username> | --group=<groupname>] <groupname>
+      group --add --user=<username> <groupname>
+      group --remove --user=<username> <groupname>
       group --list
   Examples:
   > @bot operable:group --create ops
   > @bot operable:group --create engineering
   > @bot operable:group --add --user=bob ops
-  > @bot operable:group --add --group=ops engineering
   > @bot operable:group --remove --user=bob ops
   > @bot operable:group --drop ops
   > @bot operable:group --list
@@ -27,12 +25,15 @@ defmodule Cog.Commands.Group do
   option "list", type: "bool"
 
   option "user", type: "string"
-  option "group", type: "string"
 
   permission "manage_groups"
   permission "manage_users"
 
-  rule "when command is #{Cog.embedded_bundle}:group must have #{Cog.embedded_bundle}:manage_groups"
+  rule "when command is #{Cog.embedded_bundle}:group with option[create] == true must have #{Cog.embedded_bundle}:manage_groups"
+  rule "when command is #{Cog.embedded_bundle}:group with option[drop] == true must have #{Cog.embedded_bundle}:manage_groups"
+  rule "when command is #{Cog.embedded_bundle}:group with option[list] == true must have #{Cog.embedded_bundle}:manage_groups"
+  rule "when command is #{Cog.embedded_bundle}:group with option[add] == true must have #{Cog.embedded_bundle}:manage_users"
+  rule "when command is #{Cog.embedded_bundle}:group with option[remove] == true must have #{Cog.embedded_bundle}:manage_users"
 
   alias Cog.Repo
   use Cog.Models
@@ -111,11 +112,8 @@ defmodule Cog.Commands.Group do
     Groupable.remove_from(admitter.entity, admitter.classification)
   end
 
-  defp return_results(:ok, admitter), do: MessageTranslations.translate_success(admitter)
-  defp return_results({:error, :forbidden_group_cycle}, _admitter) do
-    # This is a stop-gap, pending a larger refactoring
-    {:error, "This operation would create a circular group relationship (e.g. A is-a-member-of B, B is-a-member-of A), which is forbidden"}
-  end
+  defp return_results(:ok, admitter),
+    do: MessageTranslations.translate_success(admitter)
   defp return_results(_, admitter) do
     [error | _] = admitter.errors
     MessageTranslations.translate_error("group", error)
@@ -140,12 +138,6 @@ defmodule Cog.Commands.Group do
     case Repo.get_by(User, username: username) do
       %User{}=user -> %{input | entity: user}
       nil -> %{input | errors: [{:unrecognized_user, username} | errors]}
-    end
-  end
-  defp validate_groupable(%{req: %{options: %{"group" => name}}, errors: errors}=input) do
-    case Repo.get_by(Group, name: name) do
-      %Group{}=group -> %{input | entity: group}
-      nil -> %{input | errors: [{:unrecognized_group, name} | errors]}
     end
   end
   defp validate_groupable(%{req: %{options: _}, errors: errors}=input),

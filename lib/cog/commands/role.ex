@@ -1,18 +1,16 @@
 defmodule Cog.Commands.Role do
   @moduledoc """
-  This command allows the user to manage roles. Roles can contain users.
+  This command allows the user to manage roles.
 
   Usage:
       role --create <rolename>
       role --drop <rolename>
-      role --grant [--user=<username>|--group=<groupname>] <rolename>
-      role --revoke [--user=<username>|--group=<groupname>]  <rolename>
+      role --grant --group=<groupname> <rolename>
+      role --revoke --group=<groupname> <rolename>
       role --list
   Examples:
   > @bot operable:role --create deployment
-  > @bot operable:role --grant --user=bob deployment
   > @bot operable:role --grant --group=ops deployment
-  > @bot operable:role --revoke --user=bob deployment
   > @bot operable:role --revoke --group=ops deployment
   > @bot operable:role --drop deployment
   > @bot operable:role --list
@@ -25,16 +23,16 @@ defmodule Cog.Commands.Role do
   option "revoke", type: "bool"
   option "list", type: "bool"
 
-  option "user", type: "string"
   option "group", type: "string"
 
   permission "manage_roles"
-  permission "manage_users"
   permission "manage_groups"
 
-  rule "when command is #{Cog.embedded_bundle}:role must have #{Cog.embedded_bundle}:manage_roles"
-  rule "when command is #{Cog.embedded_bundle}:role must have #{Cog.embedded_bundle}:manage_users"
-  rule "when command is #{Cog.embedded_bundle}:role must have #{Cog.embedded_bundle}:manage_groups"
+  rule "when command is #{Cog.embedded_bundle}:role with option[create] == true must have #{Cog.embedded_bundle}:manage_roles"
+  rule "when command is #{Cog.embedded_bundle}:role with option[drop] == true must have #{Cog.embedded_bundle}:manage_roles"
+  rule "when command is #{Cog.embedded_bundle}:role with option[list] == true must have #{Cog.embedded_bundle}:manage_roles"
+  rule "when command is #{Cog.embedded_bundle}:role with option[grant] == true must have #{Cog.embedded_bundle}:manage_groups"
+  rule "when command is #{Cog.embedded_bundle}:role with option[revoke] == true must have #{Cog.embedded_bundle}:manage_groups"
 
   alias Cog.Repo
   alias Cog.MessageTranslations
@@ -88,12 +86,12 @@ defmodule Cog.Commands.Role do
   end
 
   defp existing_assignments?(rolename) do
-    group_roles = Cog.Queries.Permission.from_group_roles(rolename)|> Repo.all
-    user_roles = Cog.Queries.Permission.from_user_roles(rolename)|> Repo.all
-    case group_roles ++ user_roles do
-      [] -> false
+    case Cog.Queries.Permission.from_group_roles(rolename)|> Repo.all do
+      [] ->
+        false
       assigned_roles ->
-        gather_user_group_names(assigned_roles, "")
+        Enum.map_join(assigned_roles, "\n",
+          fn(%{group: group}) -> "* group: #{group.name}" end)
     end
   end
 
@@ -105,16 +103,6 @@ defmodule Cog.Commands.Role do
         |> return_results(enrollee)
       _ -> return_results(:error, enrollee)
     end
-  end
-
-  defp gather_user_group_names([], acc) do
-    acc
-  end
-  defp gather_user_group_names([%{group: group} | remaining], acc) do
-    gather_user_group_names(remaining, "* group: #{group.name}\n" <> acc)
-  end
-  defp gather_user_group_names([%{user: user} | remaining], acc) do
-    gather_user_group_names(remaining, "* user: #{user.username}\n" <> acc)
   end
 
   defp list_all_roles do
@@ -158,11 +146,6 @@ defmodule Cog.Commands.Role do
 
   defp validate_enrollee(%{req: req, errors: errors}=input) do
     case req.options do
-      %{"user" => username} ->
-        case Repo.get_by(User, username: username) do
-          %User{}=user -> %{input | entity: user}
-          nil -> %{input | errors: [{:unrecognized_user, username} | errors]}
-        end
       %{"group" => name} ->
         case Repo.get_by(Group, name: name) do
           %Group{}=group -> %{input | entity: group}
