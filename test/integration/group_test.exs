@@ -64,12 +64,12 @@ defmodule Integration.GroupTest do
     assert_payload(response, %{body: ["Added the user `belf` to the group `cheer`"]})
 
     response = send_message(user, "@bot: operable:group --list")
-    assert_payload(response, %{body: ["The following are the available groups: \n* cheer\n* elves\n"]})
+    assert_payload(response, %{body: ["The following are the available groups: \n* cheer\n* elves\n* cog-admin\n"]})
 
     response = send_message(user, "@bot: operable:group --drop cheer")
     assert_payload(response, %{body: ["The group `cheer` has been deleted."]})
 
     response = send_message(user, "@bot: operable:group --list")
-    assert_payload(response, %{body: ["The following are the available groups: \n* elves\n"]})
+    assert_payload(response, %{body: ["The following are the available groups: \n* elves\n* cog-admin\n"]})
   end
 end
