@@ -48,6 +48,10 @@ With those installed, setup your computer with:
 
 Cog will be run on `http://localhost:4000`.
 
+## Notes on Relay
+
+If you are running cog with relay, which you probably should be, note that this version of cog does not work with the old elixir based relay. To use relay use the new go based version, (https://github.com/operable/go-relay)
+
 ## Testing
 
     $ make test
