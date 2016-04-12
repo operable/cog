@@ -22,7 +22,7 @@ cog:
   image: operable/cog${TAG}
   environment:
     - COG_MQTT_HOST=0.0.0.0
-    - DATABASE_URL=ecto://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/cog
+    - DATABASE_URL=ecto://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:5432/cog
     - COG_ADAPTER=${COG_ADAPTER}
     - SLACK_API_TOKEN=${SLACK_API_TOKEN}
     - HIPCHAT_API_TOKEN=${HIPCHAT_API_TOKEN}
@@ -35,16 +35,8 @@ cog:
     - HIPCHAT_XMPP_PASSWORD=${HIPCHAT_XMPP_PASSWORD}
     - ERL_FLAGS=-smp enable
   links:
-    - postgres
+    - postgres:localhost
   ports:
     - 80:4000
     - 1883
-  entrypoint: scripts/wait-for-it.sh -s -t 0 -h postgres -p 5432 -- elixir --no-halt --name cog@127.0.0.1 --no-halt -S mix do ecto.create, ecto.migrate, phoenix.server
-relay:
-  image: operable/relay${TAG}
-  environment:
-    - COG_MQTT_HOST=cog
-    - ERL_FLAGS=-smp enable
-  links:
-    - cog
-  entrypoint: scripts/wait-for-it.sh -s -t 0 -h cog -p 1883 -- elixir --no-halt --name relay@127.0.0.1 -S mix
+  entrypoint: /home/operable/cog/scripts/docker-start
