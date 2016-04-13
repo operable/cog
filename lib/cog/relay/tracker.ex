@@ -28,7 +28,7 @@ defmodule Cog.Relay.Tracker do
   """
   @spec remove_relay(t, String.t) :: t
   def remove_relay(tracker, relay) do
-    map = Enum.reduce(tracker.map, %{}, fn({bundle, relays}, acc) ->
+    updated = Enum.reduce(tracker.map, %{}, fn({bundle, relays}, acc) ->
       remaining = MapSet.delete(relays, relay)
       if Enum.empty?(remaining) do
         acc
@@ -36,7 +36,10 @@ defmodule Cog.Relay.Tracker do
         Map.put(acc, bundle, remaining)
       end
     end)
-    %{tracker | map: map}
+    if updated != tracker.map do
+      Logger.info("Removed Relay #{relay} from active relay list")
+    end
+    %{tracker | map: updated}
   end
 
   @doc """

@@ -168,7 +168,6 @@ defmodule Cog.Relay.Relays do
     bundle_names = Enum.map(success_bundles, &Map.get(&1, :name)) # Just for logging purposes
     case {online_status, snapshot_status} do
       {:offline, _} ->
-        Logger.info("Removing Relay #{relay_id} from active relay list")
         Tracker.remove_relay(tracker, relay_id)
       {:online, :incremental} ->
         Logger.info("Incrementally adding bundles for Relay #{relay_id}: #{inspect bundle_names}")
