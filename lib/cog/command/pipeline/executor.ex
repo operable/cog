@@ -144,6 +144,8 @@ defmodule Cog.Command.Pipeline.Executor do
     end
   end
 
+  def plan_next_invocation(:timeout, %__MODULE__{output: []}=state),
+    do: succeed_early_with_response(state)
   def plan_next_invocation(:timeout, %__MODULE__{invocations: [current_invocation|remaining],
                                                  output: previous_output,
                                                  user_permissions: permissions}=state) do
@@ -173,8 +175,6 @@ defmodule Cog.Command.Pipeline.Executor do
         fail_pipeline_with_error({:binding_error, msg}, state)
     end
   end
-  def plan_next_invocation(:timeout, %__MODULE__{invocations: [], output: []}=state),
-    do: succeed_with_response(%{state | output: [{"Pipeline executed successfully, but no output was returned", nil}]})
   def plan_next_invocation(:timeout, %__MODULE__{invocations: []}=state),
     do: succeed_with_response(state)
 
@@ -309,6 +309,31 @@ defmodule Cog.Command.Pipeline.Executor do
     {:stop, :shutdown, state}
   end
 
+  defp succeed_early_with_response(state) do
+    # If our pipeline has "run dry" at any point, we'll send a
+    # response back to all destinations, but only if the pipeline was
+    # initiated from chat.
+    #
+    # If it was initiated from a trigger, though, we don't want to
+    # output to any chat destinations. Otherwise, you'd end up with
+    # "mystery" messages saying "Pipeline succeeded but there was no
+    # output!" without indication of what's going on. If we trigger
+    # something that succeeds without output, we'll just be silent in
+    # chat.
+
+    {:ok, chat_adapter} = Cog.chat_adapter_module
+
+    filtered_destinations = if originating_adapter(state) == chat_adapter do
+      state.destinations
+    else
+      state.destinations
+      |> Enum.reject(&(&1.adapter == chat_adapter.name))
+    end
+
+    succeed_with_response(%{state |
+                            destinations: filtered_destinations,
+                            output: [{"Pipeline executed successfully, but no output was returned", nil}]})
+  end
 
   # Return a map of adapter -> rendered message
   @spec render_for_adapters([adapter_name], %Cog.Models.Bundle{}, List.t) ::
