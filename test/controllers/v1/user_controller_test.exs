@@ -40,14 +40,12 @@ defmodule Cog.V1.UserControllerTest do
               "last_name" => "McCog",
               "email_address" => "cog@operable.io",
               "groups" => [],
-              "roles" => [],
               "username" => "cog"},
             %{"id" => other.id,
               "first_name" => "Sadpanda",
               "last_name" => "McSadpanda",
               "email_address" => "sadpanda@operable.io",
               "groups" => [],
-              "roles" => [],
               "username" => "sadpanda"}] == users_json |> sort_by("username")
   end
 
@@ -59,7 +57,6 @@ defmodule Cog.V1.UserControllerTest do
                          "first_name" => "Tester",
                          "last_name" => "McTester",
                          "groups" => [],
-                         "roles" => [],
                          "email_address" => "tester@operable.io"}} == json_response(conn, 200)
   end
 
@@ -88,7 +85,6 @@ defmodule Cog.V1.UserControllerTest do
                                                  "first_name" => @valid_attrs.first_name,
                                                  "email_address" => @valid_attrs.email_address,
                                                  "groups" => [],
-                                                 "roles" => [],
                                                  "last_name" => @valid_attrs.last_name}
   end
 
@@ -180,7 +176,6 @@ defmodule Cog.V1.UserControllerTest do
                          "first_name" => @valid_attrs.first_name,
                          "email_address" => @valid_attrs.email_address,
                          "groups" => [],
-                         "roles" => [],
                          "last_name" => @valid_attrs.last_name}
   end
 
@@ -194,7 +189,6 @@ defmodule Cog.V1.UserControllerTest do
                          "first_name" => tester.first_name,
                          "email_address" => tester.email_address,
                          "groups" => [],
-                         "roles" => [],
                          "last_name" => tester.last_name}
   end
 
@@ -215,13 +209,14 @@ defmodule Cog.V1.UserControllerTest do
              "first_name" => requestor.first_name,
              "last_name" => requestor.last_name,
              "groups" => [%{"id" => group.id,
-                            "name" => group.name}],
-             "roles" => [%{"id" => role.id,
-                           "name" => role.name,
-                           "permissions" => [%{"id" => permission.id,
-                                               "name" => "world",
-                                               "namespace" => "site"}]
+                            "name" => group.name,
+                            "roles" => [%{"id" => role.id,
+                                          "name" => role.name,
+                                          "permissions" => [%{"id" => permission.id,
+                                                              "name" => "world",
+                                                              "namespace" => "site"}]
                             }]
+                        }],
               } == user_json["user"]
   end
 
