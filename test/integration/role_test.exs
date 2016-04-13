@@ -78,6 +78,6 @@ defmodule Integration.RoleTest do
     role("happy")
 
     response = send_message(user, "@bot: operable:role --list")
-    assert_payload(response, %{body: ["The following are the available roles: \n* happy\n* cheer\n"]})
+    assert_payload(response, %{body: ["The following are the available roles: \n* happy\n* cheer\n* cog-admin\n"]})
   end
 end

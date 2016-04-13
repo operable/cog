@@ -44,6 +44,12 @@ defmodule Cog do
   @doc "The name of the site namespace."
   def site_namespace, do: "site"
 
+  @doc "The name of the admin role."
+  def admin_role, do: "cog-admin"
+
+  @doc "The name of the admin group."
+  def admin_group, do: "cog-admin"
+
   ########################################################################
   # Adapter Resolution Functions
 
