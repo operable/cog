@@ -7,7 +7,17 @@ defmodule Cog.V1.UserView do
       first_name: user.first_name,
       last_name: user.last_name,
       email_address: user.email_address,
-      groups: render_groups(user.group_memberships)}
+      groups: render_many(user.group_memberships, __MODULE__, "member.json", as: :member)}
+  end
+  def render("member.json", %{member: member}) do
+    %{id: member.group.id,
+      name: member.group.name,
+      roles: render_many(member.group.roles, __MODULE__, "role.json", as: :role)}
+  end
+  def render("role.json", %{role: role}) do
+    %{id: role.id,
+      name: role.name,
+      permissions: render_many(role.permissions, Cog.V1.PermissionView, "permission.json")}
   end
 
   def render("index.json", %{users: users}) do
@@ -17,13 +27,4 @@ defmodule Cog.V1.UserView do
   def render("show.json", %{user: user}) do
     %{user: render_one(user, __MODULE__, "user.json")}
   end
-
-  defp render_groups(groups) when is_list(groups) do
-    Enum.map(groups, fn(group_mem) ->
-        %{id: group_mem.group.id,
-          name: group_mem.group.name}
-    end)
-  end
-  defp render_groups(_), do: []
-
 end

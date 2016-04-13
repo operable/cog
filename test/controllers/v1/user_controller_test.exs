@@ -192,4 +192,32 @@ defmodule Cog.V1.UserControllerTest do
                          "last_name" => tester.last_name}
   end
 
+  test "retrieving roles for each user", %{authed: requestor} do
+    group = group("robots")
+    Groupable.add_to(requestor, group)
+    role = role("take-over")
+    Permittable.grant_to(group, role)
+    permission = permission("site:world")
+    Permittable.grant_to(role, permission)
+
+    conn = api_request(requestor, :get, "/v1/users?username=#{requestor.username}")
+    user_json = json_response(conn, 200)
+
+    assert %{"id" => requestor.id,
+             "email_address" => requestor.email_address,
+             "username" => requestor.username,
+             "first_name" => requestor.first_name,
+             "last_name" => requestor.last_name,
+             "groups" => [%{"id" => group.id,
+                            "name" => group.name,
+                            "roles" => [%{"id" => role.id,
+                                          "name" => role.name,
+                                          "permissions" => [%{"id" => permission.id,
+                                                              "name" => "world",
+                                                              "namespace" => "site"}]
+                            }]
+                        }],
+              } == user_json["user"]
+  end
+
 end
