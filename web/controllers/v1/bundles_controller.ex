@@ -40,9 +40,9 @@ defmodule Cog.V1.BundlesController do
   end
 
   def create(conn, params) do
-    result = with {:ok, config} <- get_config(params),
-                  :ok           <- validate_config(config),
-               do: persist(config)
+    result = with {:ok, config}           <- get_config(params),
+                  {:ok, validated_config} <- validate_config(config),
+               do: persist(validated_config)
 
     case result do
       {:ok, bundle} ->
@@ -95,8 +95,8 @@ defmodule Cog.V1.BundlesController do
   # Before we can use the config we validate it's contents
   defp validate_config(config) do
     case Config.validate(config) do
-      :ok ->
-        :ok
+      {:ok, validated_config} ->
+        {:ok, validated_config}
       {:error, errors} ->
         {:error, {:validation_error, errors}}
     end
