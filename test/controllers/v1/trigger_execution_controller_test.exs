@@ -283,4 +283,23 @@ defmodule Cog.V1.TriggerExecutionControllerTest do
     assert %{} == get_in(message, ["initial_context", "body"])
   end
 
+  test "early-terminating pipeline doesn't send messages to chat destinations", %{conn: conn} do
+    assert {:ok, Cog.Adapters.Test} = Cog.chat_adapter_module
+    {:ok, test_snoop} = Snoop.start_link("/bot/adapters/test/send_message")
+
+    user("cog")
+    trigger = trigger(%{name: "echo",
+                        pipeline: "filter --path='baz' | echo $foo *> here chat://#general",
+                        as_user: "cog"})
+
+    conn = post(conn, "/v1/triggers/#{trigger.id}", Poison.encode!(%{foo: "bar"}))
+
+    # We should get a success message back in the response
+    message = json_response(conn, 200)
+    assert message == "Pipeline executed successfully, but no output was returned"
+
+    # And the adapter should not get a message, even though we redirected
+    assert [] = Snoop.messages(test_snoop)
+  end
+
 end
