@@ -8,8 +8,6 @@ defmodule Cog.Relay.Relays do
   use Adz
   use GenServer
 
-  alias Carrier.Credentials
-  alias Carrier.CredentialManager
   alias Carrier.Messaging
   alias Cog.Models.Bundle
   alias Cog.Repo
@@ -57,7 +55,7 @@ defmodule Cog.Relay.Relays do
     end
   end
 
-  def handle_call({:announce_embedded_relay, message}, _from, state) do
+  def handle_call({:announce_embedded_relay, %{"announce" => announcement}}, _from, state) do
     # This function head acts as a private internal API used for
     # registering the bot as a host for the embedded command
     # bundle. (We don't provide a public API function for this message
@@ -67,7 +65,7 @@ defmodule Cog.Relay.Relays do
     # bundle is recorded in the database before proceeding.
     #
     # See `Cog.Bundle.Embedded` for more.
-    new_state = process_discovery(message, state, true)
+    new_state = process_announcement(announcement, state, true)
     {:reply, :ok, new_state}
   end
   def handle_call({:random_relay, bundle}, _from, state),
@@ -83,8 +81,8 @@ defmodule Cog.Relay.Relays do
     # Not authenticating messages here, because we don't have the keys
     # to authenticate them at this point!
     case Poison.decode(message) do
-      {:ok, json} ->
-        state = process_discovery(json, state)
+      {:ok, %{"announce" => announcement}} ->
+        state = process_announcement(announcement, state)
         {:noreply, state}
       _ ->
         {:noreply, state}
@@ -96,35 +94,7 @@ defmodule Cog.Relay.Relays do
 
   ########################################################################
 
-  # Common processing of relay announcements, whether they come from a
-  # real Relay instance, or from the bot itself, announcing the
-  # embedded bundle.
-  defp process_discovery(discovery, state, internal \\ false) when is_map(state) do
-    case discovery do
-      %{"intro" => intro} ->
-        process_introduction(intro, state)
-      %{"announce" => announcement} ->
-        process_announcement(announcement, state, internal)
-    end
-  end
-
-  defp process_introduction(%{"relay" => id,
-                              "reply_to" => reply_to}, state) do
-    case CredentialManager.get(id, by: :id) do
-      {:ok, nil} ->
-        creds = %Credentials{id: id}
-        CredentialManager.store(creds)
-        Logger.info("Stored credentials for Relay #{id}")
-      {:ok, _} ->
-        :ok
-    end
-    {:ok, my_creds} = CredentialManager.get()
-    Messaging.Connection.publish(state.mq_conn, %{intro: %{id: my_creds.id,
-                                                           role: "bot"}}, routed_by: reply_to)
-    state
-  end
-
-  defp process_announcement(announcement, %__MODULE__{tracker: tracker}=state, internal) do
+  defp process_announcement(announcement, %__MODULE__{tracker: tracker}=state, internal \\ false) do
     {success_bundles, failed_bundles} = announcement
     |> Map.get("bundles", [])
     |> Enum.map(&(lookup_or_install(&1, internal)))
@@ -153,6 +123,7 @@ defmodule Cog.Relay.Relays do
     do: %{"announcement_id" => announcement_id, "status" => "failed", "bundles" => failed_bundles}
 
   defp update_tracker(announcement, tracker, success_bundles) do
+    IO.puts "#{Map.keys(announcement)}"
     relay_id = Map.fetch!(announcement, "relay")
 
     online_status = case Map.fetch!(announcement, "online") do
