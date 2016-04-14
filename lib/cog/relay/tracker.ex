@@ -36,9 +36,6 @@ defmodule Cog.Relay.Tracker do
         Map.put(acc, bundle, remaining)
       end
     end)
-    if updated != tracker.map do
-      Logger.info("Removed Relay #{relay} from active relay list")
-    end
     %{tracker | map: updated}
   end
 

@@ -67,7 +67,7 @@ defmodule Cog.Relay.Relays do
     # bundle is recorded in the database before proceeding.
     #
     # See `Cog.Bundle.Embedded` for more.
-    new_state = process_discovery(message, state)
+    new_state = process_discovery(message, state, true)
     {:reply, :ok, new_state}
   end
   def handle_call({:random_relay, bundle}, _from, state),
@@ -99,12 +99,12 @@ defmodule Cog.Relay.Relays do
   # Common processing of relay announcements, whether they come from a
   # real Relay instance, or from the bot itself, announcing the
   # embedded bundle.
-  defp process_discovery(discovery, state) when is_map(state) do
+  defp process_discovery(discovery, state, internal \\ false) when is_map(state) do
     case discovery do
       %{"intro" => intro} ->
         process_introduction(intro, state)
       %{"announce" => announcement} ->
-        process_announcement(announcement, state)
+        process_announcement(announcement, state, internal)
     end
   end
 
@@ -124,10 +124,10 @@ defmodule Cog.Relay.Relays do
     state
   end
 
-  defp process_announcement(announcement, %__MODULE__{tracker: tracker}=state) do
+  defp process_announcement(announcement, %__MODULE__{tracker: tracker}=state, internal) do
     {success_bundles, failed_bundles} = announcement
     |> Map.get("bundles", [])
-    |> Enum.map(&lookup_or_install/1)
+    |> Enum.map(&(lookup_or_install(&1, internal)))
     |> Enum.partition(&Util.is_ok?/1)
     |> Util.unwrap_partition_results
 
@@ -169,6 +169,7 @@ defmodule Cog.Relay.Relays do
     case {online_status, snapshot_status} do
       {:offline, _} ->
         Tracker.remove_relay(tracker, relay_id)
+        Logger.info("Removed Relay #{relay_id} from active relay list")
       {:online, :incremental} ->
         Logger.info("Incrementally adding bundles for Relay #{relay_id}: #{inspect bundle_names}")
         Tracker.add_bundles_for_relay(tracker, relay_id, success_bundles)
@@ -181,7 +182,7 @@ defmodule Cog.Relay.Relays do
   # If `config` exists in the database (by name), retrieves the
   # database record. If not, installs the bundle and returns the
   # database record.
-  defp lookup_or_install(%{"name" => name, "version" => version} = config) do
+  defp lookup_or_install(%{"name" => name, "version" => version} = config, internal) do
     case Repo.get_by(Bundle, name: name) do
       %Bundle{version: ^version}=bundle ->
         {:ok, bundle}
@@ -189,12 +190,20 @@ defmodule Cog.Relay.Relays do
         Logger.error("Error! Unable to install bundle #{inspect name} because version #{installed_version} already installed")
         {:error, name}
       nil ->
-        Logger.info("Installing bundle: #{inspect name}")
-        case Cog.Bundle.Install.install_bundle(%{name: name, version: version, config_file: config}) do
-          {:ok, bundle} ->
-            {:ok, bundle}
-          {:error, error} ->
-            Logger.error("Error! Unable to install bundle #{inspect name}: #{inspect error}")
+        case internal do
+          # This is the embedded bundle
+          true ->
+            Logger.info("Installing bundle: #{inspect name}")
+            case Cog.Bundle.Install.install_bundle(%{name: name, version: version, config_file: config}) do
+              {:ok, bundle} ->
+                {:ok, bundle}
+              {:error, error} ->
+                Logger.error("Error! Unable to install bundle #{inspect name}: #{inspect error}")
+                {:error, name}
+            end
+          false ->
+            # TODO: Pass Relay ID into lookup_or_install/2 so we can generate a better error message
+            Logger.error("Relay announced unknown command bundle #{name}")
             {:error, name}
         end
     end
