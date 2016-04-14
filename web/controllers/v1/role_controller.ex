@@ -6,9 +6,15 @@ defmodule Cog.V1.RoleController do
   plug Cog.Plug.Authentication
   plug Cog.Plug.Authorization, permission: "#{Cog.embedded_bundle}:manage_roles"
 
+  # Search by name only for now
+  def index(conn, %{"name" => name}) do
+    role = Repo.get_by!(Role, name: name)
+    |> Repo.preload([[permissions: :namespace], [group_grants: :group]])
+    render(conn, "show.json", role: role)
+  end
   def index(conn, _params) do
     roles = Repo.all(Role)
-    |> Repo.preload(permissions: :namespace)
+    |> Repo.preload([[permissions: :namespace], [group_grants: :group]])
     render(conn, "index.json", roles: roles)
   end
 
@@ -17,7 +23,7 @@ defmodule Cog.V1.RoleController do
 
     case Repo.insert(changeset) do
       {:ok, role} ->
-        new_role = Repo.preload(role, permissions: :namespace)
+        new_role = Repo.preload(role, [[permissions: :namespace], [group_grants: :group]])
         conn
         |> put_status(:created)
         |> put_resp_header("location", role_path(conn, :show, new_role))
@@ -31,14 +37,14 @@ defmodule Cog.V1.RoleController do
 
   def show(conn, %{"id" => id}) do
     role = Repo.get!(Role, id)
-    |> Repo.preload(permissions: :namespace)
+    |> Repo.preload([[permissions: :namespace], [group_grants: :group]])
      render(conn, "show.json", role: role)
   end
 
   def update(conn, %{"id" => id, "role" => role_params}) do
     case Role
     |> Repo.get!(id)
-    |> Repo.preload(permissions: :namespace)
+    |> Repo.preload([[permissions: :namespace], [group_grants: :group]])
     |> Role.changeset(role_params)
     |> Repo.update do
       {:ok, %Role{}=role} ->
