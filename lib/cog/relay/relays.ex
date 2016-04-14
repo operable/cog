@@ -123,7 +123,6 @@ defmodule Cog.Relay.Relays do
     do: %{"announcement_id" => announcement_id, "status" => "failed", "bundles" => failed_bundles}
 
   defp update_tracker(announcement, tracker, success_bundles) do
-    IO.puts "#{Map.keys(announcement)}"
     relay_id = Map.fetch!(announcement, "relay")
 
     online_status = case Map.fetch!(announcement, "online") do
