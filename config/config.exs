@@ -120,7 +120,7 @@ config :cog, Cog.Endpoint,
 
 
 config :cog, Cog.TriggerEndpoint,
-  http: [port: System.get_env("COG_EVENT_HOOK_PORT") || 4001],
+  http: [port: System.get_env("COG_TRIGGER_PORT") || 4001],
   root: Path.dirname(__DIR__),
   debug_errors: false,
   cache_static_lookup: false,
