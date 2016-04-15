@@ -29,7 +29,17 @@ defmodule Cog.V1.RelayGroupMembershipController do
 
       case to_add.not_found ++ to_remove.not_found do
         [] ->
-          RelayGroup.add!(type, group.id, to_add.found)
+          try do
+            RelayGroup.add!(type, group.id, to_add.found)
+          rescue
+            err in [Ecto.InvalidChangesetError] ->
+              case err.changeset.errors do
+                [bundle_id: _] ->
+                  Repo.rollback({:add_failed, "Bundle already exists in relay group."})
+                _errors ->
+                  Repo.rollback({:add_failed, "Failed to add bundle to relay group."})
+              end
+          end
           removed = RelayGroup.remove(type, group.id, to_remove.found)
           if removed != length(to_remove.found) do
             Repo.rollback(:remove_failed)
@@ -47,6 +57,8 @@ defmodule Cog.V1.RelayGroupMembershipController do
         render(conn, Cog.V1.RelayGroupView, "show.json", relay_group: relay_group)
       {:error, reason} ->
         errors = case reason do
+                   {:add_failed, msg} ->
+                     msg
                    :remove_failed ->
                      "delete_failed"
                    {:unknown_association, ids} ->
