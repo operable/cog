@@ -78,8 +78,6 @@ defmodule Cog.Relay.Relays do
     do: {:reply, Tracker.relays(state.tracker, bundle_name), state}
 
   def handle_info({:publish, @relays_discovery_topic, message}, state) do
-    # Not authenticating messages here, because we don't have the keys
-    # to authenticate them at this point!
     case Poison.decode(message) do
       {:ok, %{"announce" => announcement}} ->
         state = process_announcement(announcement, state)
