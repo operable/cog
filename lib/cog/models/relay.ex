@@ -50,3 +50,13 @@ defmodule Cog.Models.Relay do
   end
 
 end
+
+defimpl Groupable, for: Cog.Models.Relay do
+
+  def add_to(relay, relay_group),
+    do: Cog.Models.JoinTable.associate(relay, relay_group)
+
+  def remove_from(relay, relay_group),
+    do: Cog.Models.JoinTable.dissociate(relay, relay_group)
+
+end

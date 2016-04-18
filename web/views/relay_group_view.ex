@@ -18,8 +18,11 @@ defmodule Cog.V1.RelayGroupView do
   def render("show.json", %{relay_group: relay_group}) do
     %{relay_group: render_one(relay_group, __MODULE__, "relay_group.json", include: [:relays, :bundles])}
   end
-  def render("members.json", %{relay_group: relay_group}) do
+  def render("relays.json", %{relay_group: relay_group}) do
     %{relays: render_include(:relays, relay_group)}
+  end
+  def render("bundles.json", %{relay_group: relay_group}) do
+    %{bundles: render_include(:bundles, relay_group)}
   end
 
   defp render_includes(params, relay_group) do
