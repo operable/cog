@@ -57,8 +57,16 @@ defmodule Cog.V1.RoleController do
   end
 
   def delete(conn, %{"id" => id}) do
-    Role |> Repo.get!(id) |> Repo.delete!
-    send_resp(conn, :no_content, "")
+    changeset = Role |> Repo.get!(id) |> Cog.Models.Role.changeset(:delete)
+
+    case Repo.delete(changeset) do
+      {:ok, _} ->
+        send_resp(conn, :no_content, "")
+      {:error, changed} ->
+        conn
+        |> put_status(:unprocessable_entity)
+        |> render(Cog.ChangesetView, "error.json", changeset: changed)
+    end
   end
 
 end

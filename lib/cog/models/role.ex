@@ -2,6 +2,8 @@ defmodule Cog.Models.Role do
   use Cog.Model
   use Cog.Models.EctoJson
 
+  alias Ecto.Changeset
+
   schema "roles" do
     field :name, :string
 
@@ -18,10 +20,39 @@ defmodule Cog.Models.Role do
   @required_fields ~w(name)
   @optional_fields ~w()
 
-  def changeset(model, params \\ :empty) do
+  @doc """
+  If no params are provided, an invalid changeset is returned
+  with no validation performed.
+  """
+  def changeset(model), do: changeset(model, :empty)
+
+  @doc """
+  Creates a changeset based on the `model` to validate a delete
+  action.
+  """
+  def changeset(model, :delete) do
+    %{Changeset.change(model) | action: :delete}
+    |> protect_admin_role
+
+  end
+
+  @doc """
+  Creates a changeset based on the `model` and `params`.
+  """
+  def changeset(model, params) do
     model
     |> cast(params, @required_fields, @optional_fields)
+    |> protect_admin_role
     |> unique_constraint(:name)
+  end
+
+  defp protect_admin_role(%Changeset{model: model}=changeset) do
+    if model.name == Cog.admin_role do
+      changeset
+      |> add_error(:name, "admin role may not be modified")
+    else
+      changeset
+    end
   end
 
 end

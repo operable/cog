@@ -9,11 +9,15 @@ defmodule Cog.Bootstrap.Test do
     "email_address" => "admin@example.com"
   }
 
-  setup do
-    {:ok, admin_user} = Cog.Bootstrap.bootstrap(@admin_user)
-    admin_role = Cog.Repo.get_by!(Role, name: Cog.admin_role)
-    admin_group = Cog.Repo.get_by!(Group, name: Cog.admin_group)
-    {:ok, admin: admin_user, admin_role: admin_role, admin_group: admin_group}
+  setup context do
+    if _ = context[:skip_bootstrap] do
+      {:ok, bootstrapped: false}
+    else
+      {:ok, admin_user} = Cog.Bootstrap.bootstrap(@admin_user)
+      admin_role = Cog.Repo.get_by!(Role, name: Cog.admin_role)
+      admin_group = Cog.Repo.get_by!(Group, name: Cog.admin_group)
+      {:ok, admin: admin_user, admin_role: admin_role, admin_group: admin_group, bootstrapped: true}
+    end
   end
 
   test "creates the embedded bundle permission namespace" do
@@ -58,12 +62,40 @@ defmodule Cog.Bootstrap.Test do
     assert_group_member_was_added(admin_group, Map.put(admin, :password, nil))
   end
 
-  test "if the admin group exists, the system is considered bootstrapped", %{admin_group: admin_group} do
-    assert Cog.Bootstrap.is_bootstrapped?
-
-    # Delete the admin group, and we should no longer be "bootstrapped"
-    {:ok, _} = Repo.delete(admin_group)
+  @tag :skip_bootstrap
+  test "if the admin group exists, the system is considered bootstrapped" do
     refute Cog.Bootstrap.is_bootstrapped?
+
+    Cog.Bootstrap.bootstrap(@admin_user)
+    assert Cog.Models.Group |> Cog.Repo.one! |> Map.get(:name) == Cog.admin_group
+    assert Cog.Bootstrap.is_bootstrapped?
+  end
+
+  test "the admin group cannot be deleted" do
+    try do
+      Cog.Models.Group |> Cog.Repo.delete_all
+    rescue
+      exception ->
+        assert exception.postgres.message == "cannot modify admin group"
+    end
+  end
+
+  test "the admin role cannot be deleted" do
+    try do
+      Cog.Models.Role |> Cog.Repo.delete_all
+    rescue
+      exception ->
+        assert exception.postgres.message == "cannot modify admin role"
+    end
+  end
+
+  test "the embedded bundle cannot be deleted" do
+    try do
+      Cog.Models.Bundle |> Cog.Repo.delete_all
+    rescue
+      exception ->
+        assert exception.postgres.message == "cannot modify embedded bundle"
+    end
   end
 
   test "installs embedded bundle" do
