@@ -49,6 +49,14 @@ defmodule Cog.V1.RelayGroupMembershipController do
       {:ok, relay_group} ->
         conn
         |> render("show.json", relay_group: relay_group)
+      {:error, {:not_found, {type, ids}}} ->
+        conn
+        |> put_status(:unprocessable_entity)
+        |> json(%{"errors" => %{"not_found" => %{type => ids}}})
+      {:error, {:bad_id, {type, ids}}} ->
+        conn
+        |> put_status(:unprocessable_entity)
+        |> json(%{"errors" => %{"bad_id" => %{type => ids}}})
     end
   end
 
@@ -62,24 +70,47 @@ defmodule Cog.V1.RelayGroupMembershipController do
   end
 
   defp lookup_all(_, []), do: {:ok, []} # Don't bother with a DB lookup
-  defp lookup_all(kind, names) when kind in ["relays", "bundles"] do
+  defp lookup_all(kind, ids) when kind in ["relays", "bundles"] do
 
     type = kind_to_type(kind) # e.g. "relays" -> Relay
-    unique_name_field = unique_name_field(type) # e.g. Relay -> :name
 
-    results = Repo.all(from t in type, where: field(t, ^unique_name_field) in ^names)
-
-    # make sure we got a result for each name given
-    case length(results) == length(names) do
+    # Since we are using ids we need to make sure that they are all valid UUIDs
+    # before we query the db. Otherwise Ecto with crash with a CastError
+    case good_ids?(ids) do
       true ->
-        # Each name corresponds to an entity in the database
-        {:ok, results}
-      false ->
-        # We got at least one name that doesn't map to any existing
-        # user or group. Find out what's missing and report back
-        retrieved_names = Enum.map(results, &Map.get(&1, unique_name_field))
-        bad_names = names -- retrieved_names
-        {:error, {:not_found, {kind, bad_names}}}
+        results = Repo.all(from t in type, where: field(t, :id) in ^ids)
+
+        # make sure we got a result for each id given
+        case length(results) == length(ids) do
+          true ->
+            # Each name corresponds to an entity in the database
+            {:ok, results}
+          false ->
+            # We got at least one name that doesn't map to any existing
+            # user or group. Find out what's missing and report back
+            retrieved_ids = Enum.map(results, &Map.get(&1, :id))
+            bad_ids = ids -- retrieved_ids
+            {:error, {:not_found, {kind, bad_ids}}}
+        end
+      {false, bad_ids} ->
+        {:error, {:bad_id, {kind, bad_ids}}}
+    end
+  end
+
+  defp good_ids?(ids) do
+    bad_ids = Enum.reduce(ids, [], fn(id, acc) ->
+      case Ecto.UUID.cast(id) do
+        {:ok, _id} ->
+          acc
+        :error ->
+          [id | acc]
+      end
+    end)
+
+    if length(bad_ids) > 0 do
+      {false, bad_ids}
+    else
+      true
     end
   end
 
@@ -97,8 +128,4 @@ defmodule Cog.V1.RelayGroupMembershipController do
   # Given a member_spec key, return the underlying type
   defp kind_to_type("relays"), do: Relay
   defp kind_to_type("bundles"), do: Bundle
-
-  # Given a type, return the field for its unique name
-  defp unique_name_field(Relay), do: :id
-  defp unique_name_field(Bundle), do: :id
 end
