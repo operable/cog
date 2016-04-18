@@ -22,7 +22,7 @@ defmodule Cog.V1.RelayGroupView do
     %{relays: render_include(:relays, relay_group)}
   end
   def render("bundles.json", %{relay_group: relay_group}) do
-    %{relays: render_include(:bundles, relay_group)}
+    %{bundles: render_include(:bundles, relay_group)}
   end
 
   defp render_includes(params, relay_group) do
