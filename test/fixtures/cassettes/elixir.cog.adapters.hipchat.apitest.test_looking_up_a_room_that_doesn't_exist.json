@@ -5,7 +5,7 @@
       "headers": {
         "Accept": "application/json",
         "Content-Type": "application/json",
-        "Authorization": "Bearer F2WVbSsrmooK4JT62amua41fYYPgGEvFsn2bOS6N"
+        "Authorization": "Bearer filtered-token"
       },
       "method": "get",
       "options": [],
@@ -18,13 +18,13 @@
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Expose-Headers": "Date, ETag, Link, X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset, X-Backoff",
         "Content-Type": "application/json",
-        "Date": "Tue, 29 Mar 2016 19:58:42 GMT",
+        "Date": "Mon, 18 Apr 2016 21:32:48 GMT",
         "Server": "nginx",
         "Strict-Transport-Security": "max-age=31536000",
         "X-Content-Type-Options": "nosniff",
         "X-Ratelimit-Limit": "100",
-        "X-Ratelimit-Remaining": "73",
-        "X-Ratelimit-Reset": "1459281774",
+        "X-Ratelimit-Remaining": "89",
+        "X-Ratelimit-Reset": "1461015335",
         "X-XSS-Protection": "1; mode=block",
         "Content-Length": "1604",
         "Connection": "keep-alive"
@@ -39,7 +39,7 @@
       "headers": {
         "Accept": "application/json",
         "Content-Type": "application/json",
-        "Authorization": "Bearer F2WVbSsrmooK4JT62amua41fYYPgGEvFsn2bOS6N"
+        "Authorization": "Bearer filtered-token"
       },
       "method": "get",
       "options": [],
@@ -52,11 +52,11 @@
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Expose-Headers": "Date, ETag, Link, X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset, X-Backoff",
         "Content-Type": "application/json",
-        "Date": "Tue, 29 Mar 2016 19:58:42 GMT",
+        "Date": "Mon, 18 Apr 2016 21:32:49 GMT",
         "Server": "nginx",
         "X-Ratelimit-Limit": "100",
-        "X-Ratelimit-Remaining": "72",
-        "X-Ratelimit-Reset": "1459281774",
+        "X-Ratelimit-Remaining": "88",
+        "X-Ratelimit-Reset": "1461015335",
         "Content-Length": "109",
         "Connection": "keep-alive"
       },
