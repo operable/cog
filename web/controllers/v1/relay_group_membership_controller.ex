@@ -30,6 +30,9 @@ defmodule Cog.V1.RelayGroupMembershipController do
 
   # Manage membership of a relay group. Adds and deletes can be submitted and
   # processed in a single request.
+  # TODO:
+  # The bulk of this was actually copied from `Cog.V1.GroupMembershipController`
+  # we may want to think about consolidating the code at some point.
   def manage_association(conn, %{"id" => id, "members" => member_spec}) do
     result = Repo.transaction(fn() ->
       relay_group = Repo.get!(RelayGroup, id)
@@ -78,7 +81,7 @@ defmodule Cog.V1.RelayGroupMembershipController do
     # before we query the db. Otherwise Ecto with crash with a CastError
     case good_ids?(ids) do
       true ->
-        results = Repo.all(from t in type, where: field(t, :id) in ^ids)
+        results = Repo.all(from t in type, where: t.id in ^ids)
 
         # make sure we got a result for each id given
         case length(results) == length(ids) do
