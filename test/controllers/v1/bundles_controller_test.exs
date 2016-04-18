@@ -43,7 +43,7 @@ defmodule Cog.V1.BundlesControllerTest do
       upload = %Plug.Upload{path: config_path, filename: config_file_name}
 
       # upload the config
-      conn = api_request(requestor, :post, "/v1/bundles", body: %{bundle_config: upload}, content_type: :multipart)
+      conn = api_request(requestor, :post, "/v1/bundles", body: %{bundle: %{config_file: upload}}, content_type: :multipart)
 
       bundle_id = Poison.decode!(conn.resp_body)
                   |> get_in(["bundle", "id"])
@@ -62,7 +62,7 @@ defmodule Cog.V1.BundlesControllerTest do
     config_path = make_config_file(filename)
     upload = %Plug.Upload{path: config_path, filename: filename}
 
-    conn = api_request(requestor, :post, "/v1/bundles", body: %{bundle_config: upload}, content_type: :multipart)
+    conn = api_request(requestor, :post, "/v1/bundles", body: %{bundle: %{config_file: upload}}, content_type: :multipart)
 
     assert conn.status == 415
   end
@@ -79,7 +79,7 @@ defmodule Cog.V1.BundlesControllerTest do
     config_path = make_config_file(filename, contents: "---\nfoo: bar")
     upload = %Plug.Upload{path: config_path, filename: filename}
 
-    conn = api_request(requestor, :post, "/v1/bundles", body: %{bundle_config: upload}, content_type: :multipart)
+    conn = api_request(requestor, :post, "/v1/bundles", body: %{bundle: %{config_file: upload}}, content_type: :multipart)
 
     assert conn.status == 422
   end
@@ -90,14 +90,14 @@ defmodule Cog.V1.BundlesControllerTest do
     config_path = make_config_file(filename, contents: "blah blah")
     upload = %Plug.Upload{path: config_path, filename: filename}
 
-    conn = api_request(requestor, :post, "/v1/bundles", body: %{bundle_config: upload}, content_type: :multipart)
+    conn = api_request(requestor, :post, "/v1/bundles", body: %{bundle: %{config_file: upload}}, content_type: :multipart)
 
     assert conn.status == 422
   end
 
   test "accepts a valid config passed as json", %{authed: requestor} do
     config = config(:map)
-    conn = api_request(requestor, :post, "/v1/bundles", body: %{"bundle" => config})
+    conn = api_request(requestor, :post, "/v1/bundles", body: %{"bundle" => %{"config" => config}})
 
     bundle_id = Poison.decode!(conn.resp_body)
                 |> get_in(["bundle", "id"])

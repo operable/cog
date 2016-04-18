@@ -39,14 +39,11 @@ defmodule Cog.V1.BundlesController do
     end
   end
 
-  def create(conn, params) do
-    result = with {:ok, config}           <- get_config(params),
-                  {:ok, validated_config} <- validate_config(config),
-               do: persist(validated_config)
-
-    case result do
+  def create(conn, %{"bundle" => params}) do
+    case install_bundle(params) do
       {:ok, bundle} ->
         bundle = Repo.preload(bundle, commands: [:rules])
+
         conn
         |> put_status(:created)
         |> put_resp_header("location", bundles_path(conn, :show, bundle))
@@ -56,21 +53,30 @@ defmodule Cog.V1.BundlesController do
     end
   end
 
+  def create(conn, _params) do
+    send_resp(conn, 400, "")
+  end
+
   #### BUNDLE CREATION HELPERS ####
 
-  # First let's grab the config
-  defp get_config(params) do
-    case params do
-      # If we have an upload, validate the file format and parse it
-      %{"bundle_config" => %Plug.Upload{}=upload} ->
-        with :ok <- validate_file_format(upload) do
-          parse_config(upload)
-        end
-      %{"bundle" => config} when is_map(config) ->
-        {:ok, config}
-      _ ->
-        {:error, :no_config}
-    end
+  defp install_bundle(params) do
+    with {:ok, config}       <- parse_config(params),
+         {:ok, valid_config} <- validate_config(config),
+         {:ok, params}       <- merge_config(params, valid_config),
+         do: persist(params)
+  end
+
+  defp parse_config(%{"config" => config}) when is_map(config) do
+    {:ok, config}
+  end
+
+  defp parse_config(%{"config_file" => %Plug.Upload{}=config_file}) do
+    with :ok <- validate_file_format(config_file),
+         do: parse_config_file(config_file)
+  end
+
+  defp parse_config(_) do
+    {:error, :no_config}
   end
 
   # If we have a file, check to see if the filename has the correct extension
@@ -83,7 +89,7 @@ defmodule Cog.V1.BundlesController do
   end
 
   # If we have something to parse, parse it
-  defp parse_config(%Plug.Upload{path: path}) do
+  defp parse_config_file(%Plug.Upload{path: path}) do
     case Config.Parser.read_from_file(path) do
       {:ok, config} ->
         {:ok, config}
@@ -102,10 +108,20 @@ defmodule Cog.V1.BundlesController do
     end
   end
 
+  # Construct params for creating a bundle record
+  defp merge_config(params, config) do
+    merged_params = params
+    |> Map.drop(["config", "config_file"])
+    |> Map.merge(Map.take(config, ["name", "version"]))
+    |> Map.put("config_file", config)
+
+    {:ok, merged_params}
+  end
+
   # Create a new record in the DB for the deploy
-  defp persist(%{"name" => name, "version" => version} = config) do
+  defp persist(params) do
     try do
-      Install.install_bundle(%{name: name, version: version, config_file: config})
+      Install.install_bundle(params)
     rescue
       err in [Ecto.InvalidChangesetError] ->
         {:error, {:db_error, err.changeset.errors}}
