@@ -54,3 +54,14 @@ defmodule Cog.Models.Bundle do
   end
 
 end
+
+defimpl Groupable, for: Cog.Models.Bundle do
+
+  def add_to(bundle, group),
+    do: Cog.Models.JoinTable.associate(bundle, group)
+
+  def remove_from(_bunde, _group),
+    do: "foo"
+
+end
+

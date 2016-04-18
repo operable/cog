@@ -54,6 +54,14 @@ defmodule Cog.Models.JoinTable do
     execute_associate_query(table_name, lhs_id, rhs_id, member, group)
     :ok
   end
+  def associate(%Bundle{}=bundle, %RelayGroup{}=relay_group) do
+    table_name = table_name(bundle, relay_group)
+    lhs_id = "bundle_id"
+    rhs_id = "group_id"
+
+    execute_associate_query(table_name, lhs_id, rhs_id, bundle, relay_group)
+    :ok
+  end
 
   def dissociate(lhs, %{__struct__: type}=rhs) when type in [Role, Permission] do
     lhs_type = struct_name(lhs)
@@ -112,6 +120,8 @@ defmodule Cog.Models.JoinTable do
 
   defp table_name(%User{}, %Group{}),       do: "user_group_membership"
   defp table_name(%Group{}, %Group{}),      do: "group_group_membership"
+
+  defp table_name(%Bundle{}, %RelayGroup{}),do: "relay_group_assignments"
 
   # Example:
   #
