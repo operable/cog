@@ -12,14 +12,14 @@ defmodule Cog.V1.TriggerViewTest do
                        as_user: "user",
                        pipeline: "echo foo",
                        timeout_sec: 30,
-                       active: true,
+                       enabled: true,
                        description: "Something really awesome"}
     json = %{"id" => uuid,
              "name" => "echo",
              "as_user" => "user",
              "pipeline" => "echo foo",
              "timeout_sec" => 30,
-             "active" => true,
+             "enabled" => true,
              "description" => "Something really awesome",
              "invocation_url" => "http://localhost:4001/v1/triggers/#{uuid}"}
     {:ok, %{model: model, json: json}}
