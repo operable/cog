@@ -141,7 +141,7 @@ defmodule Cog.V1.RelayGroupMembershipControllerTest do
       relay(name, "foo")
     end
     relay_ids = Enum.sort(Enum.map(relays, &(&1.id)))
-    conn = api_request(requestor, :post, "/v1/relay_groups/#{relay_group.id}/membership",
+    conn = api_request(requestor, :post, "/v1/relay_groups/#{relay_group.id}/relays",
                        body: %{"relays" => %{"add" => relay_ids}})
     updated = json_response(conn, 200)["relay_group"]
     updated_relays =
@@ -166,7 +166,7 @@ defmodule Cog.V1.RelayGroupMembershipControllerTest do
       add_relay_to_group(relay_group.id, relay.id)
     end
     [keep|to_remove] = Enum.sort(Enum.map(relays, &(&1.id)))
-    conn = api_request(requestor, :post, "/v1/relay_groups/#{relay_group.id}/membership",
+    conn = api_request(requestor, :post, "/v1/relay_groups/#{relay_group.id}/relays",
                        body: %{"relays" => %{"remove" => to_remove}})
 
     relay_group_id = relay_group.id
@@ -185,7 +185,7 @@ defmodule Cog.V1.RelayGroupMembershipControllerTest do
         bundle(name)
       end
     bundle_ids = Enum.sort(Enum.map(bundles, &(&1.id)))
-    conn = api_request(requestor, :post, "/v1/relay_groups/#{relay_group.id}/assignment",
+    conn = api_request(requestor, :post, "/v1/relay_groups/#{relay_group.id}/bundles",
                        body: %{"bundles" => %{"add" => bundle_ids}})
 
     relay_group_id = relay_group.id
@@ -213,7 +213,7 @@ defmodule Cog.V1.RelayGroupMembershipControllerTest do
     end
 
     [keep|to_remove] = Enum.sort(Enum.map(bundles, &(&1.id)))
-    conn = api_request(requestor, :post, "/v1/relay_groups/#{relay_group.id}/assignment",
+    conn = api_request(requestor, :post, "/v1/relay_groups/#{relay_group.id}/bundles",
                        body: %{"bundles" => %{"remove" => to_remove}})
 
     relay_group_id = relay_group.id
