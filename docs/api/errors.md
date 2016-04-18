@@ -2,11 +2,11 @@
 
 ## Errors
 
-When a request responds with an error, it should always include the appropriate
+When a request responds with an error, it must always include the appropriate
 HTTP status code for that error.
 
-The error response should always include a top level of resource of `errors`
-as an array. The errors array should contain only objects that match the error
+The error response must include a top level of resource of `errors`
+as an array. The errors array must contain only objects that match the error
 format.
 
 The response may optionally include other resources at the top level alongside
