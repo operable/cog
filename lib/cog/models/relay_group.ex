@@ -35,54 +35,8 @@ defimpl Groupable, for: Cog.Models.RelayGroups do
     Cog.Models.JoinTable.associate(member, relay_group)
   end
 
-  def remove_from(_member, _relay_group) do
-    "foo"
+  def remove_from(member, relay_group) do
+    Cog.Models.JoinTable.dissociate(member, relay_group)
   end
 
 end
-
-  #def add!(:bundle, group_id, bundle_id),
-  #do: add_bundles!(group_id, bundle_id)
-
-  #def add!(:relay, group_id, relay_ids),
-  #do: add_relays!(group_id, relay_ids)
-
-  #def remove(:bundle, group_id, bundle_ids),
-  #do: remove_bundles(group_id, bundle_ids)
-
-  #def remove(:relay, group_id, relay_ids),
-  #do: remove_relays(group_id, relay_ids)
-
-  #def add_relays!(group_id, relay_ids) when is_list(relay_ids) do
-    #Enum.reduce(relay_ids, [], fn(id, acc) ->
-      #rgm =
-        #%RelayGroupMembership{}
-        #|> RelayGroupMembership.changeset(%{relay_id: id, group_id: group_id})
-        #|> Repo.insert!
-      #[rgm|acc]
-    #end)
-  #end
-
-  #def remove_relays(group_id, relay_ids) when is_list(relay_ids) do
-    #{count, _} = Repo.delete_all(from rgm in RelayGroupMembership,
-                                 #where: rgm.group_id == ^group_id and rgm.relay_id in ^relay_ids)
-    #count
-  #end
-
-  #def add_bundles!(group_id, bundle_ids) when is_list(bundle_ids) do
-    #Enum.reduce(bundle_ids, [], fn(id, acc) ->
-      #rga =
-        #%RelayGroupAssignment{}
-        #|> RelayGroupAssignment.changeset(%{bundle_id: id, group_id: group_id})
-        #|> Repo.insert!
-      #[rga|acc]
-    #end)
-  #end
-
-  #def remove_bundles(group_id, bundle_ids) when is_list(bundle_ids) do
-    #{count, _} = Repo.delete_all(from rgm in RelayGroupAssignment,
-                                 #where: rgm.group_id == ^group_id and rgm.bundle_id in ^bundle_ids)
-    #count
-  #end
-
-#end

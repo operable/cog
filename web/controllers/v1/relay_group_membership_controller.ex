@@ -8,42 +8,48 @@ defmodule Cog.V1.RelayGroupMembershipController do
   plug Cog.Plug.Authentication
   plug Cog.Plug.Authorization, permission: "#{Cog.embedded_bundle}:manage_relays"
 
-  def index(conn, %{"id" => id}) do
+  plug :put_view, Cog.V1.RelayGroupView
+
+  def relay_index(conn, %{"id" => id}) do
     relay_group = Repo.get!(RelayGroup, id)
-    render(conn, Cog.V1.RelayGroupView, "members.json", relay_group: relay_group)
+    |> Repo.preload([:relays])
+    render(conn, "relays.json", relay_group: relay_group)
   end
 
-  def manage_membership(conn, %{"id" => id, "relays" => member_spec}),
+  def bundle_index(conn, %{"id" => id}) do
+    relay_group = Repo.get!(RelayGroup, id)
+    |> Repo.preload([:bundles])
+    render(conn, "bundles.json", relay_group: relay_group)
+  end
+
+  def manage_relay_membership(conn, %{"id" => id, "relays" => member_spec}),
   do: manage_association(conn, %{"id" => id, "members" => %{"relays" => member_spec}})
 
-  def manage_assignment(conn, %{"id" => id, "bundles" => member_spec}),
+  def manage_bundle_assignment(conn, %{"id" => id, "bundles" => member_spec}),
   do: manage_association(conn, %{"id" => id, "members" => %{"bundles" => member_spec}})
 
   # Manage membership of a relay group. Adds and deletes can be submitted and
   # processed in a single request.
   def manage_association(conn, %{"id" => id, "members" => member_spec}) do
-    _result = Repo.transaction(fn() ->
+    result = Repo.transaction(fn() ->
       relay_group = Repo.get!(RelayGroup, id)
-      |> Repo.preload([:bundles, :relays])
 
-      bundles_to_add    = lookup_or_fail(member_spec, ["bundles", "add"])
-      relays_to_add     = lookup_or_fail(member_spec, ["relays", "add"])
-      bundles_to_remove = lookup_or_fail(member_spec, ["bundles", "remove"])
-      relays_to_remove  = lookup_or_fail(member_spec, ["relays", "remove"])
+      member_keys = Map.keys(member_spec)
+
+      members_to_add = Enum.flat_map(member_keys, &lookup_or_fail(member_spec, [&1, "add"]))
+      members_to_remove = Enum.flat_map(member_keys, &lookup_or_fail(member_spec, [&1, "remove"]))
 
       relay_group
-      |> add(relay_group.bundles -- bundles_to_add)
-
-      %{relay_group: relay_group,
-        add_bundles: bundles_to_add,
-        add_relays: relays_to_add,
-        remove_bundles: bundles_to_remove,
-        remove_relays: relays_to_remove}
+      |> add(members_to_add)
+      |> remove(members_to_remove)
+      |> Repo.preload([:bundles, :relays])
     end)
 
-    #IO.inspect {"RESULTS", result}
-
-    json(conn, %{"FOO" => member_spec})
+    case result do
+      {:ok, relay_group} ->
+        conn
+        |> render("show.json", relay_group: relay_group)
+    end
   end
 
   defp lookup_or_fail(member_spec, [kind, _operation]=path) do
@@ -82,6 +88,11 @@ defmodule Cog.V1.RelayGroupMembershipController do
     relay_group
   end
 
+  defp remove(relay_group, members) do
+    Enum.each(members, &Groupable.remove_from(&1, relay_group))
+    relay_group
+  end
+
 
   # Given a member_spec key, return the underlying type
   defp kind_to_type("relays"), do: Relay
@@ -90,66 +101,4 @@ defmodule Cog.V1.RelayGroupMembershipController do
   # Given a type, return the field for its unique name
   defp unique_name_field(Relay), do: :id
   defp unique_name_field(Bundle), do: :id
-
-      #to_add = build_members("add", type, member_spec)
-      #to_remove = build_members("remove", type, member_spec)
-
-      #case to_add.not_found ++ to_remove.not_found do
-        #[] ->
-          #RelayGroup.add!(type, group.id, to_add.found)
-          #removed = RelayGroup.remove(type, group.id, to_remove.found)
-          #if removed != length(to_remove.found) do
-            #Repo.rollback(:remove_failed)
-          #else
-            #group
-          #end
-        #ids ->
-          #Repo.rollback({:unknown_association, ids})
-      #end
-    #end)
-
-    #case result do
-      #{:ok, relay_group} ->
-        #relay_group = Repo.one!(Queries.RelayGroup.for_id(relay_group.id))
-        #render(conn, Cog.V1.RelayGroupView, "show.json", relay_group: relay_group)
-      #{:error, reason} ->
-        #errors = case reason do
-                   #:remove_failed ->
-                     #"delete_failed"
-                   #{:unknown_association, ids} ->
-                     #name = case type do
-                              #:relay -> :relays
-                              #:bundle -> :bundles
-                            #end
-                     #%{"not_found" => %{name => ids}}
-                 #end
-        #conn
-        #|> put_status(:unprocessable_entity)
-        #|> json(%{"errors" => errors})
-    #end
-    #json(conn, %{"FOO" => member_spec})
-  #end
-
-  #"add", :relay, %{"add" => ["relay1", "relay2"],
-                   #"remove" => ["relay3", "relay4"]}
-
-  #def build_members(action, type, member_spec) do
-    #case Map.get(member_spec, action) do
-      #nil ->
-        #%{found: [], not_found: []}
-      #member_ids ->
-        #found = Enum.filter(member_ids, fn(id) -> verify_member(type, id) end)
-        #not_found = member_ids -- found
-        #%{found: found, not_found: not_found}
-    #end
-  #end
-
-  #defp verify_member(type, id) do
-    #model = case type do
-              #:relay  -> Cog.Models.Relay
-              #:bundle -> Cog.Models.Bundle
-            #end
-    #Cog.Repo.exists?(model, id)
-  #end
-
 end

@@ -48,10 +48,10 @@ defmodule Cog.Router do
     # Relay management
     resources "/v1/relays", V1.RelayController
     resources "/v1/relay_groups", V1.RelayGroupController
-    get "/v1/relay_groups/:id/relays", V1.RelayGroupMembershipController, :index
-    post "/v1/relay_groups/:id/membership", V1.RelayGroupMembershipController, :manage_membership
-    get "/v1/relay_groups/:id/bundles", V1.RelayGroupMembershipController, :index
-    post "/v1/relay_groups/:id/assignment", V1.RelayGroupMembershipController, :manage_assignment
+    get "/v1/relay_groups/:id/relays", V1.RelayGroupMembershipController, :relay_index
+    post "/v1/relay_groups/:id/relays", V1.RelayGroupMembershipController, :manage_relay_membership
+    get "/v1/relay_groups/:id/bundles", V1.RelayGroupMembershipController, :bundle_index
+    post "/v1/relay_groups/:id/bundles", V1.RelayGroupMembershipController, :manage_bundle_assignment
 
     # Event Hooks CRUD; for execution, see Cog.TriggerRouter
     resources "/v1/triggers", V1.TriggerController, only: [:index, :show, :create, :update, :delete]
