@@ -25,7 +25,7 @@ defmodule Cog.V1.TriggerExecutionController do
 
             conn = Plug.Conn.fetch_query_params(conn)
             request_id = get_request_id(conn)
-            timeout    = trigger.timeout_sec * 1000
+            timeout    = computed_timeout(trigger)
 
             context = %{trigger_id: trigger_id,
                         headers: headers_to_map(conn.req_headers),
@@ -162,5 +162,14 @@ defmodule Cog.V1.TriggerExecutionController do
   defp get_parsed_body(conn),
     do: conn.assigns[:parsed_body]
 
+  ########################################################################
 
+  defp computed_timeout(%Trigger{timeout_sec: timeout_sec}) do
+    case Application.get_env(:cog, :trigger_timeout_buffer_sec) do
+      slack when slack <= timeout_sec ->
+        (timeout_sec - slack) * 1000
+      _ ->
+        0
+    end
+  end
 end

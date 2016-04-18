@@ -133,4 +133,11 @@ config :cog, Cog.TriggerEndpoint,
 config :cog, :token_lifetime, {1, :week}
 config :cog, :token_reap_period, {1, :day}
 
+# Trigger timeouts are defined according to the needs of the
+# requestor, which includes network roundtrip time, as well as Cog's
+# internal processing. Cog itself can't wait that long to respond, as
+# that'll be guaranteed to exceed the HTTP requestor's timeout. As
+# such, we'll incorporate a buffer into our internal timeout.
+config :cog, :trigger_timeout_buffer_sec, (System.get_env("COG_TRIGGER_TIMEOUT_SLACK_SEC") || 2)
+
 import_config "#{Mix.env}.exs"
