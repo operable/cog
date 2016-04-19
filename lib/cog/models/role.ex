@@ -58,11 +58,20 @@ defmodule Cog.Models.Role do
 end
 
 defimpl Permittable, for: Cog.Models.Role do
+  alias Cog.Repo
+  alias Cog.Models.JoinTable
+  alias Cog.Models.Permission.Namespace
 
   def grant_to(role, permission),
-    do: Cog.Models.JoinTable.associate(role, permission)
+  do: JoinTable.associate(role, permission)
 
-  def revoke_from(role, permission),
-    do: Cog.Models.JoinTable.dissociate(role, permission)
+  def revoke_from(role, permission) do
+    namespace = Repo.get(Namespace, permission.namespace_id)
+    if role.name == Cog.admin_role and namespace.name == Cog.embedded_bundle do
+      {:error, "cannot remove embedded permissions from admin role"}
+    else
+      JoinTable.dissociate(role, permission)
+    end
+  end
 
 end
