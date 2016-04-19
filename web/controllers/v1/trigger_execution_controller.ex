@@ -18,7 +18,7 @@ defmodule Cog.V1.TriggerExecutionController do
 
   def execute_trigger(conn, %{"id" => trigger_id}) do
     case Triggers.trigger_definition(trigger_id) do
-      {:ok, %Trigger{active: true}=trigger} ->
+      {:ok, %Trigger{enabled: true}=trigger} ->
         conn = resolve_user(conn, trigger)
         case get_user(conn) do
           %User{username: as_user} ->
@@ -60,8 +60,8 @@ defmodule Cog.V1.TriggerExecutionController do
             # resolve_user/2 below
             conn
         end
-      {:ok, %Trigger{active: false}} ->
-        conn |> put_status(:unprocessable_entity) |> json(%{errors: "Trigger is not active"})
+      {:ok, %Trigger{enabled: false}} ->
+        conn |> put_status(:unprocessable_entity) |> json(%{errors: "Trigger is not enabled"})
       {:error, :not_found} ->
         conn
         |> put_status(:not_found)

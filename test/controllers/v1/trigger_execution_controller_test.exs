@@ -94,15 +94,15 @@ defmodule Cog.V1.TriggerExecutionControllerTest do
     assert [] = Snoop.messages(test_snoop)
   end
 
-  test "inactive triggers don't fire", %{conn: conn} do
+  test "disabled triggers don't fire", %{conn: conn} do
     user("cog")
     trigger = trigger(%{name: "echo",
-                  pipeline: "echo foo",
-                  as_user: "cog",
-                  active: false})
+                        pipeline: "echo foo",
+                        as_user: "cog",
+                        enabled: false})
 
     conn = post(conn, "/v1/triggers/#{trigger.id}", Poison.encode!(%{}))
-    assert "Trigger is not active" = json_response(conn, 422)["errors"]
+    assert "Trigger is not enabled" = json_response(conn, 422)["errors"]
   end
 
   test "request sent to executor is correctly set up", %{conn: conn} do

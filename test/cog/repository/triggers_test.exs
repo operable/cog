@@ -30,7 +30,7 @@ defmodule Cog.Repository.TriggersTest do
                       pipeline: "echo $body.message > chat://#general",
                       as_user: "marvin",
                       timeout_sec: 30,
-                      active: true,
+                      enabled: true,
                       description: nil} = trigger
   end
 

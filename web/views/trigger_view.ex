@@ -5,7 +5,7 @@ defmodule Cog.V1.TriggerView do
     %{id: trigger.id,
       name: trigger.name,
       description: trigger.description,
-      active: trigger.active,
+      enabled: trigger.enabled,
       pipeline: trigger.pipeline,
       as_user: trigger.as_user,
       timeout_sec: trigger.timeout_sec,

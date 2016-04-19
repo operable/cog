@@ -33,10 +33,10 @@ defmodule Cog.Models.TriggerTest do
     assert 30 = Ecto.Changeset.get_field(changeset, :timeout_sec)
   end
 
-  test "triggers are active by default" do
+  test "triggers are enabled by default" do
     changeset = Trigger.changeset(%Trigger{}, @valid_attrs)
     assert changeset.valid?
-    assert Ecto.Changeset.get_field(changeset, :active)
+    assert Ecto.Changeset.get_field(changeset, :enabled)
   end
 
   test "triggers have no description by default" do

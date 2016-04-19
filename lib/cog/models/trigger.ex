@@ -8,14 +8,14 @@ defmodule Cog.Models.Trigger do
     field :as_user, :string, default: nil
     field :timeout_sec, :integer, default: 30
 
-    field :active, :boolean, default: true
+    field :enabled, :boolean, default: true
     field :description, :string, default: nil
 
     timestamps
   end
 
   @required_fields ~w(name pipeline)
-  @optional_fields ~w(as_user timeout_sec active description)
+  @optional_fields ~w(as_user timeout_sec enabled description)
 
   def changeset(model, params \\ %{}) do
     model
