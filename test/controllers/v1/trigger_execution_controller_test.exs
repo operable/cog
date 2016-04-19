@@ -233,12 +233,12 @@ defmodule Cog.V1.TriggerExecutionControllerTest do
     user("cog")
 
     # Our trigger will timeout before the pipeline finishes
-    timeout_sec = 1
-    sleep_sec = timeout_sec + 1
+    timeout_sec = 2
+    set_timeout_buffer(1)
     trigger = trigger(%{name: "sleepytime",
-                  pipeline: "echo Hello | sleep #{sleep_sec} | echo $body > chat://#general",
-                  as_user: "cog",
-                  timeout_sec: timeout_sec})
+                        pipeline: "echo Hello | sleep #{timeout_sec} | echo $body > chat://#general",
+                        as_user: "cog",
+                        timeout_sec: timeout_sec})
 
     # Make the request
     conn = post(conn, "/v1/triggers/#{trigger.id}", Poison.encode!(%{}))
@@ -249,7 +249,7 @@ defmodule Cog.V1.TriggerExecutionControllerTest do
 
     # Wait to ensure that processing finishes and check that the chat
     # adapter got it
-    :timer.sleep sleep_sec * 1000
+    :timer.sleep (timeout_sec + 1)* 1000
     [message] = Snoop.messages(test_snoop)
     expected_response = Poison.encode!(%{body: ["Hello"]}, pretty: true)
     assert %{"id" => ^pipeline_id,
@@ -302,4 +302,11 @@ defmodule Cog.V1.TriggerExecutionControllerTest do
     assert [] = Snoop.messages(test_snoop)
   end
 
+  ########################################################################
+
+  defp set_timeout_buffer(new_buffer) do
+    old_buffer = Application.get_env(:cog, :trigger_timeout_buffer_sec)
+    on_exit(fn() -> Application.put_env(:cog, :trigger_timeout_buffer_sec, old_buffer) end)
+    Application.put_env(:cog, :trigger_timeout_buffer_sec, new_buffer)
+  end
 end
