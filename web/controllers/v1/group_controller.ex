@@ -52,8 +52,15 @@ defmodule Cog.V1.GroupController do
   end
 
   def delete(conn, %{"id" => id}) do
-    group = Repo.get!(Group, id)
-    Repo.delete!(group)
-    send_resp(conn, :no_content, "")
+    changeset = Repo.get!(Group, id) |> Cog.Models.Group.changeset(:delete)
+
+    case Repo.delete(changeset) do
+      {:ok, _} ->
+        send_resp(conn, :no_content, "")
+      {:error, changeset} ->
+        conn
+        |> put_status(:unprocessable_entity)
+        |> render(Cog.ChangesetView, "error.json", changeset: changeset)
+    end
   end
 end

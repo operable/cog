@@ -4,6 +4,7 @@ defmodule Cog.Models.Group do
 
   alias Cog.Models.UserGroupMembership
   alias Cog.Models.GroupGroupMembership
+  alias Ecto.Changeset
 
   schema "groups" do
     field :name, :string
@@ -28,15 +29,37 @@ defmodule Cog.Models.Group do
   detail_fields [:id, :name]
 
   @doc """
-  Creates a changeset based on the `model` and `params`.
-
   If no params are provided, an invalid changeset is returned
   with no validation performed.
   """
-  def changeset(model, params \\ :empty) do
+  def changeset(model), do: changeset(model, :empty)
+
+  @doc """
+  Creates a changeset based on the `model` to validate a delete
+  action.
+  """
+  def changeset(model, :delete) do
+    %{Changeset.change(model) | action: :delete}
+    |> protect_admin_group
+  end
+
+  @doc """
+  Creates a changeset based on the `model` and `params`.
+  """
+  def changeset(model, params) do
     model
     |> cast(params, @required_fields, @optional_fields)
+    |> protect_admin_group
     |> unique_constraint(:name)
+  end
+
+  defp protect_admin_group(%Changeset{model: model}=changeset) do
+    if model.name == Cog.admin_group do
+      changeset
+      |> add_error(:name, "admin group may not be modified")
+    else
+      changeset
+    end
   end
 
 end

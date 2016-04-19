@@ -14,4 +14,12 @@ defmodule Cog.Models.Role.Test do
     assert {:name, "has already been taken"} in changeset.errors
   end
 
+  test "admin role cannot be renamed" do
+    Cog.Bootstrap.bootstrap
+    role = Role |> Repo.get_by(name: Cog.admin_role)
+    assert role.name == Cog.admin_role
+    {:error, changeset} = Repo.update(Role.changeset(role, %{"name" => "not-cog-admin"}))
+    assert {:name, "admin role may not be modified"} in changeset.errors
+  end
+
 end
