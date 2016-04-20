@@ -38,7 +38,7 @@ defmodule Cog.Queries.Command do
     do: from c in queryable, preload: [:bundle]
 
   def with_rules(queryable),
-    do: from c in queryable, preload: [:rules]
+    do: from c in queryable, preload: [rules: [permissions: :namespace]]
 
   def with_options(queryable),
     do: from c in queryable, preload: [options: :option_type]

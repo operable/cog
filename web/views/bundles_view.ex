@@ -2,7 +2,7 @@ defmodule Cog.V1.BundlesView do
   use Cog.Web, :view
 
   alias Cog.V1.RelayGroupView
-  alias Cog.V1.RuleView
+  alias Cog.V1.CommandView
 
   def render("bundle.json", %{bundle: bundle}=params) do
     %{id: bundle.id,
@@ -21,25 +21,32 @@ defmodule Cog.V1.BundlesView do
     %{bundle: render_one(bundle, __MODULE__, "bundle.json", as: :bundle, include: [:commands, :relay_groups])}
   end
 
-  def render("command.json", %{command: command}) do
-    %{id: command.id,
-      name: command.name,
-      documentation: command.documentation,
-      enforcing: command.enforcing,
-      execution: command.execution,
-      rules: render_many(command.rules, RuleView, "rule.json")}
-  end
-
-  defp render_includes(params, bundle) do
-    Map.get(params, :include, [])
-    |> Enum.reduce(%{}, fn(inc, reply) -> Map.put(reply, inc, render_include(inc, bundle)) end)
+  defp render_includes(inc_fields, resource) do
+    Map.get(inc_fields, :include, [])
+    |> Enum.reduce(%{}, fn(field, reply) ->
+      case render_include(field, resource) do
+        nil -> reply
+        {key, value} -> Map.put(reply, key, value)
+      end
+    end)
   end
 
   defp render_include(:commands, bundle) do
-    render_many(bundle.commands, __MODULE__, "command.json", as: :command)
+    value = Map.fetch!(bundle, :commands)
+    case Ecto.assoc_loaded?(value) do
+      true ->
+        {:commands, render_many(value, CommandView, "command.json", as: :command, include: [:rules])}
+      false ->
+        nil
+    end
   end
   defp render_include(:relay_groups, bundle) do
-    render_many(bundle.relay_groups, RelayGroupView, "relay_group.json")
+    value = Map.fetch!(bundle, :relay_groups)
+    case Ecto.assoc_loaded?(value) do
+      true ->
+        {:relay_groups, render_many(value, RelayGroupView, "relay_group.json", as: :relay_group)}
+      false ->
+        nil
+    end
   end
-
 end
