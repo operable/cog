@@ -129,13 +129,14 @@ defmodule Cog.V1.BundlesControllerTest do
   test "includes rules in bundle resource", %{authed: requestor} do
     bundle = bundle("cog")
     command = command("hola")
-    permission("cog:hola")
-    rule_text = "when command is cog:hola must have cog:hola"
+    perm = permission("site:hola")
+    rule_text = "when command is cog:hola must have site:hola"
     rule = rule(rule_text)
 
     bundle_id = bundle.id
     command_id = command.id
     rule_id = rule.id
+    perm_id = perm.id
 
     conn = api_request(requestor, :get, "/v1/bundles/#{bundle.id}")
     assert %{"bundle" => %{"id" => ^bundle_id,
@@ -144,6 +145,9 @@ defmodule Cog.V1.BundlesControllerTest do
                                "rules" => [
                                  %{"id" => ^rule_id,
                                    "command" => "cog:hola",
+                                   "permissions" => [%{"id" => ^perm_id,
+                                                       "name" => "hola",
+                                                       "namespace" => "site"}],
                                    "rule" => ^rule_text}]}]}} = json_response(conn, 200)
   end
 
