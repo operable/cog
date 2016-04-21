@@ -122,6 +122,7 @@ defmodule Cog.V1.BundlesControllerTest do
                            "enabled" => bundle.enabled,
                            "relay_groups" => [],
                            "commands" => [],
+                           "permissions" => [],
                            "inserted_at" => "#{DateTime.to_iso8601(bundle.inserted_at)}",
                            "updated_at" => "#{DateTime.to_iso8601(bundle.updated_at)}"}} == json_response(conn, 200)
   end
@@ -129,8 +130,8 @@ defmodule Cog.V1.BundlesControllerTest do
   test "includes rules in bundle resource", %{authed: requestor} do
     bundle = bundle("cog")
     command = command("hola")
-    perm = permission("site:hola")
-    rule_text = "when command is cog:hola must have site:hola"
+    perm = permission("cog:hello")
+    rule_text = "when command is cog:hola must have cog:hello"
     rule = rule(rule_text)
 
     bundle_id = bundle.id
@@ -140,14 +141,17 @@ defmodule Cog.V1.BundlesControllerTest do
 
     conn = api_request(requestor, :get, "/v1/bundles/#{bundle.id}")
     assert %{"bundle" => %{"id" => ^bundle_id,
+                           "permissions" => [%{"id" => ^perm_id,
+                                               "name" => "hello",
+                                               "namespace" => "cog"}],
                            "commands" => [
                              %{"id" => ^command_id,
                                "rules" => [
                                  %{"id" => ^rule_id,
                                    "command" => "cog:hola",
                                    "permissions" => [%{"id" => ^perm_id,
-                                                       "name" => "hola",
-                                                       "namespace" => "site"}],
+                                                       "name" => "hello",
+                                                       "namespace" => "cog"}],
                                    "rule" => ^rule_text}]}]}} = json_response(conn, 200)
   end
 

@@ -42,7 +42,7 @@ defmodule Cog.V1.BundlesController do
   def create(conn, %{"bundle" => params}) do
     case install_bundle(params) do
       {:ok, bundle} ->
-        bundle = Repo.preload(bundle, commands: [rules: [permissions: :namespace]])
+        bundle = Repo.preload(bundle, [commands: [rules: [permissions: :namespace]], namespace: [permissions: :namespace]])
         conn
         |> put_status(:created)
         |> put_resp_header("location", bundles_path(conn, :show, bundle))
