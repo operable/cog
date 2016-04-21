@@ -37,3 +37,45 @@ The following fields are required in the object, but can be empty:
 
 * `url` - a link that could be provided to the user for clarification on how to
   resolve the error
+
+### Example
+
+#### Normal Error, not associated with a param
+
+```javascript
+{
+  "errors" => [
+    {
+      "code" => "cog_error",
+      "message" => "Your token has expired, please reauthenticate.",
+      "id" => "",
+      "url" => "https://docs.operable.io/kb/made-up-url-do-not-click",
+      "param" => "",
+    }
+  ]
+}
+
+```
+
+#### Form Error
+
+```javascript
+{
+  "errors" => [
+    {
+      "code" => "invalid_submission",
+      "message" => "must be in the correct format",
+      "id" => "",
+      "url" => "",
+      "param" => "email",
+    },
+    {
+      "code" => "invalid_submission",
+      "message" => "cannot be blank",
+      "id" => "",
+      "url" => "",
+      "param" => "age",
+    }
+  ]
+}
+```
