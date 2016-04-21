@@ -165,7 +165,7 @@ defmodule Cog.V1.TriggerExecutionController do
   ########################################################################
 
   defp computed_timeout(%Trigger{timeout_sec: timeout_sec}) do
-    case Application.get_env(:cog, :trigger_timeout_buffer_sec) do
+    case Application.get_env(:cog, :trigger_timeout_buffer) do
       slack when slack <= timeout_sec ->
         (timeout_sec - slack) * 1000
       _ ->
