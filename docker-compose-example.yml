@@ -1,0 +1,68 @@
+# Example docker-compose file for Cog
+#
+# This is meant to be a minimal example of how to run Cog, connecting
+# to Slack, using docker-compose. To use it, copy it to
+# `docker-compose.yml` and export the variables defined in the
+# `environment` stanzas below, and run
+#
+#     docker-compose up
+#
+# For the sake of this example, you will need to have the following
+# environment variables exported in your local environment:
+#
+#    * POSTGRES_USER
+#    * POSTGRES_PASSWORD
+#    * SLACK_API_TOKEN
+#
+#    (These two can be the same... If on OS X using docker-machine,
+#    set them to, e.g. `docker-machine ip default`)
+#    * COG_API_HOST
+#    * COG_TRIGGER_HOST
+#
+#    * RELAY_ID
+#    * RELAY_COG_TOKEN
+
+# To see all the environment variables that affect Cog's behavior,
+# please see the online documentation at
+#
+#     http://docs.operable.io/v0.4/docs/cog-environment-variables
+#
+# Add the environment variables you wish to modify to the stanzas
+# below (in your own `docker-compose.yml` file).
+
+postgres:
+  image: postgres:9.5
+  environment:
+    - POSTGRES_USER=${POSTGRES_USER}
+    - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+cog:
+  image: operable/cog:0.4-dev
+  environment:
+    - DATABASE_URL=ecto://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:5432/cog
+    - COG_ADAPTER=slack
+    - SLACK_API_TOKEN=${SLACK_API_TOKEN}
+    - COG_MQTT_HOST=0.0.0.0
+    - COG_API_HOST=${COG_API_HOST}
+    - COG_TRIGGER_HOST=${COG_API_HOST}
+  links:
+    - postgres:localhost
+  ports:
+    - 1883      # See COG_MQTT_PORT
+    - 80:4000   # See COG_WEB_PORT
+    - 4001:4001 # See COG_TRIGGER_PORT
+  entrypoint: /home/operable/cog/scripts/docker-start
+
+relay:
+  image: operable/relay:0.4-dev
+  privileged: true
+  volumes:
+    - /var/run/docker.sock:/var/run/docker.sock
+  environment:
+    - RELAY_ID=${RELAY_ID}
+    - RELAY_COG_TOKEN=${RELAY_COG_TOKEN}
+    - RELAY_COG_REFRESH_INTERVAL=30s
+    - RELAY_DOCKER_CLEAN_INTERVAL=1m
+    - RELAY_COG_HOST=localhost
+  links:
+    - cog:localhost
+  entrypoint: /usr/local/bin/relay

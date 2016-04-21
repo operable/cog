@@ -7,3 +7,5 @@ erl_crash.dump
 /data
 Mnesia.*
 /cover
+docker-compose.yml
+.env
