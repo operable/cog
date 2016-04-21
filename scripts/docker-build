@@ -1,5 +1,7 @@
 #!/bin/sh -x
 
+set -eo pipefail
+
 # install mix
 mix local.hex --force
 mix local.rebar --force
@@ -9,12 +11,12 @@ mix hex.info
 cd /home/operable/cog
 mix clean
 mix deps.get
-mix deps.compile
+ALLOW_WARNINGS=true mix deps.compile
 mix compile
 
 # build cogctl
 cd /home/operable/cogctl
 git clone https://github.com/operable/cogctl .
 mix deps.get
-mix deps.compile
+ALLOW_WARNINGS=true mix deps.compile
 mix escript
