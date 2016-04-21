@@ -18,24 +18,24 @@ defmodule Cog.Models.Relay do
   end
 
   @required_fields ~w(name)
-  @optional_fields ~w(token enabled description)
+  @optional_fields ~w(id token enabled description)
 
   def changeset(model, params \\ :empty) do
     model
     |> Repo.preload(:groups)
     |> cast(params, @required_fields, @optional_fields)
-    |> allow_user_defined_id_on_insert(params)
+    |> allow_user_defined_id_on_insert
     |> validate_presence_on_insert(:token)
     |> encode_token
     |> unique_constraint(:name)
   end
 
-  def allow_user_defined_id_on_insert(changeset, params) do
-    case {get_field(changeset, :id), Map.get(params, "id")} do
-      {_, nil} ->
+  def allow_user_defined_id_on_insert(changeset) do
+    case {Map.get(changeset.model, :id), get_field(changeset, :id)} do
+      {nil, _changed_id} ->
         changeset
-      {nil, _} ->
-        changeset |> cast(params, [], [:id])
+      {id, id} ->
+        changeset
       _ ->
         changeset
         |> add_error(:id, "cannot modify ID")
