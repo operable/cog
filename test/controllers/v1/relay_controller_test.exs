@@ -36,6 +36,15 @@ defmodule Cog.V1.RelayControllerTest do
     assert Repo.get_by(Relay, id: relay_json["id"])
   end
 
+  test "can create a relay with a user-defined ID", %{authed: requestor} do
+    uuid = Ecto.UUID.generate
+    params = Map.put(@create_attrs, :id, uuid)
+    conn = api_request(requestor, :post, "/v1/relays", body: %{"relay" => params})
+    relay_json = json_response(conn, 201)["relay"]
+    assert relay_json["id"] == uuid
+    assert Repo.get_by(Relay, id: uuid)
+  end
+
   test "cannot create a relay without permission", %{unauthed: requestor} do
     conn = api_request(requestor, :post, "/v1/relays", body: %{"relay" => @create_attrs})
     assert conn.halted
@@ -109,6 +118,15 @@ defmodule Cog.V1.RelayControllerTest do
                        body: %{"relay" => %{token: "blah"}})
     assert conn.halted
     assert conn.status == 403
+  end
+
+  test "cannot update the ID of an existing relay", %{authed: requestor} do
+    new_uuid = Ecto.UUID.generate
+    relay = relay("test-1", "foobar")
+    conn = api_request(requestor, :put, "/v1/relays/#{relay.id}",
+                       body: %{"relay" => %{id: new_uuid}})
+    errors = json_response(conn, 422)["errors"]
+    assert errors["id"] == ["cannot modify ID"]
   end
 
   test "fetching all resources", %{authed: requestor} do
