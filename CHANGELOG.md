@@ -1,5 +1,38 @@
 #  Changelog
 
+## v.0.4.0
+
+### Enhancements
+
+- Pipeline Triggers
+  - Process external events with command pipelines
+  - Flexible output routing
+  - Audit log integration
+- Brand new Relay written in Go
+  - Easier to deploy & configure
+  - Replaces previous Relay written in Elixir
+- Docker integration
+  - Distributed command bundles as Docker images
+  - Commands executed inside isolated containers
+  - Built-in support for public and private remote registries
+- Revised bundle format and deployment process
+  - Simplified bundle deployment process -- upload a single file
+  - Deploy a bundle to groups of Relays
+  - Supported bundle types:
+    - Simple
+    - Docker
+    - Zip file command bundle support EOL'd
+  - Simplified bundle config file w/sane defaults
+- All new documentation site: http://docs.operable.io
+  - GitHub wiki deprecated
+
+### Bug Fixes
+
+- [Prevent users from creating aliases with fully qualified names](https://github.com/operable/cog/issues/314)
+- [Slack Real Time Messaging connector crashes on API timeouts](https://github.com/operable/cog/issues/479)
+- [Ensure pipeline executor permission checks can see all user permissions](https://github.com/operable/cog/issues/496)
+- [Protect admin group, admin role, and built-in permissions from modification](https://github.com/operable/cog/issues/543)
+
 ## v0.3.0
 
 ### Enhancements
@@ -26,14 +59,14 @@
 
 ### Bug Fixes
 
-  - Handle Slack-escaped URLs and smart quotes
-  - Removed old chat adapters from database migrations
-  - Fixed column ordering bug in `table` command (reported by James Bowes)
-  - Route command log output to Relay log file
-  - Improved handling of unexpected command crashes
-  - Multiple bugs in `mist` command bundle (reported by Adam Ochonicki)
-  - Stopped sending Slack UID to users (reported by Adam Ochonicki)
-  - Improved output handling of `multi` commands when called at the end of a pipeline
+- Handle Slack-escaped URLs and smart quotes
+- Removed old chat adapters from database migrations
+- Fixed column ordering bug in `table` command (reported by James Bowes)
+- Route command log output to Relay log file
+- Improved handling of unexpected command crashes
+- Multiple bugs in `mist` command bundle (reported by Adam Ochonicki)
+- Stopped sending Slack UID to users (reported by Adam Ochonicki)
+- Improved output handling of `multi` commands when called at the end of a pipeline
 
 ### Documentation
 
