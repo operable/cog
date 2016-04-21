@@ -8,7 +8,8 @@ export PATH="${PATH}:$(dirname $0)"
 echo "Waiting for Postgres to become available..."
 wait-for-it.sh -s -t 0 -h localhost -p 5432 && true
 
-echo "Apply database migrations..."
+echo "Create database and apply migrations..."
+mix ecto.create
 mix ecto.migrate --no-compile --no-deps-check
 
 echo "Launching Cog server..."
