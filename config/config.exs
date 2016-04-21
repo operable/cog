@@ -137,7 +137,8 @@ config :cog, :token_reap_period, {1, :day}
 # requestor, which includes network roundtrip time, as well as Cog's
 # internal processing. Cog itself can't wait that long to respond, as
 # that'll be guaranteed to exceed the HTTP requestor's timeout. As
-# such, we'll incorporate a buffer into our internal timeout.
-config :cog, :trigger_timeout_buffer_sec, (System.get_env("COG_TRIGGER_TIMEOUT_SLACK_SEC") || 2)
+# such, we'll incorporate a buffer into our internal timeout. Defined
+# as seconds
+config :cog, :trigger_timeout_buffer, (System.get_env("COG_TRIGGER_TIMEOUT_BUFFER") || 2)
 
 import_config "#{Mix.env}.exs"

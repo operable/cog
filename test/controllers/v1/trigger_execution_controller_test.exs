@@ -305,8 +305,8 @@ defmodule Cog.V1.TriggerExecutionControllerTest do
   ########################################################################
 
   defp set_timeout_buffer(new_buffer) do
-    old_buffer = Application.get_env(:cog, :trigger_timeout_buffer_sec)
-    on_exit(fn() -> Application.put_env(:cog, :trigger_timeout_buffer_sec, old_buffer) end)
-    Application.put_env(:cog, :trigger_timeout_buffer_sec, new_buffer)
+    old_buffer = Application.get_env(:cog, :trigger_timeout_buffer)
+    on_exit(fn() -> Application.put_env(:cog, :trigger_timeout_buffer, old_buffer) end)
+    Application.put_env(:cog, :trigger_timeout_buffer, new_buffer)
   end
 end
