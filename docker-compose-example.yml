@@ -19,6 +19,8 @@
 #    * COG_API_HOST
 #    * COG_TRIGGER_HOST
 #
+#    * COG_TRIGGER_PORT_EXTERNAL
+#    * COG_API_PORT_EXTERNAL
 #    * RELAY_ID
 #    * RELAY_COG_TOKEN
 
@@ -44,12 +46,14 @@ cog:
     - COG_MQTT_HOST=0.0.0.0
     - COG_API_HOST=${COG_API_HOST}
     - COG_TRIGGER_HOST=${COG_API_HOST}
+    - COG_TRIGGER_PORT_EXTERNAL=${COG_TRIGGER_PORT_EXTERNAL}
+    - COG_API_PORT_EXTERNAL=${COG_API_PORT_EXTERNAL}
   links:
     - postgres:localhost
   ports:
-    - 1883      # See COG_MQTT_PORT
-    - 80:4000   # See COG_WEB_PORT
-    - 4001:4001 # See COG_TRIGGER_PORT
+    - 1883                              # See COG_MQTT_PORT
+    - ${COG_API_PORT_EXTERNAL}:4000     # See COG_API_PORT
+    - ${COG_TRIGGER_PORT_EXTERNAL}:4001 # See COG_TRIGGER_PORT
   entrypoint: /home/operable/cog/scripts/docker-start
 
 relay:
