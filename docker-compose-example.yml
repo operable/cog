@@ -10,24 +10,24 @@
 # For the sake of this example, you will need to have the following
 # environment variables exported in your local environment:
 #
-#    * POSTGRES_USER
-#    * POSTGRES_PASSWORD
 #    * SLACK_API_TOKEN
+#    * COG_HOST - this is not a Cog environment variable per se, but
+#      one specifically for this docker-compose example. You should
+#      set this to the host that cog can be accessed "from the
+#      outside". If using docker-machine, for example, you could set
+#      this to `docker-machine ip default`
 #
-#    (These two can be the same... If on OS X using docker-machine,
-#    set them to, e.g. `docker-machine ip default`)
-#    * COG_API_URL_HOST
-#    * COG_TRIGGER_API_HOST
+# The Cog API will be available on port 80 of $COG_HOST, while
+# triggers can be invoked on port 3000.
 #
-#    * COG_TRIGGER_URL_PORT
-#    * COG_API_URL_PORT
-#    * RELAY_ID
-#    * RELAY_COG_TOKEN
-
+# For simplicity, things like Postgres credentials are hard-coded, but
+# those can be modified to your taste.
+#
 # To see all the environment variables that affect Cog's behavior,
 # please see the online documentation at
 #
-#     http://docs.operable.io/v0.4/docs/cog-environment-variables
+#   * http://docs.operable.io/docs/cog-environment-variables
+#   * http://docs.operable.io/docs/relay-environment-variables
 #
 # Add the environment variables you wish to modify to the stanzas
 # below (in your own `docker-compose.yml` file).
@@ -35,25 +35,25 @@
 postgres:
   image: postgres:9.5
   environment:
-    - POSTGRES_USER=${POSTGRES_USER}
-    - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    - POSTGRES_USER=cog
+    - POSTGRES_PASSWORD=cog
 cog:
   image: operable/cog:0.5-dev
   environment:
-    - DATABASE_URL=ecto://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:5432/cog
+    - DATABASE_URL=ecto://cog:cog@localhost:5432/cog
     - COG_ADAPTER=slack
     - SLACK_API_TOKEN=${SLACK_API_TOKEN}
     - COG_MQTT_HOST=0.0.0.0
-    - COG_API_URL_HOST=${COG_API_URL_HOST}
-    - COG_TRIGGER_API_HOST=${COG_TRIGGER_API_HOST}
-    - COG_TRIGGER_URL_PORT=${COG_TRIGGER_URL_PORT}
-    - COG_API_URL_PORT=${COG_API_URL_PORT}
+    - COG_API_URL_HOST=${COG_HOST}
+    - COG_TRIGGER_URL_HOST=${COG_HOST}
+    - COG_TRIGGER_URL_PORT=3000
+    - COG_API_URL_PORT=80
   links:
     - postgres:localhost
   ports:
-    - 1883                         # See COG_MQTT_PORT
-    - ${COG_API_URL_PORT}:4000     # See COG_API_PORT
-    - ${COG_TRIGGER_URL_PORT}:4001 # See COG_TRIGGER_PORT
+    - 1883
+    - 80:4000
+    - 3000:4001
   entrypoint: /home/operable/cog/scripts/docker-start
 
 relay:
@@ -62,8 +62,8 @@ relay:
   volumes:
     - /var/run/docker.sock:/var/run/docker.sock
   environment:
-    - RELAY_ID=${RELAY_ID}
-    - RELAY_COG_TOKEN=${RELAY_COG_TOKEN}
+    - RELAY_ID=00000000-0000-0000-0000-000000000000
+    - RELAY_COG_TOKEN=supersecret
     - RELAY_COG_REFRESH_INTERVAL=30s
     - RELAY_DOCKER_CLEAN_INTERVAL=1m
     - RELAY_COG_HOST=localhost
