@@ -1,0 +1,72 @@
+# Example docker-compose file for Cog
+#
+# This is meant to be a minimal example of how to run Cog, connecting
+# to Slack, using docker-compose. To use it, copy it to
+# `docker-compose.yml` and export the variables defined in the
+# `environment` stanzas below, and run
+#
+#     docker-compose up
+#
+# For the sake of this example, you will need to have the following
+# environment variables exported in your local environment:
+#
+#    * SLACK_API_TOKEN
+#    * COG_HOST - this is not a Cog environment variable per se, but
+#      one specifically for this docker-compose example. You should
+#      set this to the host that cog can be accessed "from the
+#      outside". If using docker-machine, for example, you could set
+#      this to `docker-machine ip default`
+#
+# The Cog API will be available on port 80 of $COG_HOST, while
+# triggers can be invoked on port 3000.
+#
+# For simplicity, things like Postgres credentials are hard-coded, but
+# those can be modified to your taste.
+#
+# To see all the environment variables that affect Cog's behavior,
+# please see the online documentation at
+#
+#   * http://docs.operable.io/docs/cog-environment-variables
+#   * http://docs.operable.io/docs/relay-environment-variables
+#
+# Add the environment variables you wish to modify to the stanzas
+# below (in your own `docker-compose.yml` file).
+
+postgres:
+  image: postgres:9.5
+  environment:
+    - POSTGRES_USER=cog
+    - POSTGRES_PASSWORD=cog
+cog:
+  image: operable/cog:0.5-dev
+  environment:
+    - DATABASE_URL=ecto://cog:cog@localhost:5432/cog
+    - COG_ADAPTER=slack
+    - SLACK_API_TOKEN=${SLACK_API_TOKEN}
+    - COG_MQTT_HOST=0.0.0.0
+    - COG_API_URL_HOST=${COG_HOST}
+    - COG_TRIGGER_URL_HOST=${COG_HOST}
+    - COG_TRIGGER_URL_PORT=3000
+    - COG_API_URL_PORT=80
+  links:
+    - postgres:localhost
+  ports:
+    - 1883
+    - 80:4000
+    - 3000:4001
+  entrypoint: /home/operable/cog/scripts/docker-start
+
+relay:
+  image: operable/relay:0.5-dev
+  privileged: true
+  volumes:
+    - /var/run/docker.sock:/var/run/docker.sock
+  environment:
+    - RELAY_ID=00000000-0000-0000-0000-000000000000
+    - RELAY_COG_TOKEN=supersecret
+    - RELAY_COG_REFRESH_INTERVAL=30s
+    - RELAY_DOCKER_CLEAN_INTERVAL=1m
+    - RELAY_COG_HOST=localhost
+  links:
+    - cog:localhost
+  entrypoint: /usr/local/bin/relay
