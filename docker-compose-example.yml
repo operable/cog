@@ -16,11 +16,11 @@
 #
 #    (These two can be the same... If on OS X using docker-machine,
 #    set them to, e.g. `docker-machine ip default`)
-#    * COG_API_HOST
-#    * COG_TRIGGER_HOST
+#    * COG_API_URL_HOST
+#    * COG_TRIGGER_API_HOST
 #
-#    * COG_TRIGGER_PORT_EXTERNAL
-#    * COG_API_PORT_EXTERNAL
+#    * COG_TRIGGER_URL_PORT
+#    * COG_API_URL_PORT
 #    * RELAY_ID
 #    * RELAY_COG_TOKEN
 
@@ -44,16 +44,16 @@ cog:
     - COG_ADAPTER=slack
     - SLACK_API_TOKEN=${SLACK_API_TOKEN}
     - COG_MQTT_HOST=0.0.0.0
-    - COG_API_HOST=${COG_API_HOST}
-    - COG_TRIGGER_HOST=${COG_API_HOST}
-    - COG_TRIGGER_PORT_EXTERNAL=${COG_TRIGGER_PORT_EXTERNAL}
-    - COG_API_PORT_EXTERNAL=${COG_API_PORT_EXTERNAL}
+    - COG_API_URL_HOST=${COG_API_URL_HOST}
+    - COG_TRIGGER_API_HOST=${COG_TRIGGER_API_HOST}
+    - COG_TRIGGER_URL_PORT=${COG_TRIGGER_URL_PORT}
+    - COG_API_URL_PORT=${COG_API_URL_PORT}
   links:
     - postgres:localhost
   ports:
-    - 1883                              # See COG_MQTT_PORT
-    - ${COG_API_PORT_EXTERNAL}:4000     # See COG_API_PORT
-    - ${COG_TRIGGER_PORT_EXTERNAL}:4001 # See COG_TRIGGER_PORT
+    - 1883                         # See COG_MQTT_PORT
+    - ${COG_API_URL_PORT}:4000     # See COG_API_PORT
+    - ${COG_TRIGGER_URL_PORT}:4001 # See COG_TRIGGER_PORT
   entrypoint: /home/operable/cog/scripts/docker-start
 
 relay:
