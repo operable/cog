@@ -33,6 +33,14 @@ defmodule Cog.Relay.Relays do
     GenServer.call(__MODULE__, {:drop_bundle, bundle}, :infinity)
   end
 
+  def enable_relay(relay_id) do
+    GenServer.call(__MODULE__, {:enable_relay, relay_id}, :infinity)
+  end
+
+  def disable_relay(relay_id) do
+    GenServer.call(__MODULE__, {:disable_relay, relay_id}, :infinity)
+  end
+
   @doc """
   Returns the IDs of all Relays currently running `bundle_name`. If no
   Relays are running the bundle, an empty list is returned.
@@ -76,6 +84,8 @@ defmodule Cog.Relay.Relays do
   end
   def handle_call({:relays_running, bundle_name} , _from, state),
     do: {:reply, Tracker.relays(state.tracker, bundle_name), state}
+  def handle_call({:enable_relay, relay_id}, _from, state),
+    do: {:reply, enable_relay(:snapshot, state.tracker, relay_id, []), state}
 
   def handle_info({:publish, @relays_discovery_topic, message}, state) do
     case Poison.decode(message) do
@@ -128,22 +138,23 @@ defmodule Cog.Relay.Relays do
                       false -> :offline
                     end
 
+    enabled_status = case Cog.Repo.get(Cog.Models.Relay, relay_id) do
+                       %{enabled: true} -> :enabled
+                       _ -> :disabled
+                     end
+
     snapshot_status = case Map.fetch!(announcement, "snapshot") do
                         true -> :snapshot
                         false -> :incremental
                       end
 
-    bundle_names = Enum.map(success_bundles, &Map.get(&1, :name)) # Just for logging purposes
-    case {online_status, snapshot_status} do
+    case {online_status, enabled_status} do
       {:offline, _} ->
-        Logger.info("Removed Relay #{relay_id} from active relay list")
-        Tracker.remove_relay(tracker, relay_id)
-      {:online, :incremental} ->
-        Logger.info("Incrementally adding bundles for Relay #{relay_id}: #{inspect bundle_names}")
-        Tracker.add_bundles_for_relay(tracker, relay_id, success_bundles)
-      {:online, :snapshot} ->
-        Logger.info("Setting bundles list for Relay #{relay_id}: #{inspect bundle_names}")
-        Tracker.set_bundles_for_relay(tracker, relay_id, success_bundles)
+        disable_relay(tracker, relay_id)
+      {:online, :disabled} ->
+        disable_relay(tracker, relay_id)
+      {:online, :enabled} ->
+        enable_relay(snapshot_status, tracker, relay_id, success_bundles)
     end
   end
 
@@ -182,6 +193,22 @@ defmodule Cog.Relay.Relays do
       [] -> nil
       relays -> Enum.random(relays)
     end
+  end
+
+  defp enable_relay(:incremental, tracker, relay_id, success_bundles) do
+    bundle_names = Enum.map(success_bundles, &Map.get(&1, :name)) # Just for logging purposes
+    Logger.info("Incrementally adding bundles for Relay #{relay_id}: #{inspect bundle_names}")
+    Tracker.add_bundles_for_relay(tracker, relay_id, success_bundles)
+  end
+  defp enable_relay(:snapshot, tracker, relay_id, success_bundles) do
+    bundle_names = Enum.map(success_bundles, &Map.get(&1, :name)) # Just for logging purposes
+    Logger.info("Setting bundles list for Relay #{relay_id}: #{inspect bundle_names}")
+    Tracker.set_bundles_for_relay(tracker, relay_id, success_bundles)
+  end
+
+  defp disable_relay(tracker, relay_id) do
+    Logger.info("Removed Relay #{relay_id} from active relay list")
+    Tracker.remove_relay(tracker, relay_id)
   end
 
 end
