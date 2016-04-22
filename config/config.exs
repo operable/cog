@@ -108,27 +108,24 @@ config :carrier, Carrier.Messaging.Connection,
 # Web Endpoints
 
 config :cog, Cog.Endpoint,
-  http: [port: System.get_env("COG_WEB_PORT") || 4000],
+  http: [port: System.get_env("COG_API_PORT") || 4000],
+  url: [host: (System.get_env("COG_API_HOST") || "localhost"), path: "/"],
   root: Path.dirname(__DIR__),
   debug_errors: false,
   cache_static_lookup: false,
   check_origin: true,
   render_errors: [accepts: ~w(json)],
   pubsub: [name: Carrier.Messaging.Connection,
-           adapter: Phoenix.PubSub.PG2],
-  secret_key_base: System.get_env("COG_COOKIE_SECRET")
-
+           adapter: Phoenix.PubSub.PG2]
 
 config :cog, Cog.TriggerEndpoint,
   http: [port: System.get_env("COG_TRIGGER_PORT") || 4001],
+  url: [host: (System.get_env("COG_TRIGGER_HOST") || "localhost"), path: "/"],
   root: Path.dirname(__DIR__),
   debug_errors: false,
   cache_static_lookup: false,
   check_origin: true,
-  render_errors: [accepts: ~w(json)],
-  # pubsub: [name: Carrier.Messaging.Connection,
-  #          adapter: Phoenix.PubSub.PG2],
-  secret_key_base: System.get_env("COG_COOKIE_SECRET")
+  render_errors: [accepts: ~w(json)]
 
 config :cog, :token_lifetime, {1, :week}
 config :cog, :token_reap_period, {1, :day}
