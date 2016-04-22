@@ -1,5 +1,7 @@
 #!/bin/sh -x
 
+VERSION=0.4.0
+
 # install mix
 mix local.hex --force
 mix local.rebar --force
@@ -15,6 +17,7 @@ mix compile
 # build cogctl
 cd /home/operable/cogctl
 git clone https://github.com/operable/cogctl .
+git checkout ${VERSION}
 mix deps.get
 mix deps.compile
 mix escript
