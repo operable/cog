@@ -10,6 +10,8 @@ ifdef BUILDKITE_BUILD_NUMBER
 TEST_DATABASE_URL := $(TEST_DATABASE_URL).$(BUILDKITE_BUILD_NUMBER)
 endif
 
+DOCKER_IMAGE      ?= operable/cog:0.5-dev
+
 ci: export DATABASE_URL = $(TEST_DATABASE_URL)
 ci: export MIX_ENV = test
 ci: ci-setup test-all ci-cleanup
@@ -61,4 +63,7 @@ coverage: reset-db
 coverage:
 	mix coveralls.html
 
-.PHONY: ci ci-setup ci-cleanup test
+docker:
+	docker build -t $(DOCKER_IMAGE) .
+
+.PHONY: ci ci-setup ci-cleanup test docker
