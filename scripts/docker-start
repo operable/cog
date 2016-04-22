@@ -11,5 +11,7 @@ wait-for-it.sh -s -t 0 -h localhost -p 5432 && true
 echo "Apply database migrations..."
 mix ecto.migrate --no-compile --no-deps-check
 
+/home/operable/cog/scripts/configure &
+
 echo "Launching Cog server..."
 elixir --no-halt --name cog@127.0.0.1 -S mix phoenix.server --no-compile --no-deps-check
