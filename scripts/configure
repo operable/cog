@@ -1,0 +1,14 @@
+#!/bin/bash -x
+
+set -eo pipefail
+
+echo "Waiting for Cog to become available..."
+wait-for-it.sh -s -t 0 -h localhost -p 4000 && true
+
+echo "Bootstrapping Cog"
+cogctl bootstrap
+
+echo "Creating and enabling Relay"
+cogctl relays create default --token=$RELAY_COG_TOKEN --id=$RELAY_ID
+cogctl relays enable default
+cogctl relay-groups create default --members=default

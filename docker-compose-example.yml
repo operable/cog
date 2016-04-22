@@ -38,7 +38,7 @@ postgres:
     - POSTGRES_USER=cog
     - POSTGRES_PASSWORD=cog
 cog:
-  image: operable/cog:0.5-dev
+  image: operable/cog:0.4-rc1
   environment:
     - DATABASE_URL=ecto://cog:cog@localhost:5432/cog
     - COG_ADAPTER=slack
@@ -48,6 +48,8 @@ cog:
     - COG_TRIGGER_URL_HOST=${COG_HOST}
     - COG_TRIGGER_URL_PORT=3000
     - COG_API_URL_PORT=80
+    - RELAY_ID=00000000-0000-0000-0000-000000000000
+    - RELAY_COG_TOKEN=supersecret
   links:
     - postgres:localhost
   ports:
@@ -57,7 +59,7 @@ cog:
   entrypoint: /home/operable/cog/scripts/docker-start
 
 relay:
-  image: operable/relay:0.5-dev
+  image: operable/relay:0.4-rc1
   privileged: true
   volumes:
     - /var/run/docker.sock:/var/run/docker.sock
