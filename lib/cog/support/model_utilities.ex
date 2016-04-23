@@ -195,6 +195,7 @@ defmodule Cog.Support.ModelUtilities do
     relay = %Relay{}
     |> Relay.changeset(%{name: name,
                          token: token,
+                         enabled: Keyword.get(opts, :enabled, false),
                          desc: Keyword.get(opts, :desc, nil)})
     |> Repo.insert!
     %{relay | token: nil}

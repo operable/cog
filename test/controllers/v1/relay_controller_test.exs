@@ -5,10 +5,13 @@ defmodule Cog.V1.RelayControllerTest do
   use Cog.ConnCase
 
   alias Cog.Models.Relay
+  alias Cog.Relay.Relays
+  alias Cog.FakeRelay
   alias Cog.Queries
 
   @create_attrs %{name: "test-1", token: "foo"}
   @update_attrs %{enabled: true, description: "My test"}
+  @disable_attrs %{@update_attrs | enabled: false}
 
   setup do
     # Requests handled by the role controller require this permission
@@ -93,6 +96,72 @@ defmodule Cog.V1.RelayControllerTest do
     assert updated["name"] == relay.name
     assert updated["enabled"] == @update_attrs.enabled
     assert updated["description"] == @update_attrs.description
+  end
+
+  test "relays are enabled in more than just name", %{authed: requestor} do
+    # We create a relay and add a bundle to it so we can query for it in
+    # 'Cog.Relay.Relays'
+    relay = relay("relay-enable-relay-1", "foobar")
+    bundle = bundle("relay-enable-bundle-1")
+    relay_group = relay_group("relay-enable-group-1")
+    add_relay_to_group(relay_group.id, relay.id)
+    assign_bundle_to_group(relay_group.id, bundle.id)
+
+    # We shouldn't see any relays running our bundle yet, because the relay
+    # has not yet announced it's presence.
+    assert Relays.relays_running(bundle.name) == []
+
+    # Relays don't show up as available unless they are online and enabled.
+    # FakeRelay lets us send announcement messages like a real relay, so Cog
+    # will add the relay to the available relays list.
+    FakeRelay.new(relay) |> FakeRelay.get_bundles |> FakeRelay.announce
+
+    # After announcing, our relay should be online but it still won't show up,
+    # because we haven't enabled it yet.
+    assert Relays.relays_running(bundle.name) == []
+
+    # This should enable our relay
+    conn = api_request(requestor, :put, "/v1/relays/#{relay.id}",
+                       body: %{"relay" => @update_attrs})
+    # Confirm that the api thinks the relay is enabled
+    updated = json_response(conn, 200)["relay"]
+    assert updated["enabled"] == @update_attrs.enabled
+
+    # Now if we check for relays_running we should see our relay
+    assert Relays.relays_running(bundle.name) == [relay.id]
+  end
+
+  test "relays are disabled in more than just name", %{authed: requestor} do
+    # We create a relay and add a bundle to it so we can query for it in
+    # 'Cog.Relay.Relays'
+    relay = relay("relay-disable-1", "foobaz", enabled: true)
+    bundle = bundle("relay-disable-bundle-1")
+    relay_group = relay_group("relay-disable-group-1")
+    add_relay_to_group(relay_group.id, relay.id)
+    assign_bundle_to_group(relay_group.id, bundle.id)
+
+    # We shouldn't see any relays running our bundle yet, because the relay
+    # has not yet announced it's presence.
+    assert Relays.relays_running(bundle.name) == []
+
+    # Relays don't show up as available unless they are online and enabled.
+    # FakeRelay lets us send announcement messages like a real relay, so Cog
+    # will add the relay to the available relays list.
+    FakeRelay.new(relay) |> FakeRelay.get_bundles |> FakeRelay.announce
+
+    # After announcing, our relay should be online and enabled since we created
+    # it enabled.
+    assert Relays.relays_running(bundle.name) == [relay.id]
+
+    # This should disable our relay
+    conn = api_request(requestor, :put, "/v1/relays/#{relay.id}",
+                       body: %{"relay" => @disable_attrs})
+    # Confirm that the api thinks the relay is disabled
+    updated = json_response(conn, 200)["relay"]
+    assert updated["enabled"] == @disable_attrs.enabled
+
+    # Now if we check for relays_running we should see nothing again
+    assert Relays.relays_running(bundle.name) == []
   end
 
   test "updated token changes token digest", %{authed: requestor} do

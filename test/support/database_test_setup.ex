@@ -43,37 +43,24 @@ defmodule DatabaseTestSetup do
   @doc """
   Creates a bundle record
   """
-  def bundle(name, commands \\ [%{"name": "echo"}], opts \\ []) do
-    command_template = %{
-      "options" => [],
-      "name" => "echo",
-      "executable" => "/bin/echo",
-      "execution" => "multiple",
-      "enforcing" => false,
-      "documentation" => "does stuff",
-      "calling_convention" => "bound"
-    }
+  def bundle(name, commands \\ %{"echo": %{"executable" => "/bin/echo"}}, opts \\ []) do
 
     bundle_template = %{
-      "bundle" => %{"name" => "bundle_name",
-                    "version" => "0.0.1"},
-      "templates" => [],
-      "rules" => [],
-      "permissions" => [],
-      "commands" => []
+      "name" => name,
+      "version" => "0.1.0",
+      "cog_bundle_version" => 2,
+      "commands" => commands
     }
 
-    command_config = for command <- commands do
-      Map.merge(command_template, command)
-    end
-
-    bundle_config = bundle_template
-    |> Map.put("name", name)
-    |> Map.put("commands", command_config)
-    |> Map.merge(Enum.into(opts, %{}))
+    bundle_config = Enum.into(opts, bundle_template, fn
+      ({key, value}) when is_atom(key) ->
+        {Atom.to_string(key), value}
+      (opt) ->
+        opt
+    end)
 
     bundle = %Bundle{}
-    |> Bundle.changeset(%{name: name, version: "0.0.1", config_file: bundle_config})
+    |> Bundle.changeset(%{name: name, version: bundle_config["version"], config_file: bundle_config})
     |> Repo.insert!
 
     namespace(name, bundle.id)
