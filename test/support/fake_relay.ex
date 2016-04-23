@@ -30,26 +30,15 @@ defmodule Cog.FakeRelay do
       Enum.map(data, next)
     end
 
-    reply_to = "bot/test_relays/#{relay.id}"
-
-    Messaging.Connection.subscribe(conn, reply_to)
-
+    reply_to = "bot/test_relays_info/#{relay.id}"
     payload = %{"list_bundles" => %{"relay_id" => relay.id,
                                     "reply_to" => reply_to}}
 
-    Messaging.Connection.publish(conn, payload, routed_by: @relay_info_topic)
+    response = publish_and_wait(conn, payload, reply_to, @relay_info_topic)
+    |> Poison.decode!
 
-    receive do
-      {:publish, ^reply_to, response} ->
-        json = Poison.decode!(response)
-        Messaging.Connection.unsubscribe(conn, reply_to)
-        bundles = get_in(json, ["bundles", all, "config_file"])
-        %{fake_relay | bundles: bundles}
-    after
-      @timeout ->
-        :emqttc.disconnect(conn)
-        raise(RuntimeError, "Timed out waiting for a reply from relay info")
-    end
+    bundles = get_in(response, ["bundles", all, "config_file"])
+    %{fake_relay | bundles: bundles}
   end
 
   @doc """
@@ -57,23 +46,28 @@ defmodule Cog.FakeRelay do
   """
   def announce(%__MODULE__{conn: conn, relay: relay, bundles: bundles}=fake_relay) do
     reply_to = "bot/test_relays/#{relay.id}"
-    Messaging.Connection.subscribe(conn, reply_to)
     announcement = %{"announce" => %{"relay" => relay.id,
                                      "bundles" => bundles,
                                      "snapshot" => true,
                                      "online" => true,
                                      "reply_to" => reply_to,
                                      "announcement_id" => relay.id}}
-    Messaging.Connection.publish(conn, announcement, routed_by: @relays_discovery_topic)
 
+    publish_and_wait(conn, announcement, reply_to, @relays_discovery_topic)
+    fake_relay
+  end
+
+  defp publish_and_wait(conn, payload, reply_to, routed_by) do
+    Messaging.Connection.subscribe(conn, reply_to)
+    Messaging.Connection.publish(conn, payload, routed_by: routed_by)
     receive do
-      {:publish, ^reply_to, _response} ->
+      {:publish, ^reply_to, response} ->
         Messaging.Connection.unsubscribe(conn, reply_to)
-        fake_relay
+        response
     after
       @timeout ->
         :emqttc.disconnect(conn)
-        raise(RuntimeError, "Timed out waiting for announcement receipt")
+        raise(RuntimeError, "Timed out waiting for response on #{reply_to}")
     end
   end
 end
