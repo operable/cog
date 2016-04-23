@@ -34,10 +34,14 @@ defmodule Cog.Relay.Relays do
     GenServer.call(__MODULE__, {:drop_bundle, bundle}, :infinity)
   end
 
+  @doc "Enables the relay"
+  @spec enable_relay(%Relay{}) :: :ok
   def enable_relay(%Relay{}=relay) do
     GenServer.call(__MODULE__, {:enable_relay, relay}, :infinity)
   end
 
+  @doc "Disables the relay"
+  @spec disable_relay(%Relay{}) :: :ok
   def disable_relay(%Relay{}=relay) do
     GenServer.call(__MODULE__, {:disable_relay, relay}, :infinity)
   end
