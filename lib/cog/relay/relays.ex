@@ -88,13 +88,7 @@ defmodule Cog.Relay.Relays do
     {:reply, :ok, %{state | tracker: tracker}}
   end
   def handle_call({:enable_relay, relay}, _from, state) do
-    all = fn(:get, data, next) ->
-      Enum.flat_map(data, &next.(Map.delete(&1, :__struct__)))
-    end
-
-    relay = Repo.preload(relay, [groups: :bundles])
-    bundles = get_in(relay.groups, [all, :bundles])
-    tracker = enable_relay(:snapshot, state.tracker, relay.id, bundles)
+    tracker = enable_relay(state.tracker, relay.id)
     {:reply, :ok, %{state | tracker: tracker}}
   end
   def handle_call({:disable_relay, relay}, _from, state) do
@@ -166,14 +160,15 @@ defmodule Cog.Relay.Relays do
                         false -> :incremental
                       end
 
-
     case {online_status, enabled_status} do
       {:offline, _} ->
-        disable_relay(tracker, relay_id)
+        remove_relay(tracker, relay_id)
       {:online, :disabled} ->
-        disable_relay(tracker, relay_id)
+        load_bundles(snapshot_status, tracker, relay_id, success_bundles)
+        |> disable_relay(relay_id)
       {:online, :enabled} ->
-        enable_relay(snapshot_status, tracker, relay_id, success_bundles)
+        load_bundles(snapshot_status, tracker, relay_id, success_bundles)
+        |> enable_relay(relay_id)
     end
   end
 
@@ -214,18 +209,28 @@ defmodule Cog.Relay.Relays do
     end
   end
 
-  defp enable_relay(:incremental, tracker, relay_id, success_bundles) do
+  defp load_bundles(:incremental, tracker, relay_id, success_bundles) do
     bundle_names = Enum.map(success_bundles, &Map.get(&1, :name)) # Just for logging purposes
     Logger.info("Incrementally adding bundles for Relay #{relay_id}: #{inspect bundle_names}")
     Tracker.add_bundles_for_relay(tracker, relay_id, success_bundles)
   end
-  defp enable_relay(:snapshot, tracker, relay_id, success_bundles) do
+  defp load_bundles(:snapshot, tracker, relay_id, success_bundles) do
     bundle_names = Enum.map(success_bundles, &Map.get(&1, :name)) # Just for logging purposes
     Logger.info("Setting bundles list for Relay #{relay_id}: #{inspect bundle_names}")
     Tracker.set_bundles_for_relay(tracker, relay_id, success_bundles)
   end
 
+  defp enable_relay(tracker, relay_id) do
+    Logger.info("Enabled Relay #{relay_id}")
+    Tracker.enable_relay(tracker, relay_id)
+  end
+
   defp disable_relay(tracker, relay_id) do
+    Logger.info("Disabled Relay #{relay_id}")
+    Tracker.disable_relay(tracker, relay_id)
+  end
+
+  defp remove_relay(tracker, relay_id) do
     Logger.info("Removed Relay #{relay_id} from active relay list")
     Tracker.remove_relay(tracker, relay_id)
   end
