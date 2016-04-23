@@ -143,7 +143,6 @@ defmodule Cog.Relay.Relays do
 
   defp update_tracker(announcement, tracker, success_bundles, internal) do
     relay_id = Map.fetch!(announcement, "relay")
-    relay = Repo.get(Relay, relay_id)
 
     online_status = case Map.fetch!(announcement, "online") do
                       true -> :online
@@ -151,7 +150,7 @@ defmodule Cog.Relay.Relays do
                     end
 
     enabled_status = cond do
-                       internal || relay.enabled -> :enabled
+                       internal || relay_enabled?(relay_id) -> :enabled
                        true -> :disabled
                      end
 
@@ -233,6 +232,13 @@ defmodule Cog.Relay.Relays do
   defp remove_relay(tracker, relay_id) do
     Logger.info("Removed Relay #{relay_id} from active relay list")
     Tracker.remove_relay(tracker, relay_id)
+  end
+
+  defp relay_enabled?(relay_id) do
+    case Repo.get(Relay, relay_id) do
+      %Relay{enabled: true} -> true
+      _ -> false
+    end
   end
 
 end
