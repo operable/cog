@@ -46,6 +46,10 @@ defmodule Cog.V1.RelayController do
     changeset = Relay.changeset(relay, relay_params)
     case Repo.update(changeset) do
       {:ok, relay} ->
+        # If the enabled flag has changed we need to enable/disable the relay
+        if Map.has_key?(changeset.changes, :enabled) do
+          update_relay_status(relay)
+        end
         render(conn, "show.json", %{relay: relay})
       {:error, changeset} ->
         conn
@@ -53,5 +57,10 @@ defmodule Cog.V1.RelayController do
         |> render(Cog.ChangesetView, "error.json", changeset: changeset)
     end
   end
+
+  defp update_relay_status(%Relay{enabled: true}=relay),
+    do: Cog.Relay.Relays.enable_relay(relay)
+  defp update_relay_status(%Relay{enabled: false}=relay),
+    do: Cog.Relay.Relays.disable_relay(relay)
 
 end

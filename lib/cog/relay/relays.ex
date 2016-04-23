@@ -10,6 +10,7 @@ defmodule Cog.Relay.Relays do
 
   alias Carrier.Messaging
   alias Cog.Models.Bundle
+  alias Cog.Models.Relay
   alias Cog.Repo
   alias Cog.Relay.Util
 
@@ -33,12 +34,12 @@ defmodule Cog.Relay.Relays do
     GenServer.call(__MODULE__, {:drop_bundle, bundle}, :infinity)
   end
 
-  def enable_relay(relay_id) do
-    GenServer.call(__MODULE__, {:enable_relay, relay_id}, :infinity)
+  def enable_relay(%Relay{}=relay) do
+    GenServer.call(__MODULE__, {:enable_relay, relay}, :infinity)
   end
 
-  def disable_relay(relay_id) do
-    GenServer.call(__MODULE__, {:disable_relay, relay_id}, :infinity)
+  def disable_relay(%Relay{}=relay) do
+    GenServer.call(__MODULE__, {:disable_relay, relay}, :infinity)
   end
 
   @doc """
@@ -82,10 +83,22 @@ defmodule Cog.Relay.Relays do
     tracker = Tracker.drop_bundle(state.tracker, bundle)
     {:reply, :ok, %{state | tracker: tracker}}
   end
+  def handle_call({:enable_relay, relay}, _from, state) do
+    all = fn(:get, data, next) ->
+      Enum.flat_map(data, &next.(Map.delete(&1, :__struct__)))
+    end
+
+    relay = Repo.preload(relay, [groups: :bundles])
+    bundles = get_in(relay.groups, [all, :bundles])
+    tracker = enable_relay(:snapshot, state.tracker, relay.id, bundles)
+    {:reply, :ok, %{state | tracker: tracker}}
+  end
+  def handle_call({:disable_relay, relay}, _from, state) do
+    tracker = disable_relay(state.tracker, relay.id)
+    {:reply, :ok, %{state | tracker: tracker}}
+  end
   def handle_call({:relays_running, bundle_name} , _from, state),
     do: {:reply, Tracker.relays(state.tracker, bundle_name), state}
-  def handle_call({:enable_relay, relay_id}, _from, state),
-    do: {:reply, enable_relay(:snapshot, state.tracker, relay_id, []), state}
 
   def handle_info({:publish, @relays_discovery_topic, message}, state) do
     case Poison.decode(message) do
@@ -109,7 +122,7 @@ defmodule Cog.Relay.Relays do
     |> Enum.partition(&Util.is_ok?/1)
     |> Util.unwrap_partition_results
 
-    tracker = update_tracker(announcement, tracker, success_bundles)
+    tracker = update_tracker(announcement, tracker, success_bundles, internal)
 
     case Map.fetch(announcement, "reply_to")  do
       :error ->
@@ -130,23 +143,25 @@ defmodule Cog.Relay.Relays do
   defp receipt(announcement_id, failed_bundles),
     do: %{"announcement_id" => announcement_id, "status" => "failed", "bundles" => failed_bundles}
 
-  defp update_tracker(announcement, tracker, success_bundles) do
+  defp update_tracker(announcement, tracker, success_bundles, internal) do
     relay_id = Map.fetch!(announcement, "relay")
+    relay = Repo.get(Relay, relay_id)
 
     online_status = case Map.fetch!(announcement, "online") do
                       true -> :online
                       false -> :offline
                     end
 
-    enabled_status = case Cog.Repo.get(Cog.Models.Relay, relay_id) do
-                       %{enabled: true} -> :enabled
-                       _ -> :disabled
+    enabled_status = cond do
+                       internal || relay.enabled -> :enabled
+                       true -> :disabled
                      end
 
     snapshot_status = case Map.fetch!(announcement, "snapshot") do
                         true -> :snapshot
                         false -> :incremental
                       end
+
 
     case {online_status, enabled_status} do
       {:offline, _} ->
