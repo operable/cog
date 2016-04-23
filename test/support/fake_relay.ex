@@ -56,11 +56,24 @@ defmodule Cog.FakeRelay do
   Announces the relay to Cog. Puts an announcement message on the bus.
   """
   def announce(%__MODULE__{conn: conn, relay: relay, bundles: bundles}=fake_relay) do
+    reply_to = "bot/test_relays/#{relay.id}"
+    Messaging.Connection.subscribe(conn, reply_to)
     announcement = %{"announce" => %{"relay" => relay.id,
                                      "bundles" => bundles,
                                      "snapshot" => true,
-                                     "online" => true}}
+                                     "online" => true,
+                                     "reply_to" => reply_to,
+                                     "announcement_id" => relay.id}}
     Messaging.Connection.publish(conn, announcement, routed_by: @relays_discovery_topic)
-    fake_relay
+
+    receive do
+      {:publish, ^reply_to, _response} ->
+        Messaging.Connection.unsubscribe(conn, reply_to)
+        fake_relay
+    after
+      @timeout ->
+        :emqttc.disconnect(conn)
+        raise(RuntimeError, "Timed out waiting for announcement receipt")
+    end
   end
 end
