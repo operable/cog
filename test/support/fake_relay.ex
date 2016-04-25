@@ -40,6 +40,9 @@ defmodule Cog.FakeRelay do
     bundles = get_in(response, ["bundles", all, "config_file"])
     %{fake_relay | bundles: bundles}
   end
+  def get_bundles(%Relay{}=relay) do
+    new(relay) |> get_bundles
+  end
 
   @doc """
   Announces the relay to Cog. Puts an announcement message on the bus.
@@ -55,6 +58,9 @@ defmodule Cog.FakeRelay do
 
     publish_and_wait(conn, announcement, reply_to, @relays_discovery_topic)
     fake_relay
+  end
+  def announce(%Relay{}=relay) do
+    new(relay) |> get_bundles |> announce
   end
 
   defp publish_and_wait(conn, payload, reply_to, routed_by) do

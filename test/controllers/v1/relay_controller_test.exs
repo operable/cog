@@ -101,11 +101,7 @@ defmodule Cog.V1.RelayControllerTest do
   test "relays are enabled in more than just name", %{authed: requestor} do
     # We create a relay and add a bundle to it so we can query for it in
     # 'Cog.Relay.Relays'
-    relay = relay("relay-enable-relay-1", "foobar")
-    bundle = bundle("relay-enable-bundle-1")
-    relay_group = relay_group("relay-enable-group-1")
-    add_relay_to_group(relay_group.id, relay.id)
-    assign_bundle_to_group(relay_group.id, bundle.id)
+    {relay, bundle, _relay_group} = create_relay_bundle_and_group("enable-relay")
 
     # We shouldn't see any relays running our bundle yet, because the relay
     # has not yet announced it's presence.
@@ -114,7 +110,7 @@ defmodule Cog.V1.RelayControllerTest do
     # Relays don't show up as available unless they are online and enabled.
     # FakeRelay lets us send announcement messages like a real relay, so Cog
     # will add the relay to the available relays list.
-    FakeRelay.new(relay) |> FakeRelay.get_bundles |> FakeRelay.announce
+    FakeRelay.announce(relay)
 
     # After announcing, our relay should be online but it still won't show up,
     # because we haven't enabled it yet.
@@ -134,11 +130,7 @@ defmodule Cog.V1.RelayControllerTest do
   test "relays are disabled in more than just name", %{authed: requestor} do
     # We create a relay and add a bundle to it so we can query for it in
     # 'Cog.Relay.Relays'
-    relay = relay("relay-disable-1", "foobaz", enabled: true)
-    bundle = bundle("relay-disable-bundle-1")
-    relay_group = relay_group("relay-disable-group-1")
-    add_relay_to_group(relay_group.id, relay.id)
-    assign_bundle_to_group(relay_group.id, bundle.id)
+    {relay, bundle, _relay_group} = create_relay_bundle_and_group("disable-relay", relay_opts: [enabled: true])
 
     # We shouldn't see any relays running our bundle yet, because the relay
     # has not yet announced it's presence.
@@ -147,7 +139,7 @@ defmodule Cog.V1.RelayControllerTest do
     # Relays don't show up as available unless they are online and enabled.
     # FakeRelay lets us send announcement messages like a real relay, so Cog
     # will add the relay to the available relays list.
-    FakeRelay.new(relay) |> FakeRelay.get_bundles |> FakeRelay.announce
+    FakeRelay.announce(relay)
 
     # After announcing, our relay should be online and enabled since we created
     # it enabled.

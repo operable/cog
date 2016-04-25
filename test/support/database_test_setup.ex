@@ -1,8 +1,6 @@
 defmodule DatabaseTestSetup do
   use Cog.Models
 
-  import Cog.Support.ModelUtilities, only: [namespace: 2]
-
   alias Cog.Repo
 
   @doc """
@@ -22,50 +20,6 @@ defmodule DatabaseTestSetup do
   def nest_group_chain([outer,inner|rest]) do
     :ok = Groupable.add_to(inner, outer)
     nest_group_chain([inner] ++ rest)
-  end
-
-  @doc """
-  Create a command with the given name
-  """
-  def command(name) do
-    bundle = case Repo.get_by(Bundle, name: "cog") do
-      nil ->
-        bundle("cog")
-      bundle ->
-        bundle
-    end
-
-    %Command{}
-    |> Command.changeset(%{name: name, bundle_id: bundle.id})
-    |> Repo.insert!
-  end
-
-  @doc """
-  Creates a bundle record
-  """
-  def bundle(name, commands \\ %{"echo": %{"executable" => "/bin/echo"}}, opts \\ []) do
-
-    bundle_template = %{
-      "name" => name,
-      "version" => "0.1.0",
-      "cog_bundle_version" => 2,
-      "commands" => commands
-    }
-
-    bundle_config = Enum.into(opts, bundle_template, fn
-      ({key, value}) when is_atom(key) ->
-        {Atom.to_string(key), value}
-      (opt) ->
-        opt
-    end)
-
-    bundle = %Bundle{}
-    |> Bundle.changeset(%{name: name, version: bundle_config["version"], config_file: bundle_config})
-    |> Repo.insert!
-
-    namespace(name, bundle.id)
-
-    bundle
   end
 
   @doc """
