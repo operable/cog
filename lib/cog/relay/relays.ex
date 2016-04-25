@@ -46,6 +46,12 @@ defmodule Cog.Relay.Relays do
     GenServer.call(__MODULE__, {:disable_relay, relay}, :infinity)
   end
 
+  @doc "Drops the relay"
+  @spec drop_relay(%Relay{}) :: :ok
+  def drop_relay(%Relay{}=relay) do
+    GenServer.call(__MODULE__, {:drop_relay, relay}, :infinity)
+  end
+
   @doc """
   Returns the IDs of all Relays currently running `bundle_name`. If no
   Relays are running the bundle, an empty list is returned.
@@ -93,6 +99,10 @@ defmodule Cog.Relay.Relays do
   end
   def handle_call({:disable_relay, relay}, _from, state) do
     tracker = disable_relay(state.tracker, relay.id)
+    {:reply, :ok, %{state | tracker: tracker}}
+  end
+  def handle_call({:drop_relay, relay}, _from, state) do
+    tracker = remove_relay(state.tracker, relay.id)
     {:reply, :ok, %{state | tracker: tracker}}
   end
   def handle_call({:relays_running, bundle_name} , _from, state),
