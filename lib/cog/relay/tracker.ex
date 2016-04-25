@@ -38,12 +38,8 @@ defmodule Cog.Relay.Tracker do
   """
   @spec enable_relay(t, String.t) :: t
   def enable_relay(tracker, relay_id) do
-    if is_disabled?(tracker, relay_id) do
-      disabled = MapSet.delete(tracker.disabled, relay_id)
-      %{tracker | disabled: disabled}
-    else
-      tracker
-    end
+    disabled = MapSet.delete(tracker.disabled, relay_id)
+    %{tracker | disabled: disabled}
   end
 
   @doc """
@@ -138,9 +134,4 @@ defmodule Cog.Relay.Tracker do
 
     MapSet.member?(relays, relay_id)
   end
-
-  defp is_disabled?(tracker, relay_id) do
-    MapSet.member?(tracker.disabled, relay_id)
-  end
-
 end
