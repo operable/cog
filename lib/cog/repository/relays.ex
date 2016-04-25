@@ -91,6 +91,4 @@ defmodule Cog.Repository.Relays do
   defp update_relay_status(%Relay{enabled: false}=relay),
     do: Relays.disable_relay(relay)
 
-
 end
-

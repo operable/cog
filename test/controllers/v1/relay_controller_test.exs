@@ -98,6 +98,37 @@ defmodule Cog.V1.RelayControllerTest do
     assert updated["description"] == @update_attrs.description
   end
 
+  test "deleted relays are removed from the tracker", %{authed: requestor} do
+    # We create a relay and add a bundle to it so we can query for it in
+    # 'Cog.Relay.Relays'
+    {relay, bundle, _relay_group} = create_relay_bundle_and_group("deleted-relay", relay_opts: [enabled: true])
+
+    # We shouldn't see any relays running our bundle yet, because the relay
+    # has not yet announced it's presence.
+    assert Relays.relays_running(bundle.name) == []
+
+    # Relays don't show up as available unless they are online and enabled.
+    # FakeRelay lets us send announcement messages like a real relay, so Cog
+    # will add the relay to the available relays list.
+    FakeRelay.announce(relay)
+
+    # After announcing, our relay should be online and enabled since we created
+    # it enabled.
+    assert Relays.relays_running(bundle.name) == [relay.id]
+
+    # This should delete the relay
+    conn = api_request(requestor, :delete, "/v1/relays/#{relay.id}")
+
+    # Confirm that the api thinks the relay has been deleted
+    assert response(conn, 204)
+
+    # And that the relay is no longer in the db
+    refute Repo.get(Relay, relay.id)
+
+    # And finally that the tracker is not reporting the relay as running the bundle
+    assert Relays.relays_running(bundle.name) == []
+  end
+
   test "relays are enabled in more than just name", %{authed: requestor} do
     # We create a relay and add a bundle to it so we can query for it in
     # 'Cog.Relay.Relays'
