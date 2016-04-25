@@ -149,9 +149,10 @@ defmodule Cog.Relay.Relays do
                       false -> :offline
                     end
 
-    enabled_status = cond do
-                       internal || relay_enabled?(relay_id) -> :enabled
-                       true -> :disabled
+    enabled_status = if internal || relay_enabled?(relay_id) do
+                       :enabled
+                     else
+                       :disabled
                      end
 
     snapshot_status = case Map.fetch!(announcement, "snapshot") do
