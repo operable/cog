@@ -31,6 +31,10 @@ defmodule Cog.Relay.Tracker do
   Enables a relay if it exists in the disabled set by removing it from the
   disabled set. When the list of relays for a bundle is requested, disabled
   bundles are filtered out.
+
+  Note: If a relay is assigned no bundles it is unknown to the tracker. When
+  enabling or disabling make sure to load bundles first or this will just be
+  a noop.
   """
   @spec enable_relay(t, String.t) :: t
   def enable_relay(tracker, relay_id) do
@@ -46,6 +50,10 @@ defmodule Cog.Relay.Tracker do
   Disables a relay if it exists in the tracker by adding it to the disabled
   set. When the list of relays for a bundle is requested, disabled bundles
   are filtered out.
+
+  Note: If a relay is assigned no bundles it is unknown to the tracker. When
+  enabling or disabling make sure to load bundles first or this will just be
+  a noop.
   """
   @spec disable_relay(t, String.t) :: t
   def disable_relay(tracker, relay_id) do
