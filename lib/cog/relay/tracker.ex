@@ -9,10 +9,16 @@ defmodule Cog.Relay.Tracker do
 
   Tracks all the relays that have checked in with the bot, recording
   which bundles they each serve.
+
+  Maintains a set of disabled relays. Relays that appear in the disabled
+  set will be filtered out when the list of relays for a bundle is requested.
+  Note: Relays must be explicitly disabled, otherwise they are assumed to be
+  available.
   """
 
-  @type t :: %__MODULE__{map: %{String.t => MapSet.t}}
-  defstruct [map: %{}]
+  @type t :: %__MODULE__{map: %{String.t => MapSet.t},
+                         disabled: MapSet.t}
+  defstruct [map: %{}, disabled: MapSet.new]
 
   @doc """
   Create a new, empty Tracker
@@ -20,6 +26,40 @@ defmodule Cog.Relay.Tracker do
   @spec new() :: t
   def new(),
     do: %__MODULE__{}
+
+  @doc """
+  Enables a relay if it exists in the disabled set by removing it from the
+  disabled set. When the list of relays for a bundle is requested, disabled
+  bundles are filtered out.
+
+  Note: If a relay is assigned no bundles it is unknown to the tracker. When
+  enabling or disabling make sure to load bundles first or this will just be
+  a noop.
+  """
+  @spec enable_relay(t, String.t) :: t
+  def enable_relay(tracker, relay_id) do
+    disabled = MapSet.delete(tracker.disabled, relay_id)
+    %{tracker | disabled: disabled}
+  end
+
+  @doc """
+  Disables a relay if it exists in the tracker by adding it to the disabled
+  set. When the list of relays for a bundle is requested, disabled bundles
+  are filtered out.
+
+  Note: If a relay is assigned no bundles it is unknown to the tracker. When
+  enabling or disabling make sure to load bundles first or this will just be
+  a noop.
+  """
+  @spec disable_relay(t, String.t) :: t
+  def disable_relay(tracker, relay_id) do
+    if in_tracker?(tracker, relay_id) do
+      disabled = MapSet.put(tracker.disabled, relay_id)
+      %{tracker | disabled: disabled}
+    else
+      tracker
+    end
+  end
 
   @doc """
   Removes all record of `relay` from the tracker. If `relay` is the
@@ -36,7 +76,9 @@ defmodule Cog.Relay.Tracker do
         Map.put(acc, bundle, remaining)
       end
     end)
-    %{tracker | map: updated}
+
+    disabled = MapSet.delete(tracker.disabled, relay)
+    %{tracker | map: updated, disabled: disabled}
   end
 
   @doc """
@@ -81,7 +123,13 @@ defmodule Cog.Relay.Tracker do
   def relays(tracker, bundle_name) do
     tracker.map
     |> Map.get(bundle_name, MapSet.new)
+    |> MapSet.difference(tracker.disabled)
     |> MapSet.to_list
   end
 
+  defp in_tracker?(tracker, relay_id) do
+    Map.values(tracker.map)
+    |> Enum.reduce(&MapSet.union(&1, &2))
+    |> MapSet.member?(relay_id)
+  end
 end

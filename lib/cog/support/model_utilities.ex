@@ -189,12 +189,62 @@ defmodule Cog.Support.ModelUtilities do
   end
 
   @doc """
+  Create a command with the given name
+  """
+  def command(name) do
+    bundle = case Repo.get_by(Bundle, name: "cog") do
+      nil ->
+        bundle("cog")
+      bundle ->
+        bundle
+    end
+
+    %Command{}
+    |> Command.changeset(%{name: name, bundle_id: bundle.id})
+    |> Repo.insert!
+  end
+
+  @doc """
+  Creates a bundle record
+  """
+  def bundle(name, commands \\ %{"echo": %{"executable" => "/bin/echo"}}, opts \\ []) do
+
+    bundle_template = %{
+      "name" => name,
+      "version" => "0.1.0",
+      "cog_bundle_version" => 2,
+      "commands" => commands
+    }
+
+    bundle_config = Enum.into(opts, bundle_template, fn
+      ({key, value}) when is_atom(key) ->
+        {Atom.to_string(key), value}
+      (opt) ->
+        opt
+    end)
+
+    bundle = %Bundle{}
+    |> Bundle.changeset(%{name: name, version: bundle_config["version"], config_file: bundle_config})
+    |> Repo.insert!
+
+    namespace(name, bundle.id)
+
+    bundle
+  end
+
+
+  @doc """
   Creates a relay record
+
+  Options:
+  :enabled - set's whether the relay should be enabled on create
+  :desc - set's the relays description
   """
   def relay(name, token, opts \\ []) do
     relay = %Relay{}
     |> Relay.changeset(%{name: name,
                          token: token,
+                         enabled: Keyword.get(opts, :enabled, false),
                          desc: Keyword.get(opts, :desc, nil)})
     |> Repo.insert!
     %{relay | token: nil}
@@ -227,6 +277,27 @@ defmodule Cog.Support.ModelUtilities do
     |> RelayGroupAssignment.changeset(%{group_id: group_id,
                                         bundle_id: bundle_id})
     |> Repo.insert!
+  end
+
+  @doc """
+  Creates a relay, relay-group and bundle. Then assigns the bundle and adds the
+  relay to the relay-group
+
+  Options:
+  :token - sets the token for the new relay
+  :relay_opts - set any additional options for the relay as described by `__MODULE__.relay/3`
+  """
+  @spec create_relay_bundle_and_group(String.t, [{Atom.t, any()}]) :: {%Relay{}, %Bundle{}, %RelayGroup{}}
+  def create_relay_bundle_and_group(name, opts \\ []) do
+    relay = relay("relay-#{name}",
+                  Keyword.get(opts, :token, "sekrit"),
+                  Keyword.get(opts, :relay_opts, []))
+    bundle = bundle("bundle-#{name}")
+    relay_group = relay_group("group-#{name}")
+    add_relay_to_group(relay_group.id, relay.id)
+    assign_bundle_to_group(relay_group.id, bundle.id)
+
+    {relay, bundle, relay_group}
   end
 
   @doc """
