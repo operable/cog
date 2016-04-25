@@ -128,10 +128,8 @@ defmodule Cog.Relay.Tracker do
   end
 
   defp in_tracker?(tracker, relay_id) do
-    relays = Enum.reduce(tracker.map, MapSet.new(), fn({_, relays}, acc) ->
-      MapSet.union(relays, acc)
-    end)
-
-    MapSet.member?(relays, relay_id)
+    Map.values(tracker.map)
+    |> Enum.reduce(&MapSet.union(&1, &2))
+    |> MapSet.member?(relay_id)
   end
 end
