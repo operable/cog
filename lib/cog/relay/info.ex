@@ -58,9 +58,8 @@ defmodule Cog.Relay.Info do
 
         respond(%{bundles: bundles}, reply_to, state)
       nil ->
-        ## If we get a nil back then the relay isn't registered with Cog, so we
-        ## ignore it.
-        :noop
+        ## If we get a nil back then the relay isn't registered with Cog.
+        respond(%{error: "Relay with id #{relay_id} was not recognized."}, reply_to, state)
     end
   end
 
