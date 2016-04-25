@@ -235,6 +235,10 @@ defmodule Cog.Support.ModelUtilities do
 
   @doc """
   Creates a relay record
+
+  Options:
+  :enabled - set's whether the relay should be enabled on create
+  :desc - set's the relays description
   """
   def relay(name, token, opts \\ []) do
     relay = %Relay{}
@@ -278,7 +282,12 @@ defmodule Cog.Support.ModelUtilities do
   @doc """
   Creates a relay, relay-group and bundle. Then assigns the bundle and adds the
   relay to the relay-group
+
+  Options:
+  :token - sets the token for the new relay
+  :relay_opts - set any additional options for the relay as described by `__MODULE__.relay/3`
   """
+  @spec create_relay_bundle_and_group(String.t, [{Atom.t, any()}]) :: {%Relay{}, %Bundle{}, %RelayGroup{}}
   def create_relay_bundle_and_group(name, opts \\ []) do
     relay = relay("relay-#{name}",
                   Keyword.get(opts, :token, "sekrit"),
