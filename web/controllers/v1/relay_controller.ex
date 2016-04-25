@@ -1,7 +1,7 @@
 defmodule Cog.V1.RelayController do
   use Cog.Web, :controller
 
-  alias Cog.Repository.Relays
+  alias Cog.Repository.Relays, as: RelaysRepo
 
   plug Cog.Plug.Authentication
   plug Cog.Plug.Authorization, permission: "#{Cog.embedded_bundle}:manage_relays"
@@ -9,10 +9,10 @@ defmodule Cog.V1.RelayController do
   plug :scrub_params, "relay" when action in [:create, :update]
 
   def index(conn, _params),
-    do: render(conn, "index.json", relays: Relays.all)
+    do: render(conn, "index.json", relays: RelaysRepo.all)
 
   def create(conn, %{"relay" => relay_params}) do
-    case Relays.new(relay_params) do
+    case RelaysRepo.new(relay_params) do
       {:ok, relay} ->
         conn
         |> put_status(:created)
@@ -26,7 +26,7 @@ defmodule Cog.V1.RelayController do
   end
 
   def show(conn, %{"id" => id}) do
-    case Relays.by_id(id) do
+    case RelaysRepo.by_id(id) do
       {:ok, relay} ->
         conn
         |> put_status(:ok)
@@ -43,7 +43,7 @@ defmodule Cog.V1.RelayController do
   end
 
   def delete(conn, %{"id" => id}) do
-    case Relays.delete(id) do
+    case RelaysRepo.delete(id) do
       {:ok, _} ->
         conn
         |> send_resp(:no_content, "")
@@ -59,7 +59,7 @@ defmodule Cog.V1.RelayController do
   end
 
   def update(conn, %{"id" => id, "relay" => relay_params}) do
-    case Relays.update(id, relay_params) do
+    case RelaysRepo.update(id, relay_params) do
       {:ok, updated} ->
         conn
         |> render("show.json", %{relay: updated})
