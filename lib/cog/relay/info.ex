@@ -1,5 +1,7 @@
 defmodule Cog.Relay.Info do
 
+  @relay_info_topic "bot/relays/info"
+
   @moduledoc """
   Subscribes on #{@relay_info_topic} to provide info to relays
   on request. Relays can publish the following special messages
@@ -18,8 +20,6 @@ defmodule Cog.Relay.Info do
   alias Carrier.Messaging
   alias Cog.Repo
   alias Cog.Models.Relay
-
-  @relay_info_topic "bot/relays/info"
 
   def start_link do
     GenServer.start_link(__MODULE__, [], name: __MODULE__)
