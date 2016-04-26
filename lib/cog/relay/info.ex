@@ -69,6 +69,9 @@ defmodule Cog.Relay.Info do
         respond(%{bundles: bundles}, reply_to, state)
       nil ->
         ## If we get a nil back then the relay isn't registered with Cog.
+        ## Technically we should never respond with an error, because relays
+        ## should never make it through the BusEnforcer if they aren't registered
+        ## but for completeness it's included here.
         respond(%{error: "Relay with id #{relay_id} was not recognized."}, reply_to, state)
     end
   end
