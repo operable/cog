@@ -4,10 +4,12 @@ defmodule Cog.Commands.Help do
   @moduledoc """
   Get help on all installed Cog bot commands.
 
-    * `@bot #{Cog.embedded_bundle}:help` - list all enabled commands
-    * `@bot #{Cog.embedded_bundle}:help --disabled` - list all disabled commands
-    * `@bot #{Cog.embedded_bundle}:help --all` - list all known commands, enabled and disabled
-    * `@bot #{Cog.embedded_bundle}:help "#{Cog.embedded_bundle}:help"` - list help for a specific command
+  ## Example
+
+      @bot #{Cog.embedded_bundle}:help - list all enabled commands
+      @bot #{Cog.embedded_bundle}:help --disabled - list all disabled commands
+      @bot #{Cog.embedded_bundle}:help --all - list all known commands, enabled and disabled
+      @bot #{Cog.embedded_bundle}:help "#{Cog.embedded_bundle}:help" - list help for a specific command
 
   """
 

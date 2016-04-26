@@ -15,7 +15,7 @@ defmodule Cog.Commands.Sleep do
 
   Currently useful mainly for debugging purposes.
 
-  Example:
+  ## Example
 
       !echo "Get up and stretch" | sleep 10 | echo $body > me`
 

@@ -12,12 +12,15 @@ defmodule Cog.Commands.Filter do
       > { "id": "91edb472-04cf-4bca-ba05-e51b63f26758",
           "rule": "operable:manage_users",
           "command": "operable:permissions" }
+
       @bot #{Cog.embedded_bundle}:seed --list --for-command="#{Cog.embedded_bundle}:permissions" | #{Cog.embedded_bundle}:filter --path="rule" --matches="/manage_users/"
       > { "id": "91edb472-04cf-4bca-ba05-e51b63f26758",
           "rule": "operable:manage_users",
           "command": "operable:permissions" }
+
       @bot #{Cog.embedded_bundle}:seed '[{"foo":{"bar.qux":{"baz":"stuff"}}}, {"foo": {"bar":{"baz":"me"}}}]' | #{Cog.embedded_bundle}:filter --path="foo.bar.baz""
       > [ {"foo": {"bar.qux": {"baz": "stuff"} } }, {"foo": {"bar": {"baz": "me"} } } ]
+
       @bot #{Cog.embedded_bundle}:seed '[{"foo":{"bar.qux":{"baz":"stuff"}}}, {"foo": {"bar":{"baz":"me"}}}]' | #{Cog.embedded_bundle}:filter --path="foo.\\"bar.qux\\".baz""
       > { "foo": {"bar.qux": {"baz": "stuff"} } }
 

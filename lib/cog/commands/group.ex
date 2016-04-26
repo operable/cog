@@ -2,19 +2,22 @@ defmodule Cog.Commands.Group do
   @moduledoc """
   This command allows the user to manage groups of users.
 
-  Usage:
+  ## Usage
+
       group --create <groupname>
       group --drop <groupname>
       group --add --user=<username> <groupname>
       group --remove --user=<username> <groupname>
       group --list
-  Examples:
-  > @bot operable:group --create ops
-  > @bot operable:group --create engineering
-  > @bot operable:group --add --user=bob ops
-  > @bot operable:group --remove --user=bob ops
-  > @bot operable:group --drop ops
-  > @bot operable:group --list
+
+  ## Example
+
+      @bot operable:group --create ops
+      @bot operable:group --create engineering
+      @bot operable:group --add --user=bob ops
+      @bot operable:group --remove --user=bob ops
+      @bot operable:group --drop ops
+      @bot operable:group --list
   """
   use Spanner.GenCommand.Base, bundle: Cog.embedded_bundle
 

@@ -2,18 +2,21 @@ defmodule Cog.Commands.Role do
   @moduledoc """
   This command allows the user to manage roles.
 
-  Usage:
+  ## Usage
+
       role --create <rolename>
       role --drop <rolename>
       role --grant --group=<groupname> <rolename>
       role --revoke --group=<groupname> <rolename>
       role --list
-  Examples:
-  > @bot operable:role --create deployment
-  > @bot operable:role --grant --group=ops deployment
-  > @bot operable:role --revoke --group=ops deployment
-  > @bot operable:role --drop deployment
-  > @bot operable:role --list
+
+  ## Example
+
+      @bot operable:role --create deployment
+      @bot operable:role --grant --group=ops deployment
+      @bot operable:role --revoke --group=ops deployment
+      @bot operable:role --drop deployment
+      @bot operable:role --list
   """
   use Spanner.GenCommand.Base, bundle: Cog.embedded_bundle
 
