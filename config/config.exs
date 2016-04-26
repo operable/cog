@@ -44,6 +44,12 @@ config :cog, Cog.Adapters.IRC,
   password: System.get_env("IRC_PASSWORD"),
   use_ssl: System.get_env("IRC_USE_SSL") || true
 
+
+# Chat provider APIs may be slow to respond to requests in some cases
+# so we set a generous timeout.
+
+config :httpotion, :default_timeout, 30000
+
 # ========================================================================
 # Commands, Bundles, and Services
 
