@@ -1,5 +1,15 @@
 defmodule Cog.Relay.Info do
 
+  @moduledoc """
+  Subscribes on #{@relay_info_topic} to provide info to relays
+  on request. Relays can publish the following special messages
+  on the topic:
+
+  list bundles - Returns the list of bundles assigned to the relay.
+    message: {"list_bundles": {"relay_id": <relay uuid>, "reply_to": <reply topic>}}
+    response: {"bundles": [<bundles>]}
+  """
+
   defstruct [mq_conn: nil]
 
   use Adz
