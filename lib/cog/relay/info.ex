@@ -1,5 +1,17 @@
 defmodule Cog.Relay.Info do
 
+  @relay_info_topic "bot/relays/info"
+
+  @moduledoc """
+  Subscribes on #{@relay_info_topic} to provide info to relays
+  on request. Relays can publish the following special messages
+  on the topic:
+
+  list bundles - Returns the list of bundles assigned to the relay.
+    message: {"list_bundles": {"relay_id": <relay uuid>, "reply_to": <reply topic>}}
+    response: {"bundles": [<bundles>]}
+  """
+
   defstruct [mq_conn: nil]
 
   use Adz
@@ -8,9 +20,6 @@ defmodule Cog.Relay.Info do
   alias Carrier.Messaging
   alias Cog.Repo
   alias Cog.Models.Relay
-  alias Cog.Queries
-
-  @relay_info_topic "bot/relays/info"
 
   def start_link do
     GenServer.start_link(__MODULE__, [], name: __MODULE__)
@@ -46,24 +55,25 @@ defmodule Cog.Relay.Info do
   # Private functions
 
   defp info(%{"list_bundles" => %{"relay_id" => relay_id, "reply_to" => reply_to}}, state) do
-    case Repo.one(Queries.Relay.for_id(relay_id)) do
-      %Relay{}=relay ->
-        Enum.flat_map(relay.groups, &(&1.bundles))
-        |> prepare_bundles
-      nil ->
-        []
+    all = fn(:get, data, next) ->
+      Enum.flat_map(data, &next.(Map.delete(&1, :__struct__)))
     end
-    |> respond(reply_to, state)
-  end
 
-  defp prepare_bundles(bundles) do
-    prepared_bundles = Enum.map(bundles, fn(bundle) ->
-      %{name: bundle.name,
-        config_file: bundle.config_file,
-        enabled: bundle.enabled}
-    end)
+    case Repo.get(Relay, relay_id) do
+      %Relay{}=relay ->
+        relay = Repo.preload(relay, [groups: :bundles])
 
-    %{bundles: prepared_bundles}
+        bundles = get_in(relay.groups, [all, :bundles])
+        |> Enum.map(&Map.take(&1, [:name, :config_file, :enabled]))
+
+        respond(%{bundles: bundles}, reply_to, state)
+      nil ->
+        ## If we get a nil back then the relay isn't registered with Cog.
+        ## Technically we should never respond with an error, because relays
+        ## should never make it through the BusEnforcer if they aren't registered
+        ## but for completeness it's included here.
+        respond(%{error: "Relay with id #{relay_id} was not recognized."}, reply_to, state)
+    end
   end
 
   defp respond(payload, reply_to, state) do
