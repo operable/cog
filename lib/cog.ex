@@ -11,6 +11,10 @@ defmodule Cog do
                 worker(Cog.TokenReaper, []),
                 worker(Carrier.CredentialManager, []),
                 supervisor(Cog.Relay.RelaySup, []),
+
+                # TODO: Need to put this and commandsup under a supervisor
+                supervisor(Cog.Command.Service.Supervisor, []),
+
                 supervisor(Cog.Command.CommandSup, []),
                 supervisor(adapter_supervisor, []),
                 supervisor(Cog.Endpoint, []),
