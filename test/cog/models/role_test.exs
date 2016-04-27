@@ -47,13 +47,8 @@ defmodule Cog.Models.Role.Test do
 
   @tag :bootstrap
   test "embedded permissions cannot be removed from the admin role (DB)", %{admin_role: admin_role, admin_perms: [perm|_]} do
-    try do
-      JoinTable.dissociate(admin_role, perm)
-      assert "database constraint should have raised" = true
-    rescue
-      err ->
-        assert err.postgres.message == "cannot remove embedded permissions from admin role"
-    end
+    error = catch_error(JoinTable.dissociate(admin_role, perm))
+    assert error.postgres.message == "cannot remove embedded permissions from admin role"
   end
 
 end
