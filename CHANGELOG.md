@@ -1,5 +1,16 @@
 #  Changelog
 
+## v0.4.1
+
+### Enhancements
+
+- [Enforce enabled/disabled state for Relays](https://github.com/operable/cog/pull/572)
+
+### Bug Fixes
+
+- [Fix environment generation for non-string command options](https://github.com/operable/go-relay/pull/5)
+- [Increase timeout for external HTTP requests to handle slow chat provider API calls](https://github.com/operable/cog/pull/579)
+
 ## v.0.4.0
 
 ### Enhancements
