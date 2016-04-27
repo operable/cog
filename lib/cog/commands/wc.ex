@@ -10,7 +10,7 @@ defmodule Cog.Commands.Wc do
   To the moon-beholders."
   """
   use Cog.GenCommand.Base, bundle: Cog.embedded_bundle, enforcing: false
-  alias Spanner.Command.Request
+  alias Cog.Command.Request
 
   option "words", type: "bool", required: false
   option "lines", type: "bool", required: false

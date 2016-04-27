@@ -15,7 +15,7 @@ defmodule Cog.Commands.Rules do
   """
   use Cog.GenCommand.Base, bundle: Cog.embedded_bundle
 
-  alias Spanner.Command.Request
+  alias Cog.Command.Request
 
   option "add", type: "bool"
   option "list", type: "bool"

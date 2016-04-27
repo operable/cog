@@ -1,6 +1,6 @@
-defmodule Spanner.Command.Request do
+defmodule Cog.Command.Request do
 
-  use Spanner.Marshalled
+  use Cog.Marshalled
   alias Spanner.Config
 
   require Logger

@@ -1,4 +1,4 @@
-defmodule Spanner.DecodeError do
+defmodule Cog.DecodeError do
   defexception [:message, :json]
 
   def key_error(:request) do
@@ -10,7 +10,7 @@ defmodule Spanner.DecodeError do
 
 end
 
-defmodule Spanner.Marshalled do
+defmodule Cog.Marshalled do
 
   defmacro __using__(_) do
     quote do
@@ -63,9 +63,9 @@ defmodule Spanner.Marshalled do
           {:ok, populated} ->
             populated
           {:error, {:empty_field, field}} ->
-            raise Spanner.DecodeError, [message: "#{__MODULE__}.#{field} is empty", json: data]
+            raise Cog.DecodeError, [message: "#{__MODULE__}.#{field} is empty", json: data]
           {:error, reason} ->
-            raise Spanner.DecodeError, [message: inspect(reason), json: data]
+            raise Cog.DecodeError, [message: inspect(reason), json: data]
         end
       end
       def decode(data) do

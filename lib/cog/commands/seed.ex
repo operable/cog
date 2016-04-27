@@ -2,7 +2,7 @@ defmodule Cog.Command.Seed do
   use Cog.GenCommand.Base, bundle: Cog.embedded_bundle,
                                enforcing: false
 
-  alias Spanner.Command.Request
+  alias Cog.Command.Request
   require Logger
 
   @moduledoc """

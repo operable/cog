@@ -1,7 +1,7 @@
-defmodule Spanner.Command.RequestTest do
+defmodule Cog.Command.RequestTest do
   use ExUnit.Case, async: true
 
-  alias Spanner.Command.Request
+  alias Cog.Command.Request
 
   setup do
     config_dir = unique_temporary_dir

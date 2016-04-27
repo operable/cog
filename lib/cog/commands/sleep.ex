@@ -21,7 +21,7 @@ defmodule Cog.Commands.Sleep do
 
   """
 
-  alias Spanner.Command.Request
+  alias Cog.Command.Request
 
   def handle_message(req, state) do
     case sleep_seconds(req) do

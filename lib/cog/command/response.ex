@@ -1,6 +1,6 @@
-defmodule Spanner.Command.Response do
+defmodule Cog.Command.Response do
 
-  use Spanner.Marshalled
+  use Cog.Marshalled
 
   defmarshalled [:room, :status, :status_message, :body, :bundle, :template]
 

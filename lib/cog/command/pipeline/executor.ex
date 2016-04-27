@@ -52,7 +52,7 @@ defmodule Cog.Command.Pipeline.Executor do
     topic: String.t,
     started: :erlang.timestamp(),
     mq_conn: Carrier.Messaging.Connection.connection(),
-    request: %Spanner.Command.Request{}, # TODO: needs to be a type
+    request: %Cog.Command.Request{}, # TODO: needs to be a type
     destinations: [Destination.t],
     invocations: [%Piper.Command.Ast.Invocation{}], # TODO: needs to be a type
     current_plan: Cog.Command.Pipeline.Plan.t,
@@ -193,7 +193,7 @@ defmodule Cog.Command.Pipeline.Executor do
           updated_state =  %{state | current_plan: current_plan, plans: remaining_plans}
 
           dispatch_event(updated_state, relay)
-          Connection.publish(updated_state.mq_conn, Spanner.Command.Request.encode!(req), routed_by: topic)
+          Connection.publish(updated_state.mq_conn, Cog.Command.Request.encode!(req), routed_by: topic)
 
           {:next_state, :wait_for_command, updated_state, @command_timeout}
       end
@@ -212,7 +212,7 @@ defmodule Cog.Command.Pipeline.Executor do
     case topic do
       ^reply_topic ->
         payload = Poison.decode!(message)
-        resp = Spanner.Command.Response.decode!(payload)
+        resp = Cog.Command.Response.decode!(payload)
         case resp.status do
           "ok" ->
             collected_output = case resp.body do
@@ -601,7 +601,7 @@ defmodule Cog.Command.Pipeline.Executor do
     room      = request["room"]
     user      = Cog.Models.EctoJson.render(user)
 
-    %Spanner.Command.Request{command: Cog.Models.Command.full_name(plan.command),
+    %Cog.Command.Request{command: Cog.Models.Command.full_name(plan.command),
                              options: plan.options,
                              args: plan.args,
                              cog_env: plan.cog_env,

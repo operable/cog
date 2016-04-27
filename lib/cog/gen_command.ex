@@ -73,7 +73,7 @@ defmodule Cog.GenCommand do
   use GenServer
 
   require Logger
-  alias Spanner.Command
+  alias Cog.Command
 
   ## Fields
   #
