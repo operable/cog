@@ -74,7 +74,6 @@ defmodule Spanner.GenCommand do
 
   require Logger
   alias Spanner.Command
-  import Spanner.GenCommand.Util, only: [format_error_message: 3]
 
   ## Fields
   #
@@ -235,5 +234,18 @@ defmodule Spanner.GenCommand do
 
   defp command_reply_topic(bundle_name, command_name, relay_id),
     do: "#{command_topic(bundle_name, command_name, relay_id)}/reply"
+
+  defp format_error_message(command, error, stacktrace) do
+    """
+
+    It appears that the `#{command}` command crashed while executing, with the following error:
+
+   ```#{inspect error}```
+
+   Here is the stacktrace at the point where the crash occurred. This information can help the authors of the command determine the ultimate cause for the crash.
+
+   ```#{inspect stacktrace, pretty: true}```
+   """
+  end
 
 end
