@@ -1,7 +1,7 @@
 defmodule Cog.Bundle.Config.Test do
   use ExUnit.Case, async: true
   alias Cog.Bundle.Config
-  alias Spanner.GenCommand
+  alias Cog.GenCommand
 
   # Create some test modules; these will be our "bundle"
 

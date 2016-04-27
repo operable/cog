@@ -24,7 +24,7 @@ defmodule Cog.Commands.Permissions do
   > !#{Cog.embedded_bundle}:permissions --revoke --role=dev --permission=giphy:giphy
 
   """
-  use Spanner.GenCommand.Base, bundle: Cog.embedded_bundle
+  use Cog.GenCommand.Base, bundle: Cog.embedded_bundle
 
   option "create", type: "bool"
   option "delete", type: "bool"

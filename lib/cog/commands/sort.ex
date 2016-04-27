@@ -1,5 +1,5 @@
 defmodule Cog.Commands.Sort do
-  use Spanner.GenCommand.Base, bundle: Cog.embedded_bundle, enforcing: false, execution: :once
+  use Cog.GenCommand.Base, bundle: Cog.embedded_bundle, enforcing: false, execution: :once
 
   @moduledoc """
   Sorts the given inputs.

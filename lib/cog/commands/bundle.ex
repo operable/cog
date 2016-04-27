@@ -72,7 +72,7 @@ defmodule Cog.Commands.Bundle do
 
   """
 
-  use Spanner.GenCommand.Base, bundle: Cog.embedded_bundle
+  use Cog.GenCommand.Base, bundle: Cog.embedded_bundle
 
   alias Cog.Repo
   alias Cog.Models.Bundle

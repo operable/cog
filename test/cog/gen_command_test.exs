@@ -1,8 +1,8 @@
-defmodule Spanner.GenCommand.Base.Test do
+defmodule Cog.GenCommand.Base.Test do
   use ExUnit.Case
 
-  alias Spanner.GenCommand
-  alias Spanner.GenCommand.ValidationError
+  alias Cog.GenCommand
+  alias Cog.GenCommand.ValidationError
 
   defmodule TestCommand do
     use GenCommand.Base, bundle: "foo"

@@ -40,7 +40,7 @@ defmodule Cog.Bundle.Embedded do
     children = Enum.map(config["commands"], fn({command_name, command}) ->
       name = command_name
       module = Module.concat([command["module"]])
-      worker(Spanner.GenCommand, [bundle.name, name, module, []], id: module)
+      worker(Cog.GenCommand, [bundle.name, name, module, []], id: module)
     end)
     supervise(children, strategy: :rest_for_one, max_restarts: 5, max_seconds: 60)
   end

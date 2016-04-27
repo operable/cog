@@ -1,5 +1,5 @@
 defmodule Cog.Support.TestCommands.RequiredOptTestCommand do
-  use Spanner.GenCommand.Base, bundle: Cog.embedded_bundle, enforcing: false, name: "req-opt"
+  use Cog.GenCommand.Base, bundle: Cog.embedded_bundle, enforcing: false, name: "req-opt"
 
   option "req", type: "string", required: true
 

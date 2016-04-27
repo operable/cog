@@ -1,5 +1,5 @@
 defmodule Cog.Commands.SecureTestThorn do
-  use Spanner.GenCommand.Base, bundle: Cog.embedded_bundle, name: "st-thorn"
+  use Cog.GenCommand.Base, bundle: Cog.embedded_bundle, name: "st-thorn"
 
   @upcase_thorn "Þ"
   @downcase_thorn "þ"
@@ -15,4 +15,3 @@ defmodule Cog.Commands.SecureTestThorn do
     {:reply, req.reply_to, text, state}
   end
 end
-

@@ -1,5 +1,5 @@
 defmodule Cog.Support.TestCommands.SecureTestEcho do
-  use Spanner.GenCommand.Base, bundle: Cog.embedded_bundle, name: "st-echo"
+  use Cog.GenCommand.Base, bundle: Cog.embedded_bundle, name: "st-echo"
 
   @moduledoc """
   Repeats whatever it is passed.

@@ -5,7 +5,7 @@ defmodule Cog.Commands.Thorn do
   Examples:
   > @bot operable:thorn foo-Thbar-Thbaz
   """
-  use Spanner.GenCommand.Base, bundle: Cog.embedded_bundle, enforcing: false
+  use Cog.GenCommand.Base, bundle: Cog.embedded_bundle, enforcing: false
 
   @upcase_thorn "Þ"
   @downcase_thorn "þ"

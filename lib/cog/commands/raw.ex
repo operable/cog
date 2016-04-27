@@ -1,5 +1,5 @@
 defmodule Cog.Command.Raw do
-  use Spanner.GenCommand.Base, bundle: Cog.embedded_bundle,
+  use Cog.GenCommand.Base, bundle: Cog.embedded_bundle,
                                enforcing: false
 
   alias Spanner.Command.Request

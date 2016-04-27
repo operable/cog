@@ -7,7 +7,7 @@ defmodule Cog.Commands.Sum do
   > @bot operable:sum 2 "-9"
   > @bot operable:sum 2 24 57 3.7 226.78
   """
-  use Spanner.GenCommand.Base, bundle: Cog.embedded_bundle, enforcing: false
+  use Cog.GenCommand.Base, bundle: Cog.embedded_bundle, enforcing: false
   require Logger
   import Cog.Helpers, only: [get_number: 1]
 

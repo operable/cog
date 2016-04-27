@@ -1,8 +1,8 @@
-defmodule Spanner.GenCommand do
+defmodule Cog.GenCommand do
   @moduledoc """
   Generic bot command support.
 
-  Elixir-based commands should see `Spanner.GenCommand.Base`, as it
+  Elixir-based commands should see `Cog.GenCommand.Base`, as it
   provides several helper macros that remove much of the boilerplate
   from implementation, and also provides several helpful compile-time
   validity checks.
@@ -117,7 +117,7 @@ defmodule Spanner.GenCommand do
   `GenCommand`. Calls `module.init/2` to set up callback state.
 
   """
-  @spec init(Keyword.t) :: {:ok, Spanner.GenCommand.state} | {:error, term()}
+  @spec init(Keyword.t) :: {:ok, Cog.GenCommand.state} | {:error, term()}
   def init([bundle: bundle, command: command, module: module, args: args]) do
     # Trap exits for if / when the message bus connection dies; see
     # handle_info/2 for more

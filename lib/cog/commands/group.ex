@@ -16,7 +16,7 @@ defmodule Cog.Commands.Group do
   > @bot operable:group --drop ops
   > @bot operable:group --list
   """
-  use Spanner.GenCommand.Base, bundle: Cog.embedded_bundle
+  use Cog.GenCommand.Base, bundle: Cog.embedded_bundle
 
   option "create", type: "bool"
   option "drop", type: "bool"

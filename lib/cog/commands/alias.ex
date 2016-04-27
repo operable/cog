@@ -1,5 +1,5 @@
 defmodule Cog.Commands.Alias do
-  use Spanner.GenCommand.Base, bundle: Cog.embedded_bundle, enforcing: false
+  use Cog.GenCommand.Base, bundle: Cog.embedded_bundle, enforcing: false
   alias Cog.Commands.Alias
   alias Cog.Commands.Helpers
 
