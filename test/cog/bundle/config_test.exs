@@ -1,6 +1,6 @@
-defmodule Spanner.Bundle.Config.Test do
+defmodule Cog.Bundle.Config.Test do
   use ExUnit.Case, async: true
-  alias Spanner.Bundle.Config
+  alias Cog.Bundle.Config
   alias Spanner.GenCommand
 
   # Create some test modules; these will be our "bundle"
@@ -62,7 +62,7 @@ defmodule Spanner.Bundle.Config.Test do
                  "documentation" => nil,
                  "enforcing" => true,
                  "execution" => "multiple",
-                 "module" => "Spanner.Bundle.Config.Test.CommandWithoutOptions",
+                 "module" => "Cog.Bundle.Config.Test.CommandWithoutOptions",
                  "rules" => [
                    "when command is testing:command-without-options must have testing:foo"
                  ]},
@@ -70,7 +70,7 @@ defmodule Spanner.Bundle.Config.Test do
                  "documentation" => nil,
                  "enforcing" => true,
                  "execution" => "multiple",
-                 "module" => "Spanner.Bundle.Config.Test.CommandWithOptions",
+                 "module" => "Cog.Bundle.Config.Test.CommandWithOptions",
                  "options" => %{
                    "option_1" => %{
                      "type" => "bool",
@@ -85,17 +85,17 @@ defmodule Spanner.Bundle.Config.Test do
                  "documentation" => nil,
                  "enforcing" => false,
                  "execution" => "multiple",
-                 "module" => "Spanner.Bundle.Config.Test.UnenforcedCommand"},
+                 "module" => "Cog.Bundle.Config.Test.UnenforcedCommand"},
                "unbound-command" => %{
                  "documentation" => nil,
                  "enforcing" => false,
                  "execution" => "multiple",
-                 "module" => "Spanner.Bundle.Config.Test.UnboundCommand"},
+                 "module" => "Cog.Bundle.Config.Test.UnboundCommand"},
                "execution-once-command" => %{
                  "documentation" => nil,
                  "enforcing" => false,
                  "execution" => "once",
-                 "module" => "Spanner.Bundle.Config.Test.ExecutionOnceCommand"}
+                 "module" => "Cog.Bundle.Config.Test.ExecutionOnceCommand"}
              },
              "permissions" => ["testing:bar", "testing:baz", "testing:foo"]} = config
   end

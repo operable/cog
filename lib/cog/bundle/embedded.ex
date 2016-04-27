@@ -10,7 +10,7 @@ defmodule Cog.Bundle.Embedded do
   alias Carrier.Credentials
   alias Cog.Models.Bundle
   alias Cog.Repo
-  alias Spanner.Bundle.Config
+  alias Cog.Bundle.Config
 
   @embedded_bundle_root "lib/cog"
 

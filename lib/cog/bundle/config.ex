@@ -1,4 +1,4 @@
-defmodule Spanner.Bundle.Config do
+defmodule Cog.Bundle.Config do
   @moduledoc """
   Interact with and generate bundle configurations.
 
