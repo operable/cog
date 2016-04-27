@@ -32,6 +32,7 @@
   "hackney": {:hex, :hackney, "1.6.0"},
   "hedwig": {:hex, :hedwig, "0.3.0"},
   "html_entities": {:hex, :html_entities, "0.3.0"},
+  "httpoison": {:hex, :httpoison, "0.8.3"},
   "httpotion": {:hex, :httpotion, "2.2.2"},
   "ibrowse": {:hex, :ibrowse, "4.2.2"},
   "idna": {:hex, :idna, "1.2.0"},
