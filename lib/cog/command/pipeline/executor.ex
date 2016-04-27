@@ -60,6 +60,7 @@ defmodule Cog.Command.Pipeline.Executor do
     output: [{Map.t, String.t}], # {output, template}
     user: %Cog.Models.User{},
     user_permissions: [String.t],
+    service_token: String.t,
     error_type: atom(),
     error_message: String.t
   }
@@ -76,6 +77,7 @@ defmodule Cog.Command.Pipeline.Executor do
     started: nil,
     user: nil,
     user_permissions: [],
+    service_token: nil,
     error_type: nil,
     error_message: nil
   ]
@@ -97,6 +99,8 @@ defmodule Cog.Command.Pipeline.Executor do
     topic = "/bot/pipelines/#{id}"
     Connection.subscribe(conn, topic <> "/+")
 
+    service_token = Cog.Command.Service.Tokens.new
+
     case create_initial_context(request) do
       {:ok, initial_context} ->
         case fetch_user_from_request(request) do
@@ -105,6 +109,7 @@ defmodule Cog.Command.Pipeline.Executor do
             loop_data = %__MODULE__{id: id, topic: topic, request: request,
                                     mq_conn: conn,
                                     user: user,
+                                    service_token: service_token,
                                     user_permissions: perms,
                                     output: initial_context,
                                     started: :os.timestamp()}
@@ -189,7 +194,7 @@ defmodule Cog.Command.Pipeline.Executor do
         relay ->
           topic = "/bot/commands/#{relay}/#{bundle.name}/#{name}"
           reply_to_topic = "#{state.topic}/reply"
-          req = request_for_plan(current_plan, request, user, reply_to_topic)
+          req = request_for_plan(current_plan, request, user, reply_to_topic, state.service_token)
           updated_state =  %{state | current_plan: current_plan, plans: remaining_plans}
 
           dispatch_event(updated_state, relay)
@@ -593,7 +598,7 @@ defmodule Cog.Command.Pipeline.Executor do
   ########################################################################
   # Miscellaneous Functions
 
-  defp request_for_plan(plan, request, user, reply_to) do
+  defp request_for_plan(plan, request, user, reply_to, service_token) do
     # TODO: stuffing the provider into requestor here is a bit
     # code-smelly; investigate and fix
     provider  = request["adapter"]
@@ -608,7 +613,8 @@ defmodule Cog.Command.Pipeline.Executor do
                              requestor: requestor,
                              user: user,
                              room: room,
-                             reply_to: reply_to}
+                             reply_to: reply_to,
+                             service_token: service_token}
   end
 
   defp sanitize_request(request) do
