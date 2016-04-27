@@ -70,9 +70,6 @@ defmodule Spanner.Bundle.Config do
       case config do
         %{"module" => module_name} ->
           {Module.safe_concat("Elixir", module_name), []}
-        %{"name" => name, "executable" => executable} ->
-          %{"bundle" => %{"name" => bundle}} = bundle_config
-          {Spanner.Command.ForeignCommand, [[bundle: bundle, name: name, executable: executable]]}
       end
     end
   end
