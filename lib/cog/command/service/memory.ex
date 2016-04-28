@@ -108,6 +108,7 @@ defmodule Cog.Command.Service.Memory do
       [{^monitor_ref, token}] ->
         :ets.match_delete(tid, {{token, :_}, :_})
         :ets.delete(tid, monitor_ref)
+        :ets.delete(tid, token)
       [] ->
         Logger.warn("Unknown monitor ref #{inspect monitor_ref} for pid #{inspect pid} going down for #{inspect reason}")
     end
@@ -116,13 +117,19 @@ defmodule Cog.Command.Service.Memory do
   end
 
   defp monitor_executor(token, tid) do
-    case Service.Tokens.process_for_token(token) do
-      {:error, error} ->
-        {:error, error}
-      pid ->
-        Logger.debug("Monitoring #{inspect pid} for token #{inspect token}")
-        monitor_ref = :erlang.monitor(:process, pid)
-        :ets.insert(tid, {monitor_ref, token})
+    case ets_lookup(tid, token) do
+      {:error, :unknown_key} ->
+        case Service.Tokens.process_for_token(token) do
+          {:error, error} ->
+            {:error, error}
+          pid ->
+            Logger.debug("Monitoring #{inspect pid} for token #{inspect token}")
+            monitor_ref = :erlang.monitor(:process, pid)
+            :ets.insert(tid, {monitor_ref, token})
+            :ets.insert(tid, {token, monitor_ref})
+        end
+      {:ok, _monitor_ref} ->
+        Logger.debug("Already monitoring the pid for token #{inspect token}")
     end
   end
 
