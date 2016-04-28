@@ -15,6 +15,7 @@ defmodule Cog do
                 supervisor(adapter_supervisor, []),
                 supervisor(Cog.Endpoint, []),
                 supervisor(Cog.TriggerEndpoint, []),
+                supervisor(Cog.ServiceEndpoint, []),
                 supervisor(Cog.Adapters.Http.Supervisor,[])]
 
     opts = [strategy: :one_for_one, name: Cog.Supervisor]
