@@ -51,4 +51,18 @@ defmodule Cog.Plug.Util do
   def get_request_id(%Conn{}=conn),
     do: conn.assigns[:request_id]
 
+  @doc """
+  Store the service token for the current request.
+  """
+  @spec set_service_token(%Conn{}, String.t) :: %Conn{}
+  def set_service_token(%Conn{}=conn, token) when is_binary(token),
+    do: assign(conn, :service_token, token)
+
+  @doc """
+  Retrieve the service token for the current request.
+  """
+  @spec get_service_token(%Conn{}) :: binary() | nil
+  def get_service_token(%Conn{}=conn),
+    do: conn.assigns[:service_token]
+
 end
