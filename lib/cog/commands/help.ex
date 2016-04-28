@@ -1,5 +1,5 @@
 defmodule Cog.Commands.Help do
-  use Cog.GenCommand.Base, bundle: "#{Cog.embedded_bundle}", enforcing: false
+  use Cog.Command.GenCommand.Base, bundle: "#{Cog.embedded_bundle}", enforcing: false
 
   @moduledoc """
   Get help on all installed Cog bot commands.

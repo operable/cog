@@ -1,5 +1,5 @@
 defmodule Cog.Commands.Filter do
-  use Cog.GenCommand.Base, bundle: Cog.embedded_bundle, enforcing: false
+  use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle, enforcing: false
 
   @moduledoc """
   Filters a collection where the `path` equals the `matches`.

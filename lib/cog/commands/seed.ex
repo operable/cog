@@ -1,5 +1,5 @@
 defmodule Cog.Command.Seed do
-  use Cog.GenCommand.Base, bundle: Cog.embedded_bundle,
+  use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle,
                                enforcing: false
 
   alias Cog.Command.Request

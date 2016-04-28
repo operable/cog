@@ -1,12 +1,12 @@
-defmodule Cog.GenCommand.Base do
-  require Cog.GenCommand.ValidationError
-  alias Cog.GenCommand
+defmodule Cog.Command.GenCommand.Base do
+  require Cog.Command.GenCommand.ValidationError
+  alias Cog.Command.GenCommand
   alias Piper.Permissions.Ast
 
   @moduledoc """
   Macros for handling much of the boilerplate of command creation.
 
-  Most of the callbacks of the `Cog.GenCommand` behaviour are
+  Most of the callbacks of the `Cog.Command.GenCommand` behaviour are
   metadata-related, used to drive the automatic generation of command
   bundle configuration files. While these 0-arity functions can be
   defined directly, it can be rather verbose. Additionally, by using
@@ -107,7 +107,7 @@ defmodule Cog.GenCommand.Base do
       end
 
   These options can be inspected at runtime using
-  `Cog.GenCommand.Base.options/1`.
+  `Cog.Command.GenCommand.Base.options/1`.
 
   ### Permissions
 
@@ -126,7 +126,7 @@ defmodule Cog.GenCommand.Base do
 
       end
 
-  Permissions can be inspected at runtime using `Cog.GenCommand.Base.permissions/1`.
+  Permissions can be inspected at runtime using `Cog.Command.GenCommand.Base.permissions/1`.
 
   ### Rules
 
@@ -158,7 +158,7 @@ defmodule Cog.GenCommand.Base do
 
   If any rule is invalid, an error will be raised at compile time.
 
-  Rules can be inspected at runtime using `Cog.GenCommand.Base.rules/1`.
+  Rules can be inspected at runtime using `Cog.Command.GenCommand.Base.rules/1`.
   """
 
   defmacro __using__(opts) do
@@ -173,9 +173,9 @@ defmodule Cog.GenCommand.Base do
     execution = Atom.to_string(ensure_valid(opts, :execution, [:once, :multiple], :multiple, command_name))
 
     quote location: :keep do
-      @behaviour Cog.GenCommand
+      @behaviour Cog.Command.GenCommand
 
-      require Cog.GenCommand.ValidationError
+      require Cog.Command.GenCommand.ValidationError
 
       Module.register_attribute(__MODULE__, :gen_command_base, accumuate: false, persist: true)
       Module.register_attribute(__MODULE__, :bundle_name, accumulate: false, persist: true)
@@ -207,7 +207,7 @@ defmodule Cog.GenCommand.Base do
   end
 
   @doc """
-  Returns true if module `use`d Cog.GenCommand.Base
+  Returns true if module `use`d Cog.Command.GenCommand.Base
   """
   def used_base?(module) do
     attr_value(module, :gen_command_base) == true
@@ -333,7 +333,7 @@ defmodule Cog.GenCommand.Base do
   defmacro permission(name) when is_binary(name) do
     quote location: :keep, bind_quoted: [name: name] do
       if String.contains?(name, ":") do
-        raise Cog.GenCommand.ValidationError.new("Please specify permissions without the bundle namespace: `#{name}`")
+        raise Cog.Command.GenCommand.ValidationError.new("Please specify permissions without the bundle namespace: `#{name}`")
       end
       @permissions name
     end
@@ -371,7 +371,7 @@ defmodule Cog.GenCommand.Base do
   end
 
   defmacro __before_compile__(_env) do
-    alias Cog.GenCommand.ValidationError
+    alias Cog.Command.GenCommand.ValidationError
 
     callermod = __CALLER__.module
     command_name = Module.get_attribute(callermod, :command_name)

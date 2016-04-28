@@ -1,5 +1,5 @@
 defmodule Cog.Commands.Table do
-  use Cog.GenCommand.Base, bundle: Cog.embedded_bundle, enforcing: false, execution: :once
+  use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle, enforcing: false, execution: :once
   alias Cog.Formatters.Table
 
   @moduledoc """

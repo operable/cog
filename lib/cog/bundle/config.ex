@@ -59,7 +59,7 @@ defmodule Cog.Bundle.Config do
   # TODO: Worthwhile creating structs for this?
 
   require Logger
-  alias Cog.GenCommand
+  alias Cog.Command.GenCommand
 
   def commands(config), do: process_args(config, "commands")
 

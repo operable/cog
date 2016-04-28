@@ -1,5 +1,5 @@
 defmodule Cog.Commands.SecureTestThorn do
-  use Cog.GenCommand.Base, bundle: Cog.embedded_bundle, name: "st-thorn"
+  use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle, name: "st-thorn"
 
   @upcase_thorn "Þ"
   @downcase_thorn "þ"

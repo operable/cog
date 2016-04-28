@@ -15,7 +15,7 @@ defmodule Cog.Commands.Role do
   > @bot operable:role --drop deployment
   > @bot operable:role --list
   """
-  use Cog.GenCommand.Base, bundle: Cog.embedded_bundle
+  use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle
 
   option "create", type: "bool"
   option "drop", type: "bool"

@@ -1,11 +1,11 @@
-defmodule Cog.GenCommand.ValidationError do
+defmodule Cog.Command.GenCommand.ValidationError do
   defexception [:message]
 
   defmacro new(message) do
     file_name = __CALLER__.file
     line = __CALLER__.line
     quote bind_quoted: [file_name: file_name, line: line, message: message] do
-      %Cog.GenCommand.ValidationError{message: "#{message} (#{file_name}:#{line})"}
+      %Cog.Command.GenCommand.ValidationError{message: "#{message} (#{file_name}:#{line})"}
     end
   end
 end

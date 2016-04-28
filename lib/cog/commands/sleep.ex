@@ -1,5 +1,5 @@
 defmodule Cog.Commands.Sleep do
-  use Cog.GenCommand.Base, bundle: Cog.embedded_bundle,
+  use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle,
                                enforcing: false,
                                execution: :once,
                                name: "sleep"

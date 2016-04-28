@@ -1,5 +1,5 @@
 defmodule Cog.Support.TestCommands.TypesTestCommand do
-  use Cog.GenCommand.Base, bundle: Cog.embedded_bundle, enforcing: false, name: "type-test"
+  use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle, enforcing: false, name: "type-test"
 
   option "string", type: "string", required: false
   option "bool", type: "bool", required: false

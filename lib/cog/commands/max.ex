@@ -8,7 +8,7 @@ defmodule Cog.Commands.Max do
   > @bot operable:max 0.48 0.2 1.8 3548.4 0.078
   > @bot operable:max "apple" "ball" "car" "zebra"
   """
-  use Cog.GenCommand.Base, bundle: Cog.embedded_bundle, enforcing: false
+  use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle, enforcing: false
   require Logger
 
   def handle_message(req, state) do

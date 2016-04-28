@@ -1,5 +1,5 @@
 defmodule Cog.Commands.Greet do
-  use Cog.GenCommand.Base, bundle: Cog.embedded_bundle, enforcing: false
+  use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle, enforcing: false
 
   @moduledoc """
   Introduce the bot to new coworkers!

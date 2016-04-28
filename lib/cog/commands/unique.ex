@@ -6,7 +6,7 @@ defmodule Cog.Commands.Unique do
   > @bot operable:unique 49.3 9 2 2 42 49.3
   > @bot operable:unique "apple" "apple" "ball" "car" "car" "zebra"
   """
-  use Cog.GenCommand.Base, bundle: Cog.embedded_bundle, enforcing: false, execution: :once
+  use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle, enforcing: false, execution: :once
 
   def handle_message(req, state) do
     entries = get_entries(req)

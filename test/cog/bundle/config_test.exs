@@ -1,7 +1,7 @@
 defmodule Cog.Bundle.Config.Test do
   use ExUnit.Case, async: true
   alias Cog.Bundle.Config
-  alias Cog.GenCommand
+  alias Cog.Command.GenCommand
 
   # Create some test modules; these will be our "bundle"
 
