@@ -1,4 +1,14 @@
 defmodule Cog.Command.Service.Memory do
+  @moduledoc """
+  Stores state isolated to a specific pipeline. Tokens originally created by
+  the token service are used to namespace each key, so pipelines have their own
+  keyspace. When the pipeline ends successfully or crashes the memory service
+  is notifed, and keys owned by that pipeline are removed.
+
+  There are a few operations that can be performed on keys: fetch, accum, join,
+  replace and delete. Each operation will always return an ok-error tuple.
+  """
+
   use GenServer
   alias Cog.Command.Service
   require Logger
@@ -8,21 +18,44 @@ defmodule Cog.Command.Service.Memory do
   def start_link(tid),
     do: GenServer.start_link(__MODULE__, [tid], name: __MODULE__)
 
+  @doc """
+  Fetches the given key. Returns `{:ok, value}` if the key exists or `{:error,
+  :unknown_key}` if it doesn't exist.
+  """
   def fetch(token, key),
     do: GenServer.call(__MODULE__, {:fetch, token, key})
 
+  @doc """
+  Accumulates values in the given key. Returns `{:ok, accumulated_value}`. If
+  the key exists and is a list, the value is appeneded. If the key exists and
+  is not a list, we wrap it in a list before appending the value. If the key
+  does not exist we append the value to an empty list.
+  """
   def accum(token, key, value),
     do: GenServer.call(__MODULE__, {:accum, token, key, value})
 
-
+  @doc """
+  Joins values in the given key. Returns `{:ok, joined_value}` when the value
+  is successfully joined. If the key exists and is a list and the value is a
+  list, the value is joined to the end of the list. If the key does not exist,
+  the value is joined to an empty list. If either value is not a list `{:error,
+  :value_not_list}` is returned.
+  """
   def join(token, key, value) when is_list(value),
     do: GenServer.call(__MODULE__, {:join, token, key, value})
   def join(_token, _key, _value),
     do: {:error, :value_not_list}
 
+  @doc """
+  Replaces or sets the given key with the value. Returns `{:ok, value}`.
+  """
   def replace(token, key, value),
     do: GenServer.call(__MODULE__, {:replace, token, key, value})
 
+  @doc """
+  Deletes the given key. Returns `{:ok, deleted_value}` when successfully
+  deleted or `{:error, :unknown_key}` if it doesn't exist.
+  """
   def delete(token, key),
     do: GenServer.call(__MODULE__, {:delete, token, key})
 
