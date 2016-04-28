@@ -21,7 +21,7 @@ config :cog, Cog.Adapters.HipChat,
   api_token: System.get_env("HIPCHAT_API_TOKEN"),
   mention_name: System.get_env("HIPCHAT_MENTION_NAME")
 
-config :carrier, Carrier.Messaging.Connection,
+config :cog, Carrier.Messaging.Connection,
   host: "127.0.0.1",
   port: 1883
 
