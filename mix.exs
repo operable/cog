@@ -68,6 +68,8 @@ defmodule Cog.Mixfile do
      {:hedwig, "~> 0.3.0"},
      {:gproc, "~> 0.5.0", override: true},
      {:html_entities, "~> 0.3.0"},
+     {:adz, github: "operable/adz", tag: "0.2"},
+     {:carrier, github: "operable/carrier"},
      {:spanner, github: "operable/spanner"},
      {:probe, github: "operable/probe", tag: "0.2"},
      {:exml, github: "paulgray/exml", tag: "2.2.1"},
