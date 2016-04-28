@@ -37,6 +37,10 @@ defmodule Cog.V1.UserController do
     end
   end
 
+  def show(conn, %{"id" => "me"}) do
+    show(conn, %{"id" => conn.assigns.user.id})
+  end
+
   def show(conn, %{"id" => id}) do
     user = Repo.get!(User, id)
     |> Repo.preload([direct_group_memberships: [roles: [permissions: :namespace]]])
@@ -84,7 +88,8 @@ defmodule Cog.V1.UserController do
   @spec self_updating?(%Plug.Conn{}) :: true | false
   defp self_updating?(conn) do
     conn.private.phoenix_action in [:update, :show] and
-        conn.assigns.user.id == conn.params["id"]
+      conn.assigns.user.id == conn.params["id"] or
+      conn.params["id"] == "me"
   end
 
 end

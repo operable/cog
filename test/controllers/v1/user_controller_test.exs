@@ -49,6 +49,16 @@ defmodule Cog.V1.UserControllerTest do
               "username" => "sadpanda"}] == users_json |> sort_by("username")
   end
 
+  test "shows the authed user's resource", %{authed: requestor} do
+    conn = api_request(requestor, :get, "/v1/users/me")
+    assert %{"user" => %{"id" => requestor.id,
+                         "username" => requestor.username,
+                         "first_name" => requestor.first_name,
+                         "last_name" => requestor.last_name,
+                         "groups" => [],
+                         "email_address" => requestor.email_address}} == json_response(conn, 200)
+  end
+
   test "shows chosen resource", %{authed: requestor} do
     user = user("tester")
     conn = api_request(requestor, :get, "/v1/users/#{user.id}")
