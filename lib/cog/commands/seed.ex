@@ -1,8 +1,8 @@
 defmodule Cog.Command.Seed do
-  use Spanner.GenCommand.Base, bundle: Cog.embedded_bundle,
+  use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle,
                                enforcing: false
 
-  alias Spanner.Command.Request
+  alias Cog.Command.Request
   require Logger
 
   @moduledoc """

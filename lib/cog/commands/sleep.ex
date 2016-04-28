@@ -1,5 +1,5 @@
 defmodule Cog.Commands.Sleep do
-  use Spanner.GenCommand.Base, bundle: Cog.embedded_bundle,
+  use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle,
                                enforcing: false,
                                execution: :once,
                                name: "sleep"
@@ -21,7 +21,7 @@ defmodule Cog.Commands.Sleep do
 
   """
 
-  alias Spanner.Command.Request
+  alias Cog.Command.Request
 
   def handle_message(req, state) do
     case sleep_seconds(req) do

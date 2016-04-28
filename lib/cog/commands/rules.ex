@@ -13,9 +13,9 @@ defmodule Cog.Commands.Rules do
   Examples:
   > @bot operable:rules --add "when command is operable:ec2-terminate must have operable:ec2"
   """
-  use Spanner.GenCommand.Base, bundle: Cog.embedded_bundle
+  use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle
 
-  alias Spanner.Command.Request
+  alias Cog.Command.Request
 
   option "add", type: "bool"
   option "list", type: "bool"
