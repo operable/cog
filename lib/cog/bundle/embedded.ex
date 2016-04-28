@@ -60,7 +60,7 @@ defmodule Cog.Bundle.Embedded do
                                 "online" => true,
                                 "snapshot" => true,
                                 "bundles" => [bundle]}}
-    :ok = GenServer.call(Cog.Relay.Relays, {:announce_embedded_relay, message})
+    :ok = GenServer.call(Cog.Relay.Relays, {:announce_embedded_relay, message}, :infinity)
   end
 
   defp embedded_bundle do
