@@ -1,18 +1,13 @@
 defmodule Cog.Command.CommandSup do
   use Supervisor
 
-  alias Cog.Command
-
-  def start_link do
-    Supervisor.start_link(__MODULE__, [], name: __MODULE__)
-  end
+  def start_link,
+    do: Supervisor.start_link(__MODULE__, [], name: __MODULE__)
 
   def init(_) do
-    children = [worker(Command.PermissionsCache, []),
-                worker(Cog.TemplateCache, []),
-                supervisor(Command.Pipeline.ExecutorSup, []),
-                worker(Command.Pipeline.Initializer, [])]
-    supervise(children, strategy: :one_for_one)
+    children = [supervisor(Cog.Command.Service.Supervisor, []),
+                supervisor(Cog.Command.PipelineSup, [])]
+    supervise(children, strategy: :rest_for_one)
   end
 
 end
