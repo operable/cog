@@ -1,7 +1,8 @@
 defmodule Cog.Command.Service.MemoryTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
 
-  alias Cog.Command.Service.{Memory, Tokens}
+  alias Cog.Command.Service.Memory
+  alias Cog.ServiceHelpers
 
   @token "d386da42-0c99-11e6-aa1c-db55971236aa"
 
@@ -25,8 +26,27 @@ defmodule Cog.Command.Service.MemoryTest do
   end
 
   test "accumulating into a non-list key" do
-    Memory.replace(@token, "drinks", {"cold brew"})
-    assert {:error, :value_not_list} = Memory.accum(@token, "drinks", "cappuccino")
+    Memory.replace(@token, "drinks", "cold brew")
+    assert {:ok, ["cold brew", "cappuccino"]} = Memory.accum(@token, "drinks", "cappuccino")
+  end
+
+  test "joining into an unset key" do
+    breakfasts = [["eggs"], ["cinnamon rolls"], ["bacon", "cold pizza"]]
+
+    for breakfast <- breakfasts,
+      do: Memory.join(@token, "breakfast", breakfast)
+
+    assert {:ok, ["eggs", "cinnamon rolls", "bacon", "cold pizza"]} = Memory.fetch(@token, "breakfast")
+  end
+
+  test "joining into a non-list" do
+    Memory.replace(@token, "ice cream", "chocolate")
+    assert {:error, :value_not_list} = Memory.join(@token, "ice cream", ["vanilla"])
+  end
+
+  test "joining a non-list" do
+    Memory.replace(@token, "steak", ["rib eye"])
+    assert {:error, :value_not_list} = Memory.join(@token, "steak", "new yourk strip")
   end
 
   test "replacing an unset key" do
@@ -53,7 +73,7 @@ defmodule Cog.Command.Service.MemoryTest do
   end
 
   test "cleaning up keys once a pipeline exits normally" do
-    {pid, token} = fake_executor
+    {pid, token} = ServiceHelpers.spawn_fake_executor
 
     Memory.replace(token, "bbq", "valentina's tex mex")
 
@@ -64,7 +84,7 @@ defmodule Cog.Command.Service.MemoryTest do
   end
 
   test "cleaning up keys after a pipeline crashes" do
-    {pid, token} = fake_executor
+    {pid, token} = ServiceHelpers.spawn_fake_executor
 
     Memory.replace(token, "bbq", "valentina's tex mex")
 
@@ -72,28 +92,5 @@ defmodule Cog.Command.Service.MemoryTest do
     :timer.sleep(500)
 
     assert {:error, :unknown_key} = Memory.fetch(token, "bbq")
-  end
-
-  defp fake_executor do
-    caller = self()
-    pid = spawn(fn() ->
-      token = Tokens.new
-      send(caller, {:token, token, self()})
-      receive do
-        :exit_normally ->
-          :ok
-        :crash ->
-          raise "BOOM!"
-      after 2000 ->
-          flunk "Timeout waiting to receive instruction in token consumer!"
-      end
-    end)
-
-    receive do
-      {:token, token, ^pid} ->
-        {pid, token}
-    after 1000 ->
-        flunk "Timeout waiting to receive token!"
-    end
   end
 end

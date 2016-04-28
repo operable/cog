@@ -14,6 +14,12 @@ defmodule Cog.Command.Service.Memory do
   def accum(token, key, value),
     do: GenServer.call(__MODULE__, {:accum, token, key, value})
 
+
+  def join(token, key, value) when is_list(value),
+    do: GenServer.call(__MODULE__, {:join, token, key, value})
+  def join(_token, _key, _value),
+    do: {:error, :value_not_list}
+
   def replace(token, key, value),
     do: GenServer.call(__MODULE__, {:replace, token, key, value})
 
@@ -33,8 +39,18 @@ defmodule Cog.Command.Service.Memory do
   def handle_call({:accum, token, key, value}, _from, %__MODULE__{tid: tid} = state) do
     monitor_executor(token, tid)
 
-    result = with {:ok, existing_value}    <- ets_lookup_list(tid, {token, key}),
+    result = with {:ok, existing_value}    <- ets_lookup_accum_list(tid, {token, key}),
                   {:ok, accumulated_value} <- ets_insert(tid, {token, key}, existing_value ++ [value]),
+                  do: {:ok, accumulated_value}
+
+    {:reply, result, state}
+  end
+
+  def handle_call({:join, token, key, value}, _from, %__MODULE__{tid: tid} = state) when is_list(value) do
+    monitor_executor(token, tid)
+
+    result = with {:ok, existing_value}    <- ets_lookup_join_list(tid, {token, key}),
+                  {:ok, accumulated_value} <- ets_insert(tid, {token, key}, existing_value ++ value),
                   do: {:ok, accumulated_value}
 
     {:reply, result, state}
@@ -86,7 +102,16 @@ defmodule Cog.Command.Service.Memory do
     end
   end
 
-  defp ets_lookup_list(tid, key) do
+  defp ets_lookup_accum_list(tid, key) do
+    case :ets.lookup(tid, key) do
+      [{^key, value}] ->
+        {:ok, List.wrap(value)}
+      [] ->
+        {:ok, []}
+    end
+  end
+
+  defp ets_lookup_join_list(tid, key) do
     case :ets.lookup(tid, key) do
       [{^key, value}] when is_list(value) ->
         {:ok, value}
@@ -98,7 +123,7 @@ defmodule Cog.Command.Service.Memory do
   end
 
   defp ets_insert(tid, key, value) do
-    with {:ok, value} <- :ets.insert(tid, {key, value}),
+    with true <- :ets.insert(tid, {key, value}),
          do: {:ok, value}
   end
 
