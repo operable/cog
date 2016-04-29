@@ -110,12 +110,9 @@ defmodule Cog.Command.Service.Memory do
   end
 
   def handle_info({:DOWN, _monitor_ref, :process, pid, reason}, state) do
-    Logger.debug("Process #{inspect pid} went down (#{inspect reason}); removing its memory storage")
-
     case ets_lookup(state.monitor_table, pid) do
       {:ok, token} ->
-        :ets.match_delete(state.memory_table, {{token, :_}, :_})
-        :ets.delete(state.monitor_table, pid)
+        cleanup_process(state.monitor_table, state.memory_table, pid, token)
       {:error, :unknown_key} ->
         Logger.warn("Unknown pid #{inspect pid} was monitored; ignoring")
     end
