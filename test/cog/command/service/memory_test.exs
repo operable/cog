@@ -6,6 +6,30 @@ defmodule Cog.Command.Service.MemoryTest do
 
   @token "d386da42-0c99-11e6-aa1c-db55971236aa"
 
+  setup_all do
+    pid = Process.whereis(Memory)
+    Process.unregister(Memory)
+
+    on_exit(fn ->
+      Process.register(pid, Memory)
+    end)
+
+    :ok
+  end
+
+  setup do
+    memory_table  = :ets.new(:test_memory_table,  [:public])
+    monitor_table = :ets.new(:test_monitor_table, [:public])
+
+    {:ok, pid} = Memory.start_link(memory_table, monitor_table)
+
+    on_exit(fn ->
+      Process.exit(pid, :kill)
+    end)
+
+    {:ok, %{pid: pid, memory_table: memory_table, monitor_table: monitor_table}}
+  end
+
   test "fetch an existing key" do
     donuts = ["old-fashioned", "chocolate-with-sprinkles"]
     Memory.replace(@token, "donuts", donuts)
@@ -88,6 +112,46 @@ defmodule Cog.Command.Service.MemoryTest do
 
     Memory.replace(token, "bbq", "valentina's tex mex")
 
+    send(pid, :crash)
+    :timer.sleep(500)
+
+    assert {:error, :unknown_key} = Memory.fetch(token, "bbq")
+  end
+
+  test "removing keys of processes that died during a restart", context do
+    {pid, token} = ServiceHelpers.spawn_fake_executor
+
+    Memory.replace(token, "bbq", "valentina's tex mex")
+
+    # Kill memory process
+    Process.unlink(context.pid)
+    Process.exit(context.pid, :kill)
+    :timer.sleep(500)
+
+    # Kill fake executor process
+    send(pid, :crash)
+    :timer.sleep(500)
+
+    # Startup memory process; it doesn't know about the dead executor yet
+    {:ok, _pid} = Memory.start_link(context.memory_table, context.monitor_table)
+
+    assert {:error, :unknown_key} = Memory.fetch(token, "bbq")
+  end
+
+  test "monitoring processes present after a restart", context do
+    {pid, token} = ServiceHelpers.spawn_fake_executor
+
+    Memory.replace(token, "bbq", "valentina's tex mex")
+
+    # Kill memory process
+    Process.unlink(context.pid)
+    Process.exit(context.pid, :kill)
+    :timer.sleep(500)
+
+    # Startup memory process; without the old monitor
+    {:ok, _pid} = Memory.start_link(context.memory_table, context.monitor_table)
+
+    # Kill fake executor process
     send(pid, :crash)
     :timer.sleep(500)
 
