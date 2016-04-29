@@ -13,10 +13,12 @@ defmodule Cog.Command.Service.Memory do
   alias Cog.Command.Service
   require Logger
 
-  defstruct [:tid]
+  @dead_process_cleanup_interval 30000 # 30 seconds
 
-  def start_link(tid),
-    do: GenServer.start_link(__MODULE__, [tid], name: __MODULE__)
+  defstruct [:memory_table, :monitor_table]
+
+  def start_link(memory_table, monitor_table),
+    do: GenServer.start_link(__MODULE__, [memory_table, monitor_table], name: __MODULE__)
 
   @doc """
   Fetches the given key. Returns `{:ok, value}` if the key exists or `{:error,
@@ -59,82 +61,118 @@ defmodule Cog.Command.Service.Memory do
   def delete(token, key),
     do: GenServer.call(__MODULE__, {:delete, token, key})
 
-  def init([tid]) do
-    Logger.info("Starting with token table #{inspect tid}")
-    {:ok, %__MODULE__{tid: tid}}
+  def init([memory_table, monitor_table]) do
+    # Cleanup processes that died between restarts and monitor processes that
+    # are still alive after a restart. If anything dies between restarting and
+    # monitoring, the dead process cleanup will catch it.
+    account_for_existing_processes(monitor_table, memory_table)
+    schedule_dead_process_cleanup(@dead_process_cleanup_interval)
+
+    state = %__MODULE__{memory_table: memory_table, monitor_table: monitor_table}
+    {:ok, state}
   end
 
-  def handle_call({:fetch, token, key}, _from, %__MODULE__{tid: tid} = state) do
-    result = ets_lookup(tid, {token, key})
+  def handle_call({:fetch, token, key}, _from, state) do
+    result = ets_lookup(state.memory_table, {token, key})
     {:reply, result, state}
   end
 
-  def handle_call({:accum, token, key, value}, _from, %__MODULE__{tid: tid} = state) do
-    monitor_executor(token, tid)
+  def handle_call({:accum, token, key, value}, _from, state) do
+    monitor_executor(state.monitor_table, token)
 
-    result = with {:ok, existing_value}    <- ets_lookup_accum_list(tid, {token, key}),
-                  {:ok, accumulated_value} <- ets_insert(tid, {token, key}, existing_value ++ [value]),
+    result = with {:ok, existing_value}    <- ets_lookup_accum_list(state.memory_table, {token, key}),
+                  {:ok, accumulated_value} <- ets_insert(state.memory_table, {token, key}, existing_value ++ [value]),
                   do: {:ok, accumulated_value}
 
     {:reply, result, state}
   end
 
-  def handle_call({:join, token, key, value}, _from, %__MODULE__{tid: tid} = state) when is_list(value) do
-    monitor_executor(token, tid)
+  def handle_call({:join, token, key, value}, _from, state) when is_list(value) do
+    monitor_executor(state.monitor_table, token)
 
-    result = with {:ok, existing_value}    <- ets_lookup_join_list(tid, {token, key}),
-                  {:ok, accumulated_value} <- ets_insert(tid, {token, key}, existing_value ++ value),
+    result = with {:ok, existing_value}    <- ets_lookup_join_list(state.memory_table, {token, key}),
+                  {:ok, accumulated_value} <- ets_insert(state.memory_table, {token, key}, existing_value ++ value),
                   do: {:ok, accumulated_value}
 
     {:reply, result, state}
   end
 
-  def handle_call({:replace, token, key, value}, _from, %__MODULE__{tid: tid} = state) do
-    monitor_executor(token, tid)
+  def handle_call({:replace, token, key, value}, _from, state) do
+    monitor_executor(state.monitor_table, token)
 
-    result = ets_insert(tid, {token, key}, value)
+    result = ets_insert(state.memory_table, {token, key}, value)
     {:reply, result, state}
   end
 
-  def handle_call({:delete, token, key}, _from, %__MODULE__{tid: tid} = state) do
-    result = ets_delete(tid, {token, key})
+  def handle_call({:delete, token, key}, _from, state) do
+    result = ets_delete(state.memory_table, {token, key})
     {:reply, result, state}
   end
 
-  def handle_info({:DOWN, monitor_ref, :process, pid, reason}, %__MODULE__{tid: tid} = state) do 
-    Logger.debug("Process #{inspect pid} went down (#{inspect reason}); removing its memory storage")
-
-    case :ets.lookup(tid, monitor_ref) do
-      [{^monitor_ref, token}] ->
-        :ets.match_delete(tid, {{token, :_}, :_})
-        :ets.delete(tid, monitor_ref)
-        :ets.delete(tid, token)
-      [] ->
-        Logger.warn("Unknown monitor ref #{inspect monitor_ref} for pid #{inspect pid} going down for #{inspect reason}")
+  def handle_info({:DOWN, _monitor_ref, :process, pid, _reason}, state) do
+    case ets_lookup(state.monitor_table, pid) do
+      {:ok, token} ->
+        cleanup_process(state.monitor_table, state.memory_table, pid, token)
+      {:error, :unknown_key} ->
+        Logger.warn("Unknown pid #{inspect pid} was monitored; ignoring")
     end
 
     {:noreply, state}
   end
 
-  defp monitor_executor(token, tid) do
-    case ets_lookup(tid, token) do
-      {:error, :unknown_key} ->
-        case Service.Tokens.process_for_token(token) do
-          {:error, error} ->
-            {:error, error}
-          pid ->
+  def handle_info(:dead_process_cleanup, state) do
+    ets_iterate(state.monitor_table, fn pid, token ->
+      unless Process.alive?(pid) do
+        cleanup_process(state.monitor_table, state.memory_table, pid, token)
+      end
+    end)
+
+    schedule_dead_process_cleanup(@dead_process_cleanup_interval)
+
+    {:noreply, state}
+  end
+
+  defp account_for_existing_processes(monitor_table, memory_table) do
+    ets_iterate(monitor_table, fn pid, token ->
+      case Process.alive?(pid) do
+        true ->
+          Logger.debug("Remonitoring #{inspect pid} for token #{inspect token}")
+          :erlang.monitor(:process, pid)
+        false ->
+          cleanup_process(monitor_table, memory_table, pid, token)
+      end
+    end)
+  end
+
+  defp schedule_dead_process_cleanup(interval) do
+    Logger.info ("Scheduling dead process cleanup for #{round(interval / 1000)} seconds from now")
+    Process.send_after(self(), :dead_process_cleanup, interval)
+  end
+
+  defp cleanup_process(monitor_table, memory_table, pid, token) do
+    Logger.debug("Process #{inspect pid} is no longer alive; removing its memory storage")
+    :ets.match_delete(memory_table, {{token, :_}, :_})
+    :ets.delete(monitor_table, pid)
+  end
+
+  defp monitor_executor(monitor_table, token) do
+    case Service.Tokens.process_for_token(token) do
+      {:error, error} ->
+        {:error, error}
+      pid ->
+        case ets_lookup(monitor_table, pid) do
+          {:ok, ^token} ->
+            Logger.debug("Already monitoring #{inspect pid} for token #{inspect token}")
+          {:error, :unknown_key} ->
             Logger.debug("Monitoring #{inspect pid} for token #{inspect token}")
-            monitor_ref = :erlang.monitor(:process, pid)
-            :ets.insert(tid, {monitor_ref, token})
-            :ets.insert(tid, {token, monitor_ref})
+            :erlang.monitor(:process, pid)
+            :ets.insert(monitor_table, {pid, token})
         end
-      {:ok, _monitor_ref} ->
-        Logger.debug("Already monitoring the pid for token #{inspect token}")
     end
   end
 
-  defp ets_lookup(tid, key) do
-    case :ets.lookup(tid, key) do
+  defp ets_lookup(table, key) do
+    case :ets.lookup(table, key) do
       [{^key, value}] ->
         {:ok, value}
       [] ->
@@ -142,8 +180,8 @@ defmodule Cog.Command.Service.Memory do
     end
   end
 
-  defp ets_lookup_accum_list(tid, key) do
-    case :ets.lookup(tid, key) do
+  defp ets_lookup_accum_list(table, key) do
+    case :ets.lookup(table, key) do
       [{^key, value}] ->
         {:ok, List.wrap(value)}
       [] ->
@@ -151,8 +189,8 @@ defmodule Cog.Command.Service.Memory do
     end
   end
 
-  defp ets_lookup_join_list(tid, key) do
-    case :ets.lookup(tid, key) do
+  defp ets_lookup_join_list(table, key) do
+    case :ets.lookup(table, key) do
       [{^key, value}] when is_list(value) ->
         {:ok, value}
       [{^key, _value}] ->
@@ -162,14 +200,35 @@ defmodule Cog.Command.Service.Memory do
     end
   end
 
-  defp ets_insert(tid, key, value) do
-    with true <- :ets.insert(tid, {key, value}),
+  defp ets_insert(table, key, value) do
+    with true <- :ets.insert(table, {key, value}),
          do: {:ok, value}
   end
 
-  defp ets_delete(tid, key) do
-    with {:ok, value} <- ets_lookup(tid, key),
-         true <- :ets.delete(tid, key),
+  defp ets_delete(table, key) do
+    with {:ok, value} <- ets_lookup(table, key),
+         true <- :ets.delete(table, key),
          do: {:ok, value}
+  end
+
+  defp ets_iterate(table, fun) do
+    :ets.safe_fixtable(table, true)
+    ets_iterate(table, :ets.first(table), fun)
+    :ets.safe_fixtable(table, false)
+  end
+
+  defp ets_iterate(_table, :'$end_of_table', _fun) do
+    :ok
+  end
+
+  defp ets_iterate(table, key, fun) do
+    case ets_lookup(table, key) do
+      {:ok, value} ->
+        fun.(key, value)
+      _error ->
+        :ok
+    end
+
+    ets_iterate(table, :ets.next(table, key), fun)
   end
 end
