@@ -9,9 +9,32 @@ defmodule Cog.Plug.Authorization do
   alias Cog.Models.Permission
   alias Cog.Repo
 
+  @typedoc """
+  Namespaced permission name a user must have in order to be authorized
+  """
+  @type permission_opt :: {:permission, String.t}
+
+  @typedoc """
+  Boolean flag indicating whether or not 'self updates' are authorized
+  'Self update' is defined as then invocation of `:show` or `:update` action
+  when the path parameter `id` matches the currently authenticated user.
+  """
+  @type self_updates_opt :: {:allow_self_updates, bool}
+
+  @type auth_options :: [permission_opt | self_updates_opt]
+
   @doc """
-  Requires a `:permission` option, which should be the namespaced name
-  of a permission that a user must have in order to be authorized.
+  Options:
+    `:permission` - Fully namespaced permission name required for authorization
+    `:allow_self_updates` - Permit user to edit their own data. Defaults to false
+                            if unset.
+
+  Example:
+
+  ```
+  plug Cog.Plug.Authorization, [permission: "operable:manage_users",
+                                allow_self_updates: true]
+  ```
   """
   def init(opts) do
     permission = Keyword.fetch!(opts, :permission)
@@ -62,8 +85,8 @@ defmodule Cog.Plug.Authorization do
   # related data with paths such as `/v1/users/:user_id/profiles/:id`.
   defp self_updating?(conn) do
     conn.private.phoenix_action in [:update, :show] and
-      conn.assigns.user.id == conn.params["id"] or
-      conn.params["id"] == "me"
+      (conn.assigns.user.id == conn.params["id"] or
+      conn.params["id"] == "me")
   end
 
 end
