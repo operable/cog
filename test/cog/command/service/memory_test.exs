@@ -23,10 +23,6 @@ defmodule Cog.Command.Service.MemoryTest do
 
     {:ok, pid} = Memory.start_link(memory_table, monitor_table)
 
-    on_exit(fn ->
-      Process.exit(pid, :kill)
-    end)
-
     {:ok, %{pid: pid, memory_table: memory_table, monitor_table: monitor_table}}
   end
 
