@@ -109,7 +109,7 @@ defmodule Cog.Command.Service.Memory do
     {:reply, result, state}
   end
 
-  def handle_info({:DOWN, _monitor_ref, :process, pid, reason}, state) do
+  def handle_info({:DOWN, _monitor_ref, :process, pid, _reason}, state) do
     case ets_lookup(state.monitor_table, pid) do
       {:ok, token} ->
         cleanup_process(state.monitor_table, state.memory_table, pid, token)
