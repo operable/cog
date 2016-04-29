@@ -5,8 +5,12 @@ set -eo pipefail
 export ALLOW_WARNINGS=true
 export PATH="${PATH}:$(dirname $0)"
 
+[[ -z "${DATABASE_URL}" ]] && echo "Unable to parse DATABASE_URL" && exit 1
+
+read proto user pass host port db <<<$(echo ${DATABASE_URL} | sed -e 's|^\(.*://\)\(.*\)\:\(.*\)\@\(.*\)\:\(.*\)\/\(.*\)|\1 \2 \3 \4 \5 \6|g')
+
 echo "Waiting for Postgres to become available..."
-wait-for-it.sh -s -t 0 -h localhost -p 5432 && true
+wait-for-it.sh -s -t 0 -h "${host}" -p "${port}" && true
 
 echo "Apply database migrations..."
 mix ecto.migrate --no-compile --no-deps-check
