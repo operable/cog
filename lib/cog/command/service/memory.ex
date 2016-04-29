@@ -13,6 +13,8 @@ defmodule Cog.Command.Service.Memory do
   alias Cog.Command.Service
   require Logger
 
+  @dead_process_cleanup_interval 30000 # 30 seconds
+
   defstruct [:memory_table, :monitor_table]
 
   def start_link(memory_table, monitor_table),
@@ -60,9 +62,11 @@ defmodule Cog.Command.Service.Memory do
     do: GenServer.call(__MODULE__, {:delete, token, key})
 
   def init([memory_table, monitor_table]) do
-    # Cleanup processes that died between restarts and monitor
-    # processes that are still alive after a restart
+    # Cleanup processes that died between restarts and monitor processes that
+    # are still alive after a restart. If anything dies between restarting and
+    # monitoring, the dead process cleanup will catch it.
     account_for_existing_processes(monitor_table, memory_table)
+    schedule_dead_process_cleanup(@dead_process_cleanup_interval)
 
     state = %__MODULE__{memory_table: memory_table, monitor_table: monitor_table}
     {:ok, state}
@@ -119,6 +123,18 @@ defmodule Cog.Command.Service.Memory do
     {:noreply, state}
   end
 
+  def handle_info(:dead_process_cleanup, state) do
+    ets_iterate(state.monitor_table, fn pid, token ->
+      unless Process.alive?(pid) do
+        cleanup_process(state.monitor_table, state.memory_table, pid, token)
+      end
+    end)
+
+    schedule_dead_process_cleanup(@dead_process_cleanup_interval)
+
+    {:noreply, state}
+  end
+
   defp account_for_existing_processes(monitor_table, memory_table) do
     ets_iterate(monitor_table, fn pid, token ->
       case Process.alive?(pid) do
@@ -126,11 +142,20 @@ defmodule Cog.Command.Service.Memory do
           Logger.debug("Remonitoring #{inspect pid} for token #{inspect token}")
           :erlang.monitor(:process, pid)
         false ->
-          Logger.debug("Process #{inspect pid} is no longer alive; removing its memory storage")
-          :ets.match_delete(memory_table, {{token, :_}, :_})
-          :ets.delete(monitor_table, pid)
+          cleanup_process(monitor_table, memory_table, pid, token)
       end
     end)
+  end
+
+  defp schedule_dead_process_cleanup(interval) do
+    Logger.info ("Scheduling dead process cleanup for #{round(interval / 1000)} from now")
+    Process.send_after(self(), :dead_process_cleanup, interval)
+  end
+
+  defp cleanup_process(monitor_table, memory_table, pid, token) do
+    Logger.debug("Process #{inspect pid} is no longer alive; removing its memory storage")
+    :ets.match_delete(memory_table, {{token, :_}, :_})
+    :ets.delete(monitor_table, pid)
   end
 
   defp monitor_executor(monitor_table, token) do
