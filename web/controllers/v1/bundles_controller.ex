@@ -139,7 +139,7 @@ defmodule Cog.V1.BundlesController do
   end
 
   defp error(:no_config) do
-    {:bad_request, %{error: "'bundle_config' not specified. Make sure to use a multipart form and to send your file in the 'bundle_config' field."}}
+    {:bad_request, %{error: "Missing bundle config."}}
   end
   defp error(:unsupported_format) do
     msg = ~s(Unsupported file format. Please upload a file in one of the following formats: #{Enum.join(Spanner.Config.config_extensions, ", ")})
