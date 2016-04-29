@@ -18,7 +18,7 @@ defmodule Cog.Plug.Authorization.Test do
   test "errors if :user assigns is missing", %{granted_name: permission} do
     # Seeing this error in real life means we've miscoded the
     # application and are calling this plug before the Authentication one.
-    error = catch_error(conn(:get, "/") |> Authorization.call(permission))
+    error = catch_error(conn(:get, "/") |> Authorization.call(permission: permission))
     assert :function_clause = error
   end
 
@@ -39,20 +39,20 @@ defmodule Cog.Plug.Authorization.Test do
   end
 
   test "init returns the permission name when it is nominally valid", %{granted_name: name} do
-    assert ^name = Authorization.init(permission: name)
+    assert [permission: ^name] = Authorization.init(permission: name)
   end
 
   # TODO: we might want to rescue this error, log the problem, and
   # still return 403
   test "plug fails when passing an unrecognized permission" do
-    error = catch_error(conn(:get, "/") |> Authorization.call("#{Cog.embedded_bundle}:do_stuff"))
+    error = catch_error(conn(:get, "/") |> Authorization.call(permission: "#{Cog.embedded_bundle}:do_stuff"))
     assert %Ecto.NoResultsError{} = error
   end
 
   test "plug halts with forbidden if user does not have the required permission",
   %{user: user, ungranted_name: permission} do
 
-    conn = conn(:get, "/") |> assign(:user, user) |> Authorization.call(permission)
+    conn = conn(:get, "/") |> assign(:user, user) |> Authorization.call(permission: permission)
 
     assert conn.halted
     assert conn.status == 403 # forbidden
@@ -62,7 +62,7 @@ defmodule Cog.Plug.Authorization.Test do
   test "plug does not halt if user has the required permission",
   %{user: user, granted_name: permission} do
 
-    conn = conn(:get, "/") |> assign(:user, user) |> Authorization.call(permission)
+    conn = conn(:get, "/") |> assign(:user, user) |> Authorization.call(permission: permission)
 
     refute conn.halted
     refute conn.status
