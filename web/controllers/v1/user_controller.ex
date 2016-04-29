@@ -4,7 +4,8 @@ defmodule Cog.V1.UserController do
   alias Cog.Models.User
 
   plug Cog.Plug.Authentication
-  plug :check_self_updating, [permission: "#{Cog.embedded_bundle}:manage_users"]
+  plug Cog.Plug.Authorization, [permission: "#{Cog.embedded_bundle}:manage_users",
+                                allow_self_updates: true]
 
   plug :scrub_params, "user" when action in [:create, :update]
 
@@ -66,30 +67,6 @@ defmodule Cog.V1.UserController do
     user = Repo.get!(User, id)
     Repo.delete!(user)
     send_resp(conn, :no_content, "")
-  end
-
-  ###############################################
-  # Plug function - local only to user controller
-  #
-  # This local plug allows a user to update and view
-  # thieir own user information without needing
-  # the "manage_users" permission.
-  ###############################################
-  @spec check_self_updating(Plug.Conn.t, [Keyword.t]) :: Plug.Conn.t
-  defp check_self_updating(conn, opts) do
-    if self_updating?(conn) do
-      conn
-    else
-      plug_opts = Cog.Plug.Authorization.init(opts)
-      Cog.Plug.Authorization.call(conn, plug_opts)
-    end
-  end
-
-  @spec self_updating?(%Plug.Conn{}) :: true | false
-  defp self_updating?(conn) do
-    conn.private.phoenix_action in [:update, :show] and
-      conn.assigns.user.id == conn.params["id"] or
-      conn.params["id"] == "me"
   end
 
 end
