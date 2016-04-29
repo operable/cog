@@ -145,7 +145,7 @@ defmodule Cog.Command.Service.Memory do
   end
 
   defp schedule_dead_process_cleanup(interval) do
-    Logger.info ("Scheduling dead process cleanup for #{round(interval / 1000)} from now")
+    Logger.info ("Scheduling dead process cleanup for #{round(interval / 1000)} seconds from now")
     Process.send_after(self(), :dead_process_cleanup, interval)
   end
 
