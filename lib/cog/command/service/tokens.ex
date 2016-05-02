@@ -49,11 +49,17 @@ defmodule Cog.Command.Service.Tokens do
   end
 
   def handle_call(:new, {pid, _ref}, state) do
-    token = generate_token()
-    ETS.insert(state.token_table, token, pid)
-    monitor_pipeline(state.monitor_table, token, pid)
+    result = case ETS.lookup(state.monitor_table, pid) do
+      {:ok, _pid} ->
+        {:error, :token_already_exists}
+      {:error, :unknown_key} ->
+        token = generate_token()
+        ETS.insert(state.token_table, token, pid)
+        monitor_pipeline(state.monitor_table, token, pid)
+        token
+    end
 
-    {:reply, token, state}
+    {:reply, result, state}
   end
 
   def handle_call({:process, token}, _from, state) do
