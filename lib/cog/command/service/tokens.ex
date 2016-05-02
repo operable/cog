@@ -84,6 +84,13 @@ defmodule Cog.Command.Service.Tokens do
     {:noreply, state}
   end
 
+  def handle_info(:dead_process_cleanup, state) do
+    dead_pipeline_cleanup(state.monitor_table, state.token_table)
+    schedule_dead_pipeline_cleanup(@dead_pipeline_cleanup_interval)
+
+    {:noreply, state}
+  end
+
   ########################################################################
   # Helper Functions
 
