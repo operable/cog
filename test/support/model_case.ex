@@ -29,16 +29,6 @@ defmodule Cog.ModelCase do
     end
   end
 
-  setup_all do
-    Ecto.Adapters.SQL.begin_test_transaction(Cog.Repo)
-
-    on_exit(fn ->
-      Ecto.Adapters.SQL.rollback_test_transaction(Cog.Repo)
-    end)
-
-    :ok
-  end
-
   setup tags do
     unless tags[:async] do
       Ecto.Adapters.SQL.restart_test_transaction(Cog.Repo, [])
