@@ -20,8 +20,6 @@ defmodule Cog.AdapterCase do
       setup_all do
         adapter = replace_adapter(unquote(adapter))
 
-        Ecto.Adapters.SQL.begin_test_transaction(Repo)
-
         on_exit(fn ->
           Ecto.Adapters.SQL.rollback_test_transaction(Repo)
           reset_adapter(adapter)
