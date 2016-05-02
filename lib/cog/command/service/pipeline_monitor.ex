@@ -14,14 +14,18 @@ defmodule Cog.Command.Service.PipelineMonitor do
       {:error, error} ->
         {:error, error}
       pid ->
-        case ETS.lookup(monitor_table, pid) do
-          {:ok, ^token} ->
-            Logger.debug("Already monitoring #{inspect pid} for token #{inspect token}")
-          {:error, :unknown_key} ->
-            Logger.debug("Monitoring #{inspect pid} for token #{inspect token}")
-            Process.monitor(pid)
-            ETS.insert(monitor_table, pid, token)
-        end
+        monitor_pipeline(monitor_table, token, pid)
+    end
+  end
+
+  def monitor_pipeline(monitor_table, token, pid) do
+    case ETS.lookup(monitor_table, pid) do
+      {:ok, ^token} ->
+        Logger.debug("Already monitoring #{inspect pid} for token #{inspect token}")
+      {:error, :unknown_key} ->
+        Logger.debug("Monitoring #{inspect pid} for token #{inspect token}")
+        Process.monitor(pid)
+        ETS.insert(monitor_table, pid, token)
     end
   end
 

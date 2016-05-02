@@ -18,6 +18,10 @@ defmodule Cog.Command.Service.Memory do
 
   defstruct [:memory_table, :monitor_table]
 
+  @doc """
+  Starts the #{inspect __MODULE__} service. Accepts two public ets table
+  ids: one for storing tokens and keeping track of monitored pids.
+  """
   def start_link(memory_table, monitor_table),
     do: GenServer.start_link(__MODULE__, [memory_table, monitor_table], name: __MODULE__)
 
