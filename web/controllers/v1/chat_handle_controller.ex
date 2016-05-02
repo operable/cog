@@ -3,7 +3,7 @@ defmodule Cog.V1.ChatHandleController do
 
   alias Cog.Models.EctoJson
   alias Cog.Models.ChatHandle
-  alias Cog.Models.ChatProvider
+  alias Cog.Models.User
   alias Cog.Queries
 
   plug Cog.Plug.Authentication
@@ -27,29 +27,31 @@ defmodule Cog.V1.ChatHandleController do
     json(conn, EctoJson.render(chat_handles, envelope: :chat_handles))
   end
 
-  def create(conn, %{"chat_handle" => chat_handle_params, "id" => user_id}) do
-    case merge_provider_params(chat_handle_params, user_id) do
-      {:ok, params} ->
-        changeset = ChatHandle.changeset(%ChatHandle{}, params)
-        case Repo.insert(changeset) do
-          {:ok, chat_handle} ->
-            chat_handle = Repo.preload(chat_handle, [:chat_provider, :user])
-            conn
-            |> put_status(:created)
-            |> json(EctoJson.render(chat_handle, envelope: :chat_handle, policy: :detail))
-          {:error, changeset} ->
-            conn
-            |> put_status(:unprocessable_entity)
-            |> render(Cog.ChangesetView, "error.json", changeset: changeset)
-        end
+  def upsert(conn, %{"chat_handle" => %{"handle" => handle,
+                                        "chat_provider" => provider_name},
+                     "id" => user_id}) do
+    case Cog.Repository.ChatHandles.set_handle(%User{id: user_id}, provider_name, handle) do
+      {:ok, chat_handle} ->
+        conn
+        |> put_status(:created)
+        |> json(EctoJson.render(chat_handle, envelope: :chat_handle, policy: :detail))
+      {:error, %Ecto.Changeset{}=changeset} ->
+        conn
+        |> put_status(:unprocessable_entity)
+        |> render(Cog.ChangesetView, "error.json", changeset: changeset)
       {:error, :invalid_provider} ->
         conn
         |> put_status(:unprocessable_entity)
-        |> render(Cog.ErrorView, "422.json", %{error: "Provider '#{chat_handle_params["chat_provider"]}' not found"})
+        |> render(Cog.ErrorView, "422.json", %{error: "Provider '#{provider_name}' not found"})
       {:error, :invalid_handle} ->
         conn
         |> put_status(:unprocessable_entity)
-        |> render(Cog.ErrorView, "422.json", %{error: "User with handle '#{chat_handle_params["handle"]}' not found"})
+        |> render(Cog.ErrorView, "422.json", %{error: "User with handle '#{handle}' not found"})
+      {:error, :adapter_not_running} ->
+        {:ok, adapter} = Cog.chat_adapter_module
+        conn
+        |> put_status(:unprocessable_entity)
+        |> render(Cog.ErrorView, "422.json", %{error: "Currently, you can only set chat handles for the configured chat adapter, which handles '#{adapter.name}'. You requested a chat handle for '#{provider_name}'"})
     end
   end
 
@@ -59,51 +61,4 @@ defmodule Cog.V1.ChatHandleController do
     send_resp(conn, :no_content, "")
   end
 
-  def update(conn, %{"id" => id, "chat_handle" => chat_handle_params}) do
-    chat_handle = Repo.get!(ChatHandle, id)
-
-    case merge_provider_params(chat_handle_params, chat_handle.user_id) do
-      {:ok, params} ->
-        changeset = ChatHandle.changeset(chat_handle, params)
-        case Repo.update(changeset) do
-          {:ok, chat_handle} ->
-            chat_handle = Repo.preload(chat_handle, [:chat_provider, :user])
-            json(conn, EctoJson.render(chat_handle, envelope: :chat_handle, policy: :detail))
-          {:error, changeset} ->
-            conn
-            |> put_status(:unprocessable_entity)
-            |> render(Cog.ChangesetView, "error.json", changeset: changeset)
-        end
-      {:error, :invalid_provider} ->
-        conn
-        |> put_status(:unprocessable_entity)
-        |> render(Cog.ErrorView, "422.json", %{error: "Provider '#{chat_handle_params["chat_provider"]}' not found"})
-      {:error, :invalid_handle} ->
-        conn
-        |> put_status(:unprocessable_entity)
-        |> render(Cog.ErrorView, "422.json", %{error: "User with handle '#{chat_handle_params["handle"]}' not found"})
-    end
-  end
-
-  defp merge_provider_params(%{"chat_provider" => provider_name, "handle" => handle}, user_id) do
-    case Repo.get_by(ChatProvider, name: String.downcase(provider_name)) do
-      nil ->
-        {:error, :invalid_provider}
-      chat_provider ->
-        case Cog.chat_adapter_module(chat_provider.name) do
-          {:ok, adapter} ->
-            case adapter.lookup_user(handle) do
-              {:ok, %{id: chat_provider_user_id}} ->
-                {:ok, %{"handle" => handle,
-                        "provider_id" => chat_provider.id,
-                        "user_id" => user_id,
-                        "chat_provider_user_id" => chat_provider_user_id}}
-              {:error, _} ->
-                {:error, :invalid_handle}
-            end
-          {:error, _} ->
-            {:error, :invalid_provider}
-        end
-    end
-  end
 end
