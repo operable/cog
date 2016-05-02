@@ -83,7 +83,7 @@ defmodule Cog.Mixfile do
      {:ex_doc, "~> 0.10", only: :dev},
      {:mix_test_watch, "~> 0.1.1", only: [:test, :dev]},
      {:excoveralls, "~> 0.5", only: :test},
-     {:exvcr, github: "parroty/exvcr", only: [:dev, :test]}
+     {:exvcr, "~> 0.7.3", only: [:dev, :test]}
     ]
   end
 
