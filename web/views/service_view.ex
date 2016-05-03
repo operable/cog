@@ -15,10 +15,8 @@ defmodule Cog.V1.ServiceView do
               services: render_many(services, __MODULE__, "service.json")}}
   end
 
-  def render("show.json", %{service: service}) do
-    %{service: %{name: service.name,
-                 api: service.api}}
-  end
+  def render("show.json", %{service: service}),
+    do: %{service: render_one(service, __MODULE__, "service.json")}
 
   # Generate a URL where specific service metadata can be obtained.
   defp meta_url(service),

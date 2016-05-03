@@ -8,16 +8,15 @@ defmodule Cog.V1.ServiceController do
     do: render(conn, "index.json", services: Services.all)
 
   def show(conn, %{"name" => name}) do
-    case Services.service_api(name) do
-      {:ok, api} ->
-        conn
-        |> put_status(:ok)
-        |> render("show.json", service: %{name: name,
-                                          api: api})
-      {:error, :not_found} ->
+    case Services.deployed(name) do
+      nil ->
         conn
         |> put_status(:not_found)
         |> json(%{errors: "Service not found"})
+      service ->
+        conn
+        |> put_status(:ok)
+        |> render("show.json", service: service)
     end
   end
 
