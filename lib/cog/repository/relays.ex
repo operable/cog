@@ -42,6 +42,19 @@ defmodule Cog.Repository.Relays do
   end
 
   @doc """
+  Retrieves a single relay based on it's name.
+  """
+  @spec by_name(String.t) :: {:ok, %Relay{}} | {:error, :not_found}
+  def by_name(name) do
+    case Repo.get_by(Relay, name: name) do
+      %Relay{} = relay ->
+        {:ok, relay}
+      nil ->
+        {:error, :not_found}
+    end
+  end
+
+  @doc """
   Removes a relay from the db and from the internal tracker
   """
   @spec delete(String.t) :: {:ok, %Relay{}} | {:error, Ecto.Changeset.t} | {:error, Atom.t}

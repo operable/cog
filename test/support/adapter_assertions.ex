@@ -8,12 +8,8 @@ defmodule Cog.AdapterAssertions do
   # Because the raw template returns encoded json joined by newlines we have to
   # add in newlines and then pull out the single result or return a list of
   # result for those cases.
-  def assert_payload(%{"response" => response}, expected_payload) do
-    response = response
-    |> String.replace(~r/^}/m, "},")
-    |> String.rstrip(?,)
-
-    payload = case Poison.decode!("[#{response}]", keys: :atoms) do
+  def assert_payload(response, expected_payload) do
+    payload = case decode_payload(response) do
       [payload] ->
         payload
       payload ->
@@ -21,6 +17,13 @@ defmodule Cog.AdapterAssertions do
     end
 
     assert payload == expected_payload
+  end
+
+  def decode_payload(%{"response" => response}) do
+    response = response
+    |> String.replace(~r/^}/m, "},")
+    |> String.rstrip(?,)
+    Poison.decode!("[#{response}]", keys: :atoms)
   end
 
   @doc """

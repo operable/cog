@@ -30,7 +30,7 @@ defmodule Cog.Command.GenCommand.Base.Test do
 
     option "my_option", type: "string", required: true
     option "another_option", type: "boolean"
-    option "foooooo"
+    option "foooooo", short: "f"
 
     def handle_message(_,_), do: {:reply, "blah", "blah", :blah}
   end
@@ -98,9 +98,9 @@ defmodule Cog.Command.GenCommand.Base.Test do
 
   test "commands can have multiple options" do
     assert %{
-      "my_option" => %{"type" => "string", "required" => true},
-      "another_option" => %{"type" => "boolean", "required" => false},
-      "foooooo" => %{"type" => "string", "required" => false}
+      "my_option" => %{"type" => "string", "required" => true, "short_flag" => nil},
+      "another_option" => %{"type" => "boolean", "required" => false, "short_flag" => nil},
+      "foooooo" => %{"type" => "string", "required" => false, "short_flag" => "f"}
     } == GenCommand.Base.options(CommandWithMultipleOptions)
   end
 
