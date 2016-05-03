@@ -10,16 +10,20 @@ defmodule Cog.Command.Service.Tokens do
   """
 
   use GenServer
+  import Cog.Command.Service.PipelineMonitor
+  alias Cog.ETSWrapper
   require Logger
 
-  defstruct [:tid]
+  @dead_pipeline_cleanup_interval 30000 # 30 seconds
+
+  defstruct [:token_table, :monitor_table]
 
   @doc """
-  Start the #{inspect __MODULE__} service, pointed to an existing
-  public ETS table identified by `tid`.
+  Starts the #{inspect __MODULE__} service. Accepts two public ets table
+  ids: one for storing tokens and keeping track of monitored pids.
   """
-  def start_link(tid),
-    do: GenServer.start_link(__MODULE__, [tid], name: __MODULE__)
+  def start_link(token_table, monitor_table),
+    do: GenServer.start_link(__MODULE__, [token_table, monitor_table], name: __MODULE__)
 
   @doc """
   Create a new service token, registered to the calling process.
@@ -36,40 +40,54 @@ defmodule Cog.Command.Service.Tokens do
   ########################################################################
   # GenServer Implementation
 
-  def init([tid]) do
-    Logger.info("Starting with token table #{inspect tid}")
-    {:ok, %__MODULE__{tid: tid}}
+  def init([token_table, monitor_table]) do
+    account_for_existing_pipelines(monitor_table, token_table)
+    schedule_dead_pipeline_cleanup(@dead_pipeline_cleanup_interval)
+
+    state = %__MODULE__{token_table: token_table, monitor_table: monitor_table}
+    {:ok, state}
   end
 
-  def handle_call(:new, {pid, _ref}, %__MODULE__{tid: tid}=state) do
-    token   = generate_token
-    monitor = :erlang.monitor(:process, pid)
-    Logger.debug("Generated token `#{inspect token}` for process `#{inspect pid}`, monitored via `#{inspect monitor}`")
-
-    :ets.insert(tid, {token, pid})
-    :ets.insert(tid, {monitor, token})
-
-    {:reply, token, state}
-  end
-  def handle_call({:process, token}, _from, %__MODULE__{tid: tid}=state) do
-    reply = case :ets.lookup(tid, token) do
-              [{^token, process_pid}] ->
-                process_pid
-              [] ->
-                {:error, :unknown_token}
-            end
-    {:reply, reply, state}
-  end
-
-  def handle_info({:'DOWN', monitor_ref, :process, pid, reason}, %__MODULE__{tid: tid}=state) do
-    Logger.debug("Process #{inspect pid} went down (#{inspect reason}); invalidating its token")
-    case :ets.lookup(tid, monitor_ref) do
-      [{^monitor_ref, token}] ->
-        :ets.delete(tid, token)
-        :ets.delete(tid, monitor_ref)
-      [] ->
-        Logger.warn("Unknown monitor ref #{inspect monitor_ref} for pid #{inspect pid} going down for #{inspect reason}")
+  def handle_call(:new, {pid, _ref}, state) do
+    result = case ETSWrapper.lookup(state.monitor_table, pid) do
+      {:ok, _pid} ->
+        {:error, :token_already_exists}
+      {:error, :unknown_key} ->
+        token = generate_token()
+        ETSWrapper.insert(state.token_table, token, pid)
+        monitor_pipeline(state.monitor_table, token, pid)
+        token
     end
+
+    {:reply, result, state}
+  end
+
+  def handle_call({:process, token}, _from, state) do
+    result = case ETSWrapper.lookup(state.token_table, token) do
+      {:ok, pid} ->
+        pid
+      {:error, :unknown_key} ->
+        {:error, :unknown_token}
+    end
+
+    {:reply, result, state}
+  end
+
+  def handle_info({:DOWN, _monitor_ref, :process, pid, _reason}, state) do
+    case ETSWrapper.lookup(state.monitor_table, pid) do
+      {:ok, token} ->
+        cleanup_pipeline(state.monitor_table, state.token_table, pid, token)
+      {:error, :unknown_key} ->
+        Logger.warn("Unknown pid #{inspect pid} was monitored; ignoring")
+    end
+
+    {:noreply, state}
+  end
+
+  def handle_info(:dead_process_cleanup, state) do
+    dead_pipeline_cleanup(state.monitor_table, state.token_table)
+    schedule_dead_pipeline_cleanup(@dead_pipeline_cleanup_interval)
+
     {:noreply, state}
   end
 
