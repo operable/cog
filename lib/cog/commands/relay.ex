@@ -56,4 +56,15 @@ defmodule Cog.Commands.Relay do
         {:error, req.reply_to, Helpers.error(err), state}
     end
   end
+
+  @doc """
+  Returns "enabled" for an enabled relay and "disabled" for
+  a disabled relay"
+  """
+  @spec relay_status(%Cog.Models.Relay{}) :: :enabled | :disabled
+  ## This function is public because it's used in both subcommands
+  def relay_status(%{enabled: true}),
+    do: :enabled
+  def relay_status(%{enabled: false}),
+    do: :disabled
 end

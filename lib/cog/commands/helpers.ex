@@ -71,6 +71,8 @@ defmodule Cog.Commands.Helpers do
     do: "Invalid args. Please pass between #{min} and #{max} arguments."
   def error(:invalid_args),
     do: "Invalid argument list"
+  def error({:relay_not_found, relay_name}),
+    do: "No relay with name '#{relay_name}' could be found"
   def error(:alias_in_user),
     do: "Alias is already in the 'user' namespace."
   def error(:alias_in_site),

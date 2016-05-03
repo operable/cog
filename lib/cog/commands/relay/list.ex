@@ -48,22 +48,17 @@ defmodule Cog.Commands.Relay.List do
 
   defp verbose_relay(relay) do
     %{"name" => relay.name,
-     "status" => relay_status(relay.enabled),
+     "status" => Cog.Commands.Relay.relay_status(relay),
      "id" => relay.id,
      "created_at" => relay.inserted_at}
   end
 
   defp standard_relay(relay) do
     %{"name" => relay.name,
-     "status" => relay_status(relay.enabled)}
+     "status" => Cog.Commands.Relay.relay_status(relay)}
   end
 
   defp generate_group_map(relay_group) do
     %{"name" => relay_group.name}
   end
-
-  defp relay_status(true),
-    do: "enabled"
-  defp relay_status(false),
-    do: "disabled"
 end
