@@ -77,9 +77,10 @@ defmodule Cog.Repository.ChatHandles do
   # question. That is, if you're running Cog with the Slack adapter,
   # you can _only_ create or update Slack chat handles.
   defp chat_handle_params(provider_name, handle, user_id) do
+    provider_name = String.downcase(provider_name)
     {:ok, adapter} = Cog.chat_adapter_module
-    if String.downcase(provider_name) == adapter.name do
-      case Repo.get_by(ChatProvider, name: String.downcase(provider_name)) do
+    if provider_name == adapter.name do
+      case Repo.get_by(ChatProvider, name: provider_name) do
         %ChatProvider{id: provider_id} ->
           case adapter.lookup_user(handle) do
             {:ok, %{id: chat_provider_user_id}} ->
