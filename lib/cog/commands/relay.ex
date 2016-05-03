@@ -44,6 +44,8 @@ defmodule Cog.Commands.Relay do
     case result do
       {:ok, template, data} ->
         {:reply, req.reply_to, template, data, state}
+      {:ok, message} ->
+        {:reply, req.reply_to, message, state}
       {:error, err} ->
         {:error, req.reply_to, Helpers.error(err), state}
     end

@@ -22,14 +22,12 @@ defmodule Cog.Commands.Relay.List do
     if Helpers.flag?(req.options, "help") do
       show_usage
     else
-      results = case Relays.all do
+      case Relays.all do
         [] ->
-          []
+          {:ok, "No relays configured"}
         relays ->
-          generate_response(req.options, relays)
+          {:ok, "relay-list", generate_response(req.options, relays)}
       end
-
-      {:ok, "relay-list", results}
     end
   end
 
