@@ -64,7 +64,6 @@ defmodule Cog.Command.Service.PipelineMonitor do
   milliseconds in the future.
   """
   def schedule_dead_pipeline_cleanup(interval) do
-    Logger.info ("Scheduling dead process cleanup for #{round(interval / 1000)} seconds from now")
     Process.send_after(self(), :dead_process_cleanup, interval)
   end
 

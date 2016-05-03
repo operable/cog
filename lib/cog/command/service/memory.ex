@@ -71,6 +71,7 @@ defmodule Cog.Command.Service.Memory do
     # are still alive after a restart. If anything dies between restarting and
     # monitoring, the dead process cleanup will catch it.
     account_for_existing_pipelines(monitor_table, memory_table, &{&1, :_})
+    Logger.info ("Dead pipeline token clean up interval set to #{round(@dead_pipeline_cleanup_interval / 1000)} seconds.")
     schedule_dead_pipeline_cleanup(@dead_pipeline_cleanup_interval)
 
     state = %__MODULE__{memory_table: memory_table, monitor_table: monitor_table}
