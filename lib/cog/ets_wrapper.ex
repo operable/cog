@@ -1,4 +1,4 @@
-defmodule Cog.ETS do
+defmodule Cog.ETSWrapper do
   def lookup(table, key) do
     case :ets.lookup(table, key) do
       [{^key, value}] ->

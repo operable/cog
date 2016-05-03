@@ -1,6 +1,6 @@
 defmodule Cog.Command.Service.PipelineMonitor do
   alias Cog.Command.Service
-  alias Cog.ETS
+  alias Cog.ETSWrapper
   require Logger
 
   @doc """
@@ -19,13 +19,13 @@ defmodule Cog.Command.Service.PipelineMonitor do
   end
 
   def monitor_pipeline(monitor_table, token, pid) do
-    case ETS.lookup(monitor_table, pid) do
+    case ETSWrapper.lookup(monitor_table, pid) do
       {:ok, ^token} ->
         Logger.debug("Already monitoring #{inspect pid} for token #{inspect token}")
       {:error, :unknown_key} ->
         Logger.debug("Monitoring #{inspect pid} for token #{inspect token}")
         Process.monitor(pid)
-        ETS.insert(monitor_table, pid, token)
+        ETSWrapper.insert(monitor_table, pid, token)
     end
   end
 
@@ -36,8 +36,8 @@ defmodule Cog.Command.Service.PipelineMonitor do
   """
   def cleanup_pipeline(monitor_table, data_table, pid, key_match) do
     Logger.debug("Pipeline #{inspect pid} is no longer alive; cleaning up after it")
-    ETS.match_delete(data_table, {key_match, :_})
-    ETS.delete(monitor_table, pid)
+    ETSWrapper.match_delete(data_table, {key_match, :_})
+    ETSWrapper.delete(monitor_table, pid)
   end
 
   @doc """
@@ -48,7 +48,7 @@ defmodule Cog.Command.Service.PipelineMonitor do
   http://www.erlang.org/doc/man/ets.html#match-2
   """
   def account_for_existing_pipelines(monitor_table, data_table, key_match_fun \\ &(&1)) do
-    ETS.each(monitor_table, fn pid, token ->
+    ETSWrapper.each(monitor_table, fn pid, token ->
       case Process.alive?(pid) do
         true ->
           Logger.debug("Remonitoring #{inspect pid} for token #{inspect token}")
@@ -75,7 +75,7 @@ defmodule Cog.Command.Service.PipelineMonitor do
   `account_for_existing_pipelines/2` during startup.
   """
   def dead_pipeline_cleanup(monitor_table, data_table) do
-    ETS.each(monitor_table, fn pid, token ->
+    ETSWrapper.each(monitor_table, fn pid, token ->
       unless Process.alive?(pid) do
         cleanup_pipeline(monitor_table, data_table, pid, {token, :_})
       end

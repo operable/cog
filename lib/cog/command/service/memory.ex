@@ -11,7 +11,7 @@ defmodule Cog.Command.Service.Memory do
 
   use GenServer
   import Cog.Command.Service.PipelineMonitor
-  alias Cog.ETS
+  alias Cog.ETSWrapper
   require Logger
 
   @dead_pipeline_cleanup_interval 30000 # 30 seconds
@@ -78,7 +78,7 @@ defmodule Cog.Command.Service.Memory do
   end
 
   def handle_call({:fetch, token, key}, _from, state) do
-    result = ETS.lookup(state.memory_table, {token, key})
+    result = ETSWrapper.lookup(state.memory_table, {token, key})
     {:reply, result, state}
   end
 
@@ -87,7 +87,7 @@ defmodule Cog.Command.Service.Memory do
 
     result = with {:ok, existing_value} <- lookup_accum_list(state.memory_table, {token, key}),
                   accumulated_value = existing_value ++ [value],
-                  {:ok, result} <- ETS.insert(state.memory_table, {token, key}, accumulated_value),
+                  {:ok, result} <- ETSWrapper.insert(state.memory_table, {token, key}, accumulated_value),
                   do: {:ok, result}
 
     {:reply, result, state}
@@ -98,7 +98,7 @@ defmodule Cog.Command.Service.Memory do
 
     result = with {:ok, existing_value} <- lookup_join_list(state.memory_table, {token, key}),
                   accumulated_value = existing_value ++ value,
-                  {:ok, result} <- ETS.insert(state.memory_table, {token, key}, accumulated_value),
+                  {:ok, result} <- ETSWrapper.insert(state.memory_table, {token, key}, accumulated_value),
                   do: {:ok, result}
 
     {:reply, result, state}
@@ -107,17 +107,17 @@ defmodule Cog.Command.Service.Memory do
   def handle_call({:replace, token, key, value}, _from, state) do
     monitor_pipeline(state.monitor_table, token)
 
-    result = ETS.insert(state.memory_table, {token, key}, value)
+    result = ETSWrapper.insert(state.memory_table, {token, key}, value)
     {:reply, result, state}
   end
 
   def handle_call({:delete, token, key}, _from, state) do
-    result = ETS.delete(state.memory_table, {token, key})
+    result = ETSWrapper.delete(state.memory_table, {token, key})
     {:reply, result, state}
   end
 
   def handle_info({:DOWN, _monitor_ref, :process, pid, _reason}, state) do
-    case ETS.lookup(state.monitor_table, pid) do
+    case ETSWrapper.lookup(state.monitor_table, pid) do
       {:ok, token} ->
         cleanup_pipeline(state.monitor_table, state.memory_table, pid, {token, :_})
       {:error, :unknown_key} ->
@@ -135,7 +135,7 @@ defmodule Cog.Command.Service.Memory do
   end
 
   defp lookup_accum_list(table, key) do
-    case ETS.lookup(table, key) do
+    case ETSWrapper.lookup(table, key) do
       {:ok, value} ->
         {:ok, List.wrap(value)}
       {:error, :unknown_key} ->
@@ -144,7 +144,7 @@ defmodule Cog.Command.Service.Memory do
   end
 
   defp lookup_join_list(table, key) do
-    case ETS.lookup(table, key) do
+    case ETSWrapper.lookup(table, key) do
       {:ok, value} when is_list(value) ->
         {:ok, value}
       {:ok, _value} ->

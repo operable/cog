@@ -11,7 +11,7 @@ defmodule Cog.Command.Service.Tokens do
 
   use GenServer
   import Cog.Command.Service.PipelineMonitor
-  alias Cog.ETS
+  alias Cog.ETSWrapper
   require Logger
 
   @dead_pipeline_cleanup_interval 30000 # 30 seconds
@@ -49,12 +49,12 @@ defmodule Cog.Command.Service.Tokens do
   end
 
   def handle_call(:new, {pid, _ref}, state) do
-    result = case ETS.lookup(state.monitor_table, pid) do
+    result = case ETSWrapper.lookup(state.monitor_table, pid) do
       {:ok, _pid} ->
         {:error, :token_already_exists}
       {:error, :unknown_key} ->
         token = generate_token()
-        ETS.insert(state.token_table, token, pid)
+        ETSWrapper.insert(state.token_table, token, pid)
         monitor_pipeline(state.monitor_table, token, pid)
         token
     end
@@ -63,7 +63,7 @@ defmodule Cog.Command.Service.Tokens do
   end
 
   def handle_call({:process, token}, _from, state) do
-    result = case ETS.lookup(state.token_table, token) do
+    result = case ETSWrapper.lookup(state.token_table, token) do
       {:ok, pid} ->
         pid
       {:error, :unknown_key} ->
@@ -74,7 +74,7 @@ defmodule Cog.Command.Service.Tokens do
   end
 
   def handle_info({:DOWN, _monitor_ref, :process, pid, _reason}, state) do
-    case ETS.lookup(state.monitor_table, pid) do
+    case ETSWrapper.lookup(state.monitor_table, pid) do
       {:ok, token} ->
         cleanup_pipeline(state.monitor_table, state.token_table, pid, token)
       {:error, :unknown_key} ->
