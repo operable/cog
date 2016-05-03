@@ -9,6 +9,24 @@ defmodule Cog.Commands.Helpers do
   """
 
   @doc """
+  Returns a tuple containing the subcommand and remaining args
+  """
+  @spec get_subcommand(List.t) :: {String.t, List.t}
+  def get_subcommand([]),
+    do: {nil, []}
+  def get_subcommand([subcommand | args]),
+    do: {subcommand, args}
+
+  @doc """
+  If flag exists and is true will return true, otherwise returns false. Flags
+  are defined as boolean options. Options that are not 
+  """
+  @spec flag?(Map.t, String.t) :: true | false
+  def flag?(options, option) do
+    Map.has_key?(options, option) and Map.get(options, option, false) == true
+  end
+
+  @doc """
   Returns a list of args based on the count in the form of {:ok, <arg_list>}.
   If an insufficent number of args are passed an error is returned {:error, <err>}.
   """

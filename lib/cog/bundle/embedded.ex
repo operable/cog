@@ -17,8 +17,7 @@ defmodule Cog.Bundle.Embedded do
   # Permissions not required by any built-in commands yet, and thus
   # not present in automatically generated config for the embedded
   # bundle, unless we hack it in
-  @extra_permissions ["#{Cog.embedded_bundle}:manage_relays",
-                      "#{Cog.embedded_bundle}:manage_triggers"]
+  @extra_permissions ["#{Cog.embedded_bundle}:manage_triggers"]
 
   @doc """
   Start up a supervisor for the embedded `#{Cog.embedded_bundle}` bundle.

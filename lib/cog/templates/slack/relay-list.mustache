@@ -1,0 +1,12 @@
+{{^.}}
+No relays
+{{/.}}
+{{#.}}
+```
+{{#id}}ID: {{id}}
+{{/id}}{{#created_at}}Created: {{created_at}}
+{{/created_at}}Name: {{name}}
+Status: {{status}}
+{{#_show_groups}}Relay Groups:{{/_show_groups}} {{#relay_groups}}{{name}} {{/relay_groups}}
+```
+{{/.}}
