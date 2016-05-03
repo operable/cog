@@ -29,7 +29,7 @@ defmodule Cog.ETSWrapper do
 
   def each(table, fun) do
     :ets.safe_fixtable(table, true)
-    unsafe_each(table, fun)
+    do_each(table, :ets.first(table), fun)
     :ets.safe_fixtable(table, false)
   end
 
