@@ -33,6 +33,10 @@ defmodule Cog.Commands.Relay.Update do
           end
         {:error, {:not_enough_args, _count}} ->
           show_usage("Missing required argument: relay name")
+        {:error, {:too_many_args, _count}} ->
+          show_usage("Too many arguments. You can only update one relay at a time.")
+        error ->
+          error
       end
     end
   end
@@ -48,14 +52,12 @@ defmodule Cog.Commands.Relay.Update do
   end
 
   defp generate_response(relay) do
-    %{"success" => true,
-      "relay" => %{"name" => relay.name,
-                   "status" => Cog.Commands.Relay.relay_status(relay),
-                   "id" => relay.id}}
+    %{"name" => relay.name,
+      "status" => Cog.Commands.Relay.relay_status(relay),
+      "id" => relay.id}
   end
 
   def show_usage(error \\ nil) do
-    {:ok, "relay-usage", %{usage: @moduledoc, error: error}}
+    {:ok, "usage", %{usage: @moduledoc, error: error}}
   end
-
 end

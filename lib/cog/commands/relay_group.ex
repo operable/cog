@@ -65,7 +65,7 @@ defmodule Cog.Commands.RelayGroup do
   end
 
   defp show_usage do
-    {:ok, "relay-group-usage", %{usage: @moduledoc}}
+    {:ok, "usage", %{usage: @moduledoc}}
   end
 end
 

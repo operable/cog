@@ -1,5 +1,6 @@
 defmodule Cog.Commands.RelayGroup.Create do
   alias Cog.Commands.Helpers
+  alias Cog.Repository.RelayGroups
 
   @moduledoc """
   Creates relay groups
@@ -11,16 +12,37 @@ defmodule Cog.Commands.RelayGroup.Create do
   -h, --help      Display this usage info
   """
 
-  @spec create_relay_group(%Cog.Command.Request{}) :: {:ok, String.t, Map.t} | {:error, any()}
-  def create_relay_group(req) do
+  @spec create_relay_group(%Cog.Command.Request{}, List.t) :: {:ok, String.t, Map.t} | {:error, any()}
+  def create_relay_group(req, arg_list) do
     if Helpers.flag?(req.options, "help") do
       show_usage
     else
+      case Helpers.get_args(arg_list, 1) do
+        {:ok, [name]} ->
+          case RelayGroups.new(%{name: name}) do
+            {:ok, relay_group} ->
+              {:ok, "relay-group-create", generate_response(relay_group)}
+            {:error, changeset} ->
+              {:error, {:db_errors, changeset.errors}}
+          end
+        {:error, {:not_enough_args, _count}} ->
+          show_usage("Missing required argument: group name")
+        {:error, {:too_many_args, _count}} ->
+          show_usage("Too many arguments. You can only create one relay group at a time")
+        error ->
+          error
+      end
     end
   end
 
-  defp show_usage do
-    {:ok, "relay-group-usage", %{usage: @moduledoc}}
+  defp generate_response(relay_group) do
+    %{"name" => relay_group.name,
+      "id" => relay_group.id,
+      "created_at" => relay_group.inserted_at}
+  end
+
+  defp show_usage(error \\ nil) do
+    {:ok, "usage", %{usage: @moduledoc, error: error}}
   end
 end
 

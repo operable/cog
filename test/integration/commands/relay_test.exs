@@ -45,7 +45,7 @@ defmodule Integration.Commands.RelayTest do
     response = send_message(user, "@bot: operable:relay update foo --name bar")
 
     [decoded] = decode_payload(response)
-    assert decoded.relay.name == "bar"
+    assert decoded.name == "bar"
 
     relay = Repo.get(Relay, relay.id)
     assert relay.name == "bar"
