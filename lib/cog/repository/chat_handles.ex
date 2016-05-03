@@ -20,7 +20,7 @@ defmodule Cog.Repository.ChatHandles do
           result = user_id
           |> find_handle_for(provider_name)
           |> ChatHandle.changeset(params)
-          |> upsert
+          |> Repo.insert_or_update
 
           case result do
             {:ok, chat_handle} ->
@@ -54,17 +54,6 @@ defmodule Cog.Repository.ChatHandles do
     join: p in assoc(ch, :chat_provider),
     where: ch.user_id == ^user_id,
     where: p.name == ^provider_name
-  end
-
-  # TODO: When we can do database upserts, let's actually do a real
-  # one here
-  defp upsert(changeset) do
-    if changeset.model.id == nil do
-      # NOTE: for Ecto 2.0, it will be `data`, not `model`
-      Repo.insert(changeset)
-    else
-      Repo.update(changeset)
-    end
   end
 
   # We track the chat provider's "internal user ID" for a given
