@@ -19,14 +19,18 @@ defmodule Cog.Commands.Relay.List do
   """
   @spec list_relays(%Cog.Command.Request{}) :: {:ok, String.t, Map.t} | {:error, any()}
   def list_relays(req) do
-    results = case Relays.all do
-      [] ->
-        []
-      relays ->
-        generate_response(req.options, relays)
-    end
+    if Helpers.flag?(req.options, "help") do
+      show_usage
+    else
+      results = case Relays.all do
+        [] ->
+          []
+        relays ->
+          generate_response(req.options, relays)
+      end
 
-    {:ok, "relay-list", results}
+      {:ok, "relay-list", results}
+    end
   end
 
   defp generate_response(options, relays) do
@@ -60,5 +64,9 @@ defmodule Cog.Commands.Relay.List do
 
   defp generate_group_map(relay_group) do
     %{"name" => relay_group.name}
+  end
+
+  defp show_usage do
+    {:ok, "relay-usage", %{usage: @moduledoc}}
   end
 end

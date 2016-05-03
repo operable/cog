@@ -19,16 +19,20 @@ defmodule Cog.Commands.Relay.Update do
   """
   @spec update_relay(%Cog.Command.Request{}, List.t) :: {:ok, String.t, Map.t} | {:error, any()}
   def update_relay(req, arg_list) do
-    case Helpers.get_args(arg_list, 1) do
-      {:ok, [relay_name]} ->
-        case Relays.by_name(relay_name) do
-          {:ok, relay} ->
-            do_update(req, relay)
-          {:error, :not_found} ->
-            {:error, {:relay_not_found, relay_name}}
-        end
-      error ->
-        error
+    if Helpers.flag?(req.options, "help") do
+      show_usage
+    else
+      case Helpers.get_args(arg_list, 1) do
+        {:ok, [relay_name]} ->
+          case Relays.by_name(relay_name) do
+            {:ok, relay} ->
+              do_update(req, relay)
+            {:error, :not_found} ->
+              {:error, {:relay_not_found, relay_name}}
+          end
+        {:error, {:not_enough_args, _count}} ->
+          show_usage("Missing required argument: relay name")
+      end
     end
   end
 
@@ -47,6 +51,10 @@ defmodule Cog.Commands.Relay.Update do
       "relay" => %{"name" => relay.name,
                    "status" => Cog.Commands.Relay.relay_status(relay),
                    "id" => relay.id}}
+  end
+
+  def show_usage(error \\ nil) do
+    {:ok, "relay-usage", %{usage: @moduledoc, error: error}}
   end
 
 end

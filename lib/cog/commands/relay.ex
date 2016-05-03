@@ -10,22 +10,14 @@ defmodule Cog.Commands.Relay do
   Subcommands
   * list -- Lists relays and their status
   * update -- Update the name or description of a relay
-
-
-  relay list
-  Lists relays.
-
-  Usage:
-  relay list [-g <group>] [-v <verbose>]
-
-  Flags:
-  -g, --group     Group relays by relay group
-  -v, --verbose   Include additional relay details
   """
 
   permission "manage_relays"
 
   rule "when command is #{Cog.embedded_bundle}:relay must have #{Cog.embedded_bundle}:manage_relays"
+
+  # general options
+  option "help", type: "bool", short: "h"
 
   # list options
   option "group", type: "bool", short: "g"
@@ -44,7 +36,7 @@ defmodule Cog.Commands.Relay do
       "update" ->
         Relay.Update.update_relay(req, args)
       nil ->
-        :usage
+        show_usage
       invalid ->
         {:error, {:unknown_subcommand, invalid}}
     end
@@ -67,4 +59,8 @@ defmodule Cog.Commands.Relay do
     do: :enabled
   def relay_status(%{enabled: false}),
     do: :disabled
+
+  defp show_usage do
+    {:ok, "relay-usage", %{usage: @moduledoc}}
+  end
 end
