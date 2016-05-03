@@ -6,9 +6,10 @@ defmodule Cog.Commands.Relay.Update do
   Updates relay name and/or description.
 
   Usage:
-  relay update <relay name> [-n <name>] [-d <description>]
+  relay update <relay name> [-n <name>] [-d <description>] [-h <help>]
 
   Flags:
+  -h, --help           Display this usage info
   -n, --name           Update the relay's name
   -d, --description    Update the relay's description
   """
