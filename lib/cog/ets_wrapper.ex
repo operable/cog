@@ -33,10 +33,6 @@ defmodule Cog.ETSWrapper do
     :ets.safe_fixtable(table, false)
   end
 
-  def unsafe_each(table, fun) do
-    do_each(table, :ets.first(table), fun)
-  end
-
   defp do_each(_table, :'$end_of_table', _fun),
     do: :ok
   defp do_each(table, key, fun) do
