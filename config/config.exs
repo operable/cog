@@ -137,6 +137,17 @@ config :cog, Cog.TriggerEndpoint,
   check_origin: true,
   render_errors: [accepts: ~w(json)]
 
+config :cog, Cog.ServiceEndpoint,
+  http: [port: System.get_env("COG_SERVICE_PORT") || 4002],
+  url: [host: (System.get_env("COG_SERVICE_URL_HOST") || "localhost"),
+        path: "/",
+        port: (System.get_env("COG_SERVICE_URL_PORT") || 4002)],
+  root: Path.dirname(__DIR__),
+  debug_errors: false,
+  cache_static_lookup: false,
+  check_origin: true,
+  render_errors: [accepts: ~w(json)]
+
 config :cog, :token_lifetime, {1, :week}
 config :cog, :token_reap_period, {1, :day}
 
