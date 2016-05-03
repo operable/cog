@@ -8,7 +8,7 @@ defmodule Cog.V1.ChatHandleControllerTest do
   @valid_attrs %{handle: "vansterminator",
                  chat_provider: "test"}
 
-  setup do
+  setup context do
     # Requests handled by the role controller require this permission
     required_permission = permission("#{Cog.embedded_bundle}:manage_users")
 
@@ -24,23 +24,29 @@ defmodule Cog.V1.ChatHandleControllerTest do
     # Provider
     provider = Repo.get_by(ChatProvider, name: "test")
 
-    # Chat handles for our two users
-    authed_handle = ChatHandle.changeset(%ChatHandle{}, %{"handle" => "Cogswell",
-                                                          "provider_id" => provider.id,
-                                                          "user_id" => authed_user.id,
-                                                          "chat_provider_user_id" => "U024BE7LH"})
-                    |> Repo.insert!
-    unauthed_handle = ChatHandle.changeset(%ChatHandle{}, %{"handle" => "supersad",
+    if context[:create_handles] do
+      # Chat handles for our two users
+      authed_handle = ChatHandle.changeset(%ChatHandle{}, %{"handle" => "Cogswell",
                                                             "provider_id" => provider.id,
-                                                            "user_id" => unauthed_user.id,
-                                                            "chat_provider_user_id" => "U024BE7LI"})
-                      |> Repo.insert!
+                                                            "user_id" => authed_user.id,
+                                                            "chat_provider_user_id" => "U024BE7LH"})
+      |> Repo.insert!
+      unauthed_handle = ChatHandle.changeset(%ChatHandle{}, %{"handle" => "supersad",
+                                                              "provider_id" => provider.id,
+                                                              "user_id" => unauthed_user.id,
+                                                              "chat_provider_user_id" => "U024BE7LI"})
+      |> Repo.insert!
 
-    {:ok, [authed: authed_user,
-           unauthed: unauthed_user,
-           authed_handle: authed_handle,
-           unauthed_handle: unauthed_handle,
-           provider: provider]}
+      {:ok, [authed: authed_user,
+             unauthed: unauthed_user,
+             authed_handle: authed_handle,
+             unauthed_handle: unauthed_handle,
+             provider: provider]}
+    else
+      {:ok, [authed: authed_user,
+             unauthed: unauthed_user,
+             provider: provider]}
+    end
   end
 
   test "creates and renders resource when data is valid", params do
@@ -49,6 +55,7 @@ defmodule Cog.V1.ChatHandleControllerTest do
     assert Repo.get_by(ChatHandle, id: id)
   end
 
+  @tag :create_handles
   test "lists all entries on index", params do
     conn = api_request(params.authed, :get, "/v1/chat_handles")
     chat_handles_json = json_response(conn, 200)["chat_handles"]
@@ -78,6 +85,7 @@ defmodule Cog.V1.ChatHandleControllerTest do
                                    "name" => "test"}}] == chat_handles_json
   end
 
+  @tag :create_handles
   test "lists all entries for a specified user", params do
     conn = api_request(params.authed, :get, "/v1/users/#{params.authed.id}/chat_handles")
     chat_handles_json = json_response(conn, 200)["chat_handles"]
