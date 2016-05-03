@@ -27,42 +27,40 @@ defmodule Cog.Commands.Relay.List do
         [] ->
           {:ok, "No relays configured"}
         relays ->
-          {:ok, "relay-list", generate_response(req.options, relays)}
+          {:ok, get_template(req.options), generate_response(req.options, relays)}
       end
     end
   end
 
   defp generate_response(options, relays) do
     Enum.map(relays, fn(relay) ->
-      relay_map = if Helpers.flag?(options, "verbose") do
-        verbose_relay(relay)
-      else
-        standard_relay(relay)
-      end
-
       if Helpers.flag?(options, "group") do
-        Map.put(relay_map, "relay_groups", Enum.map(relay.groups, &generate_group_map/1))
+        relay_map(relay)
+        |> Map.put("relay_groups", Enum.map(relay.groups, &generate_group_map/1))
         |> Map.put("_show_groups", true)
       else
-        relay_map
+        relay_map(relay)
       end
     end)
   end
 
-  defp verbose_relay(relay) do
+  defp relay_map(relay) do
     %{"name" => relay.name,
      "status" => Cog.Commands.Relay.relay_status(relay),
      "id" => relay.id,
      "created_at" => relay.inserted_at}
   end
 
-  defp standard_relay(relay) do
-    %{"name" => relay.name,
-     "status" => Cog.Commands.Relay.relay_status(relay)}
-  end
-
   defp generate_group_map(relay_group) do
     %{"name" => relay_group.name}
+  end
+
+  defp get_template(options) do
+    if Helpers.flag?(options, "verbose") do
+      "relay-list-verbose"
+    else
+      "relay_list"
+    end
   end
 
   defp show_usage do
