@@ -55,6 +55,18 @@ defmodule Cog.V1.ChatHandleControllerTest do
     assert Repo.get_by(ChatHandle, id: id)
   end
 
+  test "fails if chat adapter for provider is not running", params do
+    chat_provider = "slack"
+    {:ok, chat_adapter} = Cog.chat_adapter_module
+    refute chat_provider == chat_adapter.name
+
+    conn = api_request(params.authed,
+                       :post, "/v1/users/#{params.authed.id}/chat_handles",
+                       body: %{"chat_handle" => %{handle: "badnews",
+                                                  chat_provider: "slack"}})
+    assert json_response(conn, 422)["errors"]
+  end
+
   @tag :create_handles
   test "lists all entries on index", params do
     conn = api_request(params.authed, :get, "/v1/chat_handles")
@@ -120,11 +132,11 @@ defmodule Cog.V1.ChatHandleControllerTest do
                                                         "user_id" => params.authed.id,
                                                         "chat_provider_user_id" => "U024BE7LK"})
                   |> Repo.insert!
-    conn = api_request(params.authed, :put, "/v1/chat_handles/#{update_test.id}",
+    conn = api_request(params.authed, :post, "/v1/users/#{params.authed.id}/chat_handles",
                        body: %{"chat_handle" => %{
-                                 "chat_provider" => "test",
-                                 "handle" => "updated-user"}})
-    chat_handle_json = json_response(conn, 200)["chat_handle"]
+                                "chat_provider" => "test",
+                                "handle" => "updated-user"}})
+    chat_handle_json = json_response(conn, 201)["chat_handle"]
     assert chat_handle_json == %{"id" => update_test.id,
                                  "chat_provider" => %{"id" => params.provider.id,
                                                       "name" => "test"},
