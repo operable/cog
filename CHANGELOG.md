@@ -1,5 +1,23 @@
 #  Changelog
 
+## v0.5.0
+
+### Enhancements
+
+- [Memory Service for Commands](http://docs.operable.io/v0.5/docs/services)
+- [Relay and relay group administrative commands](https://github.com/operable/cog/issues/513)
+- [ChatOps Design Guide](http://docs.operable.io/v0.5/docs/designing-for-chatops)
+- [Create superuser role during bootstrap](https://github.com/operable/cog/issues/360)
+- [Added --enable flag to cogctl relays create](https://github.com/operable/cog/issues/566)
+- [Improved cogctl's option parsing abilities](https://github.com/operable/cog/issues/578)
+
+### Bug Fixes
+
+- Clean up cogctl output (546)[https://github.com/operable/cog/issues/546]
+- Fixed error when creating relay group with members (567)[https://github.com/operable/cog/issues/567]
+- Bootstrap should be idempotent (574)[https://github.com/operable/cog/issues/574]
+- Command parser errors on strings containing '.' (584)[https://github.com/operable/cog/issues/584]
+
 ## v0.4.1
 
 ### Enhancements
