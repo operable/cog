@@ -27,6 +27,7 @@ defmodule Cog.Commands.RelayGroup.Assign do
           end
         {:error, {:under_min_args, _min}} ->
           show_usage("Missing required args. At a minimum you must include the relay group name and at least one bundle name")
+      end
     end
   end
 
@@ -52,4 +53,3 @@ defmodule Cog.Commands.RelayGroup.Assign do
     {:ok, "usage", %{usage: @moduledoc, error: error}}
   end
 end
-

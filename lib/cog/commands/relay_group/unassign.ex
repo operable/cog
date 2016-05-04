@@ -26,6 +26,7 @@ defmodule Cog.Commands.RelayGroup.Unassign do
           end
         {:error, {:under_min_args, _min}} ->
           show_usage("Missing required args. At a minimum you must include the relay group name and at least one bundle name")
+      end
     end
   end
 

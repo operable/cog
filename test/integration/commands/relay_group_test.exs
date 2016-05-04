@@ -12,13 +12,13 @@ defmodule Integration.Commands.RelayGroupTest do
     {:ok, %{user: user}}
   end
 
-  test "listing relay groups", %{user: user} do
+  test "getting info for relay groups", %{user: user} do
     # Create a few relays
     relay_group1 = ModelUtilities.relay_group("relay_group1")
     relay_group2 = ModelUtilities.relay_group("relay_group2")
 
     # Check to see that they show up in the list
-    response = send_message(user, "@bot: operable:relay-group list")
+    response = send_message(user, "@bot: operable:relay-group info")
 
     [foo1, foo2] = decode_payload(response)
     assert foo1.name == "relay_group1"
@@ -33,7 +33,7 @@ defmodule Integration.Commands.RelayGroupTest do
     response = send_message(user, "@bot: operable:relay-group rename relay_group rly_grp")
 
     [decoded] = decode_payload(response)
-    assert decoded.name == "rly_grp"
+    assert decoded.relay_group.name == "rly_grp"
 
     relay_group = Repo.get(RelayGroup, relay_group.id)
     assert relay_group.name == "rly_grp"

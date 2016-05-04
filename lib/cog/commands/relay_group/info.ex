@@ -29,7 +29,7 @@ defmodule Cog.Commands.RelayGroup.Info do
       else
         case RelayGroups.all_by_name(args) do
           [] ->
-            {:ok, "No relay groups configured with name in '#{Enum.join(args, ", ")}'"
+            {:ok, "No relay groups configured with name in '#{Enum.join(args, ", ")}'"}
           relay_groups ->
             {:ok, get_template(req.options), generate_response(relay_groups)}
         end
