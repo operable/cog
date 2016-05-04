@@ -7,7 +7,7 @@ defmodule Cog.Commands.RelayGroup.Remove do
   Removes relays from relay groups
 
   Usage:
-  relay-group remove [-h <help>] <group name> <relays ...>
+  relay-group remove [-h <help>] <relay group name> <relay names ...>
 
   Flags:
   -h, --help      Display this usage info
@@ -18,10 +18,14 @@ defmodule Cog.Commands.RelayGroup.Remove do
     if Helpers.flag?(req.options, "help") do
       show_usage
     else
-      with {:ok, [group | relay_names]} <- Helpers.get_args(arg_list, min: 2),
-           {:ok, relay_group} <- RelayGroup.Helpers.get_relay_group(group),
-           {:ok, relays} <- RelayGroup.Helpers.get_relays(relay_names) do
-             remove(relay_group, relays)
+      case Helpers.get_args(arg_list, min: 2) do
+        {:ok, [group | relay_names]} ->
+          with {:ok, relay_group} <- RelayGroup.Helpers.get_relay_group(group),
+               {:ok, relays} <- RelayGroup.Helpers.get_relays(relay_names) do
+                 remove(relay_group, relays)
+          end
+        {:error, {:under_min_args, _min}} ->
+          show_usage("Missing required args. At a minimum you must include the relay group name and at least one relay name")
       end
     end
   end
@@ -36,8 +40,8 @@ defmodule Cog.Commands.RelayGroup.Remove do
     end
   end
 
-  defp show_usage do
-    {:ok, "relay-group-usage", %{usage: @moduledoc}}
+  def show_usage(error \\ nil) do
+    {:ok, "usage", %{usage: @moduledoc, error: error}}
   end
 end
 

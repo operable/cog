@@ -7,7 +7,7 @@ defmodule Cog.Commands.RelayGroup.Add do
   Adds relays to relay groups
 
   Usage:
-  relay-group add [-h <help>] <relay group> <relays ...>
+  relay-group add [-h <help>] <relay group name> <relay names ...>
 
   Flags:
   -h, --help      Display this usage info
@@ -18,11 +18,15 @@ defmodule Cog.Commands.RelayGroup.Add do
     if Helpers.flag?(req.options, "help") do
       show_usage
     else
-      with {:ok, [group | relay_names]} <- Helpers.get_args(arg_list, min: 2),
-           {:ok, relay_group} <- RelayGroup.Helpers.get_relay_group(group),
-           {:ok, relays} <- RelayGroup.Helpers.get_relays(relay_names),
-           :ok <- verify_relays(relays, relay_names) do
-             add(relay_group, relays)
+      case Helpers.get_args(arg_list, min: 2) do
+        {:ok, [group | relay_names]} ->
+          with {:ok, relay_group} <- RelayGroup.Helpers.get_relay_group(group),
+               {:ok, relays} <- RelayGroup.Helpers.get_relays(relay_names),
+               :ok <- verify_relays(relays, relay_names) do
+                 add(relay_group, relays)
+          end
+        {:error, {:under_min_args, _min}} ->
+          show_usage("Missing required args. At a minimum you must include the relay group name and at least one relay name")
       end
     end
   end

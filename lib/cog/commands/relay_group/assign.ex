@@ -7,7 +7,7 @@ defmodule Cog.Commands.RelayGroup.Assign do
   Assigns bundles to relay groups.
 
   Usage:
-  relay-group assign [-h <help>] <relay group> <bundles ...>
+  relay-group assign [-h <help>] <relay group names> <bundle names ...>
 
   Flags:
   -h, --help      Display this usage info
@@ -18,12 +18,15 @@ defmodule Cog.Commands.RelayGroup.Assign do
     if Helpers.flag?(req.options, "help") do
       show_usage
     else
-      with {:ok, [group | bundle_names]} <- Helpers.get_args(arg_list, min: 2),
-           {:ok, relay_group} <- RelayGroup.Helpers.get_relay_group(group),
-           {:ok, bundles} <- RelayGroup.Helpers.get_bundles(bundle_names),
-           :ok <- verify_bundles(bundles, bundle_names) do
-             assign(relay_group, bundles)
-      end
+      case Helpers.get_args(arg_list, min: 2) do
+        {:ok, [group | bundle_names]} ->
+          with {:ok, relay_group} <- RelayGroup.Helpers.get_relay_group(group),
+               {:ok, bundles} <- RelayGroup.Helpers.get_bundles(bundle_names),
+               :ok <- verify_bundles(bundles, bundle_names) do
+                 assign(relay_group, bundles)
+          end
+        {:error, {:under_min_args, _min}} ->
+          show_usage("Missing required args. At a minimum you must include the relay group name and at least one bundle name")
     end
   end
 

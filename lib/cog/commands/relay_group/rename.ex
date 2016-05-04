@@ -7,7 +7,7 @@ defmodule Cog.Commands.RelayGroup.Rename do
   Renames relay groups
 
   Usage:
-  relay-group rename [-h <help>] <old name> <new name>
+  relay-group rename [-h <help>] <old relay name> <new relay name>
 
   Flags:
   -h, --help      Display this usage info
@@ -27,7 +27,7 @@ defmodule Cog.Commands.RelayGroup.Rename do
               {:error, {:relay_group_not_found, old_name}}
           end
         {:error, {:not_enough_args, _count}} ->
-          show_usage("Missing required arguments. Old name and new name are both required.")
+          show_usage("Missing required arguments. Old relay name and new relay name are both required.")
         {:error, {:too_many_args, _count}} ->
           show_usage("Too many arguments. You can only rename one relay group at a time")
         error ->
