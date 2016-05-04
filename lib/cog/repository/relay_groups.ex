@@ -6,6 +6,9 @@ defmodule Cog.Repository.RelayGroups do
 
   alias Cog.Repo
   alias Cog.Models.RelayGroup
+  alias Cog.Models.Relay
+  alias Cog.Models.Bundle
+  import Ecto.Query, only: [from: 1, from: 2]
 
   @doc """
   Creates a new relay group given a map of attributes
@@ -95,6 +98,103 @@ defmodule Cog.Repository.RelayGroups do
         error
     end
   end
+
+  @doc """
+  Adds bundles and relays to relay groups via a member spec.
+  """
+  @spec manage_association(%RelayGroup{}, Map.t)
+    :: {:ok, %RelayGroup{}} |
+       {:error, {:not_found, {Atom.t, List.t}}} |
+       {:error, {:bad_id, {Atom.t, List.t}}}
+  def manage_association(%RelayGroup{}=relay_group, member_spec) do
+    Repo.transaction(fn() ->
+      member_keys = Map.keys(member_spec)
+
+      members_to_add = Enum.flat_map(member_keys, &lookup_or_fail(member_spec, [&1, "add"]))
+      members_to_remove = Enum.flat_map(member_keys, &lookup_or_fail(member_spec, [&1, "remove"]))
+
+      relay_group
+      |> add(members_to_add)
+      |> remove(members_to_remove)
+      |> Repo.preload([:bundles, :relays])
+    end)
+  end
+  def manage_association(id, member_spec) do
+    case by_id(id) do
+      {:ok, relay_group} ->
+        manage_association(relay_group, member_spec)
+      error ->
+        error
+    end
+  end
+
+  defp lookup_or_fail(member_spec, [kind, _operation]=path) do
+    names = get_in(member_spec, path) || []
+    case lookup_all(kind, names) do
+      {:ok, structs} -> structs
+      {:error, reason} ->
+        Repo.rollback(reason)
+    end
+  end
+
+  defp lookup_all(_, []), do: {:ok, []} # Don't bother with a DB lookup
+  defp lookup_all(kind, ids) when kind in ["relays", "bundles"] do
+
+    type = kind_to_type(kind) # e.g. "relays" -> Relay
+
+    # Since we are using ids we need to make sure that they are all valid UUIDs
+    # before we query the db. Otherwise Ecto with crash with a CastError
+    case good_ids?(ids) do
+      true ->
+        results = Repo.all(from t in type, where: t.id in ^ids)
+
+        # make sure we got a result for each id given
+        case length(results) == length(ids) do
+          true ->
+            # Each name corresponds to an entity in the database
+            {:ok, results}
+          false ->
+            # We got at least one name that doesn't map to any existing
+            # user or group. Find out what's missing and report back
+            retrieved_ids = Enum.map(results, &Map.get(&1, :id))
+            bad_ids = ids -- retrieved_ids
+            {:error, {:not_found, {kind, bad_ids}}}
+        end
+      {false, bad_ids} ->
+        {:error, {:bad_id, {kind, bad_ids}}}
+    end
+  end
+
+  defp good_ids?(ids) do
+    bad_ids = Enum.reduce(ids, [], fn(id, acc) ->
+      case Ecto.UUID.cast(id) do
+        {:ok, _id} ->
+          acc
+        :error ->
+          [id | acc]
+      end
+    end)
+
+    if length(bad_ids) > 0 do
+      {false, bad_ids}
+    else
+      true
+    end
+  end
+
+  defp add(relay_group, members) do
+    Enum.each(members, &Groupable.add_to(&1, relay_group))
+    relay_group
+  end
+
+  defp remove(relay_group, members) do
+    Enum.each(members, &Groupable.remove_from(&1, relay_group))
+    relay_group
+  end
+
+  # Given a member_spec key, return the underlying type
+  defp kind_to_type("relays"), do: Relay
+  defp kind_to_type("bundles"), do: Bundle
 
   defp valid_uuid(id) do
     if Cog.UUID.is_uuid?(id) do

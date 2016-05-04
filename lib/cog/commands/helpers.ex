@@ -73,6 +73,8 @@ defmodule Cog.Commands.Helpers do
     do: "Invalid argument list"
   def error({:relay_not_found, relay_name}),
     do: "No relay with name '#{relay_name}' could be found"
+  def error({:relays_not_found, missing_relays}),
+    do: "Some relays could not be found: '#{Enum.join(missing_relays, ", ")}'"
   def error({:relay_group_not_found, relay_group_name}),
     do: "No relay group with name '#{relay_group_name}' could be found"
   def error(:alias_in_user),

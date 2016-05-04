@@ -1,6 +1,7 @@
 defmodule Cog.Commands.RelayGroup.Delete do
   alias Cog.Commands.Helpers
   alias Cog.Repository.RelayGroups
+  alias Cog.Commands.RelayGroup
 
   @moduledoc """
   Deletes relay groups
@@ -38,15 +39,10 @@ defmodule Cog.Commands.RelayGroup.Delete do
   defp delete(relay_group) do
     case RelayGroups.delete(relay_group) do
       {:ok, relay_group} ->
-        {:ok, "relay-group-delete", generate_response(relay_group)}
+        {:ok, "relay-group-delete", RelayGroup.json(relay_group)}
       {:error, changeset} ->
         {:error, {:db_errors, changeset.errors}}
     end
-  end
-
-  defp generate_response(relay_group) do
-    %{"name" => relay_group.name,
-      "id" => relay_group.id}
   end
 
   def show_usage(error \\ nil) do

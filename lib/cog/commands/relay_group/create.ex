@@ -1,6 +1,7 @@
 defmodule Cog.Commands.RelayGroup.Create do
   alias Cog.Commands.Helpers
   alias Cog.Repository.RelayGroups
+  alias Cog.Commands.RelayGroup
 
   @moduledoc """
   Creates relay groups
@@ -21,7 +22,7 @@ defmodule Cog.Commands.RelayGroup.Create do
         {:ok, [name]} ->
           case RelayGroups.new(%{name: name}) do
             {:ok, relay_group} ->
-              {:ok, "relay-group-create", generate_response(relay_group)}
+              {:ok, "relay-group-create", RelayGroup.json(relay_group)}
             {:error, changeset} ->
               {:error, {:db_errors, changeset.errors}}
           end
@@ -33,12 +34,6 @@ defmodule Cog.Commands.RelayGroup.Create do
           error
       end
     end
-  end
-
-  defp generate_response(relay_group) do
-    %{"name" => relay_group.name,
-      "id" => relay_group.id,
-      "created_at" => relay_group.inserted_at}
   end
 
   defp show_usage(error \\ nil) do

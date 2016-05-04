@@ -1,6 +1,7 @@
 defmodule Cog.Commands.RelayGroup.List do
   alias Cog.Commands.Helpers
   alias Cog.Repository.RelayGroups
+  alias Cog.Commands.RelayGroup
 
   @moduledoc """
   Lists relay groups.
@@ -28,13 +29,7 @@ defmodule Cog.Commands.RelayGroup.List do
   end
 
   defp generate_response(relay_groups),
-    do: Enum.map(relay_groups, &relay_group_map/1)
-
-  defp relay_group_map(relay_group) do
-    %{"name" => relay_group.name,
-      "created_at" => relay_group.inserted_at,
-      "id" => relay_group.id}
-  end
+    do: Enum.map(relay_groups, &RelayGroup.json/1)
 
   defp get_template(options) do
     if Helpers.flag?(options, "verbose") do

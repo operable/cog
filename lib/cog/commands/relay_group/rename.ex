@@ -1,6 +1,7 @@
 defmodule Cog.Commands.RelayGroup.Rename do
   alias Cog.Commands.Helpers
   alias Cog.Repository.RelayGroups
+  alias Cog.Commands.RelayGroup
 
   @moduledoc """
   Renames relay groups
@@ -38,15 +39,10 @@ defmodule Cog.Commands.RelayGroup.Rename do
   defp rename(relay_group, new_name) do
     case RelayGroups.update(relay_group, %{name: new_name}) do
       {:ok, updated_relay_group} ->
-        {:ok, "relay-group-rename", generate_response(updated_relay_group)}
+        {:ok, "relay-group-rename", RelayGroup.json(updated_relay_group)}
       {:error, changeset} ->
         {:error, {:db_errors, changeset.errors}}
     end
-  end
-
-  defp generate_response(relay_group) do
-    %{"name" => relay_group.name,
-      "id" => relay_group.id}
   end
 
   def show_usage(error \\ nil) do

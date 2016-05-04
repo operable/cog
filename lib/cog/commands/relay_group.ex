@@ -64,6 +64,29 @@ defmodule Cog.Commands.RelayGroup do
     end
   end
 
+  @doc """
+  Returns a map representing a relay group from a relay group model.
+  """
+  @spec json(%Cog.Models.RelayGroup{}) :: Map.t
+  def json(relay_group) do
+    %{"name" => relay_group.name,
+      "id" => relay_group.id,
+      "created_at" => relay_group.inserted_at,
+      "relays" => Enum.map(relay_group.relays, &Cog.Commands.Relay.json/1),
+      "bundles" => Enum.map(relay_group.bundles, &bundle_json/1)}
+  end
+
+  defp bundle_json(bundle) do
+    %{"name" => bundle.name,
+      "version" => bundle.version,
+      "status" => bundle_status(bundle)}
+  end
+
+  defp bundle_status(%{enabled: true}),
+    do: :enabled
+  defp bundle_status(%{enabled: false}),
+    do: :disabled
+
   defp show_usage do
     {:ok, "usage", %{usage: @moduledoc}}
   end
