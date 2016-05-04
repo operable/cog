@@ -42,9 +42,9 @@ defmodule Cog.Commands.RelayGroup.Info do
 
   defp get_template(options) do
     if Helpers.flag?(options, "verbose") do
-      "relay-group-list-verbose"
+      "relay-group-info-verbose"
     else
-      "relay-group-list"
+      "relay-group-info"
     end
   end
 

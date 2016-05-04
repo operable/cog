@@ -68,6 +68,6 @@ defmodule Cog.Commands.Relay do
     do: :disabled
 
   defp show_usage do
-    {:ok, "relay-usage", %{usage: @moduledoc}}
+    {:ok, "usage", %{usage: @moduledoc}}
   end
 end
