@@ -52,14 +52,19 @@ defmodule Cog.Commands.Relay do
   end
 
   @doc """
-  Returns "enabled" for an enabled relay and "disabled" for
-  a disabled relay"
+  Returns a map representing a relay from a relay model
   """
-  @spec relay_status(%Cog.Models.Relay{}) :: :enabled | :disabled
-  ## This function is public because it's used in both subcommands
-  def relay_status(%{enabled: true}),
+  @spec json(%Cog.Models.Relay{}) :: Map.t
+  def json(%Cog.Models.Relay{}=relay) do
+    %{"name" => relay.name,
+     "status" => relay_status(relay),
+     "id" => relay.id,
+     "created_at" => relay.inserted_at}
+  end
+
+  defp relay_status(%{enabled: true}),
     do: :enabled
-  def relay_status(%{enabled: false}),
+  defp relay_status(%{enabled: false}),
     do: :disabled
 
   defp show_usage do
