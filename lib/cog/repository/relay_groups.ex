@@ -1,3 +1,12 @@
+defmodule Cog.Repository.RelayGroups.BadIdError do
+  defexception [:message]
+
+  def exception(value) do
+    msg = "'#{value}' is not a valid uuid"
+    %__MODULE__{message: msg}
+  end
+end
+
 defmodule Cog.Repository.RelayGroups do
   @moduledoc """
   Behavioral API for interacting with relay groups. Prefer these
@@ -34,13 +43,23 @@ defmodule Cog.Repository.RelayGroups do
   @spec by_id(String.t) :: {:ok, %RelayGroup{}} | {:error, Ecto.Changeset.t} | {:error, Atom.t}
   def by_id(id) do
     with :ok <- valid_uuid(id) do
-      case Repo.get(RelayGroup, id) |> Repo.preload([:bundles, :relays]) do
+      case Repo.get(RelayGroup, id) do
         %RelayGroup{} = relay_group ->
           {:ok, Repo.preload(relay_group, [:bundles, :relays])}
         nil ->
           {:error, :not_found}
       end
     end
+  end
+
+  @doc """
+  Like by_id/1 but raises an error if no results are returned
+  """
+  @spec by_id!(String.t) :: {:ok, %RelayGroup{}} | no_return()
+  def by_id!(id) do
+    valid_uuid!(id)
+    Repo.get!(RelayGroup, id) |> Repo.preload([:bundles, :relays])
+    |> Repo.preload([:bundles, :relays])
   end
 
   @doc """
@@ -116,7 +135,8 @@ defmodule Cog.Repository.RelayGroups do
       relay_group
       |> add(members_to_add)
       |> remove(members_to_remove)
-      |> Repo.preload([:bundles, :relays])
+
+      by_id!(relay_group.id)
     end)
   end
   def manage_association(id, member_spec) do
@@ -201,6 +221,13 @@ defmodule Cog.Repository.RelayGroups do
       :ok
     else
       {:error, :bad_id}
+    end
+  end
+
+  defp valid_uuid!(id) do
+    case valid_uuid(id) do
+      :ok -> :ok
+      {:error, :bad_id} -> raise(RelayGroups.BadIdError, id)
     end
   end
 end
