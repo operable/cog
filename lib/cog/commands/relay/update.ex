@@ -1,6 +1,7 @@
 defmodule Cog.Commands.Relay.Update do
   alias Cog.Repository.Relays
   alias Cog.Commands.Helpers
+  alias Cog.Commands.Relay
 
   @moduledoc """
   Updates relay name and/or description.
@@ -45,16 +46,10 @@ defmodule Cog.Commands.Relay.Update do
     params = Map.take(req.options, ["name", "description"])
     case Relays.update(relay.id, params) do
       {:ok, updated_relay} ->
-        {:ok, "relay-update", generate_response(updated_relay)}
+        {:ok, "relay-update", Relay.json(updated_relay)}
       {:error, changeset} ->
         {:error, {:db_errors, changeset.errors}}
     end
-  end
-
-  defp generate_response(relay) do
-    %{"name" => relay.name,
-      "status" => Cog.Commands.Relay.relay_status(relay),
-      "id" => relay.id}
   end
 
   def show_usage(error \\ nil) do
