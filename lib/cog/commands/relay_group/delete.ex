@@ -24,7 +24,7 @@ defmodule Cog.Commands.RelayGroup.Delete do
             {:ok, relay_group} ->
               delete(relay_group)
             {:error, :not_found} ->
-              {:error, {:relay_group_no_found, group_name}}
+              {:error, {:relay_group_not_found, group_name}}
           end
         {:error, {:not_enough_args, _count}} ->
           show_usage("Missing required arguments: group name")
@@ -38,7 +38,7 @@ defmodule Cog.Commands.RelayGroup.Delete do
 
   defp delete(relay_group) do
     case RelayGroups.delete(relay_group) do
-      {:ok, relay_group} ->
+      {:ok, _deleted} ->
         {:ok, "relay-group-delete", RelayGroup.json(relay_group)}
       {:error, changeset} ->
         {:error, {:db_errors, changeset.errors}}
