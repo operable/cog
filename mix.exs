@@ -5,7 +5,7 @@ defmodule Cog.Mixfile do
 
   def project do
     [app: :cog,
-     version: "0.4.0",
+     version: "0.5.0",
      elixir: "~> 1.2",
      erlc_paths: ["emqttd_plugins"],
      erlc_options: [:debug_info, :warnings_as_errors],
@@ -69,14 +69,13 @@ defmodule Cog.Mixfile do
      {:hedwig, "~> 0.3.0"},
      {:gproc, "~> 0.5.0", override: true},
      {:html_entities, "~> 0.3.0"},
-     {:adz, github: "operable/adz", tag: "0.2"},
-     {:spanner, github: "operable/spanner"},
-     {:probe, github: "operable/probe", tag: "0.2"},
+     {:adz, github: "operable/adz", tag: "0.5.0"},
+     {:spanner, github: "operable/spanner", tag: "0.5.0"},
+     {:probe, github: "operable/probe", tag: "0.5.0"},
      {:exml, github: "paulgray/exml", tag: "2.2.1"},
-     {:fumanchu, github: "operable/fumanchu"},
+     {:fumanchu, github: "operable/fumanchu", tag: "0.5.0"},
      {:exirc, "~> 0.9.2"},
      {:exjsx, "~> 3.2", override: true},
-
      {:credo, "~> 0.3", only: [:dev, :test]},
      {:phoenix_live_reload, "~> 1.0.3", only: :dev},
      {:earmark, "~> 0.2.1", only: :dev},
