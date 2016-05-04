@@ -1,7 +1,6 @@
 defmodule Cog.Commands.Relay.List do
   alias Cog.Commands.Helpers
   alias Cog.Repository.Relays
-  alias Cog.Commands.Relay
 
   @moduledoc """
   Lists relays.
@@ -36,16 +35,23 @@ defmodule Cog.Commands.Relay.List do
   defp generate_response(options, relays) do
     Enum.map(relays, fn(relay) ->
       if Helpers.flag?(options, "group") do
-        Relay.json(relay)
-        |> Map.put("relay_groups", Enum.map(relay.groups, &relay_group_json/1))
+        relay_map(relay)
+        |> Map.put("relay_groups", Enum.map(relay.groups, &generate_group_map/1))
         |> Map.put("_show_groups", true)
       else
-        Relay.json(relay)
+        relay_map(relay)
       end
     end)
   end
 
-  defp relay_group_json(relay_group) do
+  defp relay_map(relay) do
+    %{"name" => relay.name,
+     "status" => Cog.Commands.Relay.relay_status(relay),
+     "id" => relay.id,
+     "created_at" => relay.inserted_at}
+  end
+
+  defp generate_group_map(relay_group) do
     %{"name" => relay_group.name}
   end
 
@@ -53,11 +59,11 @@ defmodule Cog.Commands.Relay.List do
     if Helpers.flag?(options, "verbose") do
       "relay-list-verbose"
     else
-      "relay-list"
+      "relay_list"
     end
   end
 
   defp show_usage do
-    {:ok, "usage", %{usage: @moduledoc}}
+    {:ok, "relay-usage", %{usage: @moduledoc}}
   end
 end
