@@ -39,7 +39,9 @@ defmodule Cog.Commands.RelayGroup.Rename do
   defp rename(relay_group, new_name) do
     case RelayGroups.update(relay_group, %{name: new_name}) do
       {:ok, updated_relay_group} ->
-        {:ok, "relay-group-rename", RelayGroup.json(updated_relay_group)}
+        json = %{old_name: relay_group.name,
+                 relay_group: RelayGroup.json(updated_relay_group)}
+        {:ok, "relay-group-rename", json}
       {:error, changeset} ->
         {:error, {:db_errors, changeset.errors}}
     end
