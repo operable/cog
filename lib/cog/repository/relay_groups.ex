@@ -54,18 +54,45 @@ defmodule Cog.Repository.RelayGroups do
   end
 
   @doc """
+  Deletes a relay group.
+  """
+  @spec delete(String.t | %RelayGroup{}) :: {:ok, %RelayGroup{}} | {:error, Ecto.Changeset.t} | {:error, Atom.t}
+  def delete(%RelayGroup{}=relay_group) do
+    try do
+      Repo.delete(relay_group)
+    rescue
+      Ecto.StaleModelError ->
+        {:error, :not_found}
+    end
+  end
+  def delete(id) do
+    case by_id(id) do
+      {:ok, relay_group} ->
+        delete(relay_group)
+      error ->
+        error
+    end
+  end
+
+  @doc """
   Updates a relay group.
   """
-  @spec update(String.t, Map.t) :: {:ok, %RelayGroup{}} | {:error, Ecto.Changeset.t}
+  @spec update(String.t | %RelayGroup{}, Map.t) :: {:ok, %RelayGroup{}} | {:error, Ecto.Changeset.t}
+  def update(%RelayGroup{}=relay_group, attrs) do
+    changeset = RelayGroup.changeset(relay_group, attrs)
+    case Repo.update(changeset) do
+      {:ok, relay_group} ->
+        {:ok, relay_group}
+      {:error, changeset} ->
+        {:error, changeset}
+    end
+  end
   def update(id, attrs) do
-    with {:ok, relay_group} <- by_id(id) do
-      changeset = RelayGroup.changeset(relay_group, attrs)
-      case Repo.update(changeset) do
-        {:ok, relay_group} ->
-          {:ok, relay_group}
-        {:error, changeset} ->
-          {:error, changeset}
-      end
+    case by_id(id) do
+      {:ok, relay_group} ->
+        update(relay_group, attrs)
+      error ->
+        error
     end
   end
 

@@ -36,7 +36,7 @@ defmodule Cog.Commands.RelayGroup.Rename do
   end
 
   defp rename(relay_group, new_name) do
-    case RelayGroups.update(relay_group.id, %{name: new_name}) do
+    case RelayGroups.update(relay_group, %{name: new_name}) do
       {:ok, updated_relay_group} ->
         {:ok, "relay-group-rename", generate_response(updated_relay_group)}
       {:error, changeset} ->
@@ -45,16 +45,11 @@ defmodule Cog.Commands.RelayGroup.Rename do
   end
 
   defp generate_response(relay_group) do
-      %{"name" => relay_group.name,
-        "id" => relay_group.id}
+    %{"name" => relay_group.name,
+      "id" => relay_group.id}
   end
 
   def show_usage(error \\ nil) do
     {:ok, "usage", %{usage: @moduledoc, error: error}}
   end
 end
-
-
-
-
-
