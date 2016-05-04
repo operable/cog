@@ -8,7 +8,7 @@ defmodule Cog.Commands.RelayGroup do
   Usage relay-group <subcommand> [flags]
 
   Subcommands
-  * list -- Lists relay groups
+  * info -- Get info about one or more relay groups
   * create -- Creates a relay group
   * rename -- Renames a relay group
   * delete -- Deletes a relay group
