@@ -37,6 +37,15 @@ defmodule Cog.Repository.RelayGroups do
     do: Repo.all(RelayGroup) |> Repo.preload([:bundles, :relays])
 
   @doc """
+  Retrieves all relay groups based on a list of relay group names
+  """
+  @spec all_by_name(List.t) :: [%RelayGroup{}]
+  def all_by_name(names) do
+    Repo.all(from g in RelayGroup, where: g.name in ^names)
+    |> Repo.preload([:bundles, :relays])
+  end
+
+  @doc """
   Retrieves a single relay group based on the id. The given id must a
   valid UUID.
   """
