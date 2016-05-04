@@ -29,21 +29,21 @@ defmodule Cog.Commands.RelayGroup.Helpers do
   end
 
   @doc """
-  Verifies that the list of relay name is included in the list of relays
+  Verifies that the entire list of values is contained in the list of models
   """
-  @spec verify_relays([%Cog.Models.Relay{}], [String.t]) :: :ok | {:error, any()}
-  def verify_relays(relays, relay_names) do
-    requested_relays = MapSet.new(relay_names)
-    found_relays = MapSet.new(relays, &(&1.name))
+  @spec verify_list([%Cog.Models.Relay{}], [String.t], Atom.t) :: :ok | {:error, any()}
+  def verify_list(models, values, key) do
+    values = MapSet.new(values)
+    models = MapSet.new(models, &(Map.get(&1, key)))
 
-    missing_relays = MapSet.difference(requested_relays, found_relays)
+    missing_values = MapSet.difference(values, models)
     |> MapSet.to_list
 
-    case missing_relays do
+    case missing_values do
       [] ->
         :ok
       missing ->
-        {:error, {:relays_not_found, missing}}
+        {:error, {:values_not_found, missing}}
     end
   end
 
