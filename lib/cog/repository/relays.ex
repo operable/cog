@@ -7,6 +7,7 @@ defmodule Cog.Repository.Relays do
   alias Cog.Repo
   alias Cog.Models.Relay
   alias Cog.Relay.Relays
+  import Ecto.Query, only: [from: 1, from: 2]
 
   @doc """
   Creates a new relay given a map of attributes
@@ -42,9 +43,18 @@ defmodule Cog.Repository.Relays do
   end
 
   @doc """
-  Retrieves a single relay based on it's name.
+  Retrieves a single relay based on it's name or a list of relays based on
+  a list of names.
   """
-  @spec by_name(String.t) :: {:ok, %Relay{}} | {:error, :not_found}
+  @spec by_name(String.t | List.t) :: {:ok, %Relay{}} | {:error, :not_found}
+  def by_name(names) when is_list(names) do
+    case Repo.all(from r in Relay, where: r.name in ^names) do
+      [] ->
+        {:error, :not_found}
+      relays ->
+        {:ok, relays}
+    end
+  end
   def by_name(name) do
     case Repo.get_by(Relay, name: name) do
       %Relay{} = relay ->
