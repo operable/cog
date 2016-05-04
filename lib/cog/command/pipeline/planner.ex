@@ -10,28 +10,33 @@ defmodule Cog.Command.Pipeline.Planner do
   # TODO: need to indicate special status of once w/r/t binding
   @spec plan(%Invocation{}, [Map.t], [String.t]) :: {:ok, [%Plan{}]} | {:error, term}
   def plan(%Invocation{meta: %Command{execution: "once"}}=invocation, context, perms) when is_list(context) do
-    with %Plan{}=plan <- _plan(invocation, %{}, context, perms),
+    with %Plan{}=plan <- create_plan(invocation, %{}, context, perms),
       do: {:ok, [plan]}
   end
-  def plan(%Invocation{meta: %Command{execution: "multiple"}}=invocation, context, perms) when is_list(context) do
-    result = Enum.reduce_while(context, [], fn(ctx, acc) ->
-      case _plan(invocation, ctx, ctx, perms) do
-        %Plan{}=plan ->
-          {:cont, [plan|acc]}
-        {:error, _}=error ->
-          {:halt, error}
-      end
-    end)
+  def plan(%Invocation{meta: %Command{execution: "multiple"}}=invocation, context, perms) when is_list(context),
+    do: create_plans(invocation, perms, context, [])
 
-    case result do
-      plans when is_list(plans) ->
-        {:ok, Enum.reverse(plans)}
-      {:error, _}=error ->
+  defp create_plans(_invocation, _perms, [], acc),
+    do: {:ok, Enum.reverse(acc)}
+  defp create_plans(invocation, perms, [context|t], acc) do
+    stage_pos = case {t, acc} do
+      {_, []} ->
+        :first
+      {[], _} ->
+        :last
+      _ ->
+        nil
+    end
+
+    case create_plan(invocation, context, context, perms, stage_pos) do
+      %Plan{}=plan ->
+        create_plans(invocation, perms, t, [plan|acc])
+      error ->
         error
     end
   end
 
-  defp _plan(invocation, binding_map, cog_env, permissions) do
+  defp create_plan(invocation, binding_map, cog_env, permissions, stage_pos \\ nil) do
     with {:ok, bound} <- Binder.bind(invocation, binding_map),
          {:ok, options, args} <- OptionInterpreter.initialize(bound),
          :allowed <- PermissionInterpreter.check(invocation.meta, options, args, permissions),
@@ -39,7 +44,8 @@ defmodule Cog.Command.Pipeline.Planner do
                 options: options,
                 args: args,
                 cog_env: cog_env,
-                invocation_text: to_string(bound)}
+                invocation_text: to_string(bound),
+                stage_pos: stage_pos}
   end
 
 end

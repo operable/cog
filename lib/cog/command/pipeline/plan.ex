@@ -10,6 +10,7 @@ defmodule Cog.Command.Pipeline.Plan do
     invocation_text: nil,
     options: %{},
     args: [],
-    cog_env: nil]
+    cog_env: nil,
+    stage_pos: nil]
 
 end
