@@ -13,10 +13,10 @@
 
 ### Bug Fixes
 
-- Clean up cogctl output (546)[https://github.com/operable/cog/issues/546]
-- Fixed error when creating relay group with members (567)[https://github.com/operable/cog/issues/567]
-- Bootstrap should be idempotent (574)[https://github.com/operable/cog/issues/574]
-- Command parser errors on strings containing '.' (584)[https://github.com/operable/cog/issues/584]
+- [Clean up cogctl output](https://github.com/operable/cog/issues/546)
+- [Fixed error when creating relay group with members](https://github.com/operable/cog/issues/567)
+- [Bootstrap should be idempotent](https://github.com/operable/cog/issues/574)
+- [Command parser errors on strings containing '.'](https://github.com/operable/cog/issues/584)
 
 ## v0.4.1
 
