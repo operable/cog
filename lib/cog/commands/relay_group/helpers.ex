@@ -1,6 +1,8 @@
 defmodule Cog.Commands.RelayGroup.Helpers do
   alias Cog.Repository.RelayGroups
   alias Cog.Repository.Relays
+  alias Cog.Repo
+  import Ecto.Query, only: [from: 1, from: 2]
 
   @doc """
   Returns a relay group by name or an error tuple.
@@ -16,15 +18,29 @@ defmodule Cog.Commands.RelayGroup.Helpers do
   end
 
   @doc """
-  Returns al list of relays based on a list of relay names.
+  Returns a list of relays based on a list of relay names.
   """
-  @spec get_relays(List.t) :: {:ok, [%Cog.Models.RelayGroup{}]} | {:error, any()}
+  @spec get_relays(List.t) :: {:ok, [%Cog.Models.Relay{}]} | {:error, any()}
   def get_relays(relay_names) do
     case Relays.by_name(relay_names) do
       {:ok, relays} ->
         {:ok, relays}
       {:error, :not_found} ->
         {:error, {:relays_not_found, relay_names}}
+    end
+  end
+
+  @doc """
+  Returns a list of bundles based on a list of bundle names.
+  """
+  @spec get_bundles(List.t) :: {:ok, [%Cog.Models.Bundle{}]} | {:error, any()}
+  def get_bundles(bundle_names) do
+    # TODO: Move this to a bundles repository
+    case Repo.all(from b in Cog.Models.Bundle, where: b.name in ^bundle_names) do
+      [] ->
+        {:error, {:bundles_not_found, bundle_names}}
+      bundles ->
+        {:ok, bundles}
     end
   end
 

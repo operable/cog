@@ -38,15 +38,15 @@ defmodule Cog.Commands.RelayGroup.Assign do
   end
 
   defp verify_bundles(bundles, bundle_names) do
-    case RelayGroup.Helpers.verify_lists(bundles, bundle_names, :name) do
+    case RelayGroup.Helpers.verify_list(bundles, bundle_names, :name) do
       :ok -> :ok
       {:error, {:values_not_found, missing}} ->
         {:error, {:bundles_not_found, missing}}
     end
   end
 
-  defp show_usage do
-    {:ok, "relay-group-usage", %{usage: @moduledoc}}
+  defp show_usage(error \\ nil) do
+    {:ok, "usage", %{usage: @moduledoc, error: error}}
   end
 end
 

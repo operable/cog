@@ -1,5 +1,7 @@
 defmodule Cog.Commands.RelayGroup.Unassign do
   alias Cog.Commands.Helpers
+  alias Cog.Repository.RelayGroups
+  alias Cog.Commands.RelayGroup
 
   @moduledoc """
   Unassigns bundles from relay groups
@@ -11,16 +13,31 @@ defmodule Cog.Commands.RelayGroup.Unassign do
   -h, --help      Display this usage info
   """
 
-  @spec unassign_bundles(%Cog.Command.Request{}) :: {:ok, String.t, Map.t} | {:error, any()}
-  def unassign_bundles(req) do
+  @spec unassign_bundles(%Cog.Command.Request{}, List.t) :: {:ok, String.t, Map.t} | {:error, any()}
+  def unassign_bundles(req, arg_list) do
     if Helpers.flag?(req.options, "help") do
       show_usage
     else
+      with {:ok, [group | bundle_names]} <- Helpers.get_args(arg_list, min: 2),
+           {:ok, relay_group} <- RelayGroup.Helpers.get_relay_group(group),
+           {:ok, bundles} <- RelayGroup.Helpers.get_bundles(bundle_names) do
+             unassign(relay_group, bundles)
+      end
     end
   end
 
-  defp show_usage do
-    {:ok, "relay-group-usage", %{usage: @moduledoc}}
+  defp unassign(relay_group, bundles) do
+    member_spec = %{"bundles" => %{"remove" => Enum.map(bundles, &(&1.id))}}
+    case RelayGroups.manage_association(relay_group, member_spec) do
+      {:ok, relay_group} ->
+        {:ok, "relay-group-update-success", RelayGroup.json(relay_group)}
+      error ->
+        {:error, error}
+    end
+  end
+
+  defp show_usage(error \\ nil) do
+    {:ok, "usage", %{usage: @moduledoc, error: error}}
   end
 end
 
