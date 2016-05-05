@@ -50,7 +50,7 @@ defmodule Integration.Commands.RelayGroupTest do
   end
 
   test "deleting a relay group", %{user: user} do
-    relay_group = ModelUtilities.relay_group("relay_group")
+    ModelUtilities.relay_group("relay_group")
 
     response = send_message(user, "@bot: operable:relay-group delete relay_group")
 
@@ -62,7 +62,7 @@ defmodule Integration.Commands.RelayGroupTest do
   end
 
   test "adding relays to relay groups", %{user: user} do
-    relay_group = ModelUtilities.relay_group("relay_group")
+    ModelUtilities.relay_group("relay_group")
     relay = ModelUtilities.relay("relay", "foo")
 
     response = send_message(user, "@bot: operable:relay-group add relay_group relay")
@@ -100,7 +100,7 @@ defmodule Integration.Commands.RelayGroupTest do
   end
 
   test "assigning bundles to relay groups", %{user: user} do
-    relay_group = ModelUtilities.relay_group("relay_group")
+    ModelUtilities.relay_group("relay_group")
     bundle = ModelUtilities.bundle("bundle")
 
     response = send_message(user, "@bot: operable:relay-group assign relay_group bundle")

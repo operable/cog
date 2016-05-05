@@ -40,12 +40,14 @@ defmodule Cog.V1.UserControllerTest do
               "last_name" => "McCog",
               "email_address" => "cog@operable.io",
               "groups" => [],
+              "chat_handles" => [],
               "username" => "cog"},
             %{"id" => other.id,
               "first_name" => "Sadpanda",
               "last_name" => "McSadpanda",
               "email_address" => "sadpanda@operable.io",
               "groups" => [],
+              "chat_handles" => [],
               "username" => "sadpanda"}] == users_json |> sort_by("username")
   end
 
@@ -56,6 +58,7 @@ defmodule Cog.V1.UserControllerTest do
                          "first_name" => requestor.first_name,
                          "last_name" => requestor.last_name,
                          "groups" => [],
+                         "chat_handles" => [],
                          "email_address" => requestor.email_address}} == json_response(conn, 200)
   end
 
@@ -67,6 +70,26 @@ defmodule Cog.V1.UserControllerTest do
                          "first_name" => "Tester",
                          "last_name" => "McTester",
                          "groups" => [],
+                         "chat_handles" => [],
+                         "email_address" => "tester@operable.io"}} == json_response(conn, 200)
+  end
+
+  test "renders the associated chat handles", %{authed: requestor} do
+    user = user("tester") |> with_chat_handle_for("test") |> Repo.preload(:chat_handles)
+    [chat_handle] = user.chat_handles
+    conn = api_request(requestor, :get, "/v1/users/#{user.id}")
+    assert %{"user" => %{"id" => user.id,
+                         "username" => "tester",
+                         "first_name" => "Tester",
+                         "last_name" => "McTester",
+                         "groups" => [],
+                         "chat_handles" => [%{
+                            "id" => chat_handle.id,
+                            "handle" => chat_handle.handle,
+                            "chat_provider" => %{
+                              "name" => "test"
+                            },
+                         }],
                          "email_address" => "tester@operable.io"}} == json_response(conn, 200)
   end
 
@@ -95,6 +118,7 @@ defmodule Cog.V1.UserControllerTest do
                                                  "first_name" => @valid_attrs.first_name,
                                                  "email_address" => @valid_attrs.email_address,
                                                  "groups" => [],
+                                                 "chat_handles" => [],
                                                  "last_name" => @valid_attrs.last_name}
   end
 
@@ -186,6 +210,7 @@ defmodule Cog.V1.UserControllerTest do
                          "first_name" => @valid_attrs.first_name,
                          "email_address" => @valid_attrs.email_address,
                          "groups" => [],
+                         "chat_handles" => [],
                          "last_name" => @valid_attrs.last_name}
   end
 
@@ -199,6 +224,7 @@ defmodule Cog.V1.UserControllerTest do
                          "first_name" => tester.first_name,
                          "email_address" => tester.email_address,
                          "groups" => [],
+                         "chat_handles" => [],
                          "last_name" => tester.last_name}
   end
 
@@ -227,6 +253,7 @@ defmodule Cog.V1.UserControllerTest do
                                                               "namespace" => "site"}]
                             }]
                         }],
+              "chat_handles" => []
               } == user_json["user"]
   end
 
