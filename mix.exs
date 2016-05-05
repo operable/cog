@@ -70,9 +70,6 @@ defmodule Cog.Mixfile do
      {:gproc, "~> 0.5.0", override: true},
      {:html_entities, "~> 0.3.0"},
      {:adz, github: "operable/adz", tag: "0.2"},
-     # Just need this until the piper branch is merged, then we can bump
-     # deps in spanner and here
-     {:piper, github: "operable/piper", branch: "peck/add-allow-keyword", override: true},
      {:spanner, github: "operable/spanner"},
      {:probe, github: "operable/probe", tag: "0.2"},
      {:exml, github: "paulgray/exml", tag: "2.2.1"},
