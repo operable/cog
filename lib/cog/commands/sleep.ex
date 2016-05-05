@@ -1,6 +1,5 @@
 defmodule Cog.Commands.Sleep do
   use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle,
-                               enforcing: false,
                                execution: :once,
                                name: "sleep"
 
@@ -20,6 +19,8 @@ defmodule Cog.Commands.Sleep do
       !echo "Get up and stretch" | sleep 10 | echo $body > me`
 
   """
+
+  rule "when command is #{Cog.embedded_bundle}:sleep allow"
 
   alias Cog.Command.Request
 

@@ -1,5 +1,5 @@
 defmodule Cog.Commands.Alias do
-  use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle, enforcing: false
+  use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle
   alias Cog.Commands.Alias
   alias Cog.Commands.Helpers
 
@@ -32,6 +32,8 @@ defmodule Cog.Commands.Alias do
       Visibility: 'site'
       Pipeline: 'echo my-other-awesome-alias'
   """
+
+  rule "when command is #{Cog.embedded_bundle}:alias allow"
 
   def handle_message(req, state) do
     {subcommand, args} = get_subcommand(req.args)

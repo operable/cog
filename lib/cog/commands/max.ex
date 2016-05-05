@@ -8,8 +8,10 @@ defmodule Cog.Commands.Max do
   > @bot operable:max 0.48 0.2 1.8 3548.4 0.078
   > @bot operable:max "apple" "ball" "car" "zebra"
   """
-  use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle, enforcing: false
+  use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle
   require Logger
+
+  rule "when command is #{Cog.embedded_bundle}:max allow"
 
   def handle_message(req, state) do
     max_val = Enum.max(req.args)

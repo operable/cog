@@ -1,5 +1,5 @@
 defmodule Cog.Commands.Help do
-  use Cog.Command.GenCommand.Base, bundle: "#{Cog.embedded_bundle}", enforcing: false
+  use Cog.Command.GenCommand.Base, bundle: "#{Cog.embedded_bundle}"
 
   @moduledoc """
   Get help on all installed Cog bot commands.
@@ -14,6 +14,8 @@ defmodule Cog.Commands.Help do
   use Cog.Models
   alias Cog.Repo
   alias Cog.Queries
+
+  rule "when command is #{Cog.embedded_bundle}:help allow"
 
   option "all", type: "bool", required: false
   option "disabled", type: "bool", required: false

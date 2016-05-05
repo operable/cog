@@ -9,8 +9,10 @@ defmodule Cog.Commands.Wc do
   The clouds give rest
   To the moon-beholders."
   """
-  use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle, enforcing: false
+  use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle
   alias Cog.Command.Request
+
+  rule "when command is #{Cog.embedded_bundle}:wc allow"
 
   option "words", type: "bool", required: false
   option "lines", type: "bool", required: false

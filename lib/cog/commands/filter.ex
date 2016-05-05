@@ -1,5 +1,5 @@
 defmodule Cog.Commands.Filter do
-  use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle, enforcing: false
+  use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle
 
   @moduledoc """
   Filters a collection where the `path` equals the `matches`.
@@ -22,6 +22,8 @@ defmodule Cog.Commands.Filter do
       > { "foo": {"bar.qux": {"baz": "stuff"} } }
 
   """
+
+  rule "when command is #{Cog.embedded_bundle}:filter allow"
 
   option "matches", type: "string", required: false
   option "path", type: "string", required: false
