@@ -97,7 +97,7 @@ defmodule Cog.RuleIngestion do
       (_) -> :error
     end)
 
-    %__MODULE__{input | permissions: Map.get(grouped, :permission),
+    %__MODULE__{input | permissions: Map.get(grouped, :permission, []),
                 errors: errors ++ Map.get(grouped, :error, [])}
   end
   def validate_permissions(input),
