@@ -607,17 +607,17 @@ defmodule Cog.Command.Pipeline.Executor do
     user      = Cog.Models.EctoJson.render(user)
 
     %Cog.Command.Request{
-      command:       Cog.Models.Command.full_name(plan.command),
-      options:       plan.options,
-      args:          plan.args,
-      cog_env:       plan.cog_env,
-      stage_pos:     plan.stage_pos,
-      invocation_id: plan.invocation_id,
-      requestor:     requestor,
-      user:          user,
-      room:          room,
-      reply_to:      reply_to,
-      service_token: service_token
+      command:         Cog.Models.Command.full_name(plan.command),
+      options:         plan.options,
+      args:            plan.args,
+      cog_env:         plan.cog_env,
+      invocation_id:   plan.invocation_id,
+      invocation_step: plan.invocation_step,
+      requestor:       requestor,
+      user:            user,
+      room:            room,
+      reply_to:        reply_to,
+      service_token:   service_token
     }
   end
 
