@@ -1,5 +1,5 @@
 defmodule Cog.Commands.Table do
-  use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle, enforcing: false, execution: :once
+  use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle, execution: :once
   alias Cog.Formatters.Table
 
   @moduledoc """
@@ -14,6 +14,8 @@ defmodule Cog.Commands.Table do
       > How to replace a character for a newline in Vim?  920
 
   """
+
+  rule "when command is #{Cog.embedded_bundle}:table allow"
 
   option "fields", type: "list", required: true
 

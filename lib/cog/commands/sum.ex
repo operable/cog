@@ -7,9 +7,11 @@ defmodule Cog.Commands.Sum do
   > @bot operable:sum 2 "-9"
   > @bot operable:sum 2 24 57 3.7 226.78
   """
-  use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle, enforcing: false
+  use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle
   require Logger
   import Cog.Helpers, only: [get_number: 1]
+
+  rule "when command is #{Cog.embedded_bundle}:sum allow"
 
   def handle_message(req, state) do
     {:reply, req.reply_to, %{sum: sum_list(req.args)}, state}

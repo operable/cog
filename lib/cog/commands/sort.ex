@@ -1,5 +1,5 @@
 defmodule Cog.Commands.Sort do
-  use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle, enforcing: false, execution: :once
+  use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle, execution: :once
 
   @moduledoc """
   Sorts the given inputs.
@@ -28,6 +28,9 @@ defmodule Cog.Commands.Sort do
   "command": "operable:permissions"
 }
   """
+
+  rule "when command is #{Cog.embedded_bundle}:sort allow"
+
   option "asc", type: "bool", required: false
   option "desc", type: "bool", required: false
   option "field", type: "string", required: false

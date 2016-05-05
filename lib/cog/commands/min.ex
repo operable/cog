@@ -8,8 +8,10 @@ defmodule Cog.Commands.Min do
   > @bot operable:min 0.48 0.2 1.8 3548.4 0.078
   > @bot operable:min "apple" "ball" "car" "zebra"
   """
-  use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle, enforcing: false
+  use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle
   require Logger
+
+  rule "when command is #{Cog.embedded_bundle}:min allow"
 
   def handle_message(req, state) do
     min_val = Enum.min(req.args)
