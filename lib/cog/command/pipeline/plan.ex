@@ -4,7 +4,8 @@ defmodule Cog.Command.Pipeline.Plan do
                          invocation_text: String.t,
                          options: %{String.t => term},
                          args: [term],
-                         cog_env: Map.t | [Map.t]}
+                         cog_env: Map.t | [Map.t],
+                         stage_pos: String.t}
   defstruct [
     command: nil,
     invocation_text: nil,

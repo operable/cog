@@ -21,9 +21,9 @@ defmodule Cog.Command.Pipeline.Planner do
   defp create_plans(invocation, perms, [context|t], acc) do
     stage_pos = case {t, acc} do
       {_, []} ->
-        :first
+        "first"
       {[], _} ->
-        :last
+        "last"
       _ ->
         nil
     end
