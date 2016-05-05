@@ -612,6 +612,7 @@ defmodule Cog.Command.Pipeline.Executor do
       args:          plan.args,
       cog_env:       plan.cog_env,
       stage_pos:     plan.stage_pos,
+      invocation_id: plan.invocation_id,
       requestor:     requestor,
       user:          user,
       room:          room,
