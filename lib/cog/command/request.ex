@@ -6,8 +6,8 @@ defmodule Cog.Command.Request do
   require Logger
 
   defmarshalled [:room, :requestor, :user, :command, :args, :options,
-                 :command_config, :reply_to, :cog_env, :service_token,
-                 :invocation_id, :invocation_step]
+                 :command_config, :reply_to, :cog_env, :invocation_id,
+                 :invocation_step, :service_token, :services_root]
 
   defp validate(request) do
     cond do
