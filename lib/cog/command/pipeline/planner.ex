@@ -44,6 +44,7 @@ defmodule Cog.Command.Pipeline.Planner do
                 options: options,
                 args: args,
                 cog_env: cog_env,
+                invocation_id: invocation.id,
                 invocation_text: to_string(bound),
                 stage_pos: stage_pos}
   end
