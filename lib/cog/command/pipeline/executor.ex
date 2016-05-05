@@ -606,15 +606,18 @@ defmodule Cog.Command.Pipeline.Executor do
     room      = request["room"]
     user      = Cog.Models.EctoJson.render(user)
 
-    %Cog.Command.Request{command: Cog.Models.Command.full_name(plan.command),
-                             options: plan.options,
-                             args: plan.args,
-                             cog_env: plan.cog_env,
-                             requestor: requestor,
-                             user: user,
-                             room: room,
-                             reply_to: reply_to,
-                             service_token: service_token}
+    %Cog.Command.Request{
+      command:       Cog.Models.Command.full_name(plan.command),
+      options:       plan.options,
+      args:          plan.args,
+      cog_env:       plan.cog_env,
+      stage_pos:     plan.stage_pos,
+      requestor:     requestor,
+      user:          user,
+      room:          room,
+      reply_to:      reply_to,
+      service_token: service_token
+    }
   end
 
   defp sanitize_request(request) do
