@@ -6,16 +6,16 @@ defmodule Cog.ServiceRouter do
     plug :accepts, ["json"]
   end
 
-  scope "/", Cog do
+  scope "/v1/services", Cog do
     pipe_through :service
 
-    get "/v1/services/meta", V1.ServiceController, :index
-    get "/v1/services/meta/deployed/:name", V1.ServiceController, :show
+    get "/meta", V1.ServiceController, :index
+    get "/meta/deployed/:name", V1.ServiceController, :show
 
-    get "/v1/services/memory/1.0.0/:key", V1.MemoryServiceController, :show
-    delete "/v1/services/memory/1.0.0/:key", V1.MemoryServiceController, :delete
-    put "/v1/services/memory/1.0.0/:key", V1.MemoryServiceController, :update
-    post "/v1/services/memory/1.0.0/:key", V1.MemoryServiceController, :change
+    get "/memory/1.0.0/:key", V1.MemoryServiceController, :show
+    delete "/memory/1.0.0/:key", V1.MemoryServiceController, :delete
+    put "/memory/1.0.0/:key", V1.MemoryServiceController, :update
+    post "/memory/1.0.0/:key", V1.MemoryServiceController, :change
 
   end
 end

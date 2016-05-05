@@ -10,6 +10,7 @@ defmodule Cog.Command.Pipeline.Executor do
   alias Cog.Events.PipelineEvent
   alias Cog.Queries
   alias Cog.Repo
+  alias Cog.ServiceEndpoint
   alias Cog.Template
   alias Piper.Command.Ast
   alias Piper.Command.Parser
@@ -617,7 +618,8 @@ defmodule Cog.Command.Pipeline.Executor do
       user:            user,
       room:            room,
       reply_to:        reply_to,
-      service_token:   service_token
+      service_token:   service_token,
+      services_root:   services_root
     }
   end
 
@@ -659,5 +661,9 @@ defmodule Cog.Command.Pipeline.Executor do
           {:error, :not_found}
       end
     end
+  end
+
+  defp services_root do
+    ServiceEndpoint.url <> "/v1/services"
   end
 end
