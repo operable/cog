@@ -7,7 +7,7 @@ defmodule Cog.Commands.Permissions do
   * List all permissions in the system
   * Grant and revoke permissions from roles.
 
-  Format:
+  ## Format
 
       --list
       --create --permission=site:<name>
@@ -15,13 +15,13 @@ defmodule Cog.Commands.Permissions do
       --grant --permission=<namespace>:<permission> --role=<name>"
       --revoke --permission=<namespace>:<permission> --role=<name>"
 
-  Examples:
+  ## Example
 
-  > !#{Cog.embedded_bundle}:permissions --list
-  > !#{Cog.embedded_bundle}:permissions --create --permission=site:admin
-  > !#{Cog.embedded_bundle}:permissions --delete --permission=site:admin
-  > !#{Cog.embedded_bundle}:permissions --grant --role=dev --permission=site:write
-  > !#{Cog.embedded_bundle}:permissions --revoke --role=dev --permission=giphy:giphy
+      @bot #{Cog.embedded_bundle}:permissions --list
+      @bot #{Cog.embedded_bundle}:permissions --create --permission=site:admin
+      @bot #{Cog.embedded_bundle}:permissions --delete --permission=site:admin
+      @bot #{Cog.embedded_bundle}:permissions --grant --role=dev --permission=site:write
+      @bot #{Cog.embedded_bundle}:permissions --revoke --role=dev --permission=giphy:giphy
 
   """
   use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle

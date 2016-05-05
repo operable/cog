@@ -2,10 +2,11 @@ defmodule Cog.Commands.Sum do
   @moduledoc """
   This command allows the user to sum together a list of numbers
 
-  Examples:
-  > @bot operable:sum 2 2
-  > @bot operable:sum 2 "-9"
-  > @bot operable:sum 2 24 57 3.7 226.78
+  ## Example
+
+      @bot operable:sum 2 2
+      @bot operable:sum 2 "-9"
+      @bot operable:sum 2 24 57 3.7 226.78
   """
   use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle
   require Logger

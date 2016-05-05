@@ -3,10 +3,11 @@ defmodule Cog.Commands.Min do
   This command allows the user to determine the minimum value given a
   list of inputs.
 
-  Examples:
-  > @bot operable:min 49 9 2 2
-  > @bot operable:min 0.48 0.2 1.8 3548.4 0.078
-  > @bot operable:min "apple" "ball" "car" "zebra"
+  ## Example
+
+      @bot operable:min 49 9 2 2
+      @bot operable:min 0.48 0.2 1.8 3548.4 0.078
+      @bot operable:min "apple" "ball" "car" "zebra"
   """
   use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle
   require Logger

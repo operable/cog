@@ -13,7 +13,7 @@ defmodule Cog.Command.Raw do
 
   Also useful as a debugging tool for command authors.
 
-  Example:
+  ## Example
 
       @bot #{Cog.embedded_bundle}:echo foo | #{Cog.embedded_bundle}:raw
       > {

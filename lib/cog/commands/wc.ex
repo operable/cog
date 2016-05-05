@@ -1,13 +1,15 @@
 defmodule Cog.Commands.Wc do
   @moduledoc """
   This command allows the user to count the number of words or lines in the input string.
-    wc [--words | --lines]  <input string>
 
-  Examples:
-  > @bot wc --words "Hey, what will we do today?"
-  > @bot wc --lines "From time to time
-  The clouds give rest
-  To the moon-beholders."
+      wc [--words | --lines]  <input string>
+
+  ## Example
+
+      > @bot wc --words "Hey, what will we do today?"
+      > @bot wc --lines "From time to time
+      The clouds give rest
+      To the moon-beholders."
   """
   use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle
   alias Cog.Command.Request

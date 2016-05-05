@@ -2,8 +2,9 @@ defmodule Cog.Commands.Thorn do
   @moduledoc """
   This command replaces `Th` following a word boundary with þ
 
-  Examples:
-  > @bot operable:thorn foo-Thbar-Thbaz
+  ## Example
+
+      @bot operable:thorn foo-Thbar-Thbaz
   """
   use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle
 

@@ -2,9 +2,10 @@ defmodule Cog.Commands.Unique do
   @moduledoc """
   This command returns unique values given list of inputs
 
-  Examples:
-  > @bot operable:unique 49.3 9 2 2 42 49.3
-  > @bot operable:unique "apple" "apple" "ball" "car" "car" "zebra"
+  ## Example
+
+      @bot operable:unique 49.3 9 2 2 42 49.3
+      @bot operable:unique "apple" "apple" "ball" "car" "car" "zebra"
   """
   use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle, execution: :once
 

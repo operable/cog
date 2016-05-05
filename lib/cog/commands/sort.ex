@@ -4,7 +4,8 @@ defmodule Cog.Commands.Sort do
   @moduledoc """
   Sorts the given inputs.
 
-  Examples
+  ## Example
+
       @bot #{Cog.embedded_bundle}:sort 3 2 1 5 4
       > [1, 2, 3, 4, 5]
       @bot #{Cog.embedded_bundle}:sort --asc 4.5 1.8 0.032 0.6 1.5 0.4
@@ -13,20 +14,20 @@ defmodule Cog.Commands.Sort do
       > [what, we, us, to, to, react, percent, it, is, how, happens, and, Life, %, 90, 10]
       @bot #{Cog.embedded_bundle}:rules --for-command=rules| sort --field=rule
       > {
-  "rule": "when command is operable:permissions with option[user] == /.*/ must have operable:manage_users",
-  "id": "12345678-abcd-efgh-ijkl-0987654321ab",
-  "command": "operable:permissions"
-}
-{
-  "rule": "when command is operable:permissions with option[role] == /.*/ must have operable:manage_roles",
-  "id": "87654321-mnop-qrst-uvwx-0123456789ab",
-  "command": "operable:permissions"
-}
-{
-  "rule": "when command is operable:permissions with option[group] == /.*/ must have operable:manage_groups",
-  "id": "24680135-azby-cxdw-evfu-ab0123456789",
-  "command": "operable:permissions"
-}
+          "rule": "when command is operable:permissions with option[user] == /.*/ must have operable:manage_users",
+          "id": "12345678-abcd-efgh-ijkl-0987654321ab",
+          "command": "operable:permissions"
+        }
+        {
+          "rule": "when command is operable:permissions with option[role] == /.*/ must have operable:manage_roles",
+          "id": "87654321-mnop-qrst-uvwx-0123456789ab",
+          "command": "operable:permissions"
+        }
+        {
+          "rule": "when command is operable:permissions with option[group] == /.*/ must have operable:manage_groups",
+          "id": "24680135-azby-cxdw-evfu-ab0123456789",
+          "command": "operable:permissions"
+        }
   """
 
   rule "when command is #{Cog.embedded_bundle}:sort allow"

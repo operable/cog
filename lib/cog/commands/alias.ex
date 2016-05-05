@@ -6,7 +6,7 @@ defmodule Cog.Commands.Alias do
   @moduledoc """
   Manages aliases
 
-  Subcommands
+  ## Subcommands
   * new <alias-name> <alias-definition> -- creates a new alias visible to the creating user.
   * mv <alias-name> <site | user>:[new-alias-name] -- moves aliases between user and site visibility. Optionally renames aliases.
   * rm <alias-name> -- Removes aliases
@@ -14,23 +14,23 @@ defmodule Cog.Commands.Alias do
 
   ## Example
 
-    @bot #{Cog.embedded_bundle}:alias new my-awesome-alias "echo \"My Awesome Alias\""
-    > user:my-awesome-alias has been created
+      @bot #{Cog.embedded_bundle}:alias new my-awesome-alias "echo \"My Awesome Alias\""
+      > user:my-awesome-alias has been created
 
-    @bot #{Cog.embedded_bundle}:alias mv my-awesome-alias site:awesome-alias
-    > Moved user:my-awesome-alias to site:awesome-alias
+      @bot #{Cog.embedded_bundle}:alias mv my-awesome-alias site:awesome-alias
+      > Moved user:my-awesome-alias to site:awesome-alias
 
-    @bot #{Cog.embedded_bundle}:alias rm awesome-alias
-    > Removed site:awesome-alias
+      @bot #{Cog.embedded_bundle}:alias rm awesome-alias
+      > Removed site:awesome-alias
 
-    @bot #{Cog.embedded_bundle}:alias ls
-    > Name: 'my-awesome-alias'
-      Visibility: 'user'
-      Pipeline: 'echo my-awesome-alias'
+      @bot #{Cog.embedded_bundle}:alias ls
+      > Name: 'my-awesome-alias'
+        Visibility: 'user'
+        Pipeline: 'echo my-awesome-alias'
 
-      Name: 'my-other-awesome-alias'
-      Visibility: 'site'
-      Pipeline: 'echo my-other-awesome-alias'
+        Name: 'my-other-awesome-alias'
+        Visibility: 'site'
+        Pipeline: 'echo my-other-awesome-alias'
   """
 
   rule "when command is #{Cog.embedded_bundle}:alias allow"

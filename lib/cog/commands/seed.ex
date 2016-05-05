@@ -15,7 +15,7 @@ defmodule Cog.Command.Seed do
 
   Best used for debugging and experimentation.
 
-  Examples:
+  ## Example
 
       !seed '{"thing":"stuff"}' | echo $thing
       > stuff

@@ -18,14 +18,14 @@ defmodule Cog.Commands.Which do
 
   ## Example
 
-    @bot #{Cog.embedded_bundle}:which my-awesome-alias
-    > alias - user:my-awesome-alias -> "echo my awesome alias"
+      @bot #{Cog.embedded_bundle}:which my-awesome-alias
+      > alias - user:my-awesome-alias -> "echo my awesome alias"
 
-    @bot #{Cog.embedded_bundle}:which an-awesome-command
-    > command - operable:an-awesome-command
+      @bot #{Cog.embedded_bundle}:which an-awesome-command
+      > command - operable:an-awesome-command
 
-    @bot #{Cog.embedded_bundle}:which not-anything
-    > No matching commands or aliases.
+      @bot #{Cog.embedded_bundle}:which not-anything
+      > No matching commands or aliases.
   """
 
   rule "when command is #{Cog.embedded_bundle}:which allow"

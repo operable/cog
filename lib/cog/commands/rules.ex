@@ -2,16 +2,17 @@ defmodule Cog.Commands.Rules do
   @moduledoc """
   This command allows the user to manage rules for commands.
 
-  Format:
-    Rules -
+  ## Format
+
       rules --add "when command is <full_command_name> must have <namespace>:<permission>"
       rules --add --for-command=<full_command_name> --permission=<namespace>:<permission>
       rules --list --for-command=<full_command_name>
       rules --drop --for-command=<full_command_name>
       rules --drop --id=<rule_id>
 
-  Examples:
-  > @bot operable:rules --add "when command is operable:ec2-terminate must have operable:ec2"
+  ## Example
+
+      @bot operable:rules --add "when command is operable:ec2-terminate must have operable:ec2"
   """
   use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle
 
