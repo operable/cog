@@ -1,5 +1,5 @@
 defmodule Cog.Support.TestCommands.TestEcho do
-  use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle, enforcing: false, name: "t-echo"
+  use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle, name: "t-echo"
 
   @moduledoc """
   Repeats whatever it is passed.
@@ -10,6 +10,8 @@ defmodule Cog.Support.TestCommands.TestEcho do
       > this if nifty
 
   """
+
+  rule "when command is #{Cog.embedded_bundle}:t-echo allow"
 
   def handle_message(req, state) do
     {:reply, req.reply_to, echo_string(req.args), state}

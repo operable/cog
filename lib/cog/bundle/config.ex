@@ -154,7 +154,6 @@ defmodule Cog.Bundle.Config do
   defp command_map(module, acc) do
     command =
       %{"options" => GenCommand.Base.options(module),
-        "enforcing" => GenCommand.Base.enforcing?(module),
         "execution" => GenCommand.Base.execution(module),
         "rules" => GenCommand.Base.rules(module) |> Enum.sort,
         "documentation" => case Code.get_docs(module, :moduledoc) do

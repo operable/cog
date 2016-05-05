@@ -43,55 +43,6 @@ defmodule Cog.Command.GenCommand.Base do
         # ...
       end
 
-  ### Enforced/Secure Commands
-
-  By default commands enforced, meaning they require permissions to run.
-  Optionally users can opt-out and set 'enforcing' to false, requiring no
-  permissions to run. Un-enforced commands should be used sparingly and are most
-  useful for commands that do simple text processing and never call out to
-  outside services. `operable:echo` and `operable:table` are good examples of
-  un-enforced commands.
-
-  To opt-out set the enforcing flag to false when using the command macro.
-  true when using #{inspect __MODULE__}
-
-  Example:
-
-      defmodule MyPrimitiveCommand do
-        use #{inspect __MODULE__}, enforcing: false
-
-        # ...
-      end
-
-  ### Calling Convention
-
-  By default commands use the 'bound' calling convention. This means commands
-  only have access to variables that are explicitly passed to the command.
-
-  For example: '@cog stackoveflow vim | echo $title'
-  Echo is a bound command, it will only ever have access to the value held in '$title'.
-
-  If a command is unenforced, meaning the 'enforcing' option is set to false and
-  there are no permissions, you can set the calling convention to 'all'.
-  Commands using 'all' have access to a special key on the request called
-  'cog_env'. 'cog_env' contains the context that the command is currently being
-  executed under.
-
-  For example: '@cog stackoverflow vim | filter --matches="^Vim" --field="title"
-  Filter is of the 'all' calling convention and therefore has access to the entire
-  result map from stackoverflow.
-
-  'all' should be used sparingly. It can potentially cause some difficult to debug
-  errors if missused. It also makes it very difficult to lock down commands, hence
-  the limitation on commands that have no permissions.
-
-      defmodule MyCommand do
-        use #{inspect __MODULE__}, enforcing: false
-
-        # ...
-
-      end
-
   ### Options
 
   All commands can specify options, using the `option/1` macro.
@@ -169,7 +120,6 @@ defmodule Cog.Command.GenCommand.Base do
 
     bundle_name = Keyword.fetch!(opts, :bundle)
     command_name = Keyword.get(opts, :name, default_name)
-    enforcing = ensure_valid(opts, :enforcing, [true, false], true, command_name)
     execution = Atom.to_string(ensure_valid(opts, :execution, [:once, :multiple], :multiple, command_name))
 
     quote location: :keep do
@@ -184,7 +134,6 @@ defmodule Cog.Command.GenCommand.Base do
       Module.register_attribute(__MODULE__, :permissions, accumulate: true, persist: true)
       Module.register_attribute(__MODULE__, :raw_rules, accumulate: true, persist: false)
       Module.register_attribute(__MODULE__, :rules, accumulate: true, persist: true)
-      Module.register_attribute(__MODULE__, :enforcing, accumulate: false, persist: true)
       Module.register_attribute(__MODULE__, :execution, accumulate: false, persist: true)
 
       import unquote(__MODULE__), only: [option: 1,
@@ -194,7 +143,6 @@ defmodule Cog.Command.GenCommand.Base do
       @gen_command_base true
       @bundle_name unquote(bundle_name)
       @command_name unquote(command_name)
-      @enforcing unquote(enforcing)
       @execution unquote(execution)
 
       def init(_args),
@@ -259,13 +207,6 @@ defmodule Cog.Command.GenCommand.Base do
   """
   def permissions(module) do
     attr_values(module, :permissions)
-  end
-
-  @doc """
-  Indicates whether a command should skip permission checks or not.
-  """
-  def enforcing?(module) do
-    attr_value(module, :enforcing) == true
   end
 
   @doc """
