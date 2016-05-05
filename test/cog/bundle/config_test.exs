@@ -25,20 +25,9 @@ defmodule Cog.Bundle.Config.Test do
     def handle_message(_,_), do: {:reply, "blah", "blah", :blah}
   end
 
-  defmodule UnenforcedCommand do
-    use GenCommand.Base, name: "unenforced-command", enforcing: false, bundle: "testing"
-
-    def handle_message(_,_), do: {:reply, "blah", "blah", "blah"}
-  end
-
-  defmodule UnboundCommand do
-    use GenCommand.Base, name: "unbound-command", enforcing: false, bundle: "testing"
-
-    def handle_message(_,_), do: {:reply, "blah", "blah", "blah"}
-  end
 
   defmodule ExecutionOnceCommand do
-    use GenCommand.Base, name: "execution-once-command", enforcing: false, bundle: "testing", execution: :once
+    use GenCommand.Base, name: "execution-once-command", bundle: "testing", execution: :once
 
     def handle_message(_,_), do: {:reply, "blah", "blah", "blah"}
   end
@@ -50,8 +39,6 @@ defmodule Cog.Bundle.Config.Test do
   test "creates a config for a set of modules" do
     config = Config.gen_config("testing", [CommandWithoutOptions,
                                            CommandWithOptions,
-                                           UnenforcedCommand,
-                                           UnboundCommand,
                                            ExecutionOnceCommand,
                                            NeitherCommandNorService], ".")
     assert %{"name" => "testing",
@@ -60,7 +47,6 @@ defmodule Cog.Bundle.Config.Test do
              "commands" => %{
                "command-without-options" => %{
                  "documentation" => nil,
-                 "enforcing" => true,
                  "execution" => "multiple",
                  "module" => "Cog.Bundle.Config.Test.CommandWithoutOptions",
                  "rules" => [
@@ -68,7 +54,6 @@ defmodule Cog.Bundle.Config.Test do
                  ]},
                "command-with-options" => %{
                  "documentation" => nil,
-                 "enforcing" => true,
                  "execution" => "multiple",
                  "module" => "Cog.Bundle.Config.Test.CommandWithOptions",
                  "options" => %{
@@ -81,19 +66,8 @@ defmodule Cog.Bundle.Config.Test do
                    "when command is testing:command-with-options must have testing:bar",
                    "when command is testing:command-with-options with arg[0] == 'baz' must have testing:baz"
                  ]},
-               "unenforced-command" => %{
-                 "documentation" => nil,
-                 "enforcing" => false,
-                 "execution" => "multiple",
-                 "module" => "Cog.Bundle.Config.Test.UnenforcedCommand"},
-               "unbound-command" => %{
-                 "documentation" => nil,
-                 "enforcing" => false,
-                 "execution" => "multiple",
-                 "module" => "Cog.Bundle.Config.Test.UnboundCommand"},
                "execution-once-command" => %{
                  "documentation" => nil,
-                 "enforcing" => false,
                  "execution" => "once",
                  "module" => "Cog.Bundle.Config.Test.ExecutionOnceCommand"}
              },
