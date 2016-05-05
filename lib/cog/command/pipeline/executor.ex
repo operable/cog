@@ -619,7 +619,7 @@ defmodule Cog.Command.Pipeline.Executor do
       room:            room,
       reply_to:        reply_to,
       service_token:   service_token,
-      services_root:   services_root
+      services_root:   ServiceEndpoint.url
     }
   end
 
@@ -661,9 +661,5 @@ defmodule Cog.Command.Pipeline.Executor do
           {:error, :not_found}
       end
     end
-  end
-
-  defp services_root do
-    ServiceEndpoint.url <> "/v1/services"
   end
 end
