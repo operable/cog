@@ -16,7 +16,7 @@ defmodule Cog.Bundle.Install do
   require Logger
 
   @command_attrs ["options", "rules", "documentation",
-                  "enforcing", "execution"]
+                  "execution"]
 
   @doc """
   Given a map of bundle parameters, fully installs the bundle into the
