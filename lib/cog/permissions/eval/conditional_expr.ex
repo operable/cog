@@ -3,6 +3,9 @@ defimpl Cog.Eval, for: Piper.Permissions.Ast.ConditionalExpr do
   alias Cog.Eval
   alias Piper.Permissions.Ast
 
+  def value_of(%Ast.ConditionalExpr{op: :allow}, context) do
+    {true, context}
+  end
   def value_of(%Ast.ConditionalExpr{op: op, left: lhs, right: rhs}, context) do
     f = operator(op)
     {lhsv, context} = Eval.value_of(lhs, context)
