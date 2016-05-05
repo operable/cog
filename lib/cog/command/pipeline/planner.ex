@@ -19,7 +19,7 @@ defmodule Cog.Command.Pipeline.Planner do
   defp create_plans(_invocation, _perms, [], acc),
     do: {:ok, Enum.reverse(acc)}
   defp create_plans(invocation, perms, [context|t], acc) do
-    stage_pos = case {t, acc} do
+    step = case {t, acc} do
       {_, []} ->
         "first"
       {[], _} ->
@@ -28,7 +28,7 @@ defmodule Cog.Command.Pipeline.Planner do
         nil
     end
 
-    case create_plan(invocation, context, context, perms, stage_pos) do
+    case create_plan(invocation, context, context, perms, step) do
       %Plan{}=plan ->
         create_plans(invocation, perms, t, [plan|acc])
       error ->
@@ -36,7 +36,7 @@ defmodule Cog.Command.Pipeline.Planner do
     end
   end
 
-  defp create_plan(invocation, binding_map, cog_env, permissions, stage_pos \\ nil) do
+  defp create_plan(invocation, binding_map, cog_env, permissions, step \\ nil) do
     with {:ok, bound} <- Binder.bind(invocation, binding_map),
          {:ok, options, args} <- OptionInterpreter.initialize(bound),
          :allowed <- PermissionInterpreter.check(invocation.meta, options, args, permissions),
@@ -46,7 +46,7 @@ defmodule Cog.Command.Pipeline.Planner do
                 cog_env: cog_env,
                 invocation_id: invocation.id,
                 invocation_text: to_string(bound),
-                stage_pos: stage_pos}
+                invocation_step: step}
   end
 
 end

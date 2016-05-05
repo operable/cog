@@ -7,7 +7,7 @@ defmodule Cog.Command.Request do
 
   defmarshalled [:room, :requestor, :user, :command, :args, :options,
                  :command_config, :reply_to, :cog_env, :service_token,
-                 :stage_pos, :invocation_id]
+                 :invocation_id, :invocation_step]
 
   defp validate(request) do
     cond do
