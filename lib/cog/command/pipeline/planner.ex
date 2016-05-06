@@ -5,7 +5,6 @@ defmodule Cog.Command.Pipeline.Planner do
   alias Cog.Command.Pipeline.Plan
   alias Piper.Command.Ast.Invocation
 
-  # TODO: need to indicate special status of once w/r/t binding
   @spec plan(%Invocation{}, [Map.t], [String.t]) :: {:ok, [%Plan{}]} | {:error, term}
   def plan(invocation, context, perms) when is_list(context),
     do: create_plans(invocation, perms, context, [])
