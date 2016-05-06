@@ -1,9 +1,5 @@
 defmodule Cog.Formatters.Table do
   def format(data) do
-    data = Enum.map(data, fn row ->
-      Enum.map(row, &to_string/1)
-    end)
-
     data
     |> format_columns
     |> format_rows

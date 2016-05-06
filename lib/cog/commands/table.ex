@@ -62,12 +62,21 @@ defmodule Cog.Commands.Table do
     |> Enum.flat_map(&Map.keys/1)
     |> Enum.uniq
 
-    tableize(items, headers)
+    case headers do
+      [] ->
+        ""
+      _ ->
+        tableize(items, headers)
+    end
   end
 
   defp tableize(items, headers) do
+    headers = Enum.map(headers, &to_string/1)
+
     rows = Enum.map(items, fn item ->
-      Enum.map(headers, &Map.get(item, &1, ""))
+      Enum.map(headers, fn header ->
+        Map.get(item, header, "") |> to_string
+      end)
     end)
 
     Table.format([headers|rows])
