@@ -26,15 +26,16 @@ defmodule Cog.Commands.Sleep do
     step  = req.invocation_step
     value = req.cog_env
 
+    MemoryClient.accum(root, token, key, value)
+
     case step do
       step when step in ["first", nil] ->
-        MemoryClient.accum(root, token, key, value)
         {:reply, req.reply_to, nil, state}
       "last" ->
         accumulated_value = MemoryClient.fetch(root, token, key)
         MemoryClient.delete(root, token, key)
         :timer.sleep(seconds * 1000)
-        {:reply, req.reply_to, accumulated_value ++ [value], state}
+        {:reply, req.reply_to, accumulated_value, state}
     end
   end
 

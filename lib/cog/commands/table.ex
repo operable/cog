@@ -44,13 +44,14 @@ defmodule Cog.Commands.Table do
     value = req.cog_env
     args  = req.args
 
+    MemoryClient.accum(root, token, key, value)
+
     case step do
       step when step in ["first", nil] ->
-        MemoryClient.accum(root, token, key, value)
         {:reply, req.reply_to, nil, state}
       "last" ->
         accumulated_value = MemoryClient.fetch(root, token, key)
-        table = tableize(accumulated_value ++ [value], args)
+        table = tableize(accumulated_value, args)
         MemoryClient.delete(root, token, key)
         {:reply, req.reply_to, "table", %{"table" => table}, state}
     end

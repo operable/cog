@@ -45,13 +45,14 @@ defmodule Cog.Commands.Sort do
     opts  = req.options
     args  = req.args
 
+    MemoryClient.accum(root, token, key, value)
+
     case step do
       step when step in ["first", nil] ->
-        MemoryClient.accum(root, token, key, value)
         {:reply, req.reply_to, nil, state}
       "last" -> 
         accumulated_value = MemoryClient.fetch(root, token, key)
-        sorted_value = sort_by(accumulated_value ++ [value], opts, args)
+        sorted_value = sort_by(accumulated_value, opts, args)
         MemoryClient.delete(root, token, key)
         {:reply, req.reply_to, sorted_value, state}
     end

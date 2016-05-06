@@ -26,13 +26,14 @@ defmodule Cog.Commands.Unique do
     step  = req.invocation_step
     value = req.cog_env
 
+    MemoryClient.accum(root, token, key, value)
+
     case step do
       step when step in ["first", nil] ->
-        MemoryClient.accum(root, token, key, value)
         {:reply, req.reply_to, nil, state}
       "last" ->
         accumulated_value = MemoryClient.fetch(root, token, key)
-        unique_values = Enum.uniq(accumulated_value ++ [value])
+        unique_values = Enum.uniq(accumulated_value)
         MemoryClient.delete(root, token, key)
         {:reply, req.reply_to, unique_values, state}
     end
