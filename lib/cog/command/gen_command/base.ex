@@ -120,7 +120,6 @@ defmodule Cog.Command.GenCommand.Base do
 
     bundle_name = Keyword.fetch!(opts, :bundle)
     command_name = Keyword.get(opts, :name, default_name)
-    execution = Atom.to_string(ensure_valid(opts, :execution, [:once, :multiple], :multiple, command_name))
 
     quote location: :keep do
       @behaviour Cog.Command.GenCommand
@@ -134,7 +133,6 @@ defmodule Cog.Command.GenCommand.Base do
       Module.register_attribute(__MODULE__, :permissions, accumulate: true, persist: true)
       Module.register_attribute(__MODULE__, :raw_rules, accumulate: true, persist: false)
       Module.register_attribute(__MODULE__, :rules, accumulate: true, persist: true)
-      Module.register_attribute(__MODULE__, :execution, accumulate: false, persist: true)
 
       import unquote(__MODULE__), only: [option: 1,
                                          option: 2,
@@ -143,7 +141,6 @@ defmodule Cog.Command.GenCommand.Base do
       @gen_command_base true
       @bundle_name unquote(bundle_name)
       @command_name unquote(command_name)
-      @execution unquote(execution)
 
       def init(_args),
         do: {:ok, []}
@@ -208,14 +205,6 @@ defmodule Cog.Command.GenCommand.Base do
   def permissions(module) do
     attr_values(module, :permissions)
   end
-
-  @doc """
-  Return the execution method of the command
-  """
-  def execution(module) do
-    attr_value(module, :execution)
-  end
-
 
   @doc """
   Declare an option that this command takes.
@@ -344,19 +333,6 @@ defmodule Cog.Command.GenCommand.Base do
     end
     quote do
       @rules unquote(rules)
-    end
-  end
-
-  defp ensure_valid(opts, opt_name, allowed, default, command_name) do
-    opt_value = Keyword.get(opts, opt_name, default)
-    cond do
-      opt_value == default ->
-        opt_value
-      Enum.member?(allowed, opt_value) ->
-        opt_value
-      true ->
-        raise ValidationError.new "Illegal option value for \"#{opt_name}\" in command \"#{command_name}\". " <>
-        "Value must be one of #{inspect allowed} but found \"#{opt_value}\"."
     end
   end
 

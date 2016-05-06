@@ -9,11 +9,10 @@ defmodule Cog.Command.Pipeline.Planner.Test do
   ########################################################################
   # cog_env handling
 
-  test "plan a multiple invocation with 1-item context" do
+  test "plan invocation with 1-item context" do
     invocation = unbound_invocation("test:test --foo=$var",
                                     options: [[name: "foo"]],
-                                    rules: ["when command is test:test must have test:admin"],
-                                    execution: "multiple")
+                                    rules: ["when command is test:test must have test:admin"])
     plans = Planner.plan(invocation, [%{"var" => "stuff"}], ["test:admin"])
 
     command = invocation.meta
@@ -24,11 +23,10 @@ defmodule Cog.Command.Pipeline.Planner.Test do
 
   end
 
-  test "plan a multiple invocation with multi-item context" do
+  test "plan invocation with multi-item context" do
     invocation = unbound_invocation("test:test --foo=$var",
                                     options: [[name: "foo"]],
-                                    rules: ["when command is test:test must have test:admin"],
-                                    execution: "multiple")
+                                    rules: ["when command is test:test must have test:admin"])
     plans = Planner.plan(invocation, [%{"var" => "stuff"},
                                       %{"var" => "other"},
                                       %{"var" => "thingies"}],
@@ -48,42 +46,6 @@ defmodule Cog.Command.Pipeline.Planner.Test do
                         args: [],
                         cog_env: %{"var" => "thingies"}}
                  ]} = plans
-  end
-
-  test "plan a once invocation with a 1-item context" do
-    invocation = unbound_invocation("test:test --foo=bar",
-                                    options: [[name: "foo"]],
-                                    rules: ["when command is test:test must have test:admin"],
-                                    execution: "once")
-    plans = Planner.plan(invocation,
-                         [%{"var" => "stuff"}],
-                         ["test:admin"])
-
-    command = invocation.meta
-    assert {:ok, [%Plan{command: ^command,
-                        options: %{"foo" => "bar"},
-                        args: [],
-                        cog_env: [%{"var" => "stuff"}]}]} = plans
-  end
-
-  test "plan a once invocation with a multi-item context" do
-    invocation = unbound_invocation("test:test --foo=bar",
-                                    options: [[name: "foo"]],
-                                    rules: ["when command is test:test must have test:admin"],
-                                    execution: "once")
-    plans = Planner.plan(invocation,
-                         [%{"var" => "stuff"},
-                          %{"var" => "more_stuff"},
-                          %{"var" => "even_more_stuff"}],
-                         ["test:admin"])
-
-    command = invocation.meta
-    assert {:ok, [%Plan{command: ^command,
-                        options: %{"foo" => "bar"},
-                        args: [],
-                        cog_env: [%{"var" => "stuff"},
-                                  %{"var" => "more_stuff"},
-                                  %{"var" => "even_more_stuff"}]}]} = plans
   end
 
   ########################################################################

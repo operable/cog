@@ -1,19 +1,13 @@
 defmodule Cog.Command.Pipeline.Planner do
-
   alias Cog.Command.OptionInterpreter
   alias Cog.Command.PermissionInterpreter
   alias Cog.Command.Pipeline.Binder
   alias Cog.Command.Pipeline.Plan
-  alias Cog.Models.Command
   alias Piper.Command.Ast.Invocation
 
   # TODO: need to indicate special status of once w/r/t binding
   @spec plan(%Invocation{}, [Map.t], [String.t]) :: {:ok, [%Plan{}]} | {:error, term}
-  def plan(%Invocation{meta: %Command{execution: "once"}}=invocation, context, perms) when is_list(context) do
-    with %Plan{}=plan <- create_plan(invocation, %{}, context, perms),
-      do: {:ok, [plan]}
-  end
-  def plan(%Invocation{meta: %Command{execution: "multiple"}}=invocation, context, perms) when is_list(context),
+  def plan(invocation, context, perms) when is_list(context),
     do: create_plans(invocation, perms, context, [])
 
   defp create_plans(_invocation, _perms, [], acc),
@@ -38,7 +32,7 @@ defmodule Cog.Command.Pipeline.Planner do
     end
   end
 
-  defp create_plan(invocation, binding_map, cog_env, permissions, step \\ nil) do
+  defp create_plan(invocation, binding_map, cog_env, permissions, step) do
     with {:ok, bound} <- Binder.bind(invocation, binding_map),
          {:ok, options, args} <- OptionInterpreter.initialize(bound),
          :allowed <- PermissionInterpreter.check(invocation.meta, options, args, permissions),

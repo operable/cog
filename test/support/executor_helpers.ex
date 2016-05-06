@@ -47,7 +47,6 @@ defmodule Cog.ExecutorHelpers do
   defp command_from_spec(spec) do
     %Command{
       name: Keyword.fetch!(spec, :name),
-      execution: Keyword.get(spec, :execution, "multiple"),
       bundle: %Cog.Models.Bundle{name: Keyword.fetch!(spec, :bundle)},
       options: Enum.map(Keyword.get(spec, :options, []), &option_from_spec/1),
       rules: Enum.map(Keyword.get(spec, :rules, []), &rule_from_text/1)}
