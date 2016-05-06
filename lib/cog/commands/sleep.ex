@@ -1,42 +1,45 @@
 defmodule Cog.Commands.Sleep do
-  use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle,
-                               execution: :once,
-                               name: "sleep"
+  use Cog.Command.GenCommand.Base,
+    bundle: Cog.embedded_bundle
+
+  alias Cog.Command.Service.MemoryClient
 
   @moduledoc """
-  Sleep for a configurable number of seconds. Useful
-  for testing timeout handling in executor logic.
+  Sleeps for the provided number of seconds and emits the exact
+  input passed in.
 
-  Passes COG_ENV through unchanged.
+  ## Usage
 
-  Note, however, that invocations of this command are still subject to
-  the current per-invocation timeout in the executor (1 minute).
+    sleep <duration>
 
-  Currently useful mainly for debugging purposes.
+  ## Examples
 
-  ## Example
-
-      !echo "Get up and stretch" | sleep 10 | echo $body > me`
-
+    @cog sleep 2400 | echo "Lasagna is done cooking!" > me
   """
 
   rule "when command is #{Cog.embedded_bundle}:sleep allow"
 
-  alias Cog.Command.Request
+  def handle_message(%{args: [seconds]} = req, state) when is_integer(seconds) do
+    root  = req.services_root
+    token = req.service_token
+    key   = req.invocation_id
+    step  = req.invocation_step
+    value = req.cog_env
 
-  def handle_message(req, state) do
-    case sleep_seconds(req) do
-      {:ok, sec} ->
-        :timer.sleep(sec * 1000)
-        {:reply, req.reply_to, req.cog_env, state}
-      :error ->
-        {:error, req.reply_to, "Must specify a single integer sleep duration", state}
+    case step do
+      step when step in ["first", nil] ->
+        MemoryClient.accum(root, token, key, value)
+        {:reply, req.reply_to, nil, state}
+      "last" ->
+        accumulated_value = MemoryClient.fetch(root, token, key)
+        MemoryClient.delete(root, token, key)
+        :timer.sleep(seconds * 1000)
+        {:reply, req.reply_to, accumulated_value ++ [value], state}
     end
   end
 
-  defp sleep_seconds(%Request{args: [sec]}) when is_integer(sec),
-    do: {:ok, sec}
-  defp sleep_seconds(_),
-    do: :error
-
+  def handle_message(%{args: []} = req, state),
+    do: {:error, req.reply_to, "Must specify a duration", state}
+  def handle_message(req, state),
+    do: {:error, req.reply_to, "Must specify a only one duration", state}
 end

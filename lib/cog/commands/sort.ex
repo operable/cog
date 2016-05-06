@@ -1,76 +1,77 @@
 defmodule Cog.Commands.Sort do
-  use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle, execution: :once
+  use Cog.Command.GenCommand.Base,
+    bundle: Cog.embedded_bundle
+
+  alias Cog.Command.Service.MemoryClient
 
   @moduledoc """
-  Sorts the given inputs.
+  Sorts the given list of input in ascending order by default.
 
-  ## Example
+  ## Usage
 
-      @bot #{Cog.embedded_bundle}:sort 3 2 1 5 4
-      > [1, 2, 3, 4, 5]
-      @bot #{Cog.embedded_bundle}:sort --asc 4.5 1.8 0.032 0.6 1.5 0.4
-      > [0.032, 0.4, 0.6, 1.5, 1.8, 4.5]
-      @bot #{Cog.embedded_bundle}:sort --desc Life is 10 percent what happens to us and 90% how we react to it
-      > [what, we, us, to, to, react, percent, it, is, how, happens, and, Life, %, 90, 10]
-      @bot #{Cog.embedded_bundle}:rules --for-command=rules| sort --field=rule
-      > {
-          "rule": "when command is operable:permissions with option[user] == /.*/ must have operable:manage_users",
-          "id": "12345678-abcd-efgh-ijkl-0987654321ab",
-          "command": "operable:permissions"
-        }
-        {
-          "rule": "when command is operable:permissions with option[role] == /.*/ must have operable:manage_roles",
-          "id": "87654321-mnop-qrst-uvwx-0123456789ab",
-          "command": "operable:permissions"
-        }
-        {
-          "rule": "when command is operable:permissions with option[group] == /.*/ must have operable:manage_groups",
-          "id": "24680135-azby-cxdw-evfu-ab0123456789",
-          "command": "operable:permissions"
-        }
+    sort [flags] [fields...]
+
+    Fields are used to pick which values to sort by. If two keys have the same
+    value the values of the next key are compared and so on. If no fields are
+    provided, items are intellegently sorted based on their contents.
+
+  ## Flags
+
+    -a, --asc   sort in ascending order
+    -d, --desc  sort in descending order
+
+  ## Examples
+    @cog seed '[{"a": 1}, {"a": 3}, {"a": 2}]' | sort
+    > [{"a": 1}, {"a": 2}, {"a": 3}]
+
+    @cog seed '[{"a": 1}, {"a": 3}, {"a": 2}]' | sort --desc
+    > [{"a": 3}, {"a": 2}, {"a": 1}]
+
+    @cog seed '[{"a": 3, "b": 4}, {"a": 1, "b": 4}, {"a": 2, "b": 6}]' | sort b a
+    > [{"a": 1, "b": 4}, {"a: 3, "b": 4}, {"a": 2, "b": 6}]
   """
 
   rule "when command is #{Cog.embedded_bundle}:sort allow"
 
-  option "asc", type: "bool", required: false
-  option "desc", type: "bool", required: false
-  option "field", type: "string", required: false
+  option "desc", short: "d", type: "bool", required: false
+  option "asc",  short: "a", type: "bool", required: false
 
   def handle_message(req, state) do
-    args = case req.cog_env do
-             [map] when map == %{} ->
-               req.args
-             arg ->
-               arg
-           end
+    root  = req.services_root
+    token = req.service_token
+    key   = req.invocation_id
+    step  = req.invocation_step
+    value = req.cog_env
+    opts  = req.options
+    args  = req.args
 
-    options = get_options(req.options)
-    {:reply, req.reply_to, sort_items(options, args), state}
-  end
-
-  defp get_options(options) when is_list(options) do
-    [opt | _] = options
-    opt
-  end
-  defp get_options(options), do: options
-
-  defp sort_items(options, items) do
-    case options do
-      %{"desc" => true, "field" => field} ->
-        Enum.sort_by(items, &field_func(&1, field), &>=/2)
-      %{"desc" => true} ->
-        Enum.sort(items, &(&1 > &2))
-      %{"field" => field} ->
-        Enum.sort_by(items, &field_func(&1, field))
-      _ ->
-        Enum.sort(items)
+    case step do
+      step when step in ["first", nil] ->
+        MemoryClient.accum(root, token, key, value)
+        {:reply, req.reply_to, nil, state}
+      "last" -> 
+        accumulated_value = MemoryClient.fetch(root, token, key)
+        sorted_value = sort_by(accumulated_value ++ [value], opts, args)
+        MemoryClient.delete(root, token, key)
+        {:reply, req.reply_to, sorted_value, state}
     end
   end
 
-  defp field_func(item, field) do
-    case item[field] do
-      nil -> item
-      value -> value
+  defp sort_by(items, %{"desc" => true}, args),
+    do: Enum.sort_by(items, &pluck_fields(&1, args), &>=/2)
+  defp sort_by(items, _opts, args),
+    do: Enum.sort_by(items, &pluck_fields(&1, args))
+
+  defp pluck_fields(item, []),
+    do: item
+  defp pluck_fields(item, fields) do
+    values = Enum.map(fields, &Map.get(item, &1))
+
+    case Enum.reject(values, &is_nil/1) do
+      [] ->
+        item
+      _ ->
+        values
     end
   end
 end
