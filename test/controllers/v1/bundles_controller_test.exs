@@ -202,7 +202,7 @@ defmodule Cog.V1.BundlesControllerTest do
     """
     ---
     # Format version
-    cog_bundle_version: 2
+    cog_bundle_version: 3
 
     name: test_bundle
     version: "0.1.0"

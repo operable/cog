@@ -22,6 +22,12 @@ defmodule Cog.V1.BundlesView do
     %{bundle: render_one(bundle, __MODULE__, "bundle.json", as: :bundle, include: [:commands, :relay_groups, :namespace])}
   end
 
+  def render("show_with_warnings.json", %{bundle: bundle, warnings: warnings}) do
+    warnings = Enum.map(warnings, fn({msg, meta}) -> ~s(Warning near #{meta}: #{msg}) end)
+    %{warnings: warnings,
+      bundle: render_one(bundle, __MODULE__, "bundle.json", as: :bundle, include: [:commands, :relay_groups, :namespace])}
+  end
+
   defp render_includes(inc_fields, resource) do
     Map.get(inc_fields, :include, [])
     |> Enum.reduce(%{}, fn(field, reply) ->

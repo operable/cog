@@ -41,12 +41,17 @@ defmodule Cog.V1.BundlesController do
 
   def create(conn, %{"bundle" => params}) do
     case install_bundle(params) do
-      {:ok, bundle} ->
+      {:ok, bundle, warnings} ->
+        view = if length(warnings) > 0 do
+          "show_with_warnings.json"
+        else
+          "show.json"
+        end
         bundle = Repo.preload(bundle, [commands: [rules: [permissions: :namespace]], namespace: [permissions: :namespace]])
         conn
         |> put_status(:created)
         |> put_resp_header("location", bundles_path(conn, :show, bundle))
-        |> render("show.json", %{bundle: bundle})
+        |> render(view, %{bundle: bundle, warnings: warnings})
       {:error, err} ->
         send_failure(conn, err)
     end
@@ -59,10 +64,12 @@ defmodule Cog.V1.BundlesController do
   #### BUNDLE CREATION HELPERS ####
 
   defp install_bundle(params) do
-    with {:ok, config}       <- parse_config(params),
-         {:ok, valid_config} <- validate_config(config),
-         {:ok, params}       <- merge_config(params, valid_config),
-         do: persist(params)
+    with {:ok, config}                 <- parse_config(params),
+         {:ok, valid_config, warnings} <- validate_config(config),
+         {:ok, params}                 <- merge_config(params, valid_config),
+         {:ok, bundle}                 <- persist(params) do
+           {:ok, bundle, warnings}
+    end
   end
 
   defp parse_config(%{"config" => config}) when is_map(config) do
@@ -101,9 +108,11 @@ defmodule Cog.V1.BundlesController do
   defp validate_config(config) do
     case Config.validate(config) do
       {:ok, validated_config} ->
-        {:ok, validated_config}
-      {:error, errors} ->
-        {:error, {:validation_error, errors}}
+        {:ok, validated_config, []}
+      {:warning, validated_config, warnings} ->
+        {:ok, validated_config, warnings}
+      {:error, errors, warnings} ->
+        {:error, {:validation_error, errors, warnings}}
     end
   end
 
@@ -149,10 +158,11 @@ defmodule Cog.V1.BundlesController do
     msg = ["Unable to parse config file."]
     {:unprocessable_entity, %{errors: msg ++ errors}}
   end
-  defp error({:validation_error, errors}) do
+  defp error({:validation_error, errors, warnings}) do
     msg = ["Invalid config file."]
     errors = Enum.map(errors, fn({msg, meta}) -> ~s(Error near #{meta}: #{msg}) end)
-    {:unprocessable_entity, %{errors: msg ++ errors}}
+    warnings = Enum.map(warnings, fn({msg, meta}) -> ~s(Warning near #{meta}: #{msg}) end)
+    {:unprocessable_entity, %{errors: msg ++ errors, warnings: warnings}}
   end
   defp error({:db_error, errors}) do
     msg = ["Could not save bundle."]
