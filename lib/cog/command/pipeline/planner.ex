@@ -20,6 +20,8 @@ defmodule Cog.Command.Pipeline.Planner do
     do: {:ok, Enum.reverse(acc)}
   defp create_plans(invocation, perms, [context|t], acc) do
     step = case {t, acc} do
+      {[], []} ->
+        "last"
       {_, []} ->
         "first"
       {[], _} ->

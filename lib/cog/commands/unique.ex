@@ -1,24 +1,41 @@
 defmodule Cog.Commands.Unique do
+  use Cog.Command.GenCommand.Base,
+    bundle: Cog.embedded_bundle
+
+  alias Cog.Command.Service.MemoryClient
+
   @moduledoc """
-  This command returns unique values given list of inputs
+  Removes all duplicate values from the given input.
 
-  ## Example
+  ## Usage
 
-      @bot operable:unique 49.3 9 2 2 42 49.3
-      @bot operable:unique "apple" "apple" "ball" "car" "car" "zebra"
+    unique
+
+  ## Examples
+
+    @cog seed '[{"a": 1}, {"a": 3}, {"a": 1}]' | unique
+    > [{"a": 1}, {"a": 3}]
   """
-  use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle, execution: :once
 
   rule "when command is #{Cog.embedded_bundle}:unique allow"
 
   def handle_message(req, state) do
-    entries = get_entries(req)
-    |> Enum.uniq
-    {:reply, req.reply_to, entries, state}
-  end
+    root  = req.services_root
+    token = req.service_token
+    key   = req.invocation_id
+    step  = req.invocation_step
+    value = req.cog_env
 
-  defp get_entries(%{cog_env: cog_env, args: args}) when is_nil(cog_env),
-    do: args
-  defp get_entries(%{cog_env: cog_env, args: args}),
-    do: List.flatten([cog_env] ++ args)
+    MemoryClient.accum(root, token, key, value)
+
+    case step do
+      step when step in ["first", nil] ->
+        {:reply, req.reply_to, nil, state}
+      "last" ->
+        accumulated_value = MemoryClient.fetch(root, token, key)
+        unique_values = Enum.uniq(accumulated_value)
+        MemoryClient.delete(root, token, key)
+        {:reply, req.reply_to, unique_values, state}
+    end
+  end
 end

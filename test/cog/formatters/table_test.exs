@@ -9,9 +9,11 @@ defmodule Cog.Formatters.TableTest do
             ["Summer", "Smith", "17"],
             ["Rick", "Sanchez", "too old"]]
 
-    assert Table.format(data) == [["FIRST ","LAST   ","AGE    "],
-                                  ["Morty ","Smith  ","14     "],
-                                  ["Summer","Smith  ","17     "],
-                                  ["Rick  ","Sanchez","too old"]]
+    assert Table.format(data) == """
+    FIRST   LAST     AGE
+    Morty   Smith    14
+    Summer  Smith    17
+    Rick    Sanchez  too old
+    """ |> String.rstrip
   end
 end

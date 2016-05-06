@@ -1,3 +1,5 @@
+Application.ensure_all_started(:cog)
+
 exclude_slack = System.get_env("TEST_SLACK") == nil
 exclude_hipchat = System.get_env("TEST_HIPCHAT") == nil
 exclude_relay = System.get_env("TEST_RELAY") == nil
