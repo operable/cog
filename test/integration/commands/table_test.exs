@@ -8,11 +8,30 @@ defmodule Integration.Commands.TableTest do
     {:ok, %{user: user}}
   end
 
-  test "displaying data in a table", %{user: user} do
-    response = send_message(user, ~s<@bot: seed '[{"foo": "foo1", "bar": "bar1", "baz": "baz1"}, {"foo": "foo2", "bar": "bar2", "baz": "baz2"}]' | table --fields "foo,bar,baz">)
+  test "basic table", %{user: user} do
+    response = send_message(user, ~s(@bot: seed '[{"pizza": "cheese", "price": "$10"}, {"pizza": "peperoni", "price": "$12"}]' | table))
+    assert_payload(response, %{table: """
+    pizza     price
+    cheese    $10
+    peperoni  $12
+    """ |> String.rstrip})
+  end
 
-    assert_payload(response, %{
-      table: "foo   bar   baz \nfoo1  bar1  baz1\nfoo2  bar2  baz2"
-    })
+  test "table with column", %{user: user} do
+    response = send_message(user, ~s(@bot: seed '[{"pizza": "cheese", "price": "$10"}, {"pizza": "peperoni", "price": "$12"}]' | table pizza))
+    assert_payload(response, %{table: """
+    pizza
+    cheese
+    peperoni
+    """ |> String.rstrip})
+  end
+
+  test "table with ordered columns", %{user: user} do
+    response = send_message(user, ~s(@bot: seed '[{"pizza": "cheese", "price": "$10"}, {"pizza": "peperoni", "price": "$12"}]' | table price pizza))
+    assert_payload(response, %{table: """
+    price  pizza
+    $10    cheese
+    $12    peperoni
+    """ |> String.rstrip})
   end
 end

@@ -16,8 +16,10 @@ config :cog, Cog.Endpoint,
   http: [port: 4001],
   catch_errors: true,
   cache_static_lookup: false,
-  server: false,
   secret_key_base: "test-secret"
+
+config :cog, Cog.ServiceEndpoint,
+  server: true
 
 # 4-round hashing for test/dev only
 config :comeonin,
