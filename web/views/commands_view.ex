@@ -6,8 +6,7 @@ defmodule Cog.V1.CommandView do
   def render("command.json", %{command: command}=resource) do
     %{id: command.id,
       name: command.name,
-      documentation: command.documentation,
-      enforcing: command.enforcing}
+      documentation: command.documentation}
     |> Map.merge(render_includes(resource, command))
   end
 

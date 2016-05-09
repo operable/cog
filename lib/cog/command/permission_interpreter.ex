@@ -2,10 +2,7 @@ defmodule Cog.Command.PermissionInterpreter do
 
   alias Piper.Permissions.Parser
   alias Cog.Permissions
-  alias Cog.Models.Command
 
-  def check(%Command{enforcing: false}, _options, _args, _perms),
-    do: :allowed
   def check(command, options, args, perms) do
     context = Permissions.Context.new(permissions: perms,
                                       command: Cog.Models.Command.full_name(command),
