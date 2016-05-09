@@ -7,8 +7,7 @@ defmodule Cog.V1.CommandView do
     %{id: command.id,
       name: command.name,
       documentation: command.documentation,
-      enforcing: command.enforcing,
-      execution: command.execution}
+      enforcing: command.enforcing}
     |> Map.merge(render_includes(resource, command))
   end
 

@@ -5,13 +5,8 @@ defmodule Cog.Command.Raw do
 
 
   @moduledoc """
-  Show the raw output of a command, exclusive of any templating.
-
-  Useful for seeing the difference between `multiple` and `once`
-  execution modes, as well as seeing which fields are available for
-  use in `bound` and `all` calling conventions.
-
-  Also useful as a debugging tool for command authors.
+  Show the raw output of a command, exclusive of any templating. Useful as a
+  debugging tool for command authors.
 
   ## Example
 

@@ -25,13 +25,6 @@ defmodule Cog.Bundle.Config.Test do
     def handle_message(_,_), do: {:reply, "blah", "blah", :blah}
   end
 
-
-  defmodule ExecutionOnceCommand do
-    use GenCommand.Base, name: "execution-once-command", bundle: "testing", execution: :once
-
-    def handle_message(_,_), do: {:reply, "blah", "blah", "blah"}
-  end
-
   defmodule NeitherCommandNorService do
     def howdy, do: "Hello World"
   end
@@ -39,7 +32,6 @@ defmodule Cog.Bundle.Config.Test do
   test "creates a config for a set of modules" do
     config = Config.gen_config("testing", [CommandWithoutOptions,
                                            CommandWithOptions,
-                                           ExecutionOnceCommand,
                                            NeitherCommandNorService], ".")
     assert %{"name" => "testing",
              "type" => "elixir",
@@ -47,14 +39,12 @@ defmodule Cog.Bundle.Config.Test do
              "commands" => %{
                "command-without-options" => %{
                  "documentation" => nil,
-                 "execution" => "multiple",
                  "module" => "Cog.Bundle.Config.Test.CommandWithoutOptions",
                  "rules" => [
                    "when command is testing:command-without-options must have testing:foo"
                  ]},
                "command-with-options" => %{
                  "documentation" => nil,
-                 "execution" => "multiple",
                  "module" => "Cog.Bundle.Config.Test.CommandWithOptions",
                  "options" => %{
                    "option_1" => %{
@@ -66,10 +56,6 @@ defmodule Cog.Bundle.Config.Test do
                    "when command is testing:command-with-options must have testing:bar",
                    "when command is testing:command-with-options with arg[0] == 'baz' must have testing:baz"
                  ]},
-               "execution-once-command" => %{
-                 "documentation" => nil,
-                 "execution" => "once",
-                 "module" => "Cog.Bundle.Config.Test.ExecutionOnceCommand"}
              },
              "permissions" => ["testing:bar", "testing:baz", "testing:foo"]} = config
   end
