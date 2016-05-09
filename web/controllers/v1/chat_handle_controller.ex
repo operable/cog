@@ -4,7 +4,6 @@ defmodule Cog.V1.ChatHandleController do
   alias Cog.Models.EctoJson
   alias Cog.Models.ChatHandle
   alias Cog.Models.User
-  alias Cog.Queries
 
   plug Cog.Plug.Authentication
   plug Cog.Plug.Authorization, [permission: "#{Cog.embedded_bundle}:manage_users",
@@ -12,13 +11,6 @@ defmodule Cog.V1.ChatHandleController do
 
   plug :scrub_params, "chat_handle" when action in [:create, :update]
 
-  def index(conn, %{"id" => user_id}) do
-    chat_handles = Queries.ChatHandle.for_user_id(user_id)
-    |> Repo.all
-    |> Repo.preload([:chat_provider, :user])
-
-    json(conn, EctoJson.render(chat_handles, envelope: :chat_handles))
-  end
   def index(conn, _params) do
     chat_handles = ChatHandle
     |> Repo.all
