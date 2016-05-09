@@ -42,16 +42,11 @@ defmodule Cog.V1.BundlesController do
   def create(conn, %{"bundle" => params}) do
     case install_bundle(params) do
       {:ok, bundle, warnings} ->
-        view = if length(warnings) > 0 do
-          "show_with_warnings.json"
-        else
-          "show.json"
-        end
         bundle = Repo.preload(bundle, [commands: [rules: [permissions: :namespace]], namespace: [permissions: :namespace]])
         conn
         |> put_status(:created)
         |> put_resp_header("location", bundles_path(conn, :show, bundle))
-        |> render(view, %{bundle: bundle, warnings: warnings})
+        |> render("show.json", %{bundle: bundle, warnings: warnings})
       {:error, err} ->
         send_failure(conn, err)
     end
