@@ -56,6 +56,26 @@ defmodule Cog.V1.BundlesControllerTest do
     end
   end)
 
+  test "accepts an upgradable config", %{authed: requestor} do
+    config_path = make_config_file("old_config.yaml", contents: old_config)
+    upload = %Plug.Upload{path: config_path, filename: "old_config.yaml"}
+
+    conn = api_request(requestor, :post, "/v1/bundles", body: %{bundle: %{config_file: upload}}, content_type: :multipart)
+
+    response = Poison.decode!(conn.resp_body)
+
+    warnings = get_in(response, ["warnings"])
+    bundle_id = get_in(response, ["bundle", "id"])
+    bundle = Cog.Repo.get_by(Cog.Models.Bundle, id: bundle_id)
+    config = Spanner.Config.Parser.read_from_file!(config_path)
+
+    assert conn.status == 201
+    assert bundle.name == config["name"]
+    assert warnings == [
+      "Warning near #/cog_bundle_version: Bundle config version 2 has been deprecated. Please update to version 3.",
+      "Warning near #/commands/date/enforcing: Non-enforcing commands have been deprecated. Please update your bundle config to version 3."]
+  end
+
   test "rejects a file with an improper extension", %{authed: requestor} do
     filename = "config.jpg"
 
@@ -202,7 +222,7 @@ defmodule Cog.V1.BundlesControllerTest do
     """
     ---
     # Format version
-    cog_bundle_version: 2
+    cog_bundle_version: 3
 
     name: test_bundle
     version: "0.1.0"
@@ -223,6 +243,44 @@ defmodule Cog.V1.BundlesControllerTest do
             short_flag: o
         rules:
         - when command is test_bundle:date must have test_bundle:date
+      time:
+        executable: /usr/local/bin/time
+        rules:
+        - when command is test_bundle:time must have test_bundle:time
+    templates:
+      time:
+        slack: "{{time}}"
+        hipchat: "{{time}}"
+      date:
+        slack: "{{date}}"
+        hipchat: "{{date}}"
+    """
+  end
+
+  defp old_config do
+    """
+    ---
+    # Format version
+    cog_bundle_version: 2
+
+    name: test_bundle
+    version: "0.1.0"
+    permissions:
+    - test_bundle:date
+    - test_bundle:time
+    docker:
+      image: operable-bundle/test_bundle
+      tag: v0.1.0
+    commands:
+      date:
+        executable: /usr/local/bin/date
+        enforcing: false
+        options:
+          option1:
+            type: string
+            description: An option
+            required: false
+            short_flag: o
       time:
         executable: /usr/local/bin/time
         rules:

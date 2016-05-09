@@ -18,6 +18,11 @@ defmodule Cog.V1.BundlesView do
     %{bundles: render_many(bundles, __MODULE__, "bundle.json", as: :bundle, include: [:commands, :relay_groups, :namespace])}
   end
 
+  def render("show.json", %{bundle: bundle, warnings: warnings}) when length(warnings) > 0 do
+    warnings = Enum.map(warnings, fn({msg, meta}) -> ~s(Warning near #{meta}: #{msg}) end)
+    %{warnings: warnings,
+      bundle: render_one(bundle, __MODULE__, "bundle.json", as: :bundle, include: [:commands, :relay_groups, :namespace])}
+  end
   def render("show.json", %{bundle: bundle}) do
     %{bundle: render_one(bundle, __MODULE__, "bundle.json", as: :bundle, include: [:commands, :relay_groups, :namespace])}
   end
