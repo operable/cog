@@ -7,7 +7,6 @@ defmodule Cog.Models.Command do
   schema "commands" do
     field :name, :string
     field :documentation, :string
-    field :enforcing, :boolean, default: true
 
     belongs_to :bundle, Bundle
 
@@ -16,7 +15,7 @@ defmodule Cog.Models.Command do
   end
 
   @required_fields ~w(name bundle_id)
-  @optional_fields ~w(documentation enforcing)
+  @optional_fields ~w(documentation)
 
   summary_fields [:id, :name]
   detail_fields [:id, :name, :documentation]
