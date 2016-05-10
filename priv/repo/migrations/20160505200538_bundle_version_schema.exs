@@ -77,14 +77,6 @@ defmodule Cog.Repo.Migrations.BundleVersionSchema do
     # TODO: Wants to be a primary key
     create unique_index(:permission_bundle_version_v2, [:permission_id, :bundle_version_id])
 
-    create table(:rule_permission_v2, primary_key: false) do
-      add :rule_id, references(:rules_v2, type: :uuid, on_delete: :delete_all, ), null: false
-      add :permission_id, references(:permissions_v2, type: :uuid, on_delete: :delete_all, ), null: false
-    end
-    # TODO: Wants to be a primary key
-    create unique_index(:rule_permission_v2, [:rule_id, :permission_id])
-
-
     ########################################################################
     # MOVE THE DATA OVER
     ########################################################################
@@ -250,7 +242,7 @@ defmodule Cog.Repo.Migrations.BundleVersionSchema do
        WHERE bundles_v2.id=permissions_v2.bundle_id
          AND permissions_v2.id=OLD.permission_id;
 
-      IF role = 'cog-admin' AND bundle = 'operable' THEN
+      IF role = '#{Cog.admin_role}' AND bundle = '#{Cog.embedded_bundle}' THEN
         RAISE EXCEPTION 'cannot remove embedded permissions from admin role';
       END IF;
       RETURN NULL;
@@ -290,10 +282,24 @@ defmodule Cog.Repo.Migrations.BundleVersionSchema do
     FROM rules
     """
 
-    # TODO: Could just re-use the old table, but point the FKs elsewhere
+    # Link new rules and new permissions
     execute """
-    INSERT INTO rule_permission_v2(rule_id, permission_id)
-    SELECT rule_id, permission_id FROM rule_permissions
+    ALTER table rule_permissions
+    DROP CONSTRAINT rule_permissions_rule_id_fkey
+    """
+    execute """
+    ALTER TABLE rule_permissions
+    ADD CONSTRAINT rule_permissions_rule_id_fkey
+    FOREIGN KEY(rule_id) REFERENCES rules_v2(id) ON DELETE CASCADE ON UPDATE CASCADE
+    """
+    execute """
+    ALTER table rule_permissions
+    DROP CONSTRAINT rule_permissions_permission_id_fkey
+    """
+    execute """
+    ALTER TABLE rule_permissions
+    ADD CONSTRAINT rule_permissions_permission_id_fkey
+    FOREIGN KEY(permission_id) REFERENCES permissions_v2(id) ON DELETE CASCADE ON UPDATE CASCADE
     """
 
   end
