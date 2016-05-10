@@ -97,24 +97,6 @@ defmodule Cog.V1.ChatHandleControllerTest do
                                    "name" => "test"}}] == chat_handles_json
   end
 
-  @tag :create_handles
-  test "lists all entries for a specified user", params do
-    conn = api_request(params.authed, :get, "/v1/users/#{params.authed.id}/chat_handles")
-    chat_handles_json = json_response(conn, 200)["chat_handles"]
-    assert [%{"id" => params.authed_handle.id,
-              "handle" => "Cogswell",
-              "chat_provider_user_id" => "U024BE7LH",
-              "user" => %{
-                "id" => params.authed.id,
-                "email_address" => params.authed.email_address,
-                "first_name" => params.authed.first_name,
-                "last_name" => params.authed.last_name,
-                "username" => params.authed.username
-              },
-              "chat_provider" => %{"id" => params.provider.id,
-                                   "name" => "test"}}] == chat_handles_json
-  end
-
   test "deletes an entry", params do
     delete_test = ChatHandle.changeset(%ChatHandle{}, %{"handle" => "DeleteTest",
                                                         "provider_id" => params.provider.id,

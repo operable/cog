@@ -7,7 +7,8 @@ defmodule Cog.V1.UserView do
       first_name: user.first_name,
       last_name: user.last_name,
       email_address: user.email_address,
-      groups: render_many(user.group_memberships, __MODULE__, "member.json", as: :member)}
+      groups: render_many(user.group_memberships, __MODULE__, "member.json", as: :member),
+      chat_handles: render_many(user.chat_handles, Cog.V1.ChatHandleView, "show.json")}
   end
   def render("member.json", %{member: member}) do
     %{id: member.group.id,
@@ -21,10 +22,21 @@ defmodule Cog.V1.UserView do
   end
 
   def render("index.json", %{users: users}) do
+    users = users |> preload_associations
     %{users: render_many(users, __MODULE__, "user.json")}
   end
 
   def render("show.json", %{user: user}) do
+    user = user |> preload_associations
     %{user: render_one(user, __MODULE__, "user.json")}
+  end
+
+
+  defp preload_associations(user) do
+    Cog.Repo.preload(user, [
+      chat_handles: [:chat_provider],
+      direct_group_memberships: [roles: [permissions:
+          :namespace]]
+    ])
   end
 end
