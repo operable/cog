@@ -15,14 +15,16 @@ defmodule Cog.Command.Seed do
 
   Best used for debugging and experimentation.
 
-  ## Example
+  USAGE
+    seed [ARGS]
 
-      !seed '{"thing":"stuff"}' | echo $thing
-      > stuff
+  EXAMPLE
+    seed '{"thing":"stuff"}' | echo $thing
+    > stuff
 
-      !seed '[{"thing":"stuff"},{"thing":"more stuff"}]' | echo $thing
-      > stuff
-      > more stuff
+    seed '[{"thing":"stuff"},{"thing":"more stuff"}]' | echo $thing
+    > stuff
+    > more stuff
 
   """
 

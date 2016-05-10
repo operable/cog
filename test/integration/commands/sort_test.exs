@@ -1,4 +1,4 @@
-defmodule Integration.SortTest do
+defmodule Integration.Commands.SortTest do
   use Cog.AdapterCase, adapter: "test"
 
   setup do
