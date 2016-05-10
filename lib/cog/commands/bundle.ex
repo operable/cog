@@ -26,14 +26,12 @@ defmodule Cog.Commands.Bundle do
   `disable` (see below) on the `#{Cog.embedded_bundle}` bundle is an
   error.
 
-  ## Usage
-
+  USAGE:
     bundle <subcommand>
 
 
-  ## Subcommands
-
-    • `status`
+  SUBCOMMANDS:
+    `status`
 
             bundle status <bundle_name>
 
@@ -46,7 +44,7 @@ defmodule Cog.Commands.Bundle do
 
        Can be called on any bundle, including `#{Cog.embedded_bundle}`.
 
-    • `enable`
+    `enable`
 
             bundle enable <bundle_name>
 
@@ -55,7 +53,7 @@ defmodule Cog.Commands.Bundle do
 
       Cannot be used on the `#{Cog.embedded_bundle}` bundle.
 
-    • `disable`
+    `disable`
 
             bundle disable <bundle_name>
 

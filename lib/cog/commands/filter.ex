@@ -6,27 +6,23 @@ defmodule Cog.Commands.Filter do
   The `path` option is the key that you would like to focus on;
   The `matches` option is the value that you are searching for.
 
-  ## Usage
+  USAGE:
+    filter [OPTIONS]
 
-    filter [OPTIONS] <input>
-
-  ## Options
-
+  OPTIONS:
     -m, --matches    The value to search for
     -p, --path       The key to focus on
 
-
-  ## Example
-
-    @bot rules --list --for-command="permissions" | filter --path="rule" --matches="/manage_users/"
+  EXAMPLE:
+    rules --list --for-command="permissions" | filter --path="rule" --matches="/manage_users/"
     > { "id": "91edb472-04cf-4bca-ba05-e51b63f26758",
         "rule": "operable:manage_users",
         "command": "operable:permissions" }
 
-    @bot seed '[{"foo":{"bar.qux":{"baz":"stuff"}}}, {"foo": {"bar":{"baz":"me"}}}]' | filter --path="foo.bar.baz""
+    seed '[{"foo":{"bar.qux":{"baz":"stuff"}}}, {"foo": {"bar":{"baz":"me"}}}]' | filter --path="foo.bar.baz""
     > [ {"foo": {"bar.qux": {"baz": "stuff"} } }, {"foo": {"bar": {"baz": "me"} } } ]
 
-    @bot seed '[{"foo":{"bar.qux":{"baz":"stuff"}}}, {"foo": {"bar":{"baz":"me"}}}]' | filter --path="foo.\\"bar.qux\\".baz""
+    seed '[{"foo":{"bar.qux":{"baz":"stuff"}}}, {"foo": {"bar":{"baz":"me"}}}]' | filter --path="foo.\\"bar.qux\\".baz""
     > { "foo": {"bar.qux": {"baz": "stuff"} } }
   """
 
