@@ -100,10 +100,10 @@ defmodule Integration.CommandTest do
 
   test "running commands in a pipeline", %{user: user} do
     user
-    |> with_permission("operable:t-echo")
-    |> with_permission("operable:st-thorn")
+    |> with_permission("operable:echo")
+    |> with_permission("operable:thorn")
 
-    response = send_message(user, ~s(@bot: operable:t-echo "this is a test" | operable:st-thorn $body))
+    response = send_message(user, ~s(@bot: operable:echo "this is a test" | operable:thorn $body))
 
     assert_payload(response, %{body: ["þis is a test"]})
   end
