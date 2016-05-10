@@ -10,14 +10,9 @@ defmodule Cog.Commands.Thorn do
 
   rule "when command is #{Cog.embedded_bundle}:thorn allow"
 
-  @upcase_thorn "Þ"
-  @downcase_thorn "þ"
+  @message "The thorn command has been deprecated and will be removed in a future release"
 
   def handle_message(req, state) do
-    text = Enum.join(req.args, " ")
-    |> String.replace(~r{\bTh}, @upcase_thorn)
-    |> String.replace(~r{\bth}, @downcase_thorn)
-
-    {:reply, req.reply_to, text, state}
+    {:reply, req.reply_to, @message, state}
   end
 end
