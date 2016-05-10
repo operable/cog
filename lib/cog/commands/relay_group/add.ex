@@ -6,11 +6,11 @@ defmodule Cog.Commands.RelayGroup.Add do
   @moduledoc """
   Adds relays to relay groups
 
-  Usage:
-  relay-group add [-h <help>] <relay group name> <relay names ...>
+  USAGE
+    relay-group add [-h <help>] <relay group name> <relay names ...>
 
-  Flags:
-  -h, --help      Display this usage info
+  FLAGS
+    -h, --help      Display this usage info
   """
 
   @spec add_relays(%Cog.Command.Request{}, List.t) :: {:ok, String.t, Map.t} | {:error, any()}

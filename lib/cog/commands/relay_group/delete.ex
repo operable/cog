@@ -6,11 +6,11 @@ defmodule Cog.Commands.RelayGroup.Delete do
   @moduledoc """
   Deletes relay groups
 
-  Usage:
-  relay-group delete [-h <help>] <relay group name>
+  USAGE
+    relay-group delete [-h <help>] <relay group name>
 
-  Flags:
-  -h, --help      Display this usage info
+  FLAGS
+    -h, --help      Display this usage info
   """
 
   @spec delete_relay_group(%Cog.Command.Request{}, List.t) :: {:ok, String.t, Map.t} | {:error, any()}

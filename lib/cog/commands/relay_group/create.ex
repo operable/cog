@@ -6,11 +6,11 @@ defmodule Cog.Commands.RelayGroup.Create do
   @moduledoc """
   Creates relay groups
 
-  Usage:
-  relay-group create [-h <help>] <relay group name>
+  USAGE
+    relay-group create [-h <help>] <relay group name>
 
-  Flags:
-  -h, --help      Display this usage info
+  FLAGS
+    -h, --help      Display this usage info
   """
 
   @spec create_relay_group(%Cog.Command.Request{}, List.t) :: {:ok, String.t, Map.t} | {:error, any()}

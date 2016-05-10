@@ -6,11 +6,11 @@ defmodule Cog.Commands.RelayGroup.Assign do
   @moduledoc """
   Assigns bundles to relay groups.
 
-  Usage:
-  relay-group assign [-h <help>] <relay group names> <bundle names ...>
+  USAGE
+    relay-group assign [-h <help>] <relay group names> <bundle names ...>
 
-  Flags:
-  -h, --help      Display this usage info
+  FLAGS
+    -h, --help      Display this usage info
   """
 
   @spec assign_bundles(%Cog.Command.Request{}, List.t) :: {:ok, String.t, Map.t} | {:error, any()}
