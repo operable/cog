@@ -6,13 +6,13 @@ defmodule Cog.Commands.Relay.List do
   @moduledoc """
   Lists relays.
 
-  Usage:
-  relay list [-g <group>] [-v <verbose>] [-h <help>]
+  USAGE
+    relay list [-g <group>] [-v <verbose>] [-h <help>]
 
-  Flags:
-  -h, --help      Display this usage info
-  -g, --group     Group relays by relay group
-  -v, --verbose   Include additional relay details
+  FLAGS
+    -h, --help      Display this usage info
+    -g, --group     Group relays by relay group
+    -v, --verbose   Include additional relay details
   """
 
   @doc """
