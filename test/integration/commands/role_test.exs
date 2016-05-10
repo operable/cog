@@ -1,4 +1,4 @@
-defmodule Integration.RoleTest do
+defmodule Integration.Commands.RoleTest do
   use Cog.AdapterCase, adapter: "test"
 
   setup do
