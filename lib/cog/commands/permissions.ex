@@ -7,21 +7,37 @@ defmodule Cog.Commands.Permissions do
   * List all permissions in the system
   * Grant and revoke permissions from roles.
 
-  ## Format
+  USAGE
+    permissions --list
+    permissions --create --permission=site:<name>
+    permissions --delete --permission=site:<name>
+    permissions --grant --permission=<namespace>:<permission> --role=<name>"
+    permissions --revoke --permission=<namespace>:<permission> --role=<name>"
 
-      --list
-      --create --permission=site:<name>
-      --delete --permission=site:<name>
-      --grant --permission=<namespace>:<permission> --role=<name>"
-      --revoke --permission=<namespace>:<permission> --role=<name>"
+  EXAMPLES
+    permissions --list
+    > The following permissions exist:
 
-  ## Example
+      * operable:manage_commands
+      * operable:manage_groups
+      * operable:manage_permissions
+      * operable:manage_relays
+      * operable:manage_roles
+      * operable:manage_triggers
+      * operable:manage_users
 
-      @bot #{Cog.embedded_bundle}:permissions --list
-      @bot #{Cog.embedded_bundle}:permissions --create --permission=site:admin
-      @bot #{Cog.embedded_bundle}:permissions --delete --permission=site:admin
-      @bot #{Cog.embedded_bundle}:permissions --grant --role=dev --permission=site:write
-      @bot #{Cog.embedded_bundle}:permissions --revoke --role=dev --permission=giphy:giphy
+
+    permissions --create --permission=site:admin
+    > Created permission 'site:admin'
+
+    permissions --delete --permission=site:admin
+    > Deleted permission 'site:admin'
+
+    permissions --grant --role=dev --permission=site:write
+    > Granted permission 'site:write' to role 'dev'
+
+    permissions --revoke --role=dev --permission=site:write
+    > Revoked permission 'site:write' from role 'dev'
 
   """
   use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle
