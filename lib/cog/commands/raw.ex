@@ -8,14 +8,16 @@ defmodule Cog.Command.Raw do
   Show the raw output of a command, exclusive of any templating. Useful as a
   debugging tool for command authors.
 
-  ## Example
+  USAGE
+    raw
 
-      @bot #{Cog.embedded_bundle}:echo foo | #{Cog.embedded_bundle}:raw
-      > {
-          "body": [
-            "foo"
-          ]
-        }
+  EXAMPLE
+    echo foo | raw
+    > {
+        "body": [
+          "foo"
+        ]
+      }
 
   """
 
