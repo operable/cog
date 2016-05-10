@@ -82,10 +82,14 @@ defmodule Cog.Repo.Migrations.MigrateRules do
   end
 
   defp site_bundle_version_id do
-    "site"
+    case "site"
     |> versions_for_bundle
-    |> Repo.one
-    |> Map.fetch!(:bundle_version_id)
+    |> Repo.one do
+      nil ->
+        nil
+      version ->
+        Map.fetch!(version, :bundle_version_id)
+    end
   end
 
   defp rule_in_version?(rule_text, %{all_rules: rules}),
