@@ -11,7 +11,7 @@ defmodule Cog.Commands.Alias.New do
 
   EXAMPLE
     alias new my-awesome-alias "echo \"My awesome alias\""
-    > Success, 'user:my-awesome-alias' has been created"
+    > Success, 'user:my-awesome-alias' has been created
   """
 
   @doc """

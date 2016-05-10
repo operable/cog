@@ -5,7 +5,7 @@ defmodule Cog.Commands.Echo do
   Repeats whatever it is passed.
 
   USAGE
-    echo [args]
+    echo [ARGS ...]
 
   EXAMPLE
     echo this is nifty
