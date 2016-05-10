@@ -7,7 +7,7 @@ defmodule Cog.Commands.Relay.List do
   Lists relays.
 
   USAGE
-    relay list [-g <group>] [-v <verbose>] [-h <help>]
+    relay list [FLAGS]
 
   FLAGS
     -h, --help      Display this usage info

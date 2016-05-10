@@ -8,7 +8,6 @@ defmodule Cog.Commands.Relay do
 
   USAGE
     relay <subcommand>
-    relay <subcommand>
 
   SUBCOMMANDS
     list      Lists relays and their status
