@@ -1,4 +1,4 @@
-defmodule Integration.GroupTest do
+defmodule Integration.Commands.GroupTest do
   use Cog.AdapterCase, adapter: "test"
 
   setup do
