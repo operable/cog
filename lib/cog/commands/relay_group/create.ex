@@ -7,7 +7,7 @@ defmodule Cog.Commands.RelayGroup.Create do
   Creates relay groups
 
   USAGE
-    relay-group create [-h <help>] <relay group name>
+    relay-group create [FLAGS] <relay group name>
 
   FLAGS
     -h, --help      Display this usage info

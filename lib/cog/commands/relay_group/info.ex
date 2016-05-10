@@ -7,7 +7,7 @@ defmodule Cog.Commands.RelayGroup.Info do
   Get info on one or more relay groups.
 
   USAGE
-    relay-group info [<relay group names ...>] [-v <verbose>] [-h <help>]
+    relay-group info [FLAGS] [<relay group names ...>]
 
   FLAGS
     -h, --help      Display this usage info

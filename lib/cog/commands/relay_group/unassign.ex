@@ -7,7 +7,7 @@ defmodule Cog.Commands.RelayGroup.Unassign do
   Unassigns bundles from relay groups
 
   USAGE
-    relay-group unassign [-h <help>] <relay group name> <bundle names ...>
+    relay-group unassign [FLAGS] <relay group name> <bundle names ...>
 
   FLAGS
     -h, --help      Display this usage info

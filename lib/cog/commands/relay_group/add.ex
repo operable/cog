@@ -7,7 +7,7 @@ defmodule Cog.Commands.RelayGroup.Add do
   Adds relays to relay groups
 
   USAGE
-    relay-group add [-h <help>] <relay group name> <relay names ...>
+    relay-group add [FLAGS] <relay group name> <relay names ...>
 
   FLAGS
     -h, --help      Display this usage info

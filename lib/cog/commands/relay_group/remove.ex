@@ -7,7 +7,7 @@ defmodule Cog.Commands.RelayGroup.Remove do
   Removes relays from relay groups
 
   USAGE
-    relay-group remove [-h <help>] <relay group name> <relay names ...>
+    relay-group remove [FLAGS] <relay group name> <relay names ...>
 
   FLAGS
     -h, --help      Display this usage info

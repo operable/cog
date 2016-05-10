@@ -7,7 +7,7 @@ defmodule Cog.Commands.RelayGroup.Rename do
   Renames relay groups
 
   USAGE
-    relay-group rename [-h <help>] <old relay name> <new relay name>
+    relay-group rename [FLAGS] <old relay name> <new relay name>
 
   FLAGS
     -h, --help      Display this usage info

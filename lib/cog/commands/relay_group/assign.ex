@@ -7,7 +7,7 @@ defmodule Cog.Commands.RelayGroup.Assign do
   Assigns bundles to relay groups.
 
   USAGE
-    relay-group assign [-h <help>] <relay group names> <bundle names ...>
+    relay-group assign [FLAGS] <relay group names> <bundle names ...>
 
   FLAGS
     -h, --help      Display this usage info

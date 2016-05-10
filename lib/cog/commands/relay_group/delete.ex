@@ -7,7 +7,7 @@ defmodule Cog.Commands.RelayGroup.Delete do
   Deletes relay groups
 
   USAGE
-    relay-group delete [-h <help>] <relay group name>
+    relay-group delete [FLAGS] <relay group name>
 
   FLAGS
     -h, --help      Display this usage info
