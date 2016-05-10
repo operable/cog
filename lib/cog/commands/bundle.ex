@@ -26,11 +26,11 @@ defmodule Cog.Commands.Bundle do
   `disable` (see below) on the `#{Cog.embedded_bundle}` bundle is an
   error.
 
-  USAGE:
+  USAGE
     bundle <subcommand>
 
 
-  SUBCOMMANDS:
+  SUBCOMMANDS
     `status`
 
             bundle status <bundle_name>

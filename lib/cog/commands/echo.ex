@@ -4,10 +4,10 @@ defmodule Cog.Commands.Echo do
   @moduledoc """
   Repeats whatever it is passed.
 
-  USAGE:
+  USAGE
     echo [args]
 
-  EXAMPLE:
+  EXAMPLE
     echo this is nifty
     > this if nifty
   """

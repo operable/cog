@@ -6,18 +6,18 @@ defmodule Cog.Commands.Alias do
   @moduledoc """
   Manages aliases
 
-  USAGE:
+  USAGE
     alias <subcommand>
 
 
-  SUBCOMMANDS:
+  SUBCOMMANDS
     new <alias-name> <alias-definition>             creates a new alias visible to the creating user.
     mv <alias-name> <site | user>:[new-alias-name]  moves aliases between user and site visibility. Optionally renames aliases.
     rm <alias-name>                                 Removes aliases
     ls [pattern]                                    Returns the list of aliases optionally filtered by pattern. Pattern support basic wildcards with '*'.
 
 
-  EXAMPLES:
+  EXAMPLES
     alias new my-awesome-alias "echo \"My Awesome Alias\""
     > user:my-awesome-alias has been created
 

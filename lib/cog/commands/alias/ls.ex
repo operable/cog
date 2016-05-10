@@ -9,13 +9,13 @@ defmodule Cog.Commands.Alias.Ls do
   Lists aliases. Subcommand for alias.
   Optionally takes a pattern supporting basic wildcards.
 
-  USAGE:
+  USAGE
     alias ls [ARGS]
 
-  ARGS:
+  ARGS
     pattern  The pattern to filter aliases by.
 
-  EXAMPLES:
+  EXAMPLES
     alias ls
     > Name: my_alias
       Visibility: user

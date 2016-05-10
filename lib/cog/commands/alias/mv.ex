@@ -9,10 +9,10 @@ defmodule Cog.Commands.Alias.Mv do
   for alias. If a visibility is not specified the user visibility is first searched
   and then the site visibility.
 
-  USAGE:
+  USAGE
     alias mv <alias-src> <alias-destination>
 
-  EXAMPLES:
+  EXAMPLES
     alias mv user:my-awesome-alias site
     > Successfully moved user:my-awesome-alias to site
 

@@ -6,10 +6,10 @@ defmodule Cog.Commands.Alias.New do
   @moduledoc """
   Create new aliases. Subcommand for alias.
 
-  USAGE:
+  USAGE
     alias new <alias-name> <alias-definition>
 
-  EXAMPLE:
+  EXAMPLE
     alias new my-awesome-alias "echo \"My awesome alias\""
     > Success, 'user:my-awesome-alias' has been created"
   """

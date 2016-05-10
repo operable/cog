@@ -7,10 +7,10 @@ defmodule Cog.Commands.Alias.Rm do
   If a visibility is not passed the user visibility is first searched and then
   the site visibility.
 
-  USAGE:
+  USAGE
     alias rm <alias-name>
 
-  EXAMPLE:
+  EXAMPLE
     alias rm my-awesome-alias
     > Successfully removed 'user:my-awesome-alias'
 
