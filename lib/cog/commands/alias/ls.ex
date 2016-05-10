@@ -9,12 +9,25 @@ defmodule Cog.Commands.Alias.Ls do
   Lists aliases. Subcommand for alias.
   Optionally takes a pattern supporting basic wildcards.
 
-  usage:
-  alias ls [pattern]
+  USAGE
+    alias ls [ARGS]
 
-  example:
-  alias ls
-  alias ls "my-*"
+  ARGS
+    pattern  The pattern to filter aliases by.
+
+  EXAMPLES
+    alias ls
+    > Name: my_alias
+      Visibility: user
+      Pipeline: echo my new alias
+    > Name: foo
+      Visibility: user
+      Pipeline: echo foo
+
+    alias ls "my-*"
+    > Name: my_alias
+      Visibility: user
+      Pipeline: echo my new alias
   """
 
   @doc """

@@ -6,31 +6,35 @@ defmodule Cog.Commands.Alias do
   @moduledoc """
   Manages aliases
 
-  ## Subcommands
-  * new <alias-name> <alias-definition> -- creates a new alias visible to the creating user.
-  * mv <alias-name> <site | user>:[new-alias-name] -- moves aliases between user and site visibility. Optionally renames aliases.
-  * rm <alias-name> -- Removes aliases
-  * ls [pattern] -- Returns the list of aliases optionally filtered by pattern. Pattern support basic wildcards with '*'.
+  USAGE
+    alias <subcommand>
 
-  ## Example
 
-      @bot #{Cog.embedded_bundle}:alias new my-awesome-alias "echo \"My Awesome Alias\""
-      > user:my-awesome-alias has been created
+  SUBCOMMANDS
+    new <alias-name> <alias-definition>             creates a new alias visible to the creating user.
+    mv <alias-name> <site | user>:[new-alias-name]  moves aliases between user and site visibility. Optionally renames aliases.
+    rm <alias-name>                                 Removes aliases
+    ls [pattern]                                    Returns the list of aliases optionally filtered by pattern. Pattern support basic wildcards with '*'.
 
-      @bot #{Cog.embedded_bundle}:alias mv my-awesome-alias site:awesome-alias
-      > Moved user:my-awesome-alias to site:awesome-alias
 
-      @bot #{Cog.embedded_bundle}:alias rm awesome-alias
-      > Removed site:awesome-alias
+  EXAMPLES
+    alias new my-awesome-alias "echo \"My Awesome Alias\""
+    > user:my-awesome-alias has been created
 
-      @bot #{Cog.embedded_bundle}:alias ls
-      > Name: 'my-awesome-alias'
-        Visibility: 'user'
-        Pipeline: 'echo my-awesome-alias'
+    alias mv my-awesome-alias site:awesome-alias
+    > Moved user:my-awesome-alias to site:awesome-alias
 
-        Name: 'my-other-awesome-alias'
-        Visibility: 'site'
-        Pipeline: 'echo my-other-awesome-alias'
+    alias rm awesome-alias
+    > Removed site:awesome-alias
+
+    alias ls
+    > Name: 'my-awesome-alias'
+      Visibility: 'user'
+      Pipeline: 'echo my-awesome-alias'
+
+      Name: 'my-other-awesome-alias'
+      Visibility: 'site'
+      Pipeline: 'echo my-other-awesome-alias'
   """
 
   rule "when command is #{Cog.embedded_bundle}:alias allow"

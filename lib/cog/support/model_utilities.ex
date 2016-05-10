@@ -223,8 +223,10 @@ defmodule Cog.Support.ModelUtilities do
         opt
     end)
 
+    enabled = Keyword.get(opts, :enabled, false)
+
     bundle = %Bundle{}
-    |> Bundle.changeset(%{name: name, version: bundle_config["version"], config_file: bundle_config})
+    |> Bundle.changeset(%{name: name, version: bundle_config["version"], config_file: bundle_config, enabled: enabled})
     |> Repo.insert!
 
     namespace(name, bundle.id)

@@ -4,11 +4,12 @@ defmodule Cog.Commands.Echo do
   @moduledoc """
   Repeats whatever it is passed.
 
-  ## Example
+  USAGE
+    echo [ARGS ...]
 
-      @bot #{Cog.embedded_bundle}:echo this is nifty
-      > this if nifty
-
+  EXAMPLE
+    echo this is nifty
+    > this if nifty
   """
 
   rule "when command is #{Cog.embedded_bundle}:echo allow"

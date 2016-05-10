@@ -6,30 +6,30 @@ defmodule Cog.Commands.Filter do
   The `path` option is the key that you would like to focus on;
   The `matches` option is the value that you are searching for.
 
-  ## Example
+  USAGE
+    filter [OPTIONS]
 
-      @bot #{Cog.embedded_bundle}:rules --list --for-command="#{Cog.embedded_bundle}:permissions" | #{Cog.embedded_bundle}:filter --path="rule" --matches="/manage_users/"
-      > { "id": "91edb472-04cf-4bca-ba05-e51b63f26758",
-          "rule": "operable:manage_users",
-          "command": "operable:permissions" }
+  OPTIONS
+    -m, --matches    The value to search for
+    -p, --path       The key to focus on
 
-      @bot #{Cog.embedded_bundle}:seed --list --for-command="#{Cog.embedded_bundle}:permissions" | #{Cog.embedded_bundle}:filter --path="rule" --matches="/manage_users/"
-      > { "id": "91edb472-04cf-4bca-ba05-e51b63f26758",
-          "rule": "operable:manage_users",
-          "command": "operable:permissions" }
+  EXAMPLES
+    rules --list --for-command="permissions" | filter --path="rule" --matches="/manage_users/"
+    > { "id": "91edb472-04cf-4bca-ba05-e51b63f26758",
+        "rule": "operable:manage_users",
+        "command": "operable:permissions" }
 
-      @bot #{Cog.embedded_bundle}:seed '[{"foo":{"bar.qux":{"baz":"stuff"}}}, {"foo": {"bar":{"baz":"me"}}}]' | #{Cog.embedded_bundle}:filter --path="foo.bar.baz""
-      > [ {"foo": {"bar.qux": {"baz": "stuff"} } }, {"foo": {"bar": {"baz": "me"} } } ]
+    seed '[{"foo":{"bar.qux":{"baz":"stuff"}}}, {"foo": {"bar":{"baz":"me"}}}]' | filter --path="foo.bar.baz""
+    > [ {"foo": {"bar.qux": {"baz": "stuff"} } }, {"foo": {"bar": {"baz": "me"} } } ]
 
-      @bot #{Cog.embedded_bundle}:seed '[{"foo":{"bar.qux":{"baz":"stuff"}}}, {"foo": {"bar":{"baz":"me"}}}]' | #{Cog.embedded_bundle}:filter --path="foo.\\"bar.qux\\".baz""
-      > { "foo": {"bar.qux": {"baz": "stuff"} } }
-
+    seed '[{"foo":{"bar.qux":{"baz":"stuff"}}}, {"foo": {"bar":{"baz":"me"}}}]' | filter --path="foo.\\"bar.qux\\".baz""
+    > { "foo": {"bar.qux": {"baz": "stuff"} } }
   """
 
   rule "when command is #{Cog.embedded_bundle}:filter allow"
 
-  option "matches", type: "string", required: false
-  option "path", type: "string", required: false
+  option "matches", short: "m", type: "string", required: false
+  option "path", short: "p", type: "string", required: false
 
   defstruct req: nil, expanded_path: nil, match: nil, input: nil, output: nil, errors: []
 

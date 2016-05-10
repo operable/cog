@@ -1,8 +1,5 @@
 defmodule Cog.Commands.Bundle do
   @moduledoc """
-
-  ## Overview
-
   Manipulate and interrogate command bundle status.
 
   A bundle may be either `enabled` or `disabled`. If a bundle is
@@ -29,46 +26,49 @@ defmodule Cog.Commands.Bundle do
   `disable` (see below) on the `#{Cog.embedded_bundle}` bundle is an
   error.
 
-  ## Subcommands
+  USAGE
+    bundle <subcommand>
 
-  * `status`
 
-          bundle status <bundle_name>
+  SUBCOMMANDS
+    status
 
-     Shows the current status of the bundle, whether `enabled` or
-     `disabled`. Additionally shows which Relays (if any) are running
-     the code for the bundle.
+            bundle status <bundle_name>
 
-     The `enable` and `disable` subcommands (see below) also return
-     this information.
+       Shows the current status of the bundle, whether `enabled` or
+       `disabled`. Additionally shows which Relays (if any) are running
+       the code for the bundle.
 
-     Can be called on any bundle, including `#{Cog.embedded_bundle}`.
+       The `enable` and `disable` subcommands (see below) also return
+       this information.
 
-  * `enable`
+       Can be called on any bundle, including `#{Cog.embedded_bundle}`.
 
-          bundle enable <bundle_name>
+    enable
 
-    Enabling a bundle allows chat commands to be routed to it. Running
-    this subcommand has no effect if a bundle is already enabled.
+            bundle enable <bundle_name>
 
-    Cannot be used on the `#{Cog.embedded_bundle}` bundle.
+      Enabling a bundle allows chat commands to be routed to it. Running
+      this subcommand has no effect if a bundle is already enabled.
 
-  * `disable`
+      Cannot be used on the `#{Cog.embedded_bundle}` bundle.
 
-          bundle disable <bundle_name>
+    disable
 
-     Disabling a bundle prevents commands from being routed to it. The
-     bundle is not uninstalled, and all custom rules remain
-     intact. The bundle still exists, but commands in it will not be
-     executed.
+            bundle disable <bundle_name>
 
-     A disabled bundle can be re-enabled using this the `enable`
-     sub-command; see above.
+       Disabling a bundle prevents commands from being routed to it. The
+       bundle is not uninstalled, and all custom rules remain
+       intact. The bundle still exists, but commands in it will not be
+       executed.
 
-     Running this subcommand has no effect if a bundle is already
-     disabled.
+       A disabled bundle can be re-enabled using this the `enable`
+       sub-command; see above.
 
-     Cannot be used on the `#{Cog.embedded_bundle}` bundle.
+       Running this subcommand has no effect if a bundle is already
+       disabled.
+
+       Cannot be used on the `#{Cog.embedded_bundle}` bundle.
 
   """
 
