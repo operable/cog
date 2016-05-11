@@ -1,13 +1,20 @@
 defmodule Cog.Commands.Min do
   @moduledoc """
   This command allows the user to determine the minimum value given a
-  list of inputs.
+  list of inputs. The min value is based on erlangs term ordering.
 
-  ## Example
+  USAGE
+    min [ARGS ...]
 
-      @bot operable:min 49 9 2 2
-      @bot operable:min 0.48 0.2 1.8 3548.4 0.078
-      @bot operable:min "apple" "ball" "car" "zebra"
+  EXAMPLES
+    min 49 9 2 2
+    > 2
+
+    min 0.48 0.2 1.8 3548.4 0.078
+    > 0.078
+
+    min "apple" "ball" "car" "zebra"
+    > apple
   """
   use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle
   require Logger

@@ -2,22 +2,33 @@ defmodule Cog.Commands.Group do
   @moduledoc """
   This command allows the user to manage groups of users.
 
-  ## Usage
+  USAGE:
+    group --create <groupname>
+    group --drop <groupname>
+    group --add --user=<username> <groupname>
+    group --remove --user=<username> <groupname>
+    group --list
 
-      group --create <groupname>
-      group --drop <groupname>
-      group --add --user=<username> <groupname>
-      group --remove --user=<username> <groupname>
-      group --list
+  EXAMPLE:
+    group --create ops
+    > The group 'ops' has been created.
 
-  ## Example
+    group --create engineering
+    > The group 'engineering' has been created.
 
-      @bot operable:group --create ops
-      @bot operable:group --create engineering
-      @bot operable:group --add --user=bob ops
-      @bot operable:group --remove --user=bob ops
-      @bot operable:group --drop ops
-      @bot operable:group --list
+    group --add --user=bob ops
+    > Added the user 'bob' to the group 'ops'
+
+    group --remove --user=bob ops
+    > Removed the user 'bob' from the group 'ops'
+
+    group --drop ops
+    > The group 'ops' has been deleted.
+
+    group --list
+    > The following are the available groups:
+      * admin
+      * cog-admin
   """
   use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle
 

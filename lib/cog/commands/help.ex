@@ -2,15 +2,18 @@ defmodule Cog.Commands.Help do
   use Cog.Command.GenCommand.Base, bundle: "#{Cog.embedded_bundle}"
 
   @moduledoc """
-  Get help on all installed Cog bot commands.
+  Get help on all installed Cog bot commands. By default only enabled
+  commands are listed.
 
-  ## Example
+  USAGE:
+    help [OPTIONS] [ARGS]
 
-      @bot #{Cog.embedded_bundle}:help - list all enabled commands
-      @bot #{Cog.embedded_bundle}:help --disabled - list all disabled commands
-      @bot #{Cog.embedded_bundle}:help --all - list all known commands, enabled and disabled
-      @bot #{Cog.embedded_bundle}:help "#{Cog.embedded_bundle}:help" - list help for a specific command
+  OPTIONS:
+    -d, --disabled    list all disabled commands
+    -a, --all         list all know commands, enabled and disabled
 
+  ARGS:
+    command_name      list specific help for a command
   """
 
   use Cog.Models

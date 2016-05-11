@@ -1,4 +1,4 @@
-defmodule Integration.PermissionTest do
+defmodule Integration.Commands.PermissionTest do
   use Cog.AdapterCase, adapter: "test"
 
   setup do
