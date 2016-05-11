@@ -1,4 +1,4 @@
-defmodule Integration.RuleTest do
+defmodule Integration.Commands.RuleTest do
   use Cog.AdapterCase, adapter: "test"
 
   setup do

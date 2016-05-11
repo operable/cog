@@ -16,16 +16,18 @@ defmodule Cog.Commands.Which do
   Note: If a command is shadowed, it has an alias with the same name, the alias
   will be returned.
 
-  ## Example
+  USAGE
+    which [alias]
 
-      @bot #{Cog.embedded_bundle}:which my-awesome-alias
-      > alias - user:my-awesome-alias -> "echo my awesome alias"
+  EXAMPLE
+    which my-awesome-alias
+    > alias - user:my-awesome-alias -> "echo my awesome alias"
 
-      @bot #{Cog.embedded_bundle}:which an-awesome-command
-      > command - operable:an-awesome-command
+    which an-awesome-command
+    > command - operable:an-awesome-command
 
-      @bot #{Cog.embedded_bundle}:which not-anything
-      > No matching commands or aliases.
+    which not-anything
+    > No matching commands or aliases.
   """
 
   rule "when command is #{Cog.embedded_bundle}:which allow"

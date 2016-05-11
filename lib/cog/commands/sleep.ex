@@ -8,13 +8,12 @@ defmodule Cog.Commands.Sleep do
   Sleeps for the provided number of seconds and emits the exact
   input passed in.
 
-  ## Usage
-
+  USAGE
     sleep <duration>
 
-  ## Examples
-
-    @cog sleep 2400 | echo "Lasagna is done cooking!" > me
+  EXAMPLES
+    sleep 2400 | echo "Lasagna is done cooking!" > me
+    > Lasagna is done cooking!
   """
 
   rule "when command is #{Cog.embedded_bundle}:sleep allow"

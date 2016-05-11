@@ -7,13 +7,11 @@ defmodule Cog.Commands.Unique do
   @moduledoc """
   Removes all duplicate values from the given input.
 
-  ## Usage
-
+  USAGE
     unique
 
-  ## Examples
-
-    @cog seed '[{"a": 1}, {"a": 3}, {"a": 1}]' | unique
+  EXAMPLES
+    seed '[{"a": 1}, {"a": 3}, {"a": 1}]' | unique
     > [{"a": 1}, {"a": 3}]
   """
 

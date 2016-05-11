@@ -8,27 +8,25 @@ defmodule Cog.Commands.Table do
   @moduledoc """
   Converts the given list into a table of columns with headers.
 
-  ## Usage
-
+  USAGE
     table [columns...]
 
     Columns specify the keys in the json to include in the table;
     these column names are also used as headers. If no columns are
     provided, the columns will be made up of all existing keys.
 
-  ## Examples
-
-    @cog seed '[{"pizza": "cheese", "price": "$10"}, {"pizza": "peperoni", "price": "$12"}]' | table
+  EXAMPLES
+    seed '[{"pizza": "cheese", "price": "$10"}, {"pizza": "peperoni", "price": "$12"}]' | table
     > pizza     price
       cheese    $10
       peperoni  $12
 
-    @cog seed '[{"pizza": "cheese", "price": "$10"}, {"pizza": "peperoni", "price": "$12"}]' | table pizza
-    > pizza   
-      cheese  
+    seed '[{"pizza": "cheese", "price": "$10"}, {"pizza": "peperoni", "price": "$12"}]' | table pizza
+    > pizza
+      cheese
       peperoni
 
-    @cog seed '[{"pizza": "cheese", "price": "$10"}, {"pizza": "peperoni", "price": "$12"}]' | table price pizza
+    seed '[{"pizza": "cheese", "price": "$10"}, {"pizza": "peperoni", "price": "$12"}]' | table price pizza
     > price  pizza
       $10    cheese
       $12    peperoni
