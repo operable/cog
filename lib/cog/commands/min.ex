@@ -1,29 +1,61 @@
 defmodule Cog.Commands.Min do
+  use Cog.Command.GenCommand.Base,
+    bundle: Cog.embedded_bundle
+
+  alias Cog.Command.Service.MemoryClient
+  require Logger
+
   @moduledoc """
-  This command allows the user to determine the minimum value given a
-  list of inputs. The min value is based on erlangs term ordering.
+  Finds the minimum value in the input list.
 
   USAGE
-    min [ARGS ...]
+    min [path]
+
+  ARGS
+    path  JSON path used in determining the minimum
 
   EXAMPLES
-    min 49 9 2 2
-    > 2
+    seed '[{"a": 2}, {"a": -1}, {"a": 3}]' | min
+    > {"a": -1}
 
-    min 0.48 0.2 1.8 3548.4 0.078
-    > 0.078
+    seed '[{"a": 2}, {"a": -1}, {"a": 3}]' | min a
+    > {"a": -1}
 
-    min "apple" "ball" "car" "zebra"
-    > apple
+    seed '[{"a": {"b": 2}}, {"a": {"b": -1}}, {"a": {"b": 3}}]' | min a.b
+    > {"a": {"b": -1}}
   """
-  use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle
-  require Logger
 
   rule "when command is #{Cog.embedded_bundle}:min allow"
 
   def handle_message(req, state) do
-    min_val = Enum.min(req.args)
-    {:reply, req.reply_to, %{min: min_val}, state}
+    root  = req.services_root
+    token = req.service_token
+    key   = req.invocation_id
+    step  = req.invocation_step
+    value = req.cog_env
+    args  = req.args
+
+    MemoryClient.accum(root, token, key, value)
+
+    case step do
+      step when step in ["first", nil] ->
+        {:reply, req.reply_to, nil, state}
+      "last" ->
+        accumulated_value = MemoryClient.fetch(root, token, key)
+        min_value = min_by(accumulated_value, args)
+        MemoryClient.delete(root, token, key)
+        {:reply, req.reply_to, min_value, state}
+    end
   end
 
+  defp min_by(items, []),
+    do: Enum.min(items)
+  defp min_by(items, [path]) do
+    path_list = path_to_list(path)
+    Enum.min_by(items, &get_in(&1, path_list))
+  end
+
+  defp path_to_list(path) do
+    String.split(path, ".")
+  end
 end
