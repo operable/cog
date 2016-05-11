@@ -49,8 +49,10 @@ defmodule Cog.Commands.RelayGroup.Helpers do
   """
   @spec verify_list([%Cog.Models.Relay{}], [String.t], Atom.t) :: :ok | {:error, any()}
   def verify_list(models, values, key) do
-    values = MapSet.new(values)
-    models = MapSet.new(models, &(Map.get(&1, key)))
+    values = List.wrap(values)
+             |> MapSet.new
+    models = List.wrap(models)
+             |> MapSet.new(&(Map.get(&1, key)))
 
     missing_values = MapSet.difference(values, models)
     |> MapSet.to_list

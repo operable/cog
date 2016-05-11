@@ -7,17 +7,17 @@ defmodule Cog.Commands.RelayGroup do
   Manages relay groups
 
   USAGE
-    relay-group <subcommand>
+    relay-group <SUBCOMMAND>
+
+  FLAGS
+    -h, --help      Display this usage info
 
   SUBCOMMANDS
     info      Get info about one or more relay groups
     create    Creates a relay group
     rename    Renames a relay group
     delete    Deletes a relay group
-    add       Adds relays to relay groups
-    remove    Remove relays from relay groups
-    assign    Assigns bundles to relay groups
-    unassign  Un-assigns bundles from relay groups
+    member    Managers relay and bundle assignments
   """
 
   permission "manage_relays"
@@ -42,14 +42,8 @@ defmodule Cog.Commands.RelayGroup do
         RelayGroup.Rename.rename_relay_group(req, args)
       "delete" ->
         RelayGroup.Delete.delete_relay_group(req, args)
-      "add" ->
-        RelayGroup.Add.add_relays(req, args)
-      "remove" ->
-        RelayGroup.Remove.remove_relays(req, args)
-      "assign" ->
-        RelayGroup.Assign.assign_bundles(req, args)
-      "unassign" ->
-        RelayGroup.Unassign.unassign_bundles(req, args)
+      "member" ->
+        RelayGroup.Member.member(req, args)
       nil ->
         show_usage
       invalid ->
