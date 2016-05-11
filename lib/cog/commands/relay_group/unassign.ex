@@ -6,11 +6,11 @@ defmodule Cog.Commands.RelayGroup.Unassign do
   @moduledoc """
   Unassigns bundles from relay groups
 
-  Usage:
-  relay-group unassign [-h <help>] <relay group name> <bundle names ...>
+  USAGE
+    relay-group unassign [FLAGS] <relay group name> <bundle names ...>
 
-  Flags:
-  -h, --help      Display this usage info
+  FLAGS
+    -h, --help      Display this usage info
   """
 
   @spec unassign_bundles(%Cog.Command.Request{}, List.t) :: {:ok, String.t, Map.t} | {:error, any()}

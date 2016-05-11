@@ -6,12 +6,12 @@ defmodule Cog.Commands.RelayGroup.Info do
   @moduledoc """
   Get info on one or more relay groups.
 
-  Usage:
-  relay-group info [<relay group names ...>] [-v <verbose>] [-h <help>]
+  USAGE
+    relay-group info [FLAGS] [<relay group names ...>]
 
-  Flags:
-  -h, --help      Display this usage info
-  -v, --verbose   Include addition relay group details
+  FLAGS
+    -h, --help      Display this usage info
+    -v, --verbose   Include addition relay group details
   """
 
   @spec relay_group_info(%Cog.Command.Request{}, List.t) :: {:ok, String.t, Map.t} | {:error, any()}

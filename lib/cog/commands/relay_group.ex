@@ -5,17 +5,19 @@ defmodule Cog.Commands.RelayGroup do
 
   @moduledoc """
   Manages relay groups
-  Usage relay-group <subcommand> [flags]
 
-  Subcommands
-  * info -- Get info about one or more relay groups
-  * create -- Creates a relay group
-  * rename -- Renames a relay group
-  * delete -- Deletes a relay group
-  * add -- Adds relays to relay groups
-  * remove -- Remove relays from relay groups
-  * assign -- Assigns bundles to relay groups
-  * unassign -- Un-assigns bundles from relay groups
+  USAGE
+    relay-group <subcommand>
+
+  SUBCOMMANDS
+    info      Get info about one or more relay groups
+    create    Creates a relay group
+    rename    Renames a relay group
+    delete    Deletes a relay group
+    add       Adds relays to relay groups
+    remove    Remove relays from relay groups
+    assign    Assigns bundles to relay groups
+    unassign  Un-assigns bundles from relay groups
   """
 
   permission "manage_relays"

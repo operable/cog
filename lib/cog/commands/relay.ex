@@ -5,11 +5,13 @@ defmodule Cog.Commands.Relay do
 
   @moduledoc """
   Manages relays
-  Usage relay <subcommand> [flags]
 
-  Subcommands
-  * list -- Lists relays and their status
-  * update -- Update the name or description of a relay
+  USAGE
+    relay <subcommand>
+
+  SUBCOMMANDS
+    list      Lists relays and their status
+    update    Update the name or description of a relay
   """
 
   permission "manage_relays"

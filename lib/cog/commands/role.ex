@@ -2,21 +2,30 @@ defmodule Cog.Commands.Role do
   @moduledoc """
   This command allows the user to manage roles.
 
-  ## Usage
+  USAGE
+    role --create <rolename>
+    role --drop <rolename>
+    role --grant --group=<groupname> <rolename>
+    role --revoke --group=<groupname> <rolename>
+    role --list
 
-      role --create <rolename>
-      role --drop <rolename>
-      role --grant --group=<groupname> <rolename>
-      role --revoke --group=<groupname> <rolename>
-      role --list
+  EXAMPLE
+    role --create deployment
+    > The role 'deployment' has been created.
 
-  ## Example
+    role --grant --group=ops deployment
+    > Granted role 'deployment' to group 'ops'
 
-      @bot operable:role --create deployment
-      @bot operable:role --grant --group=ops deployment
-      @bot operable:role --revoke --group=ops deployment
-      @bot operable:role --drop deployment
-      @bot operable:role --list
+    role --revoke --group=ops deployment
+    > Revoked role 'deployment' from group 'ops'
+
+    role --drop deployment
+    > The role 'deployment' has been deleted.
+
+    role --list
+    > The following are the available roles:
+      * admin
+      * cog-admin
   """
   use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle
 

@@ -6,11 +6,11 @@ defmodule Cog.Commands.RelayGroup.Rename do
   @moduledoc """
   Renames relay groups
 
-  Usage:
-  relay-group rename [-h <help>] <old relay name> <new relay name>
+  USAGE
+    relay-group rename [FLAGS] <old relay name> <new relay name>
 
-  Flags:
-  -h, --help      Display this usage info
+  FLAGS
+    -h, --help      Display this usage info
   """
 
   @spec rename_relay_group(%Cog.Command.Request{}, List.t) :: {:ok, String.t, Map.t} | {:error, any()}
