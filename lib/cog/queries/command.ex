@@ -81,8 +81,26 @@ defmodule Cog.Queries.Command do
     end
   end
 
+  def qualified_names(query \\ Command) do
+    from c in query,
+    join: b in assoc(c, :bundle),
+    order_by: [b.name, c.name],
+    select: fragment("? || ':' || ?", b.name, c.name)
+  end
+
+  def enabled(query \\ Command) do
+    from c in query,
+    join: b in assoc(c, :bundle),
+    where: b.enabled
+  end
+
+  def disabled(query \\ Command) do
+    from c in query,
+    join: b in assoc(c, :bundle),
+    where: not(b.enabled)
+  end
+
   # Split a string as though it were a qualified name
   defp is_qualified?(name),
     do: length(String.split(name, ":", parts: 2)) == 2
-
 end
