@@ -297,7 +297,7 @@ defmodule Cog.Adapters.Slack.API do
     end
   end
 
-  def expire_key(key) do
+  defp expire_key(key) do
     :ets.delete(@channel_cache, key)
   end
 
