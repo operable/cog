@@ -1,4 +1,4 @@
-defmodule Cog.Commands.RelayGroup.Unassign do
+defmodule Cog.Commands.RelayGroup.Member.Unassign do
   alias Cog.Commands.Helpers
   alias Cog.Repository.RelayGroups
   alias Cog.Commands.RelayGroup
@@ -7,7 +7,11 @@ defmodule Cog.Commands.RelayGroup.Unassign do
   Unassigns bundles from relay groups
 
   USAGE
-    relay-group unassign [FLAGS] <relay group name> <bundle names ...>
+    relay-group member unassign [FLAGS] <group_name> <bundle_name ...>
+
+  ARGS
+    group_name   The relay group to unassign bundles from
+    bundle_name  The list of bundle names to unassign from the relay group
 
   FLAGS
     -h, --help      Display this usage info
@@ -19,13 +23,13 @@ defmodule Cog.Commands.RelayGroup.Unassign do
       show_usage
     else
       case Helpers.get_args(arg_list, min: 2) do
-        {:ok, [group | bundle_names]} ->
-          with {:ok, relay_group} <- RelayGroup.Helpers.get_relay_group(group),
+        {:ok, [group_name | bundle_names]} ->
+          with {:ok, relay_group} <- RelayGroup.Helpers.get_relay_group(group_name),
                {:ok, bundles} <- RelayGroup.Helpers.get_bundles(bundle_names) do
                  unassign(relay_group, bundles)
           end
         {:error, {:under_min_args, _min}} ->
-          show_usage("Missing required args. At a minimum you must include the relay group name and at least one bundle name")
+          show_usage(error(:missing_args))
       end
     end
   end
@@ -38,6 +42,10 @@ defmodule Cog.Commands.RelayGroup.Unassign do
       error ->
         {:error, error}
     end
+  end
+
+  defp error(:missing_args) do
+    "Missing required args. At a minimum you must include the relay group name and at least one bundle name"
   end
 
   defp show_usage(error \\ nil) do

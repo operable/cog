@@ -1,4 +1,4 @@
-defmodule Cog.Commands.RelayGroup.Remove do
+defmodule Cog.Commands.RelayGroup.Member.Remove do
   alias Cog.Commands.Helpers
   alias Cog.Repository.RelayGroups
   alias Cog.Commands.RelayGroup
@@ -7,7 +7,11 @@ defmodule Cog.Commands.RelayGroup.Remove do
   Removes relays from relay groups
 
   USAGE
-    relay-group remove [FLAGS] <relay group name> <relay names ...>
+    relay-group member remove [FLAGS] <group_name> <relay_name ...>
+
+  ARGS
+    group_name   The relay group to remove relays from
+    relay_name   List of relay names to remove from the relay group
 
   FLAGS
     -h, --help      Display this usage info
@@ -19,13 +23,13 @@ defmodule Cog.Commands.RelayGroup.Remove do
       show_usage
     else
       case Helpers.get_args(arg_list, min: 2) do
-        {:ok, [group | relay_names]} ->
-          with {:ok, relay_group} <- RelayGroup.Helpers.get_relay_group(group),
+        {:ok, [group_name | relay_names]} ->
+          with {:ok, relay_group} <- RelayGroup.Helpers.get_relay_group(group_name),
                {:ok, relays} <- RelayGroup.Helpers.get_relays(relay_names) do
                  remove(relay_group, relays)
           end
         {:error, {:under_min_args, _min}} ->
-          show_usage("Missing required args. At a minimum you must include the relay group name and at least one relay name")
+          show_usage(error(:missing_args))
       end
     end
   end
@@ -40,7 +44,11 @@ defmodule Cog.Commands.RelayGroup.Remove do
     end
   end
 
-  def show_usage(error \\ nil) do
+  defp error(:missing_args) do
+    "Missing required args. At a minimum you must include the relay group name and at least one relay name"
+  end
+
+  defp show_usage(error \\ nil) do
     {:ok, "usage", %{usage: @moduledoc, error: error}}
   end
 end

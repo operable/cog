@@ -65,7 +65,7 @@ defmodule Integration.Commands.RelayGroupTest do
     ModelUtilities.relay_group("relay_group")
     relay = ModelUtilities.relay("relay", "foo")
 
-    response = send_message(user, "@bot: operable:relay-group add relay_group relay")
+    response = send_message(user, "@bot: operable:relay-group member add relay_group relay")
 
     [decoded] = decode_payload(response)
     assert decoded.name == "relay_group"
@@ -87,7 +87,7 @@ defmodule Integration.Commands.RelayGroupTest do
     relay = ModelUtilities.relay("relay", "foo")
     ModelUtilities.add_relay_to_group(relay_group.id, relay.id)
 
-    response = send_message(user, "@bot: operable:relay-group remove relay_group relay")
+    response = send_message(user, "@bot: operable:relay-group member remove relay_group relay")
 
     [decoded] = decode_payload(response)
     assert decoded.name == "relay_group"
@@ -103,7 +103,7 @@ defmodule Integration.Commands.RelayGroupTest do
     ModelUtilities.relay_group("relay_group")
     bundle = ModelUtilities.bundle("bundle")
 
-    response = send_message(user, "@bot: operable:relay-group assign relay_group bundle")
+    response = send_message(user, "@bot: operable:relay-group member assign relay_group bundle")
 
     [decoded] = decode_payload(response)
     assert decoded.name == "relay_group"
@@ -125,7 +125,7 @@ defmodule Integration.Commands.RelayGroupTest do
     bundle = ModelUtilities.bundle("bundle")
     ModelUtilities.assign_bundle_to_group(relay_group.id, bundle.id)
 
-    response = send_message(user, "@bot: operable:relay-group unassign relay_group bundle")
+    response = send_message(user, "@bot: operable:relay-group member unassign relay_group bundle")
 
     [decoded] = decode_payload(response)
     assert decoded.name == "relay_group"

@@ -7,17 +7,17 @@ defmodule Cog.Commands.RelayGroup do
   Manages relay groups
 
   USAGE
-    relay-group <subcommand>
+    relay-group <SUBCOMMAND>
+
+  FLAGS
+    -h, --help      Display this usage info
 
   SUBCOMMANDS
     info      Get info about one or more relay groups
     create    Creates a relay group
     rename    Renames a relay group
     delete    Deletes a relay group
-    add       Adds relays to relay groups
-    remove    Remove relays from relay groups
-    assign    Assigns bundles to relay groups
-    unassign  Un-assigns bundles from relay groups
+    member    Managers relay and bundle assignments
   """
 
   permission "manage_relays"
@@ -42,18 +42,16 @@ defmodule Cog.Commands.RelayGroup do
         RelayGroup.Rename.rename_relay_group(req, args)
       "delete" ->
         RelayGroup.Delete.delete_relay_group(req, args)
-      "add" ->
-        RelayGroup.Add.add_relays(req, args)
-      "remove" ->
-        RelayGroup.Remove.remove_relays(req, args)
-      "assign" ->
-        RelayGroup.Assign.assign_bundles(req, args)
-      "unassign" ->
-        RelayGroup.Unassign.unassign_bundles(req, args)
+      "member" ->
+        RelayGroup.Member.member(req, args)
       nil ->
-        show_usage
+        if Helpers.flag?(req.options, "help") do
+          show_usage
+        else
+          show_usage(error(:required_subcommand))
+        end
       invalid ->
-        {:error, {:unknown_subcommand, invalid}}
+        show_usage(error({:unknown_subcommand, invalid}))
     end
 
     case result do
@@ -89,8 +87,13 @@ defmodule Cog.Commands.RelayGroup do
   defp bundle_status(%{enabled: false}),
     do: :disabled
 
-  defp show_usage do
-    {:ok, "usage", %{usage: @moduledoc}}
+  defp error(:required_subcommand),
+    do: "You are required to specify a subcommand. Please specify one of, 'info', 'create', 'rename', 'delete' or 'member'"
+  defp error({:unknown_subcommand, subcommand}),
+    do: "Unknown subcommand '#{subcommand}'. Please specify one of, 'info', 'create', 'rename', 'delete' or 'member'"
+
+  defp show_usage(error \\ nil) do
+    {:ok, "usage", %{usage: @moduledoc, error: error}}
   end
 end
 
