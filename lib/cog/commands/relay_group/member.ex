@@ -6,10 +6,7 @@ defmodule Cog.Commands.RelayGroup.Member do
   Manages relay and bundle assignments to relay groups.
 
   USAGE
-    relay-group member <relay group name> <SUBCOMMAND>
-
-  ARGS
-    group_name    The relay group to operate on
+    relay-group member <SUBCOMMAND>
 
   FLAGS
     -h, --help      Display this usage info
@@ -29,17 +26,17 @@ defmodule Cog.Commands.RelayGroup.Member do
     end
   end
   def member(req, arg_list) do
-    {group_name, subcommand, args} = Helpers.get_resource_subcommand(arg_list)
+    {subcommand, args} = Helpers.get_subcommand(arg_list)
 
     case subcommand do
       "add" ->
-        Member.Add.add_relays(group_name, req, args)
+        Member.Add.add_relays(req, args)
       "remove" ->
-        Member.Remove.remove_relays(group_name, req, args)
+        Member.Remove.remove_relays(req, args)
       "assign" ->
-        Member.Assign.assign_bundles(group_name, req, args)
+        Member.Assign.assign_bundles(req, args)
       "unassign" ->
-        Member.Unassign.unassign_bundles(group_name, req, args)
+        Member.Unassign.unassign_bundles(req, args)
       invalid ->
         show_usage(error(:invalid_subcommand, invalid))
     end

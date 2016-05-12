@@ -7,7 +7,7 @@ defmodule Cog.Commands.RelayGroup.Member.Unassign do
   Unassigns bundles from relay groups
 
   USAGE
-    relay-group member <group_name> unassign [FLAGS] <bundle_name ...>
+    relay-group member unassign [FLAGS] <group_name> <bundle_name ...>
 
   ARGS
     group_name   The relay group to unassign bundles from
@@ -17,20 +17,18 @@ defmodule Cog.Commands.RelayGroup.Member.Unassign do
     -h, --help      Display this usage info
   """
 
-  @spec unassign_bundles(String.t, %Cog.Command.Request{}, List.t) :: {:ok, String.t, Map.t} | {:error, any()}
-  def unassign_bundles(group_name, req, arg_list) do
+  @spec unassign_bundles(%Cog.Command.Request{}, List.t) :: {:ok, String.t, Map.t} | {:error, any()}
+  def unassign_bundles(req, arg_list) do
     if Helpers.flag?(req.options, "help") do
       show_usage
     else
-      case {Helpers.get_args(arg_list, min: 1), group_name} do
-        {_, nil} ->
-          show_usage(error(:missing_args))
-        {{:ok, bundle_names}, group_name} ->
+      case Helpers.get_args(arg_list, min: 2) do
+        {:ok, [group_name | bundle_names]} ->
           with {:ok, relay_group} <- RelayGroup.Helpers.get_relay_group(group_name),
                {:ok, bundles} <- RelayGroup.Helpers.get_bundles(bundle_names) do
                  unassign(relay_group, bundles)
           end
-        {{:error, {:under_min_args, _min}}, _} ->
+        {:error, {:under_min_args, _min}} ->
           show_usage(error(:missing_args))
       end
     end

@@ -7,7 +7,7 @@ defmodule Cog.Commands.RelayGroup.Member.Add do
   Adds relays to relay groups
 
   USAGE
-    relay-group member <group_name> add [FLAGS] <relay_name ...>
+    relay-group member add [FLAGS] <group_name> <relay_name ...>
 
   ARGS
     group_name    The relay group to add relays to
@@ -17,21 +17,19 @@ defmodule Cog.Commands.RelayGroup.Member.Add do
     -h, --help      Display this usage info
   """
 
-  @spec add_relays(String.t, %Cog.Command.Request{}, List.t) :: {:ok, String.t, Map.t} | {:error, any()}
-  def add_relays(group_name, req, arg_list) do
+  @spec add_relays(%Cog.Command.Request{}, List.t) :: {:ok, String.t, Map.t} | {:error, any()}
+  def add_relays(req, arg_list) do
     if Helpers.flag?(req.options, "help") do
       show_usage
     else
-      case {Helpers.get_args(arg_list, min: 1), group_name} do
-        {_, nil} ->
-          show_usage(error(:missing_args))
-        {{:ok, relay_names}, group_name} ->
+      case Helpers.get_args(arg_list, min: 2) do
+        {:ok, [group_name | relay_names]} ->
           with {:ok, relay_group} <- RelayGroup.Helpers.get_relay_group(group_name),
                {:ok, relays} <- RelayGroup.Helpers.get_relays(relay_names),
                :ok <- verify_relays(relays, relay_names) do
                  add(relay_group, relays)
           end
-        {{:error, {:under_min_args, _min}}, _} ->
+        {:error, {:under_min_args, _min}} ->
           show_usage(error(:missing_args))
       end
     end

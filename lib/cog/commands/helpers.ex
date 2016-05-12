@@ -17,15 +17,6 @@ defmodule Cog.Commands.Helpers do
   def get_subcommand([subcommand | args]),
     do: {subcommand, args}
 
-  def get_resource_subcommand([]),
-    do: {nil, nil, []}
-  def get_resource_subcommand([resource, subcommand]),
-    do: {resource, subcommand, []}
-  def get_resource_subcommand([resource, subcommand | args]),
-    do: {resource, subcommand, args}
-  def get_resource_subcommand([subcommand | args]),
-    do: {nil, subcommand, args}
-
   @doc """
   If flag exists and is true will return true, otherwise returns false. Flags
   are defined as boolean options. Options that are not 
