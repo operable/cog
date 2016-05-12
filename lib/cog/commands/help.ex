@@ -1,29 +1,54 @@
 defmodule Cog.Commands.Help do
-  use Cog.Command.GenCommand.Base, bundle: "#{Cog.embedded_bundle}"
-
-  @moduledoc """
-  Get help on all installed Cog bot commands. By default only enabled
-  commands are listed.
-
-  USAGE:
-    help [OPTIONS] [ARGS]
-
-  OPTIONS:
-    -d, --disabled    list all disabled commands
-    -a, --all         list all know commands, enabled and disabled
-
-  ARGS:
-    command_name      list specific help for a command
-  """
+  use Cog.Command.GenCommand.Base,
+    bundle: Cog.embedded_bundle
 
   use Cog.Models
   alias Cog.Repo
   alias Cog.Queries
 
+  @moduledoc """
+  Prints help documentation for all commands.
+
+  USAGE
+    help [FLAGS] <command>
+
+  ARGS
+    command  prints long form documentation
+
+  FLAGS
+    -a, --all       Lists all enabled and disabled commands
+    -d, --disabled  Lists all disabled commands
+
+  EXAMPLES
+    help
+    > operable:alias
+      operable:bundle
+      operable:echo
+      operable:filter
+      operable:group
+      operable:help
+      operable:max
+      operable:min
+      operable:permissions
+      operable:raw
+      operable:relay
+      operable:relay-group
+      operable:role
+      operable:rules
+      operable:seed
+      operable:sleep
+      operable:sort
+      operable:sum
+      operable:table
+      operable:unique
+      operable:wc
+      operable:which
+  """
+
   rule "when command is #{Cog.embedded_bundle}:help allow"
 
-  option "all", type: "bool", required: false
-  option "disabled", type: "bool", required: false
+  option "all",      short: "a", type: "bool", required: false
+  option "disabled", short: "d", type: "bool", required: false
 
   def handle_message(%{args: [], options: options, reply_to: reply_to}, state) do
     case commands(options) do
