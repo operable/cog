@@ -2,9 +2,11 @@ defmodule Cog.Adapters.Slack.RTMConnector do
 
   # ping periodically so Slack knows we're still here
   @ping_interval 30000 # 30 seconds
-
   @send_chat_message_timeout 5000 # 5 seconds
-
+  @channel_events ["channel_joined", "channel_left", "channel_deleted",
+                   "channel_rename", "channel_archive", "channel_unarchive",
+                   "group_joined", "group_left", "group_close", "group_archive",
+                   "group_unarchive", "group_rename"]
 
   @typedoc """
   Custom state struct for the Slack `gen_server`-esque Websocket client.
@@ -111,6 +113,17 @@ defmodule Cog.Adapters.Slack.RTMConnector do
       SlackAdapter.API.send_message(%{"id" => channel}, message)
     end
     handler.()
+  end
+  def handle_message(%{type: channel_event, channel: channel}, _slack, state) when channel_event in @channel_events do
+    channel_id = case channel do
+      channel when is_binary(channel) ->
+        channel
+      %{id: id} ->
+        id
+    end
+
+    SlackAdapter.API.expire_channel(channel_id)
+    {:ok, state}
   end
   def handle_message(_message, _slack, state) do
     {:ok, state}
