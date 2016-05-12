@@ -10,6 +10,8 @@ defmodule Cog.Repository.Groups do
   alias Cog.Models.Role
   import Ecto.Query, only: [from: 1, from: 2]
 
+  @preloads [:direct_user_members, :direct_group_members, :roles]
+
 
   @doc """
   Creates a new user group given a map of attributes
@@ -26,7 +28,7 @@ defmodule Cog.Repository.Groups do
   """
   @spec all :: [%Group{}]
   def all,
-    do: Repo.all(Group) |> Repo.preload([:direct_user_members, :direct_group_members, :roles])
+    do: Repo.all(Group) |> Repo.preload(@preloads)
 
   @doc """
   Retrieves a single user group based on the id. The given id must be
@@ -37,7 +39,7 @@ defmodule Cog.Repository.Groups do
     if Cog.UUID.is_uuid?(id) do
       case Repo.get(Group, id) do
         %Group{} = group ->
-          group = Repo.preload(group, [:direct_user_members, :direct_group_members, :roles])
+          group = Repo.preload(group, @preloads)
           {:ok, group}
         nil ->
           {:error, :not_found}
@@ -112,7 +114,7 @@ defmodule Cog.Repository.Groups do
       |> grant(roles_to_add)
       |> remove(users_to_remove)
       |> revoke(roles_to_remove)
-      |> Repo.preload([:direct_user_members, :direct_group_members, :roles])
+      |> Repo.preload(@preloads)
     end)
   end
 
