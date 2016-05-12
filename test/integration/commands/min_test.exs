@@ -8,27 +8,23 @@ defmodule Integration.Commands.MinTest do
     {:ok, %{user: user}}
   end
 
-  test "Min from a set of integers", %{user: user} do
-    response = send_message(user, "@bot: operable:min 49 9 2 2")
-
-    [payload] = decode_payload(response)
-
-    assert payload.min == 2
+  test "basic min", %{user: user} do
+    response = send_message(user, ~s(@bot: seed '[{"a": 1}, {"a": 3}, {"a": 2}]' | min))
+    assert_payload(response, %{a: 1})
   end
 
-  test "Min from a set of floats", %{user: user} do
-    response = send_message(user, "@bot: operable:min 0.48 0.2 1.8 3548.4 0.078")
-
-    [payload] = decode_payload(response)
-
-    assert payload.min == 0.078
+  test "min by simple key", %{user: user} do
+    response = send_message(user, ~s(@bot: seed '[{"a": 1}, {"a": 3}, {"a": 2}]' | min a))
+    assert_payload(response, %{a: 1})
   end
 
-  test "Min from a set of words", %{user: user} do
-    response = send_message(user, "@bot: operable:min apple ball car zebra")
+  test "min by complex key", %{user: user} do
+    response = send_message(user, ~s(@bot: seed '[{"a": {"b": 1}}, {"a": {"b": 3}}, {"a": {"b": 2}}]' | min a.b))
+    assert_payload(response, %{a: %{b: 1}})
+  end
 
-    [payload] = decode_payload(response)
-
-    assert payload.min == "apple"
+  test "min by incorrect key", %{user: user} do
+    response = send_message(user, ~s(@bot: seed '[{"a": {"b": 1}}, {"a": {"b": 3}}, {"a": {"b": 2}}]' | min c.d))
+    assert_error_message_contains(response, "The path provided does not exist")
   end
 end
