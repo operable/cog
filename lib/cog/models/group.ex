@@ -48,6 +48,7 @@ defmodule Cog.Models.Group do
   """
   def changeset(model, params) do
     model
+    |> Repo.preload([:direct_user_members, :direct_group_members, :roles, :permissions])
     |> cast(params, @required_fields, @optional_fields)
     |> protect_admin_group
     |> unique_constraint(:name)
