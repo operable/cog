@@ -1,7 +1,7 @@
 defmodule Cog.V1.GroupController do
   use Cog.Web, :controller
 
-  alias Cog.Models.Group
+  alias Cog.Repository.Groups
 
   plug Cog.Plug.Authentication
   plug Cog.Plug.Authorization, permission: "#{Cog.embedded_bundle}:manage_groups"
@@ -9,15 +9,12 @@ defmodule Cog.V1.GroupController do
   plug :scrub_params, "group" when action in [:create, :update]
 
   def index(conn, _params) do
-    groups = Repo.all(Group)
-    |> Repo.preload([:direct_user_members, :direct_group_members, :roles])
+    groups = Groups.all
     render(conn, "index.json", groups: groups)
   end
 
   def create(conn, %{"group" => group_params}) do
-    changeset = Group.changeset(%Group{}, group_params)
-
-    case Repo.insert(changeset) do
+    case Groups.new(group_params) do
       {:ok, group} ->
         new_group = Repo.preload(group, [:direct_user_members, :direct_group_members, :roles])
         conn
@@ -32,35 +29,58 @@ defmodule Cog.V1.GroupController do
   end
 
   def show(conn, %{"id" => id}) do
-    group = Repo.get!(Group, id)
-    |> Repo.preload([:direct_user_members, :direct_group_members, :roles])
-    render(conn, "show.json", group: group)
+    case Groups.by_id(id) do
+      {:ok, group} ->
+        conn
+        |> put_status(:ok)
+        |> render("show.json", group: group)
+      {:error, :not_found} ->
+        conn
+        |> put_status(:not_found)
+        |> json(%{errors: "Group not found"})
+      {:error, :bad_id} ->
+        conn
+        |> put_status(:bad_request)
+        |> json(%{errors: "Bad ID format"})
+    end
   end
 
   def update(conn, %{"id" => id, "group" => group_params}) do
-    group = Repo.get!(Group, id)
-    changeset = Group.changeset(group, group_params)
-
-    case Repo.update(changeset) do
-      {:ok, group} ->
-        render(conn, "show.json", group: group)
-      {:error, changeset} ->
-        conn
-        |> put_status(:unprocessable_entity)
-        |> render(Cog.ChangesetView, "error.json", changeset: changeset)
+    with {:ok, group} <- Groups.by_id(id) do
+      case Groups.update(group, group_params) do
+        {:ok, updated} ->
+          render(conn, "show.json", group: updated)
+        {:error, :not_found} ->
+          conn
+          |> put_status(:not_found)
+          |> json(%{errors: "Group not found"})
+        {:error, :bad_id} ->
+          conn
+          |> put_status(:bad_request)
+          |> json(%{errors: "Bad ID format"})
+        {:error, changeset} ->
+          conn
+          |> put_status(:unprocessable_entity)
+          |> render(Cog.ChangesetView, "error.json", changeset: changeset)
+      end
     end
   end
 
   def delete(conn, %{"id" => id}) do
-    changeset = Repo.get!(Group, id) |> Cog.Models.Group.changeset(:delete)
-
-    case Repo.delete(changeset) do
-      {:ok, _} ->
-        send_resp(conn, :no_content, "")
-      {:error, changeset} ->
-        conn
-        |> put_status(:unprocessable_entity)
-        |> render(Cog.ChangesetView, "error.json", changeset: changeset)
+    with {:ok, group} <- Groups.by_id(id) do
+      case Groups.delete(group) do
+        {:ok, _} ->
+          send_resp(conn, :no_content, "")
+        {:error, :not_found} ->
+          conn
+          |> put_status(:not_found)
+          |> json(%{errors: "Group not found"})
+        {:error, :bad_id} ->
+          conn
+          |> put_status(:bad_request)
+          |> json(%{errors: "Bad ID format"})
+      end
     end
   end
+
 end

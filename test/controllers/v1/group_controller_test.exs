@@ -41,9 +41,9 @@ defmodule Cog.V1.GroupControllerTest do
                                                   "name" => group.name}
   end
 
-  test "does not show resource and instead throw error when id is nonexistent", %{authed: user} do
-    error = catch_error(api_request(user, :get, "/v1/groups/#{@bad_uuid}"))
-    assert %Ecto.NoResultsError{} = error
+  test "returns an error when a bad id is passed", %{authed: user} do
+    conn = api_request(user, :get, "/v1/groups/#{@bad_uuid}")
+    assert "Group not found" = json_response(conn, 404)["errors"]
   end
 
   test "creates and renders resource when data is valid", %{authed: user} do
