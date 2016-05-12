@@ -70,6 +70,10 @@ defmodule Cog.Adapters.Slack.API do
     end
   end
 
+  def expire_channel(channel_id) when is_binary(channel_id) do
+    GenServer.call(@server_name, {:expire_channel, channel_id}, :infinity)
+  end
+
   def init(config) do
     token = config[:api][:token]
     cache_ttl = config[:api][:cache_ttl] || @default_ttl
@@ -197,6 +201,11 @@ defmodule Cog.Adapters.Slack.API do
     end
   end
 
+  def handle_call({:expire_channel, channel_id}, _from, state) do
+    expire_key(channel_id)
+    {:reply, :ok, state}
+  end
+
   defp is_channel_named?(%{name: name}, name), do: true
   defp is_channel_named?(%{"name" => name}, name), do: true
   defp is_channel_named?(_, _), do: false
@@ -286,6 +295,10 @@ defmodule Cog.Adapters.Slack.API do
       [{_, {entry, _}}] when is_map(entry) ->
         entry
     end
+  end
+
+  def expire_key(key) do
+    :ets.delete(@channel_cache, key)
   end
 
   defp extract_key([id: id]), do: id
