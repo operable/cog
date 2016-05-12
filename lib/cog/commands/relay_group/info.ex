@@ -22,7 +22,7 @@ defmodule Cog.Commands.RelayGroup.Info do
     if Helpers.flag?(req.options, "help") do
       show_usage
     else
-      relay_groups = if length(args) == 0 do
+      if length(args) == 0 do
         case RelayGroups.all do
           [] ->
             {:ok, "No relay groups configured"}

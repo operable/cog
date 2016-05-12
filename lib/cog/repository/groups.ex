@@ -10,8 +10,7 @@ defmodule Cog.Repository.Groups do
   alias Cog.Models.Role
   import Ecto.Query, only: [from: 1, from: 2]
 
-  @preloads [:direct_user_members, :direct_group_members, :roles]
-
+  @preloads [:direct_user_members, :direct_group_members, :roles, :permissions]
 
   @doc """
   Creates a new user group given a map of attributes
@@ -29,6 +28,15 @@ defmodule Cog.Repository.Groups do
   @spec all :: [%Group{}]
   def all,
     do: Repo.all(Group) |> Repo.preload(@preloads)
+
+  @doc """
+  Retrieves all user groups in the list of names.
+  """
+  @spec all_by_name(List.t) :: [%Group{}]
+  def all_by_name(names) do
+    Repo.all(from g in Group, where: g.name in ^names)
+    |> Repo.preload(@preloads)
+  end
 
   @doc """
   Retrieves a single user group based on the id. The given id must be
