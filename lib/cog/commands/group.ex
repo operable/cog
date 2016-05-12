@@ -1,13 +1,25 @@
 defmodule Cog.Commands.Group do
-  @moduledoc """
-  This command allows the user to manage groups of users.
+  use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle
+  #use Cog.Models
+  #alias Cog.Repo
+  #alias Cog.MessageTranslations
+  alias Cog.Commands.Helpers
+  alias Cog.Commands.Group
 
-  USAGE:
-    group --create <groupname>
-    group --drop <groupname>
-    group --add --user=<username> <groupname>
-    group --remove --user=<username> <groupname>
-    group --list
+  @moduledoc """
+  Manage user groups
+
+  USAGE
+    group [FLAGS] <SUBCOMMAND>
+
+  SUBCOMMANDS
+    list      List user groups
+    create    Creates a new user group
+    delete    Deletes a user group
+    member    Manage members of user groups
+
+  FLAGS
+    -h, --help    Display this usage info
 
   EXAMPLE:
     group --create ops
@@ -30,141 +42,191 @@ defmodule Cog.Commands.Group do
       * admin
       * cog-admin
   """
-  use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle
-
-  option "create", type: "bool"
-  option "drop", type: "bool"
-  option "add", type: "bool"
-  option "remove", type: "bool"
-  option "list", type: "bool"
-
-  option "user", type: "string"
 
   permission "manage_groups"
   permission "manage_users"
 
-  rule "when command is #{Cog.embedded_bundle}:group with option[create] == true must have #{Cog.embedded_bundle}:manage_groups"
-  rule "when command is #{Cog.embedded_bundle}:group with option[drop] == true must have #{Cog.embedded_bundle}:manage_groups"
-  rule "when command is #{Cog.embedded_bundle}:group with option[list] == true must have #{Cog.embedded_bundle}:manage_groups"
-  rule "when command is #{Cog.embedded_bundle}:group with option[add] == true must have #{Cog.embedded_bundle}:manage_users"
-  rule "when command is #{Cog.embedded_bundle}:group with option[remove] == true must have #{Cog.embedded_bundle}:manage_users"
+  rule ~s(when command is #{Cog.embedded_bundle}:group must have #{Cog.embedded_bundle}:manage_groups)
+  rule ~s(when command is #{Cog.embedded_bundle}:group with arg[0] == 'member' must have #{Cog.embedded_bundle}:manage_users)
 
-  alias Cog.Repo
-  use Cog.Models
-  alias Cog.MessageTranslations
+  # general options
+  option "help", type: "bool", short: "h"
+
+  # list options
+  option "verbose", type: "bool", short: "v"
 
   def handle_message(req, state) do
-    result = case req.options do
-               %{"create" => true} -> create_group(req.args)
-               %{"drop" => true} -> drop_group(req.args)
-               %{"add" => true} -> modify_group(req)
-               %{"remove" => true} -> modify_group(req)
-               %{"list" => true} -> list_all_groups
-               _ ->
-                 {:error, "I am not sure what action you want me to take using `group`"}
-             end
+    {subcommand, args} = Helpers.get_subcommand(req.args)
+
+    result = case subcommand do
+      "list" ->
+        Group.List.list_users(req, args)
+      "create" ->
+        Group.Create.create_user(req, args)
+      "delete" ->
+        Group.Delete.delete_user(req, args)
+      "member" ->
+        Group.Member.manage_members(req, args)
+      nil ->
+        if Helpers.flag?(req.options, "help") do
+          show_usage
+        else
+          show_usage(error(:required_subcommand))
+        end
+      invalid ->
+        show_usage(error({:unknown_subcommand, invalid}))
+    end
+
     case result do
+      {:ok, template, data} ->
+        {:reply, req.reply_to, template, data, state}
       {:ok, message} ->
         {:reply, req.reply_to, message, state}
-      {:error, message} ->
-        {:error, req.reply_to, message, state}
+      {:error, err} ->
+        {:error, req.reply_to, Helpers.error(err), state}
     end
   end
 
-  defp create_group([]),
-    do: MessageTranslations.translate_error("Missing name", {:fail_creation, ""})
-  defp create_group([name | _]) do
-    case Repo.get_by(Group, name: name) do
-      nil ->
-        case Group.changeset(%Group{}, %{name: name}) |> Repo.insert do
-          {:ok, group} -> MessageTranslations.translate_success(%{action: :create, entity: group})
-          {:error, errmsg} -> MessageTranslations.translate_error(errmsg, {:fail_creation, name})
-        end
-      %Group{} ->
-        MessageTranslations.translate_error("group", {:already_exists, name})
-    end
+  @spec json(%Cog.Models.Group{}) :: Map.t
+  def json(group) do
+    %{name: group.name,
+      roles: Enum.map(group.roles, &role_json/1),
+      members: Enum.map(group.user_membership, &member_json/1)}
   end
 
-  defp drop_group([name | _]) do
-    case Repo.get_by(Group, name: name) do
-      %Group{}=group ->
-        Repo.delete!(group)
-        MessageTranslations.translate_success(%{action: :drop, entity: group})
-      nil -> MessageTranslations.translate_error("group", {:does_not_exists, name})
-    end
+  defp role_json(role) do
+    %{name: role.name,
+      id: role.id}
   end
 
-  defp modify_group(req) do
-    admitter = validate(req)
-    case admitter.errors do
-      [] ->
-        perform_action(admitter.action, admitter)
-        |> return_results(admitter)
-      _ -> return_results(:error, admitter)
-    end
+  defp member_json(membership) do
+    %{email: membership.member.email_address,
+      first_name: membership.member.first_name,
+      last_name: membership.member.last_name,
+      id: membership.member.id}
   end
 
-  defp list_all_groups do
-    result = Repo.all(Group)
-    case result do
-      [] -> {:ok, "Currently, there are no groups in the system."}
-      _ -> {:ok, format_list(result, "")}
-    end
-  end
+  defp error(:required_subcommand),
+    do: "You must specify a subcommand. Please specify one of, 'list', 'create', 'delete' or 'member'"
+  defp error({:unknown_subcommand, invalid}),
+    do: "Unknown subcommand '#{invalid}'. Please specify one of, 'list', 'create', 'delete' or 'member'"
 
-  defp format_list([], acc) do
-    "The following are the available groups: \n#{acc}"
+  defp show_usage(error \\ nil) do
+    {:ok, "usage", %{usage: @moduledoc, error: error}}
   end
-  defp format_list([%{name: name} | remaining], acc) do
-    format_list(remaining, "* #{name}\n" <> acc)
-  end
-
-  defp perform_action(:add, admitter) do
-    Groupable.add_to(admitter.entity, admitter.classification)
-  end
-  defp perform_action(:remove, admitter) do
-    Groupable.remove_from(admitter.entity, admitter.classification)
-  end
-
-  defp return_results(:ok, admitter),
-    do: MessageTranslations.translate_success(admitter)
-  defp return_results(_, admitter) do
-    [error | _] = admitter.errors
-    MessageTranslations.translate_error("group", error)
-  end
-
-  defp validate(req) do
-    %MessageTranslations{req: req}
-    |> validate_action
-    |> validate_groupable
-    |> validate_group
-  end
-
-  defp validate_action(%{req: req, errors: errors}=input) do
-    case req.options do
-      %{"add" => true} -> %{input | action: :add}
-      %{"remove" => true} -> %{input | action: :remove}
-      _ -> %{input | errors: [:missing_action | errors]}
-    end
-  end
-
-  defp validate_groupable(%{req: %{options: %{"user" => username}}, errors: errors}=input) do
-    case Repo.get_by(User, username: username) do
-      %User{}=user -> %{input | entity: user}
-      nil -> %{input | errors: [{:unrecognized_user, username} | errors]}
-    end
-  end
-  defp validate_groupable(%{req: %{options: _}, errors: errors}=input),
-    do: %{input | errors: [:missing_target | errors]}
-
-  defp validate_group(%{req: %{args: []}, errors: errors}=input) do
-    %{input | errors: [:missing_group | errors]}
-  end
-  defp validate_group(%{req: %{args: [name | _]}, errors: errors}=input) do
-    case Repo.get_by(Group, name: name) do
-      %Group{}=group -> %{input | classification: group}
-      nil -> %{input | errors: [{:unrecognized_group, name} | errors]}
-    end
-  end
-
 end
+
+    #result = case req.options do
+               #%{"create" => true} -> create_group(req.args)
+               #%{"drop" => true} -> drop_group(req.args)
+               #%{"add" => true} -> modify_group(req)
+               #%{"remove" => true} -> modify_group(req)
+               #%{"list" => true} -> list_all_groups
+               #_ ->
+                 #{:error, "I am not sure what action you want me to take using `group`"}
+             #end
+    #case result do
+      #{:ok, message} ->
+        #{:reply, req.reply_to, message, state}
+      #{:error, message} ->
+        #{:error, req.reply_to, message, state}
+    #end
+  #end
+
+  #defp create_group([]),
+    #do: MessageTranslations.translate_error("Missing name", {:fail_creation, ""})
+  #defp create_group([name | _]) do
+    #case Repo.get_by(Group, name: name) do
+      #nil ->
+        #case Group.changeset(%Group{}, %{name: name}) |> Repo.insert do
+          #{:ok, group} -> MessageTranslations.translate_success(%{action: :create, entity: group})
+          #{:error, errmsg} -> MessageTranslations.translate_error(errmsg, {:fail_creation, name})
+        #end
+      #%Group{} ->
+        #MessageTranslations.translate_error("group", {:already_exists, name})
+    #end
+  #end
+
+  #defp drop_group([name | _]) do
+    #case Repo.get_by(Group, name: name) do
+      #%Group{}=group ->
+        #Repo.delete!(group)
+        #MessageTranslations.translate_success(%{action: :drop, entity: group})
+      #nil -> MessageTranslations.translate_error("group", {:does_not_exists, name})
+    #end
+  #end
+
+  #defp modify_group(req) do
+    #admitter = validate(req)
+    #case admitter.errors do
+      #[] ->
+        #perform_action(admitter.action, admitter)
+        #|> return_results(admitter)
+      #_ -> return_results(:error, admitter)
+    #end
+  #end
+
+  #defp list_all_groups do
+    #result = Repo.all(Group)
+    #case result do
+      #[] -> {:ok, "Currently, there are no groups in the system."}
+      #_ -> {:ok, format_list(result, "")}
+    #end
+  #end
+
+  #defp format_list([], acc) do
+    #"The following are the available groups: \n#{acc}"
+  #end
+  #defp format_list([%{name: name} | remaining], acc) do
+    #format_list(remaining, "* #{name}\n" <> acc)
+  #end
+
+  #defp perform_action(:add, admitter) do
+    #Groupable.add_to(admitter.entity, admitter.classification)
+  #end
+  #defp perform_action(:remove, admitter) do
+    #Groupable.remove_from(admitter.entity, admitter.classification)
+  #end
+
+  #defp return_results(:ok, admitter),
+    #do: MessageTranslations.translate_success(admitter)
+  #defp return_results(_, admitter) do
+    #[error | _] = admitter.errors
+    #MessageTranslations.translate_error("group", error)
+  #end
+
+  #defp validate(req) do
+    #%MessageTranslations{req: req}
+    #|> validate_action
+    #|> validate_groupable
+    #|> validate_group
+  #end
+
+  #defp validate_action(%{req: req, errors: errors}=input) do
+    #case req.options do
+      #%{"add" => true} -> %{input | action: :add}
+      #%{"remove" => true} -> %{input | action: :remove}
+      #_ -> %{input | errors: [:missing_action | errors]}
+    #end
+  #end
+
+  #defp validate_groupable(%{req: %{options: %{"user" => username}}, errors: errors}=input) do
+    #case Repo.get_by(User, username: username) do
+      #%User{}=user -> %{input | entity: user}
+      #nil -> %{input | errors: [{:unrecognized_user, username} | errors]}
+    #end
+  #end
+  #defp validate_groupable(%{req: %{options: _}, errors: errors}=input),
+    #do: %{input | errors: [:missing_target | errors]}
+
+  #defp validate_group(%{req: %{args: []}, errors: errors}=input) do
+    #%{input | errors: [:missing_group | errors]}
+  #end
+  #defp validate_group(%{req: %{args: [name | _]}, errors: errors}=input) do
+    #case Repo.get_by(Group, name: name) do
+      #%Group{}=group -> %{input | classification: group}
+      #nil -> %{input | errors: [{:unrecognized_group, name} | errors]}
+    #end
+  #end
+
+#end
