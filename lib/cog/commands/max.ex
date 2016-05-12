@@ -44,15 +44,36 @@ defmodule Cog.Commands.Max do
         accumulated_value = MemoryClient.fetch(root, token, key)
         max_value = max_by(accumulated_value, args)
         MemoryClient.delete(root, token, key)
-        {:reply, req.reply_to, max_value, state}
+
+        case max_value do
+          {:ok, value} ->
+            {:reply, req.reply_to, value, state}
+          {:error, error} ->
+            {:error, req.reply_to, error, state}
+        end
     end
   end
 
   defp max_by(items, []),
-    do: Enum.max(items)
+    do: {:ok, Enum.max(items)}
   defp max_by(items, [path]) do
     path_list = path_to_list(path)
-    Enum.max_by(items, &get_in(&1, path_list))
+
+    case bad_path(items, path_list) do
+      true ->
+        {:error, "The path provided does not exist"}
+      false ->
+        max_item = Enum.max_by(items, &get_in(&1, path_list))
+        {:ok, max_item}
+    end
+  end
+
+  defp bad_path(items, path_list) do
+    Enum.all?(items, fn item ->
+      item
+      |> get_in(path_list)
+      |> is_nil
+    end)
   end
 
   defp path_to_list(path) do

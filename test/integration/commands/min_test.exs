@@ -22,4 +22,9 @@ defmodule Integration.Commands.MinTest do
     response = send_message(user, ~s(@bot: seed '[{"a": {"b": 1}}, {"a": {"b": 3}}, {"a": {"b": 2}}]' | min a.b))
     assert_payload(response, %{a: %{b: 1}})
   end
+
+  test "min by incorrect key", %{user: user} do
+    response = send_message(user, ~s(@bot: seed '[{"a": {"b": 1}}, {"a": {"b": 3}}, {"a": {"b": 2}}]' | min c.d))
+    assert_error_message_contains(response, "The path provided does not exist")
+  end
 end

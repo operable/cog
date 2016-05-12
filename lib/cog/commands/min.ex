@@ -44,15 +44,36 @@ defmodule Cog.Commands.Min do
         accumulated_value = MemoryClient.fetch(root, token, key)
         min_value = min_by(accumulated_value, args)
         MemoryClient.delete(root, token, key)
-        {:reply, req.reply_to, min_value, state}
+
+        case min_value do
+          {:ok, value} ->
+            {:reply, req.reply_to, value, state}
+          {:error, error} ->
+            {:error, req.reply_to, error, state}
+        end
     end
   end
 
   defp min_by(items, []),
-    do: Enum.min(items)
+    do: {:ok, Enum.min(items)}
   defp min_by(items, [path]) do
     path_list = path_to_list(path)
-    Enum.min_by(items, &get_in(&1, path_list))
+
+    case bad_path(items, path_list) do
+      true ->
+        {:error, "The path provided does not exist"}
+      false ->
+        min_item = Enum.min_by(items, &get_in(&1, path_list))
+        {:ok, min_item}
+    end
+  end
+
+  defp bad_path(items, path_list) do
+    Enum.all?(items, fn item ->
+      item
+      |> get_in(path_list)
+      |> is_nil
+    end)
   end
 
   defp path_to_list(path) do
