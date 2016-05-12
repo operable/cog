@@ -1,12 +1,9 @@
 defmodule Cog.Commands.Group do
   use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle
-  #use Cog.Models
-  #alias Cog.Repo
-  #alias Cog.MessageTranslations
-  alias Cog.Commands.Helpers
+  require Cog.Commands.Helpers, as: Helpers
   alias Cog.Commands.Group
 
-  @moduledoc """
+  Helpers.usage :root, """
   Manage user groups
 
   USAGE
@@ -20,27 +17,6 @@ defmodule Cog.Commands.Group do
 
   FLAGS
     -h, --help    Display this usage info
-
-  EXAMPLE:
-    group --create ops
-    > The group 'ops' has been created.
-
-    group --create engineering
-    > The group 'engineering' has been created.
-
-    group --add --user=bob ops
-    > Added the user 'bob' to the group 'ops'
-
-    group --remove --user=bob ops
-    > Removed the user 'bob' from the group 'ops'
-
-    group --drop ops
-    > The group 'ops' has been deleted.
-
-    group --list
-    > The following are the available groups:
-      * admin
-      * cog-admin
   """
 
   permission "manage_groups"
@@ -48,9 +24,6 @@ defmodule Cog.Commands.Group do
 
   rule ~s(when command is #{Cog.embedded_bundle}:group must have #{Cog.embedded_bundle}:manage_groups)
   rule ~s(when command is #{Cog.embedded_bundle}:group with arg[0] == 'member' must have #{Cog.embedded_bundle}:manage_users)
-
-  # general options
-  option "help", type: "bool", short: "h"
 
   # list options
   option "verbose", type: "bool", short: "v"
@@ -60,11 +33,11 @@ defmodule Cog.Commands.Group do
 
     result = case subcommand do
       "list" ->
-        Group.List.list_users(req, args)
+        Group.List.list_groups(req, args)
       "create" ->
-        Group.Create.create_user(req, args)
+        Group.Create.create_group(req, args)
       "delete" ->
-        Group.Delete.delete_user(req, args)
+        Group.Delete.delete_group(req, args)
       "member" ->
         Group.Member.manage_members(req, args)
       nil ->
@@ -90,6 +63,7 @@ defmodule Cog.Commands.Group do
   @spec json(%Cog.Models.Group{}) :: Map.t
   def json(group) do
     %{name: group.name,
+      id: group.id,
       roles: Enum.map(group.roles, &role_json/1),
       members: Enum.map(group.user_membership, &member_json/1)}
   end
@@ -99,21 +73,19 @@ defmodule Cog.Commands.Group do
       id: role.id}
   end
 
-  defp member_json(membership) do
-    %{email: membership.member.email_address,
-      first_name: membership.member.first_name,
-      last_name: membership.member.last_name,
-      id: membership.member.id}
+  defp member_json(%{member: member}) do
+    %{email: member.email_address,
+      first_name: member.first_name,
+      last_name: member.last_name,
+      id: member.id}
   end
+  defp member_json(_),
+    do: %{}
 
   defp error(:required_subcommand),
     do: "You must specify a subcommand. Please specify one of, 'list', 'create', 'delete' or 'member'"
   defp error({:unknown_subcommand, invalid}),
     do: "Unknown subcommand '#{invalid}'. Please specify one of, 'list', 'create', 'delete' or 'member'"
-
-  defp show_usage(error \\ nil) do
-    {:ok, "usage", %{usage: @moduledoc, error: error}}
-  end
 end
 
     #result = case req.options do

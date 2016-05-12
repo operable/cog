@@ -1,9 +1,9 @@
 defmodule Cog.Commands.Group.List do
-  alias Cog.Commands.Helpers
+  require Cog.Commands.Helpers, as: Helpers
   alias Cog.Commands.Group
   alias Cog.Repository.Groups
 
-  @moduledoc """
+  Helpers.usage """
   Lists user groups. Optionally you can pass a list of group names to
   display. Group names that don't exist will be ignored.
 
@@ -18,8 +18,8 @@ defmodule Cog.Commands.Group.List do
     -v, --verbose Display additional info for groups
   """
 
-  @spec list_users(%Cog.Command.Request{}, List.t) :: {:ok, String.t, Map.t} | {:error, any()}
-  def list_users(req, arg_list) do
+  @spec list_groups(%Cog.Command.Request{}, List.t) :: {:ok, String.t, Map.t} | {:error, any()}
+  def list_groups(req, arg_list) do
     if Helpers.flag?(req.options, "help") do
       show_usage
     else
@@ -47,9 +47,5 @@ defmodule Cog.Commands.Group.List do
     else
       "user-group-list"
     end
-  end
-
-  defp show_usage(error \\ nil) do
-    {:ok, "usage", %{usage: @moduledoc, error: error}}
   end
 end
