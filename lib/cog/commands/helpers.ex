@@ -40,7 +40,7 @@ defmodule Cog.Commands.Helpers do
 
   @doc """
   If flag exists and is true will return true, otherwise returns false. Flags
-  are defined as boolean options. Options that are not 
+  are defined as boolean options. Options that are not.
   """
   @spec flag?(Map.t, String.t) :: true | false
   def flag?(options, option) do
@@ -114,6 +114,8 @@ defmodule Cog.Commands.Helpers do
     do: "I don't what to do, please specify a subcommand"
   def error({:unknown_subcommand, subcommand}),
     do: "Unknown subcommand '#{subcommand}'"
+  def error({:resource_not_found, resource_type, resource_name}),
+    do: "Could not find '#{resource_type}' with the name '#{resource_name}'"
 
   @doc """
   Returns an alias. If the visibility isn't passed we first search for a user

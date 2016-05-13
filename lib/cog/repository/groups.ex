@@ -39,6 +39,19 @@ defmodule Cog.Repository.Groups do
   end
 
   @doc """
+  Retrieves a user group based on it's name
+  """
+  @spec by_name(String.t) :: %Group{}
+  def by_name(name) do
+    case Repo.get_by(Group, name: name) do
+      %Group{} = group ->
+        {:ok, Repo.preload(group, @preloads)}
+      nil ->
+        {:error, :not_found}
+    end
+  end
+
+  @doc """
   Retrieves a single user group based on the id. The given id must be
   a valid UUID.
   """
