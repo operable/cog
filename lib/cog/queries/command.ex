@@ -81,11 +81,11 @@ defmodule Cog.Queries.Command do
     end
   end
 
-  def qualified_names(query \\ Command) do
+  def sorted_by_qualified_name(query \\ Command) do
     from c in query,
     join: b in assoc(c, :bundle),
     order_by: [b.name, c.name],
-    select: fragment("? || ':' || ?", b.name, c.name)
+    preload: [:bundle]
   end
 
   def enabled(query \\ Command) do

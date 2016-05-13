@@ -83,19 +83,19 @@ defmodule Cog.Commands.Help do
 
   defp find_commands_query(%{"all" => true}) do
     Command
-    |> Queries.Command.qualified_names
+    |> Queries.Command.sorted_by_qualified_name
   end
 
   defp find_commands_query(%{"disabled" => true}) do
     Command
     |> Queries.Command.disabled
-    |> Queries.Command.qualified_names
+    |> Queries.Command.sorted_by_qualified_name
   end
 
   defp find_commands_query(%{}) do
     Command
     |> Queries.Command.enabled
-    |> Queries.Command.qualified_names
+    |> Queries.Command.sorted_by_qualified_name
   end
 
   defp find_command_query(command) do
