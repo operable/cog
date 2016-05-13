@@ -1,6 +1,7 @@
 defmodule Cog.Commands.Group.Member.Add do
   require Cog.Commands.Helpers, as: Helpers
   alias Cog.Commands.Group
+  alias Cog.Repository.Groups
 
   Helpers.usage """
   Add users to user groups.
@@ -22,9 +23,20 @@ defmodule Cog.Commands.Group.Member.Add do
       show_usage
     else
       case Helpers.get_args(arg_list, min: 2) do
+        {:ok, [group_name | usernames]} ->
+          add(group_name, usernames)
         {:error, {:under_min_args, _min}} ->
           show_usage(error(:missing_args))
       end
+    end
+  end
+
+  defp add(group_name, usernames) do
+    case Groups.by_name(group_name) do
+      {:ok, group} ->
+        IO.inspect group
+      {:error, :not_found} ->
+        {:error, {:resource_not_found, "user group", group_name}}
     end
   end
 
