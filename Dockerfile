@@ -15,7 +15,7 @@ ENV MIX_ENV ${MIX_ENV:-dev}
 # build stage layer.
 RUN apk update -U && \
     apk add erlang erlang-crypto erlang-dev erlang-ssh erlang-ssl erlang-mnesia erlang-syntax-tools erlang-parsetools \
-            bash git postgresql-client elixir@operable
+            erlang-xmerl bash git postgresql-client elixir@operable
 
 # Setup operable user
 RUN adduser -h /home/operable -D operable
