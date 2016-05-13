@@ -29,8 +29,12 @@ defmodule Cog.BusDriver do
   def init(_) do
     case configure_message_bus() do
       {:ok, [app_name]} ->
-        Application.start(app_name)
-        {:ok, app_name}
+        case Application.ensure_all_started(app_name) do
+          :ok ->
+            {:ok, app_name}
+          error ->
+            error
+        end
       error ->
         Logger.error("Message bus configuration error: #{inspect error}")
         {:stop, :shutdown}
