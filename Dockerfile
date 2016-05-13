@@ -8,7 +8,7 @@ RUN echo "@operable https://storage.googleapis.com/operable-apk/" > /etc/apk/rep
 
 # Select mix environment to use. We declare the MIX_ENV at build time
 ARG MIX_ENV
-ENV MIX_ENV ${MIX_ENV:-dev}
+ENV MIX_ENV ${MIX_ENV:-prod}
 
 # Install dependencies that will be used at runtime. Build
 # time dependencies are installed _and_ removed during the
