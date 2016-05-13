@@ -23,7 +23,7 @@
   "exvcr": {:hex, :exvcr, "0.7.3"},
   "fs": {:hex, :fs, "0.9.2"},
   "fumanchu": {:git, "https://github.com/operable/fumanchu.git", "d16846a508a419460fdac31cb9a3327e0c8d5036", []},
-  "gen_logger": {:git, "git://github.com/emqtt/gen_logger.git", "f985723843926f1814818bf63646b3dedf5c9fb3", [branch: "master"]},
+  "gen_logger": {:git, "https://github.com/emqtt/gen_logger.git", "530af9cc2babcb77c541d46af34a9879d4a5ac07", [branch: "master"]},
   "getopt": {:git, "https://github.com/jcomellas/getopt.git", "3b2751dc198d1099ae2da7a98192444fcbe42285", [branch: "master"]},
   "goldrush": {:hex, :goldrush, "0.1.7"},
   "gproc": {:hex, :gproc, "0.5.0"},

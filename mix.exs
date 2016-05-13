@@ -58,6 +58,7 @@ defmodule Cog.Mixfile do
      {:ecto, "~> 1.1.3"},
      {:lager_logger, "~> 1.0.2"},
      {:logger_file_backend, github: "onkel-dirtus/logger_file_backend", ref: "457ce74fc242261328f71a77d75252bf0c74c170"},
+     {:gen_logger, github: "emqtt/gen_logger", branch: "master", override: true},
      {:emqttc, github: "operable/emqttc", tag: "cog-0.2"},
      {:emqttd, github: "operable/emqttd", branch: "tweaks-for-upstream"},
      {:lager, "~> 3.0.2", override: true},
