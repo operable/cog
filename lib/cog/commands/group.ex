@@ -47,7 +47,9 @@ defmodule Cog.Commands.Group do
           show_usage(error(:required_subcommand))
         end
       invalid ->
-        show_usage(error({:unknown_subcommand, invalid}))
+        suggestion = Enum.max_by(["list", "create", "delete", "member"],
+                                 &String.jaro_distance(&1, invalid))
+        show_usage(error({:unknown_subcommand, invalid, suggestion}))
     end
 
     case result do
@@ -84,8 +86,8 @@ defmodule Cog.Commands.Group do
 
   defp error(:required_subcommand),
     do: "You must specify a subcommand. Please specify one of, 'list', 'create', 'delete' or 'member'"
-  defp error({:unknown_subcommand, invalid}),
-    do: "Unknown subcommand '#{invalid}'. Please specify one of, 'list', 'create', 'delete' or 'member'"
+  defp error({:unknown_subcommand, invalid, suggestion}),
+    do: "Unknown subcommand '#{invalid}'. Did you mean '#{suggestion}'?"
 end
 
     #result = case req.options do
