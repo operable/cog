@@ -5,8 +5,29 @@ defmodule Cog.Commands.Helpers do
   alias Cog.Models.EctoJson
 
   @moduledoc """
-  A collection of helper functions for working with commands.
+  A collection of helper functions and macros for working with commands.
   """
+
+  # Adds moduledoc and the show_usage function
+  defmacro usage(usage_str) do
+    quote do
+      @moduledoc unquote(usage_str)
+
+      defp show_usage(error \\ nil) do
+        {:ok, "usage", %{usage: @moduledoc, error: error}}
+      end
+    end
+  end
+
+  # In addition to the standard usage bits this also
+  # add the 'help' option. Note that this will fail
+  # if used outside of a gen_command
+  defmacro usage(:root, usage_str) do
+    quote do
+      Cog.Commands.Helpers.usage(unquote(usage_str))
+      option "help", type: "bool", short: "h"
+    end
+  end
 
   @doc """
   Returns a tuple containing the subcommand and remaining args
