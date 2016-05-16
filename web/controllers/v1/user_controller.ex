@@ -1,7 +1,7 @@
 defmodule Cog.V1.UserController do
   use Cog.Web, :controller
 
-  alias Cog.Models.User
+  alias Cog.Repository.Users
 
   plug Cog.Plug.Authentication
   plug Cog.Plug.Authorization, [permission: "#{Cog.embedded_bundle}:manage_users",
@@ -11,18 +11,24 @@ defmodule Cog.V1.UserController do
 
   # Search by username only for now
   def index(conn, %{"username" => name}) do
-    user = Repo.get_by!(User, username: name)
-    render(conn, "show.json", user: user)
+    case Users.by_username(name) do
+      {:ok, user} ->
+        conn
+        |> put_status(:ok)
+        |> render("show.json", user: user)
+      {:error, :not_found} ->
+        conn
+        |> put_status(:not_found)
+        |> json(%{errors: "User not found"})
+    end
   end
   def index(conn, _params) do
-    users = Repo.all(User)
+    users = Users.all
     render(conn, "index.json", users: users)
   end
 
   def create(conn, %{"user" => user_params}) do
-    changeset = User.changeset(%User{}, user_params)
-
-    case Repo.insert(changeset) do
+    case Users.new(user_params) do
       {:ok, user} ->
         conn
         |> put_status(:created)
@@ -40,17 +46,38 @@ defmodule Cog.V1.UserController do
   end
 
   def show(conn, %{"id" => id}) do
-    user = Repo.get!(User, id)
-    render(conn, "show.json", user: user)
+    case Users.by_id(id) do
+      {:ok, user} ->
+        conn
+        |> put_status(:ok)
+        |> render("show.json", user: user)
+      {:error, :not_found} ->
+        conn
+        |> put_status(:not_found)
+        |> json(%{errors: "User not found"})
+      {:error, :bad_id} ->
+        conn
+        |> put_status(:bad_request)
+        |> json(%{errors: "Bad ID format"})
+    end
   end
 
   def update(conn, %{"id" => id, "user" => user_params}) do
-    user = Repo.get!(User, id)
-    changeset = User.changeset(user, user_params)
+    results = with {:ok, user} <- Users.by_id(id) do
+      Users.update(user, user_params)
+    end
 
-    case Repo.update(changeset) do
-      {:ok, user} ->
-        render(conn, "show.json", user: user)
+    case results do
+      {:ok, updated} ->
+        render(conn, "show.json", user: updated)
+      {:error, :not_found} ->
+        conn
+        |> put_status(:not_found)
+        |> json(%{errors: "User not found"})
+      {:error, :bad_id} ->
+        conn
+        |> put_status(:bad_request)
+        |> json(%{errors: "Bad ID format"})
       {:error, changeset} ->
         conn
         |> put_status(:unprocessable_entity)
@@ -59,9 +86,22 @@ defmodule Cog.V1.UserController do
   end
 
   def delete(conn, %{"id" => id}) do
-    user = Repo.get!(User, id)
-    Repo.delete!(user)
-    send_resp(conn, :no_content, "")
+    results = with {:ok, user} <- Users.by_id(id) do
+      Users.delete(user)
+    end
+
+    case results do
+      {:ok, _} ->
+        send_resp(conn, :no_content, "")
+      {:error, :bad_id} ->
+        conn
+        |> put_status(:bad_request)
+        |> json(%{errors: "Bad ID format"})
+      {:error, :not_found} ->
+       conn
+       |> put_status(:not_found)
+       |> json(%{errors: "User not found"})
+    end
   end
 end
 
