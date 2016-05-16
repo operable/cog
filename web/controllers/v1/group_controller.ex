@@ -46,40 +46,44 @@ defmodule Cog.V1.GroupController do
   end
 
   def update(conn, %{"id" => id, "group" => group_params}) do
-    with {:ok, group} <- Groups.by_id(id) do
-      case Groups.update(group, group_params) do
-        {:ok, updated} ->
-          render(conn, "show.json", group: updated)
-        {:error, :not_found} ->
-          conn
-          |> put_status(:not_found)
-          |> json(%{errors: "Group not found"})
-        {:error, :bad_id} ->
-          conn
-          |> put_status(:bad_request)
-          |> json(%{errors: "Bad ID format"})
-        {:error, changeset} ->
-          conn
-          |> put_status(:unprocessable_entity)
-          |> render(Cog.ChangesetView, "error.json", changeset: changeset)
-      end
+    results = with {:ok, group} <- Groups.by_id(id) do
+      Groups.update(group, group_params)
+    end
+
+    case results do
+      {:ok, updated} ->
+        render(conn, "show.json", group: updated)
+      {:error, :not_found} ->
+        conn
+        |> put_status(:not_found)
+        |> json(%{errors: "Group not found"})
+      {:error, :bad_id} ->
+        conn
+        |> put_status(:bad_request)
+        |> json(%{errors: "Bad ID format"})
+      {:error, changeset} ->
+        conn
+        |> put_status(:unprocessable_entity)
+        |> render(Cog.ChangesetView, "error.json", changeset: changeset)
     end
   end
 
   def delete(conn, %{"id" => id}) do
-    with {:ok, group} <- Groups.by_id(id) do
-      case Groups.delete(group) do
-        {:ok, _} ->
-          send_resp(conn, :no_content, "")
-        {:error, :not_found} ->
-          conn
-          |> put_status(:not_found)
-          |> json(%{errors: "Group not found"})
-        {:error, :bad_id} ->
-          conn
-          |> put_status(:bad_request)
-          |> json(%{errors: "Bad ID format"})
-      end
+    results = with {:ok, group} <- Groups.by_id(id) do
+      Groups.delete(group)
+    end
+
+    case results do
+      {:ok, _} ->
+        send_resp(conn, :no_content, "")
+      {:error, :not_found} ->
+        conn
+        |> put_status(:not_found)
+        |> json(%{errors: "Group not found"})
+      {:error, :bad_id} ->
+        conn
+        |> put_status(:bad_request)
+        |> json(%{errors: "Bad ID format"})
     end
   end
 
