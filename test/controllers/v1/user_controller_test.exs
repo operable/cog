@@ -93,9 +93,9 @@ defmodule Cog.V1.UserControllerTest do
                          "email_address" => "tester@operable.io"}} == json_response(conn, 200)
   end
 
-  test "does not show resource and instead throw error when id is nonexistent", %{authed: requestor} do
-    error = catch_error(api_request(requestor, :get, "/v1/users/#{@bad_uuid}"))
-    assert %Ecto.NoResultsError{} = error
+  test "returns an error when a bad id is passed", %{authed: requestor} do
+    conn = api_request(requestor, :get, "/v1/users/#{@bad_uuid}")
+    assert "User not found" = json_response(conn, 404)["errors"]
   end
 
   test "creates and renders resource when data is valid", %{authed: requestor} do
