@@ -59,12 +59,7 @@ defmodule Cog.Repository.Users do
   """
   @spec delete(%User{}) :: {:ok, %User{}} | {:error, :not_found}
   def delete(%User{}=user) do
-    try do
-      Repo.delete(user)
-    rescue
-      Ecto.StateModelError ->
-        {:error, :not_found}
-    end
+    Repo.delete(user)
   end
 
   @doc """
