@@ -4,6 +4,7 @@ defmodule Cog.ExecutorHelpers do
 
   alias Cog.Command.Pipeline.Binder
   alias Cog.Models.Command
+  alias Cog.Models.CommandVersion
   alias Cog.Models.CommandOption
   alias Cog.Models.CommandOptionType
   alias Piper.Command.Parser
@@ -45,11 +46,12 @@ defmodule Cog.ExecutorHelpers do
   end
 
   defp command_from_spec(spec) do
-    %Command{
-      name: Keyword.fetch!(spec, :name),
-      bundle: %Cog.Models.Bundle{name: Keyword.fetch!(spec, :bundle)},
-      options: Enum.map(Keyword.get(spec, :options, []), &option_from_spec/1),
-      rules: Enum.map(Keyword.get(spec, :rules, []), &rule_from_text/1)}
+    %CommandVersion{
+      command: %Command{name: Keyword.fetch!(spec, :name),
+                        rules: Enum.map(Keyword.get(spec, :rules, []), &rule_from_text/1),
+                        bundle: %Cog.Models.Bundle{name: Keyword.fetch!(spec, :bundle)}},
+      bundle_version: %Cog.Models.BundleVersion{version: "1.0.0"},
+      options: Enum.map(Keyword.get(spec, :options, []), &option_from_spec/1)}
   end
 
   defp option_from_spec(spec) do

@@ -15,8 +15,8 @@ defmodule Cog.Command.Pipeline.Planner.Test do
                                     rules: ["when command is test:test must have test:admin"])
     plans = Planner.plan(invocation, [%{"var" => "stuff"}], ["test:admin"])
 
-    command = invocation.meta
-    assert {:ok, [%Plan{command: ^command,
+    command_version = invocation.meta
+    assert {:ok, [%Plan{command_version: ^command_version,
                         options: %{"foo" => "stuff"},
                         args: [],
                         cog_env: %{"var" => "stuff"}}]} = plans
@@ -32,16 +32,16 @@ defmodule Cog.Command.Pipeline.Planner.Test do
                                       %{"var" => "thingies"}],
                          ["test:admin"])
 
-    command = invocation.meta
-    assert {:ok, [%Plan{command: ^command,
+    command_version = invocation.meta
+    assert {:ok, [%Plan{command_version: ^command_version,
                         options: %{"foo" => "stuff"},
                         args: [],
                         cog_env: %{"var" => "stuff"}},
-                  %Plan{command: ^command,
+                  %Plan{command_version: ^command_version,
                         options: %{"foo" => "other"},
                         args: [],
                         cog_env: %{"var" => "other"}},
-                  %Plan{command: ^command,
+                  %Plan{command_version: ^command_version,
                         options: %{"foo" => "thingies"},
                         args: [],
                         cog_env: %{"var" => "thingies"}}

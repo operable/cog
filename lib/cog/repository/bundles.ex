@@ -1,0 +1,396 @@
+defmodule Cog.Repository.Bundles do
+
+  require Ecto.Query
+  import Ecto.Query, only: [from: 2]
+
+  require Logger
+
+  alias Cog.Repo
+  alias Cog.Models.Bundle
+  alias Cog.Models.BundleVersion
+  alias Cog.Models.CommandVersion
+
+  @permanent_site_bundle_version "0.0.0"
+
+  # TODO: toggle inner transaction on or off as needed
+  @doc """
+  Install a new bundle version.
+  """
+  def install(%{"name" => _name, "version" => _version, "config_file" => _config}=params) do
+    case install_bundle(params) do
+      {:ok, bundle_version} ->
+        {:ok, preload(bundle_version)}
+      {:error, _}=error ->
+        error
+    end
+  end
+
+  # Used in Cog.Relay.Relays to verify the existence of the the bundle
+  # versions a relay claims to be serving
+  def verify_version_exists(%{"name" => bundle_name, "version" => version}) do
+    case Repo.one(bundle_version(bundle_name, version)) do
+      %BundleVersion{}=bundle_version ->
+        # TODO: Where this is used, we really only need the name and
+        # version string, and nothing else
+        bv = Repo.preload(bundle_version, :bundle)
+        {:ok, bv}
+      nil ->
+        {:error, bundle_name} # TODO might need version in this, too
+    end
+  end
+
+  def maybe_upgrade_embedded_bundle!(%{"name" => bundle_name, "version" => version} = config) do
+    case Repo.one(bundle_version(bundle_name, version)) do
+      %BundleVersion{}=bundle_version ->
+        preload(bundle_version)
+      nil ->
+        case install(%{"name" => bundle_name, "version" => version, "config_file" => config}) do
+          {:ok, bundle_version} ->
+            # TODO: should install_bundle return preloads?
+            preload(bundle_version)
+          {:error, reason} ->
+            raise "Unable to install embedded bundle: #{inspect reason}"
+        end
+    end
+  end
+
+  # Consolidate what we need to preload for various things so we stay
+  # consistent
+  defp preload(%Bundle{}=bundle),
+    do: Repo.preload(bundle, [:permissions, :commands])
+  defp preload(%BundleVersion{}=bv),
+    do: Repo.preload(bv, bundle: [:permissions, :commands])
+
+
+  # TODO: Might not need this function after all, pending refactorings
+  # mentioned in Cog.Bundle.Embedded.
+  @doc """
+  Returns the active version of the embedded command bundle, which is
+  always the most recently installed one.
+  """
+  def active_embedded_bundle_version do
+    # Eventually, once we put in properly enabled bundle management
+    # for the embedded bundle, this will change, but for now, we'll
+    # just select the highest-version of the bundle.
+    #
+    # Yay, abstraction!
+    embedded_name = Cog.embedded_bundle
+
+    Repo.one(from bv in BundleVersion,
+             join: b in assoc(bv, :bundle),
+             where: b.name == ^embedded_name,
+             order_by: [desc: bv.version],
+             limit: 1,
+             preload: :bundle)
+  end
+
+  @doc """
+  The `site` bundle is special in a handful of ways, one of which is
+  that there is only one version of it, ever. This returns that one
+  version on-demand.
+  """
+  def site_bundle_version do
+    site = Cog.site_namespace
+
+    Repo.one!(from bv in BundleVersion,
+              join: b in assoc(bv, :bundle),
+              where: b.name == ^site,
+              where: bv.version == @permanent_site_bundle_version,
+              preload: :bundle)
+  end
+
+  @doc """
+  Called only once when bootstrapping the system to create the site
+  bundle and its single version.
+
+  Exposed here for use mainly for consistency in tests.
+  """
+  def create_site_bundle do
+    install(%{"name" => Cog.site_namespace,
+              "version" => @permanent_site_bundle_version,
+              "config_file" => %{}})
+  end
+
+  @doc """
+  Returns a map of bundle name to enabled version for all enabled
+  bundles. Currently, only one version of any bundle may be enabled at
+  a time.
+  """
+  def enabled_bundles do
+    # TODO: For now, *everything* is enabled. Once the whole system is
+    # plumbed for versioned bundles, this will (of course) be remedied.
+    query = from bv in BundleVersion,
+    join: b in assoc(bv, :bundle),
+    select: {b.name, bv.version}
+
+    # TODO: Need to filter out "site" bundle (if some version of this
+    # query gets used in the end
+
+    query
+    |> Repo.all
+    |> Enum.into(%{})
+  end
+
+  @doc """
+  Given the name of a command, and the name and version of a bundle,
+  return the specific details for that command in that bundle version.
+
+  This is what the Executor will be calling to figure out exactly
+  which command it should be preparing to execute.
+  """
+  def command_for_bundle_version(command_name, bundle_name, bundle_version) do
+    query = (from cv in CommandVersion,
+             join: bv in assoc(cv, :bundle_version),
+             join: b in assoc(bv, :bundle),
+             join: c in assoc(cv, :command),
+             where: bv.version == ^bundle_version,
+             where: b.name == ^bundle_name,
+             where: c.name == ^command_name,
+
+             # command and bundle are needed in order to access the names
+             # TODO: Do we need bundle on bundle_version?
+             preload: [:bundle_version,
+                       options: :option_type,
+                       command: [:bundle, :rules]])
+    Repo.one(query)
+  end
+
+  @doc """
+  Given a bare command name, find the names of all bundles that
+  provide it.
+
+  Used to help disambiguate unqualified command invocations in the
+  Executor.
+  """
+  def bundle_names_for_command(command_name) do
+    Repo.all(from b in Bundle,
+             join: c in assoc(b, :commands),
+             where: c.name == ^command_name,
+             select: b.name)
+  end
+
+  @doc """
+  Given a relay ID, return all the bundle versions that it is
+  currently assigned.
+  """
+  def bundle_versions_for_relay(relay_id) do
+    # TODO: Consider just returning the config_file, since that's
+    # apparently the only thing that's really needed
+
+    # TODO: Need to join into enabled bundles when that's in place
+    Repo.all(from bv in BundleVersion,
+             join: b in assoc(bv, :bundle),
+             join: rg in assoc(b, :relay_groups),
+             join: r in assoc(rg, :relays),
+             where: r.id == ^relay_id)
+  end
+
+  ########################################################################
+
+  defp bundle_version(name, version) do
+    from bv in BundleVersion,
+    join: b in assoc(bv, :bundle),
+    where: b.name == ^name,
+    where: bv.version == ^version
+  end
+
+
+
+
+
+
+  defp find_or_create_bundle(name) do
+    bundle = case Repo.get_by(Bundle, name: name) do
+               %Bundle{}=bundle ->
+                 bundle
+               nil ->
+                 %Bundle{}
+                 |> Bundle.changeset(%{name: name})
+                 |> Repo.insert!
+             end
+    preload(bundle)
+  end
+
+
+  # TODO: This raises an exception if it can't insert... is this
+  # globally OK?
+  defp new_version(bundle, params) do
+    bundle
+    |> Ecto.Model.build(:versions)
+    |> BundleVersion.changeset(params)
+    |> Repo.insert!
+    |> preload
+  end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  ########################################################################
+  #
+  # Below here used to be the old Cog.Bundle.Install module. This code
+  # rightfully belongs in the module now, though
+  #
+  ########################################################################
+
+
+  use Cog.Models
+
+  defp install_bundle(bundle_params) do
+    Repo.transaction(fn ->
+
+      # Create a bundle record if it doesn't exist yet
+      bundle = find_or_create_bundle(bundle_params["name"])
+
+      # Create a new version record
+      version = new_version(bundle, bundle_params)
+
+      # Add permissions, after deduping
+      :ok = register_permissions_for_version(version)
+
+      # Add commands, after deduping
+      commands = register_commands_for_version(version)
+
+      # Add command_versions; rules get ingested in this process as
+      # well
+      version.config_file
+      |> Map.get("commands", %{})
+      |> Enum.each(&create_command_version(version, commands, &1))
+
+
+      # Add templates
+      version.config_file
+      |> Map.get("templates", %{})
+      |> Enum.each(&create_template(version, &1))
+
+      version
+    end)
+  end
+
+  # Given the parent `bundle` and the bundle configuration schema for a
+  # single command, inserts records into the database for that
+  # command. This includes any command options.
+  defp create_command_version(%BundleVersion{}=bundle_version,
+                              all_commands,
+                              {command_name, command_spec}) do
+
+    canonical_command = Enum.find(all_commands, &(&1.name == command_name))
+
+    command_version = bundle_version
+    |> Ecto.Model.build(:commands)
+    |> Map.put(:command_id, canonical_command.id)
+    |> CommandVersion.changeset(command_spec)
+    |> Repo.insert!
+
+    command_spec
+    |> Map.get("rules", [])
+    |> Enum.each(&(Cog.RuleIngestion.ingest(&1, bundle_version, false)))
+
+    command_spec
+    |> Map.get("options", [])
+    |> Enum.each(&create_option(command_version, &1))
+  end
+
+  defp create_option(command_version, {option_name, params}) do
+    option = Map.merge(%{
+      "name" => option_name,
+      "long_flag" => option_name
+    }, params)
+
+    CommandOption.build_new(command_version, option)
+    |> Repo.insert!
+  end
+
+  defp create_template(bundle_version, {name, template}) do
+    Enum.each(template, fn({provider, contents}) ->
+      params = %{
+        adapter: provider,
+        name: name,
+        source: contents
+      }
+
+      bundle_version
+      |> Ecto.Model.build(:templates)
+      |> Template.changeset(params)
+      |> Repo.insert!
+    end)
+  end
+
+  defp register_permissions_for_version(bundle_version) do
+    bundle = bundle_version.bundle
+
+    # Get just raw names... they'll come in as fully-qualified
+    raw_names = bundle_version.config_file
+    |> Map.get("permissions", [])
+    |> Enum.map(&raw_name/1)
+    |> MapSet.new
+
+    # Determine which of those already exist in the database
+
+    existing_permissions = bundle.permissions
+    existing_permission_names = Enum.map(existing_permissions, &(&1.name)) |> MapSet.new
+    missing_permission_names  = MapSet.difference(raw_names, existing_permission_names)
+
+    # Create new permissions for the remaining ones
+    missing_permission_names
+    |> Enum.map(&Cog.Repository.Permissions.create_permission(bundle_version, &1))
+    |> Enum.map(fn({:ok, p}) -> p end)
+
+    # Link preexisting permissions to the current bundle version
+    Enum.each(existing_permissions, &Cog.Repository.Permissions.link_permission_to_bundle_version(bundle_version, &1))
+
+    :ok
+  end
+
+  defp register_commands_for_version(bundle_version) do
+    # TODO: preload commands onto bundle
+    bundle = bundle_version.bundle
+
+    # Figure out what commands we need for this bundle version
+    command_names = bundle_version.config_file
+    |> Map.get("commands", %{})
+    |> Map.keys
+    |> MapSet.new
+
+    # Determine which of those already exist in the database
+    existing_command_names = Enum.map(bundle.commands, &(&1.name)) |> MapSet.new
+    missing_command_names  = MapSet.difference(command_names, existing_command_names)
+
+    # Create new commands for the remaining ones, if any
+    new_commands = Enum.map(missing_command_names, &add_bundle_command(bundle, &1))
+
+    # Link ALL the permissions to the current bundle version
+    all_commands = Enum.concat([bundle.commands, new_commands])
+
+
+    # Now we need to actually make versioned commands linked to the
+    # high-level commands we just made and to the bundle for this
+    # version
+    #
+    # Perhaps we'll do that in a separate function for now
+    all_commands
+  end
+
+  defp raw_name(permission_name) do
+    {_, name} = Permission.split_name(permission_name)
+    name
+  end
+
+  defp add_bundle_command(bundle, command_name) do
+    bundle
+    |> Ecto.Model.build(:commands)
+    |> Command.changeset(%{name: command_name})
+    |> Repo.insert!
+  end
+
+end

@@ -20,8 +20,8 @@ defmodule Cog.Bootstrap.Test do
     end
   end
 
-  test "creates the embedded bundle permission namespace" do
-    assert Repo.get_by!(Namespace, name: Cog.embedded_bundle)
+  test "creates the embedded bundle" do
+    assert Repo.get_by!(Bundle, name: Cog.embedded_bundle)
   end
 
   test "creates core permissions in the embedded bundle namespace" do
@@ -32,13 +32,18 @@ defmodule Cog.Bootstrap.Test do
     assert retrieve("#{Cog.embedded_bundle}:manage_commands")
   end
 
-  test "creates the 'site' permission namespace" do
-    assert Repo.get_by!(Namespace, name: Cog.site_namespace)
+  test "creates the site bundle" do
+    assert Repo.get_by!(Bundle, name: Cog.site_namespace)
   end
 
-  test "the 'site' permission namespace contains no permissions" do
-    ns = Repo.get_by!(Namespace, name: Cog.site_namespace) |> Repo.preload(:permissions)
-    assert [] == ns.permissions
+  test "creates single site bundle version" do
+    bundle = Repo.get_by!(Bundle, name: Cog.site_namespace) |> Repo.preload(:versions)
+    assert [%BundleVersion{version: "0.0.0"}] = bundle.versions
+  end
+
+  test "the 'site' bundle contains no permissions" do
+    bundle = Repo.get_by!(Bundle, name: Cog.site_namespace) |> Repo.preload(:permissions)
+    assert [] == bundle.permissions
   end
 
   test "creates a default admin user", %{admin: admin} do

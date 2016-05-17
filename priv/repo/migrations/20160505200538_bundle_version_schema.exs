@@ -252,7 +252,19 @@ defmodule Cog.Repo.Migrations.BundleVersionSchema do
 
     # Move command options over
     execute "ALTER TABLE command_options DROP CONSTRAINT command_options_command_id_fkey"
-    execute "ALTER TABLE command_options ADD CONSTRAINT command_options_command_id_fkey FOREIGN KEY(command_id) REFERENCES commands_v2(id) ON DELETE CASCADE"
+
+    # Replace existing command IDs with new version IDs; take
+    # advantage of the fact that right now, there is only one version
+    # per command
+    execute """
+    UPDATE command_options AS co
+    SET command_id = cv.id
+    FROM command_versions_v2 AS cv
+    WHERE cv.command_id = co.command_id
+    """
+
+    execute "ALTER TABLE command_options RENAME COLUMN command_id TO command_version_id"
+    execute "ALTER TABLE command_options ADD CONSTRAINT command_options_command_id_fkey FOREIGN KEY(command_version_id) REFERENCES command_versions_v2(id) ON DELETE CASCADE ON UPDATE CASCADE"
 
     # Move templates over
     execute "ALTER TABLE templates DROP CONSTRAINT templates_bundle_id_fkey"
@@ -301,6 +313,98 @@ defmodule Cog.Repo.Migrations.BundleVersionSchema do
     ADD CONSTRAINT rule_permissions_permission_id_fkey
     FOREIGN KEY(permission_id) REFERENCES permissions_v2(id) ON DELETE CASCADE ON UPDATE CASCADE
     """
+
+
+    # We still have a user_permissions table that's used in
+    # tests. Ultimately it needs to disappear, but for now, we should
+    # point it over to the new permissions table.
+    execute """
+    ALTER table user_permissions
+    DROP CONSTRAINT user_permissions_permission_id_fkey
+    """
+    execute """
+    ALTER TABLE user_permissions
+    ADD CONSTRAINT user_permissions_permission_id_fkey
+    FOREIGN KEY(permission_id) REFERENCES permissions_v2(id) ON DELETE CASCADE ON UPDATE CASCADE
+    """
+
+    # Ditto for group_permissions
+    execute """
+    ALTER table group_permissions
+    DROP CONSTRAINT group_permissions_permission_id_fkey
+    """
+    execute """
+    ALTER TABLE group_permissions
+    ADD CONSTRAINT group_permissions_permission_id_fkey
+    FOREIGN KEY(permission_id) REFERENCES permissions_v2(id) ON DELETE CASCADE ON UPDATE CASCADE
+    """
+
+
+
+
+        execute """
+CREATE OR REPLACE FUNCTION fetch_user_permissions (
+  p_user users.id%TYPE)
+RETURNS TABLE(id uuid, name text)
+LANGUAGE plpgsql STABLE STRICT
+AS $$
+BEGIN
+
+RETURN QUERY WITH
+
+  -- Walk the tree of group memberships and find
+  -- all the groups the user is a direct and
+  -- indirect member of.
+  all_groups as (
+  SELECT group_id
+    FROM groups_for_user(p_user)
+  ),
+  all_permissions as (
+
+  -- Retrieve all permissions granted to the list
+  -- groups returned from all_groups
+  SELECT gp.permission_id
+    FROM group_permissions as gp
+    JOIN all_groups as ag
+      ON gp.group_id = ag.group_id
+  UNION DISTINCT
+
+  -- Retrieve all permissions granted to the user
+  -- via roles
+  SELECT rp.permission_id
+    FROM role_permissions as rp
+    JOIN user_roles as ur
+      ON rp.role_id = ur.role_id
+    WHERE ur.user_id = p_user
+  UNION DISTINCT
+
+  -- Retrieve all permissions granted to the groups
+  -- via roles
+  SELECT rp.permission_id
+    FROM role_permissions as rp
+    JOIN group_roles as gr
+      ON rp.role_id = gr.role_id
+    JOIN all_groups AS ag
+      ON gr.group_id = ag.group_id
+  UNION DISTINCT
+
+  -- Retrieve all permissions granted directly to the user
+  SELECT up.permission_id
+    FROM user_permissions as up
+   WHERE up.user_id = p_user
+  )
+
+-- Join the permission ids returned by the CTE against
+-- the permissions and namespaces tables to produce
+-- the final result
+SELECT p.id, b.name||':'||p.name as name
+  FROM permissions_v2 as p, bundles_v2 as b, all_permissions as ap
+ WHERE ap.permission_id = p.id and p.bundle_id = b.id;
+END;
+$$;
+   """
+
+
 
   end
 end

@@ -30,9 +30,9 @@ defmodule Cog.Bundle.Config.Test do
   end
 
   test "creates a config for a set of modules" do
-    config = Config.gen_config("testing", [CommandWithoutOptions,
-                                           CommandWithOptions,
-                                           NeitherCommandNorService], ".")
+    config = Config.gen_config("testing", "0.0.1", [CommandWithoutOptions,
+                                                    CommandWithOptions,
+                                                    NeitherCommandNorService], ".")
     assert %{"name" => "testing",
              "type" => "elixir",
              "version" => "0.0.1",
@@ -62,11 +62,11 @@ defmodule Cog.Bundle.Config.Test do
 
   # TODO: Should this be allowed?
   test "creates a config when there are no commands, services, permissions, or rules" do
-    config = Config.gen_config("testing", [NeitherCommandNorService], ".")
+    config = Config.gen_config("testing", "1.0.0", [NeitherCommandNorService], ".")
 
     assert %{"name" => "testing",
              "type" => "elixir",
-             "version" => "0.0.1",
+             "version" => "1.0.0",
              "commands" => %{},
              "permissions" => [],
              "templates" => %{}} == config
@@ -83,7 +83,7 @@ defmodule Cog.Bundle.Config.Test do
   end
 
   test "includes templates in the config" do
-    config = Config.gen_config("testing", [], "test/support/test-bundle")
+    config = Config.gen_config("testing", "2.0.0", [], "test/support/test-bundle")
 
     assert %{"templates" => %{"help" => %{
                                 "hipchat" => "{{#command}}\n  Documentation for <pre>{{command}}</pre>\n  {{{documentation}}}\n{{/command}}\n",

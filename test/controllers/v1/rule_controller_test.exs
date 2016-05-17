@@ -16,6 +16,8 @@ defmodule Cog.V1.RuleController.Test do
     # indeed required for requests
     unauthed_user = user("sadpanda") |> with_token
 
+    ensure_site_bundle
+
     {:ok, [authed: authed_user,
            unauthed: unauthed_user]}
   end

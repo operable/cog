@@ -93,7 +93,7 @@ defmodule Cog.V1.PermissionGrantController.Test do
                            body: %{"permissions" => %{"grant" => ["site:do_stuff"]}})
 
         %{id: id, name: name} = permission
-        assert %{"permissions" => [%{"namespace" => "site", "id" => ^id, "name" => ^name}]} = json_response(conn, 200)
+        assert %{"permissions" => [%{"bundle" => "site", "id" => ^id, "name" => ^name}]} = json_response(conn, 200)
 
         assert_permission_is_granted(target, permission)
       end
@@ -176,7 +176,7 @@ defmodule Cog.V1.PermissionGrantController.Test do
                            body: %{"permissions" => %{"grant" => ["site:do_stuff"]}})
 
         %{id: id, name: name} = permission
-        assert %{"permissions" => [%{"namespace" => "site", "id" => ^id, "name" => ^name}]} = json_response(conn, 200)
+        assert %{"permissions" => [%{"bundle" => "site", "id" => ^id, "name" => ^name}]} = json_response(conn, 200)
 
         # Still got it!
         assert_permission_is_granted(target, permission)
@@ -252,7 +252,7 @@ defmodule Cog.V1.PermissionGrantController.Test do
         %{id: id, name: name} = remaining_permission
 
         # only the revoked permission is, um, revoked
-        assert %{"permissions" => [%{"namespace" => "site", "id" => ^id, "name" => ^name}]} = json_response(conn, 200)
+        assert %{"permissions" => [%{"bundle" => "site", "id" => ^id, "name" => ^name}]} = json_response(conn, 200)
 
         assert_permission_is_granted(target, remaining_permission)
         refute_permission_is_granted(target, to_be_revoked_permission)

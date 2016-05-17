@@ -2,7 +2,6 @@ defmodule Cog.V1.PermissionController do
   use Cog.Web, :controller
 
   alias Cog.Models.Permission
-  alias Cog.Models.Permission.Namespace
   alias Cog.Queries
 
   plug :scrub_params, "permission" when action in [:create, :update]
@@ -15,7 +14,7 @@ defmodule Cog.V1.PermissionController do
   def index(conn, params) do
     permissions = filtered_permissions_query(params)
     |> Repo.all
-    |> Repo.preload(:namespace)
+    |> Repo.preload(:bundle)
 
     render(conn, "index.json", permissions: permissions)
   end
@@ -26,13 +25,9 @@ defmodule Cog.V1.PermissionController do
   Given a permission 'name' (using the 'site' namespace that
   already exists in the system), a new permission will be created.
   """
-  def create(conn, %{"permission" => params}) do
-    namespace = Repo.get_by(Namespace, name: @site)
-    permission = Permission.build_new(namespace, params)
-    case Repo.insert(permission) do
+  def create(conn, %{"permission" => %{"name" => name}}) do
+    case Cog.Repository.Permissions.create_permission(name) do
       {:ok, permission} ->
-        permission = Repo.preload(permission, :namespace)
-
         conn
         |> put_status(:created)
         |> put_resp_header("location", permission_path(conn, :show, permission))
@@ -50,7 +45,7 @@ defmodule Cog.V1.PermissionController do
   def show(conn, %{"id" => id}) do
     permission = Permission
     |> Repo.get!(id)
-    |> Repo.preload(:namespace)
+    |> Repo.preload(:bundle)
 
     render(conn, "show.json", permission: permission)
   end
@@ -61,9 +56,9 @@ defmodule Cog.V1.PermissionController do
   def update(conn, %{"id" => id, "permission" => params}) do
     permission = Permission
     |> Repo.get!(id)
-    |> Repo.preload(:namespace)
+    |> Repo.preload(:bundle)
 
-    case permission.namespace.name do
+    case permission.bundle.name do
       @site ->
         changeset = Permission.changeset(permission, params)
         update_permission(conn, changeset)
@@ -80,9 +75,9 @@ defmodule Cog.V1.PermissionController do
   def delete(conn, %{"id" => id}) do
     permission = Permission
     |> Repo.get!(id)
-    |> Repo.preload(:namespace)
+    |> Repo.preload(:bundle)
 
-    case permission.namespace.name do
+    case permission.bundle.name do
       @site ->
         permission = Repo.get!(Permission, id)
         Repo.delete!(permission)

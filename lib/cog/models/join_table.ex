@@ -62,6 +62,14 @@ defmodule Cog.Models.JoinTable do
     execute_associate_query(table_name, lhs_id, rhs_id, member, relay_group)
     :ok
   end
+  def associate(%Rule{}=rule, %BundleVersion{}=bv) do
+    table_name = table_name(rule, bv)
+    lhs_id = "rule_id"
+    rhs_id = "bundle_version_id"
+
+    execute_associate_query(table_name, lhs_id, rhs_id, rule, bv)
+    :ok
+  end
 
   def dissociate(lhs, %{__struct__: type}=rhs) when type in [Role, Permission] do
     lhs_type = struct_name(lhs)
@@ -119,23 +127,28 @@ defmodule Cog.Models.JoinTable do
        Cog.UUID.uuid_to_bin(rhs.id)])
   end
 
-  defp table_name(%User{}, %Permission{}),  do: "user_permissions"
-  defp table_name(%User{}, %Role{}),        do: "user_roles"
-  defp table_name(%Role{}, %Permission{}),  do: "role_permissions"
-  defp table_name(%Group{}, %Permission{}), do: "group_permissions"
-  defp table_name(%Group{}, %Role{}),       do: "group_roles"
-  defp table_name(%Rule{}, %Permission{}),  do: "rule_permissions"
+  defp table_name(%User{}, %Permission{}),   do: "user_permissions"
+  defp table_name(%User{}, %Role{}),         do: "user_roles"
+  defp table_name(%Role{}, %Permission{}),   do: "role_permissions"
+  defp table_name(%Group{}, %Permission{}),  do: "group_permissions"
+  defp table_name(%Group{}, %Role{}),        do: "group_roles"
+  defp table_name(%Rule{}, %Permission{}),   do: "rule_permissions"
 
-  defp table_name(%User{}, %Group{}),       do: "user_group_membership"
-  defp table_name(%Group{}, %Group{}),      do: "group_group_membership"
+  defp table_name(%User{}, %Group{}),        do: "user_group_membership"
+  defp table_name(%Group{}, %Group{}),       do: "group_group_membership"
 
-  defp table_name(%Bundle{}, %RelayGroup{}),do: "relay_group_assignments"
-  defp table_name(%Relay{}, %RelayGroup{}),do: "relay_group_memberships"
+  defp table_name(%Bundle{}, %RelayGroup{}), do: "relay_group_assignments"
+  defp table_name(%Relay{}, %RelayGroup{}),  do: "relay_group_memberships"
+
+  defp table_name(%BundleVersion{}, %Permission{}), do: "permission_bundle_version_v2"
+  defp table_name(%Rule{}, %BundleVersion{}), do: "rule_bundle_version_v2"
 
   # Example:
   #
   #     iex> struct_name(%Cog.Models.User{})
   #     "user"
+  defp struct_name(%BundleVersion{}),
+    do: "bundle_version" # not "bundleversion"
   defp struct_name(%{__struct__: type}) do
     type |> Module.split |> :lists.reverse |> hd |> String.downcase
   end

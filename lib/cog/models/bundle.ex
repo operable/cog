@@ -2,15 +2,12 @@ defmodule Cog.Models.Bundle do
   use Cog.Model
   use Cog.Models
 
-  schema "bundles" do
+  schema "bundles_v2" do
     field :name, :string
-    field :version, :string
-    field :config_file, :map
-    field :enabled, :boolean, default: false
 
+    has_many :versions, BundleVersion
     has_many :commands, Command
-    has_many :templates, Template
-    has_one :namespace, Namespace
+    has_many :permissions, Permission
 
     has_many :group_assignments, RelayGroupAssignment, foreign_key: :bundle_id
     has_many :relay_groups, through: [:group_assignments, :group]
@@ -18,11 +15,11 @@ defmodule Cog.Models.Bundle do
     timestamps
   end
 
-  @required_fields ~w(name version config_file)
-  @optional_fields ~w(enabled)
+  @required_fields ~w(name)
+  @optional_fields ~w()
 
-  summary_fields [:id, :name, :namespace, :inserted_at, :enabled]
-  detail_fields [:id, :name, :namespace, :commands, :inserted_at, :enabled]
+  summary_fields [:id, :name, :inserted_at]
+  detail_fields [:id, :name, :inserted_at]
 
   def changeset(model, params \\ :empty) do
     model
@@ -30,27 +27,6 @@ defmodule Cog.Models.Bundle do
     |> cast(params, @required_fields, @optional_fields)
     |> validate_format(:name, ~r/\A[A-Za-z0-9\_\-\.]+\z/)
     |> unique_constraint(:name, name: :bundles_name_index, message: "The bundle name is already in use.")
-    |> enable_if_embedded
-  end
-
-  def embedded?(%__MODULE__{name: name}),
-    do: name == Cog.embedded_bundle
-  def embedded?(_),
-    do: false
-
-  # When the embedded bundle is installed, it should always be
-  # enabled. Though we prevent disabling it elsewhere, this code also
-  # happens to block that, as well.
-  #
-  # Nothing is changed if it is not the embedded bundle.
-  defp enable_if_embedded(changeset) do
-    embedded = Cog.embedded_bundle
-    case fetch_field(changeset, :name) do
-      {_, ^embedded} ->
-        put_change(changeset, :enabled, true)
-      _ ->
-        changeset
-    end
   end
 
 end

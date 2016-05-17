@@ -55,16 +55,15 @@ defmodule Cog.Relay.Info do
   # Private functions
 
   defp info(%{"list_bundles" => %{"relay_id" => relay_id, "reply_to" => reply_to}}, state) do
-    all = fn(:get, data, next) ->
-      Enum.flat_map(data, &next.(Map.delete(&1, :__struct__)))
-    end
+    # TODO: consider getting rid of this Repo.get call altogether,
+    # particularly in light of the note in the `nil` branch of the
+    # case statement below
 
     case Repo.get(Relay, relay_id) do
-      %Relay{}=relay ->
-        relay = Repo.preload(relay, [groups: :bundles])
-
-        bundles = get_in(relay.groups, [all, :bundles])
-        |> Enum.map(&Map.take(&1, [:name, :config_file, :enabled]))
+      %Relay{} ->
+        bundles = relay_id
+        |> Cog.Repository.Bundles.bundle_versions_for_relay
+        |> Enum.map(&Map.take(&1, [:config_file]))
 
         respond(%{bundles: bundles}, reply_to, state)
       nil ->

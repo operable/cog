@@ -97,7 +97,7 @@ defmodule Cog.V1.RoleGrantController.Test do
                                "name" => role.name,
                                "permissions" => [%{"id" => role_permission.id,
                                                  "name" => role_permission.name,
-                                                 "namespace" => "site"}]}]} == json_response(conn, 200)
+                                                 "bundle" => "site"}]}]} == json_response(conn, 200)
 
         assert_role_is_granted(target, role)
       end

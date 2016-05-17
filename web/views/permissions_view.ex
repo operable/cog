@@ -4,7 +4,7 @@ defmodule Cog.V1.PermissionView do
   def render("permission.json", %{permission: permission}) do
     %{id: permission.id,
       name: permission.name,
-      namespace: permission.namespace.name}
+      bundle: permission.bundle.name}
   end
 
   def render("index.json", %{permissions: permissions}) do

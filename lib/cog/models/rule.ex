@@ -5,15 +5,17 @@ defmodule Cog.Models.Rule do
  alias Piper.Permissions.Ast
  alias Piper.Permissions.Parser
 
-  schema "rules" do
-    field :parse_tree, :string
-    field :score, :integer
+  schema "rules_v2" do
+   field :parse_tree, :string
+   field :score, :integer
+   field :enabled, :boolean, default: true
 
    belongs_to :command, Cog.Models.Command
 
    has_many :permission_grants, Cog.Models.RulePermission
    has_many :permissions, through: [:permission_grants, :permission]
 
+   timestamps
   end
 
   @required_fields ~w(parse_tree score)
@@ -36,7 +38,7 @@ defmodule Cog.Models.Rule do
   def changeset(model, params) do
     model
     |> Changeset.cast(params, @required_fields, @optional_fields)
-    |> unique_constraint(:no_dupes, name: "rules_command_id_parse_tree_index")
+    |> unique_constraint(:no_dupes, name: :rules_v2_command_id_parse_tree_index)
   end
 
 end

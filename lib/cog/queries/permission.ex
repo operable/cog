@@ -4,26 +4,25 @@ defmodule Cog.Queries.Permission do
 
   def names do
     from p in Cog.Models.Permission,
-    join: n in assoc(p, :namespace),
-    order_by: [n.name, p.name],
-    select: [n.name, p.name]
+    join: b in assoc(p, :bundle),
+    order_by: [b.name, p.name],
+    select: [b.name, p.name]
   end
 
   def from_full_name(full_name) do
-    {namespace, name} = Permission.split_name(full_name)
+    {bundle_name, name} = Permission.split_name(full_name)
 
     from p in Cog.Models.Permission,
-    join: n in assoc(p, :namespace),
+    join: b in assoc(p, :bundle),
     where: p.name == ^name and
-           n.name == ^namespace,
+           b.name == ^bundle_name,
     select: p
   end
 
   def from_bundle_name(bundle_name) do
     from p in Cog.Models.Permission,
-    join: n in assoc(p, :namespace),
-    # recall namespace names are the same as bundle names
-    where: n.name == ^bundle_name,
+    join: b in assoc(p, :bundle),
+    where: b.name == ^bundle_name,
     select: p
   end
 

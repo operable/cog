@@ -101,7 +101,7 @@ defmodule Integration.Commands.RelayGroupTest do
 
   test "assigning bundles to relay groups", %{user: user} do
     ModelUtilities.relay_group("relay_group")
-    bundle = ModelUtilities.bundle("bundle")
+    bundle = ModelUtilities.bundle_version("bundle").bundle
 
     response = send_message(user, "@bot: operable:relay-group member assign relay_group bundle")
 
@@ -122,7 +122,7 @@ defmodule Integration.Commands.RelayGroupTest do
 
   test "unassigning bundles from relay groups", %{user: user} do
     relay_group = ModelUtilities.relay_group("relay_group")
-    bundle = ModelUtilities.bundle("bundle")
+    bundle = ModelUtilities.bundle_version("bundle").bundle
     ModelUtilities.assign_bundle_to_group(relay_group.id, bundle.id)
 
     response = send_message(user, "@bot: operable:relay-group member unassign relay_group bundle")

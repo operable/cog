@@ -28,7 +28,7 @@ defmodule Cog.V1.RoleGrantController do
       permittable
       |> grant(roles_to_grant)
       |> revoke(roles_to_revoke)
-      |> Repo.preload([roles: [permissions: :namespace]])
+      |> Repo.preload([roles: [permissions: :bundle]])
     end)
 
     case result do
@@ -54,7 +54,7 @@ defmodule Cog.V1.RoleGrantController do
   defp lookup_all([]), do: {:ok, []} # Don't bother with a DB lookup
   defp lookup_all(names) do
     results = Repo.all(from r in Role, where: r.name in ^names)
-    |> Repo.preload(permissions: :namespace)
+    |> Repo.preload(permissions: :bundle)
 
     # make sure we got a result for each name given
     case length(results) == length(names) do

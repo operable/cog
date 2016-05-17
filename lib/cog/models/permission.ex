@@ -1,66 +1,45 @@
-defmodule Cog.Models.Permission.Namespace do
-  use Cog.Model
-  alias Ecto.Changeset
-
-  schema "namespaces" do
-    field :name, :string
-    belongs_to :bundle, Cog.Models.Bundle
-    has_many :permissions, Cog.Models.Permission
-  end
-
-  @required_fields ~w(name)
-  @optional_fields ~w(bundle_id)
-
-  summary_fields [:id, :name]
-  detail_fields [:id, :name]
-
-  def changeset(model, params) do
-    model
-    |> Changeset.cast(params, @required_fields, @optional_fields)
-    |> unique_constraint(:name)
-  end
-end
-
 defmodule Cog.Models.Permission do
   use Cog.Model
+  use Cog.Models
   alias Ecto.Changeset
-  alias Cog.Models.Permission.Namespace
 
-  schema "permissions" do
-    belongs_to :namespace, Namespace
+  schema "permissions_v2" do
+    belongs_to :bundle, Bundle
     field :name, :string
+
+    timestamps
   end
 
   @required_fields ~w(name)
   @optional_fields ~w()
 
-  summary_fields [:id, :name, :namespace]
-  detail_fields [:id, :name, :namespace]
+  summary_fields [:id, :name, :bundle]
+  detail_fields [:id, :name, :bundle]
 
   @doc """
   Allows for the inclusion of the namespace model
-  when inserting a new permission. 
+  when inserting a new permission.
 
   Allows the Insert to error out with a changeset, if the insertion
   is not completed successfully
   """
-  def build_new(%Namespace{}=namespace, params) do
-    namespace
+  def build_new(%Bundle{}=bundle, params) do
+    bundle
     |> Ecto.Model.build(:permissions)
     |> changeset(params)
   end
 
   @doc """
   This function is for use when creating a new permission, but outside
-  of the API. This can be used during the installation process - whether 
+  of the API. This can be used during the installation process - whether
   for bootstrapping or installing a new command.
 
   Assumes a successful insertion into the database or it throws an error.
 
   Internal operable use only.
   """
-  def insert_new(%Namespace{}=namespace, params) do
-    namespace
+  def insert_new(%Bundle{}=bundle, params) do
+    bundle
     |> build_new(params)
     |> Repo.insert!
   end
@@ -68,7 +47,7 @@ defmodule Cog.Models.Permission do
   def changeset(model, params) do
     model
     |> Changeset.cast(params, @required_fields, @optional_fields)
-    |> Changeset.unique_constraint(:name, name: "permissions_namespace_id_name_index")
+    |> Changeset.unique_constraint(:name, name: "permissions_v2_bundle_id_name_index")
   end
 
   @doc """
@@ -86,8 +65,8 @@ defmodule Cog.Models.Permission do
 
   """
   def split_name(full_name) do
-    [ns, name] = String.split(full_name, ":")
-    {ns, name}
+    [bundle, name] = String.split(full_name, ":")
+    {bundle, name}
   end
 
 end

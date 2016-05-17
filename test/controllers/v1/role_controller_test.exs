@@ -194,7 +194,7 @@ defmodule Cog.V1.RoleController.Test do
                             "name" => group.name}],
              "permissions" => [%{"id" => permission.id,
                                  "name" => "world",
-                                 "namespace" => "site"}]
+                                 "bundle" => "site"}]
               } == role_json["role"]
   end
 end

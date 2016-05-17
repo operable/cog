@@ -7,7 +7,7 @@ defmodule Cog.Models.Template do
     field :name, :string
     field :source, :string
 
-    belongs_to :bundle, Bundle
+    belongs_to :bundle_version, BundleVersion
 
     timestamps
   end

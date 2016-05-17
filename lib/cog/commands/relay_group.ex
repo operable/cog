@@ -77,15 +77,15 @@ defmodule Cog.Commands.RelayGroup do
   end
 
   defp bundle_json(bundle) do
-    %{"name" => bundle.name,
-      "version" => bundle.version,
-      "status" => bundle_status(bundle)}
+    %{"name" => bundle.name}#,
+#      "version" => bundle.version,
+   #   "status" => bundle_status(bundle)}
   end
 
-  defp bundle_status(%{enabled: true}),
-    do: :enabled
-  defp bundle_status(%{enabled: false}),
-    do: :disabled
+  # defp bundle_status(%{enabled: true}),
+  #   do: :enabled
+  # defp bundle_status(%{enabled: false}),
+  #   do: :disabled
 
   defp error(:required_subcommand),
     do: "You are required to specify a subcommand. Please specify one of, 'info', 'create', 'rename', 'delete' or 'member'"
@@ -96,4 +96,3 @@ defmodule Cog.Commands.RelayGroup do
     {:ok, "usage", %{usage: @moduledoc, error: error}}
   end
 end
-

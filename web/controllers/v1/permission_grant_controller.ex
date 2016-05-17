@@ -28,7 +28,7 @@ defmodule Cog.V1.PermissionGrantController do
       permittable
       |> grant(permissions_to_grant)
       |> revoke(permissions_to_revoke)
-      |> Repo.preload(permissions: :namespace)
+      |> Repo.preload(permissions: :bundle)
     end)
 
     case result do

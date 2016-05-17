@@ -7,7 +7,7 @@ defmodule Cog.V1.PermissionControllerTest do
   @bad_uuid "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
 
   setup do
-    namespace("site")
+    ensure_site_bundle
     required_permission = permission("#{Cog.embedded_bundle}:manage_permissions")
 
     # This user will be used to test the normal operation of the controller
@@ -78,32 +78,32 @@ defmodule Cog.V1.PermissionControllerTest do
 
   test "shows chosen resource regardless of namespace", %{user: user} do
     # random namespace
-    rand_perm = permission("joe:test_perm") |> Repo.preload(:namespace)
+    rand_perm = permission("joe:test_perm") |> Repo.preload(:bundle)
     conn = api_request(user, :get, "/v1/permissions/#{rand_perm.id}")
     assert json_response(conn, 200) == %{
       "permission" =>
-        %{"namespace" => rand_perm.namespace.name,
+        %{"bundle" => rand_perm.bundle.name,
           "id" => rand_perm.id,
           "name" => rand_perm.name}
       }
 
     # site namespace
-    site_perm = permission("site:test_perm") |> Repo.preload(:namespace)
+    site_perm = permission("site:test_perm") |> Repo.preload(:bundle)
     conn = api_request(user, :get, "/v1/permissions/#{site_perm.id}")
     assert json_response(conn, 200) == %{
       "permission" =>
-        %{"namespace" => site_perm.namespace.name,
+        %{"bundle" => site_perm.bundle.name,
           "id" => site_perm.id,
           "name" => site_perm.name}
       }
 
 
     # embedded bundle namespace
-    embedded_perm = permission("#{Cog.embedded_bundle}:test_perm") |> Repo.preload(:namespace)
+    embedded_perm = permission("#{Cog.embedded_bundle}:test_perm") |> Repo.preload(:bundle)
     conn = api_request(user, :get, "/v1/permissions/#{embedded_perm.id}")
     assert json_response(conn, 200) == %{
       "permission" =>
-        %{"namespace" => embedded_perm.namespace.name,
+        %{"bundle" => embedded_perm.bundle.name,
           "id" => embedded_perm.id,
           "name" => embedded_perm.name}
       }
