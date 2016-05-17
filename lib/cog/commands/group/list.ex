@@ -1,6 +1,5 @@
 defmodule Cog.Commands.Group.List do
   require Cog.Commands.Helpers, as: Helpers
-  alias Cog.Commands.Group
   alias Cog.Repository.Groups
 
   Helpers.usage """
@@ -8,10 +7,7 @@ defmodule Cog.Commands.Group.List do
   display. Group names that don't exist will be ignored.
 
   USAGE
-    group list [FLAGS] [group_name ...]
-
-  ARGS
-    group_name    List of one or more group names to display
+    group list [FLAGS]
 
   FLAGS
     -h, --help    Display this usage info
@@ -19,24 +15,15 @@ defmodule Cog.Commands.Group.List do
   """
 
   @spec list_groups(%Cog.Command.Request{}, List.t) :: {:ok, String.t, Map.t} | {:error, any()}
-  def list_groups(req, arg_list) do
+  def list_groups(req, _arg_list) do
     if Helpers.flag?(req.options, "help") do
       show_usage
     else
-      if length(arg_list) == 0 do
-        case Groups.all do
-          [] ->
-            {:ok, "Currently, there are no groups in the system"}
-          groups ->
-            {:ok, get_template(req.options), Enum.map(groups, &Group.json/1)}
-        end
-      else
-        case Groups.all_by_name(arg_list) do
-          [] ->
-            {:ok, "There are no groups with a name in '#{Enum.join(arg_list, ", ")}'"}
-          groups ->
-            {:ok, get_template(req.options), Enum.map(groups, &Group.json/1)}
-        end
+      case Groups.all do
+        [] ->
+          {:ok, "Currently, there are no groups in the system."}
+        groups ->
+          {:ok, get_template(req.options), groups}
       end
     end
   end

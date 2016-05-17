@@ -120,3 +120,13 @@ defimpl Groupable, for: Cog.Models.User do
     do: Cog.Models.JoinTable.dissociate(user, group)
 
 end
+
+defimpl Poison.Encoder, for: Cog.Models.User do
+  def encode(struct, options) do
+    map = struct
+    |> Map.from_struct
+    |> Map.take([:id, :username, :first_name, :last_name, :email_address])
+
+    Poison.Encoder.Map.encode(map, options)
+  end
+end

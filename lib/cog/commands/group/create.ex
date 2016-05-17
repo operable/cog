@@ -1,6 +1,5 @@
 defmodule Cog.Commands.Group.Create do
   require Cog.Commands.Helpers, as: Helpers
-  alias Cog.Commands.Group
   alias Cog.Repository.Groups
 
   Helpers.usage """
@@ -25,7 +24,7 @@ defmodule Cog.Commands.Group.Create do
         {:ok, [group_name]} ->
           case Groups.new(%{name: group_name}) do
             {:ok, group} ->
-              {:ok, "user-group-create", Group.json(group)}
+              {:ok, "user-group-create", group}
             {:error, changeset} ->
               {:error, {:db_errors, changeset.errors}}
           end

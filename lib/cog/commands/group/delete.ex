@@ -1,6 +1,5 @@
 defmodule Cog.Commands.Group.Delete do
   require Cog.Commands.Helpers, as: Helpers
-  alias Cog.Commands.Group
   alias Cog.Repository.Groups
 
   Helpers.usage """
@@ -40,7 +39,7 @@ defmodule Cog.Commands.Group.Delete do
   defp delete(group) do
     case Groups.delete(group) do
       {:ok, _deleted} ->
-        {:ok, "user-group-delete", Group.json(group)}
+        {:ok, "user-group-delete", group}
       {:error, changeset} ->
         {:error, {:db_errors, changeset.errors}}
     end

@@ -10,7 +10,7 @@ defmodule Cog.Commands.Group do
     group [FLAGS] <SUBCOMMAND>
 
   SUBCOMMANDS
-    list      List user groups
+    list      List user groups (Default)
     create    Creates a new user group
     delete    Deletes a user group
     member    Manage members of user groups
@@ -44,7 +44,7 @@ defmodule Cog.Commands.Group do
         if Helpers.flag?(req.options, "help") do
           show_usage
         else
-          show_usage(error(:required_subcommand))
+          Group.List.list_groups(req, args)
         end
       invalid ->
         suggestion = Enum.max_by(["list", "create", "delete", "member"],
@@ -61,28 +61,6 @@ defmodule Cog.Commands.Group do
         {:error, req.reply_to, Helpers.error(err), state}
     end
   end
-
-  @spec json(%Cog.Models.Group{}) :: Map.t
-  def json(group) do
-    %{name: group.name,
-      id: group.id,
-      roles: Enum.map(group.roles, &role_json/1),
-      members: Enum.map(group.user_membership, &member_json/1)}
-  end
-
-  defp role_json(role) do
-    %{name: role.name,
-      id: role.id}
-  end
-
-  defp member_json(%{member: member}) do
-    %{email: member.email_address,
-      first_name: member.first_name,
-      last_name: member.last_name,
-      id: member.id}
-  end
-  defp member_json(_),
-    do: %{}
 
   defp error(:required_subcommand),
     do: "You must specify a subcommand. Please specify one of, 'list', 'create', 'delete' or 'member'"

@@ -1,13 +1,12 @@
-defmodule Cog.Commands.Group.Member.Add do
+defmodule Cog.Commands.Group.Member.Remove do
   require Cog.Commands.Helpers, as: Helpers
   alias Cog.Repository.Groups
-  alias Cog.Repository.Users
 
   Helpers.usage """
-  Add users to user groups.
+  Removes users from user groups.
 
   USAGE
-    group member add [FLAGS] <group_name> <user_name ...>
+    group member remove [FLAGS] <group_name> <user_name ...>
 
   ARGS
     group_name    The group to add users to
@@ -17,14 +16,14 @@ defmodule Cog.Commands.Group.Member.Add do
     -h, --help    Display this usage info
   """
 
-  @spec add_user(%Cog.Command.Request{}, List.t) :: {:ok, String.t, Map.t} | {:error, any()}
-  def add_user(req, arg_list) do
+  @spec remove_user(%Cog.Command.Request{}, List.t) :: {:ok, String.t, Map.t} | {:error, any()}
+  def remove_user(req, arg_list) do
     if Helpers.flag?(req.options, "help") do
       show_usage
     else
       case Helpers.get_args(arg_list, min: 2) do
         {:ok, [group_name | usernames]} ->
-          case add(group_name, usernames) do
+          case remove(group_name, usernames) do
             {:ok, group} ->
               {:ok, "user-group-update-success", group}
             error ->
@@ -36,12 +35,12 @@ defmodule Cog.Commands.Group.Member.Add do
     end
   end
 
-  defp add(group_name, usernames) do
+  defp remove(group_name, usernames) do
     case Groups.by_name(group_name) do
       {:ok, group} ->
         case Users.all_with_username(usernames) do
           {:ok, users} ->
-            Groups.manage_membership(group, %{"members" => %{"add" => users}})
+            Groups.manage_membership(group, %{"members" => %{"remove" => users}})
           {:some, _users, not_found} ->
             {:error, {:resource_not_found, "user", "in #{Enum.join(not_found, ", ")}"}}
           {:error, :not_found} ->
@@ -53,6 +52,7 @@ defmodule Cog.Commands.Group.Member.Add do
   end
 
   defp error(:missing_args) do
-    "Missing required args. At a minimum you must include the user group and at least one user name to add"
+    "Missing required args. At a minimum you must include the user group and at least one user name to remove"
   end
 end
+
