@@ -292,6 +292,9 @@ defmodule Cog.Support.ModelUtilities do
                   Keyword.get(opts, :token, "sekrit"),
                   Keyword.get(opts, :relay_opts, []))
     bundle_version = bundle_version("bundle-#{name}")
+
+    Cog.Repository.Bundles.set_bundle_version_status(bundle_version, :enabled)
+
     relay_group = relay_group("group-#{name}")
     add_relay_to_group(relay_group.id, relay.id)
     assign_bundle_to_group(relay_group.id, bundle_version.bundle.id)
