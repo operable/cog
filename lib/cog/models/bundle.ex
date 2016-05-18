@@ -65,3 +65,12 @@ defimpl Groupable, for: Cog.Models.Bundle do
 
 end
 
+defimpl Poison.Encoder, for: Cog.Models.Bundle do
+  def encode(struct, options) do
+    map = struct
+    |> Map.from_struct
+    |> Map.take([:name])
+
+    Poison.Encoder.Map.encode(map, options)
+  end
+end

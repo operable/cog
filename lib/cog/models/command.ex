@@ -85,7 +85,7 @@ defimpl Poison.Encoder, for: Cog.Models.Command do
   def encode(%Cog.Models.Command{} = struct, options) do
     map = struct
     |> Map.from_struct
-    |> Map.take([:name, :version])
+    |> Map.take([:name, :version, :documentation, :bundle])
 
     Poison.Encoder.Map.encode(map, options)
   end
