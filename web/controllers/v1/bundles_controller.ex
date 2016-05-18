@@ -15,6 +15,15 @@ defmodule Cog.V1.BundlesController do
   def index(conn, _params),
     do: render(conn, "index.json", %{bundles: Repository.Bundles.bundles})
 
+  def show(conn, %{"id" => id}) do
+    case Repository.Bundles.bundle(id) do
+      nil ->
+        send_resp(conn, 404, Poison.encode!(%{error: "Bundle #{id} not found"}))
+      %Bundle{}=bundle ->
+        render(conn, "show.json", %{bundle: bundle})
+    end
+  end
+
   def versions(conn, %{"id" => id}) do
     case Repository.Bundles.bundle(id) do
       nil ->
@@ -22,15 +31,6 @@ defmodule Cog.V1.BundlesController do
       %Bundle{}=bundle ->
         versions = Repository.Bundles.versions(bundle)
         render(conn, Cog.V1.BundleVersionsView, "index.json", %{bundle_versions: versions})
-    end
-  end
-
-  def bundle_version_show(conn, %{"name" => name, "version" => version}) do
-    case Repository.Bundles.version(name, version) do
-      nil ->
-        send_resp(conn, 404, Poison.encode!(%{error: "Bundle #{name} #{version} not found"}))
-      bundle_version ->
-        render(conn, Cog.V1.BundleVersionsView, "show.json", %{bundle_version: bundle_version})
     end
   end
 
@@ -62,7 +62,8 @@ defmodule Cog.V1.BundlesController do
   def create(conn, _params),
     do: send_resp(conn, 400, "")
 
-  #### BUNDLE CREATION HELPERS ####
+  ########################################################################
+  # Bundle Creation Helpers
 
   defp install_bundle(params) do
     with {:ok, config}                 <- parse_config(params),

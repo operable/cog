@@ -42,6 +42,7 @@ defmodule Cog.Router do
 
     get    "/v1/bundles", V1.BundlesController, :index
     post   "/v1/bundles", V1.BundlesController, :create
+    get    "/v1/bundles/:id", V1.BundlesController, :show
     delete "/v1/bundles/:id", V1.BundlesController, :delete
 
     # TODO: Maybe this is just :show on /bundles/:id?
