@@ -182,16 +182,29 @@ defmodule Cog.Repository.Bundles do
   """
   # TODO: this all needs to be transactional, for maximum safety
   def maybe_upgrade_embedded_bundle!(%{"name" => bundle_name, "version" => version} = config) do
-    case Repo.one(bundle_version(bundle_name, version)) do
-      %BundleVersion{}=bundle_version ->
-        postprocess_embedded_bundle_version(bundle_version)
-      nil ->
+    upgrade_to_current = fn() ->
         case install(%{"name" => bundle_name, "version" => version, "config_file" => config}) do
           {:ok, latest_version} ->
             :ok = delete_outdated_embedded_version(latest_version)
             postprocess_embedded_bundle_version(latest_version)
           {:error, reason} ->
             raise "Unable to install embedded bundle: #{inspect reason}"
+        end
+    end
+
+    case active_embedded_bundle_version do
+      nil ->
+        upgrade_to_current.()
+      %BundleVersion{}=installed ->
+        {:ok, installed_version} = VersionTriple.dump(installed.version)
+        {:ok, current_version}   = VersionTriple.dump(version)
+        cond do
+          installed_version < current_version ->
+            upgrade_to_current.()
+          installed_version == current_version ->
+            postprocess_embedded_bundle_version(installed)
+          installed_version > current_version ->
+            raise "Unable to downgrade from #{installed.version} to #{version}}"
         end
     end
   end
