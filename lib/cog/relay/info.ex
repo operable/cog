@@ -62,8 +62,8 @@ defmodule Cog.Relay.Info do
     case Repo.get(Relay, relay_id) do
       %Relay{} ->
         bundles = relay_id
-        |> Cog.Repository.Bundles.bundle_versions_for_relay
-        |> Enum.map(&Map.take(&1, [:config_file]))
+        |> Cog.Repository.Bundles.bundle_configs_for_relay
+        |> Enum.map(&(%{config_file: &1}))
 
         respond(%{bundles: bundles}, reply_to, state)
       nil ->

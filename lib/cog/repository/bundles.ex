@@ -340,18 +340,17 @@ defmodule Cog.Repository.Bundles do
   end
 
   @doc """
-  Given a relay ID, return all the bundle versions that it is
-  currently assigned.
+  Given a relay ID, return all the configurations for the bundle
+  versions that it is currently assigned.
   """
-  def bundle_versions_for_relay(relay_id) do
-    # TODO: Consider just returning the config_file, since that's
-    # apparently the only thing that's really needed
+  def bundle_configs_for_relay(relay_id) do
     Repo.all(from bv in BundleVersion,
              join: e in "enabled_bundle_versions", on: bv.bundle_id == e.bundle_id and bv.version == e.version,
              join: b in assoc(bv, :bundle),
              join: rg in assoc(b, :relay_groups),
              join: r in assoc(rg, :relays),
-             where: r.id == ^relay_id)
+             where: r.id == ^relay_id,
+             select: bv.config_file)
   end
 
   ########################################################################
