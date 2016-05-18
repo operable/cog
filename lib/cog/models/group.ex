@@ -113,9 +113,15 @@ end
 
 defimpl Poison.Encoder, for: Cog.Models.Group do
   def encode(struct, options) do
+    members = Enum.flat_map(struct.user_membership, fn
+      (%{member: member}) -> [member]
+      (_) -> []
+    end)
+
     map = struct
     |> Map.from_struct
-    |> Map.take([:id, :name, :roles, :user_membership])
+    |> Map.take([:id, :name, :roles])
+    |> Map.put(:members, members)
 
     Poison.Encoder.Map.encode(map, options)
   end

@@ -26,7 +26,7 @@ defmodule Integration.Commands.GroupTest do
 
     [response] = send_message(user, "@bot: operable:group member add elves belf")
     |> decode_payload
-    member = Map.get(hd(response.user_membership), :member)
+    member = hd(response.members)
     assert member.username == "belf"
   end
 
@@ -62,7 +62,7 @@ defmodule Integration.Commands.GroupTest do
     |> decode_payload
     assert response.id == cheer.id
     assert response.name == cheer.name
-    member = Map.get(hd(response.user_membership), :member)
+    member = hd(response.members)
     assert member.email_address == user.email_address
     assert member.first_name == user.first_name
     assert member.last_name == user.last_name
@@ -83,7 +83,7 @@ defmodule Integration.Commands.GroupTest do
     |> decode_payload
     assert response.id == cheer.id
     assert response.name == cheer.name
-    member = Map.get(hd(response.user_membership), :member)
+    member = hd(response.members)
     assert member.email_address == user.email_address
     assert member.first_name == user.first_name
     assert member.last_name == user.last_name
