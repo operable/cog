@@ -11,9 +11,11 @@ defmodule Cog.Commands.Group do
 
   SUBCOMMANDS
     list      List user groups (Default)
+    info      Get info about a specific user group
     create    Creates a new user group
     delete    Deletes a user group
     member    Manage members of user groups
+    role      Manage roles associated with user groups
 
   FLAGS
     -h, --help    Display this usage info

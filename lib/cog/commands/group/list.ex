@@ -3,8 +3,7 @@ defmodule Cog.Commands.Group.List do
   alias Cog.Repository.Groups
 
   Helpers.usage """
-  Lists user groups. Optionally you can pass a list of group names to
-  display. Group names that don't exist will be ignored.
+  Lists user groups.
 
   USAGE
     group list [FLAGS]
