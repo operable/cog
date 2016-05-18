@@ -167,9 +167,9 @@ defmodule Cog.Repository.Groups do
   def manage_membership(%Group{}=group, %{"members" => member_spec}) do
     Repo.transaction(fn() ->
       users_to_add     = lookup_or_fail(member_spec, ["users", "add"])
-      roles_to_add    = lookup_or_fail(member_spec, ["roles", "grant"])
+      roles_to_add    = lookup_or_fail(member_spec, ["roles", "add"])
       users_to_remove  = lookup_or_fail(member_spec, ["users", "remove"])
-      roles_to_remove = lookup_or_fail(member_spec, ["roles", "revoke"])
+      roles_to_remove = lookup_or_fail(member_spec, ["roles", "remove"])
 
       # If we already have a model, there is no need to look it up again
       {user_models_to_add, role_models_to_add} = get_models("add", member_spec)

@@ -1,6 +1,7 @@
 defmodule Cog.Commands.Group.Member.Remove do
   require Cog.Commands.Helpers, as: Helpers
   alias Cog.Repository.Groups
+  alias Cog.Repository.Users
 
   Helpers.usage """
   Removes users from user groups.

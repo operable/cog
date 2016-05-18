@@ -10,7 +10,7 @@ defmodule Integration.Commands.GroupTest do
     {:ok, %{user: user}}
   end
 
-  test "adding a user to a group", %{user: user} do
+  test "adding and removing users to groups", %{user: user} do
     response = send_message(user, "@bot: operable:group member add elves #{user.username}")
     assert_error_message_contains(response, "Whoops! An error occurred. Could not find 'user group' with the name 'elves'")
 
@@ -28,6 +28,31 @@ defmodule Integration.Commands.GroupTest do
     |> decode_payload
     member = hd(response.members)
     assert member.username == "belf"
+
+    [response] = send_message(user, "@bot: operable:group member remove elves belf")
+    |> decode_payload
+    assert length(response.members) == 0
+  end
+
+  test "adding and removing roles to groups", %{user: user} do
+    cheer = group("cheer")
+    role("admin")
+
+    [response] = send_message(user, "@bot: operable:group role add cheer admin")
+    |> decode_payload
+    assert response.name == "cheer"
+
+    [response] = send_message(user, "@bot: operable:group info cheer")
+    |> decode_payload
+    assert hd(response.roles).name == "admin"
+
+    [response] = send_message(user, "@bot: operable:group role remove cheer admin")
+    |> decode_payload
+    assert response.name == "cheer"
+
+    [response] = send_message(user, "@bot: operable:group info cheer")
+    |> decode_payload
+    assert length(response.roles) == 0
   end
 
   test "getting group info", %{user: user} do
