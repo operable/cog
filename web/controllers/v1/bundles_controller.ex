@@ -2,59 +2,65 @@ defmodule Cog.V1.BundlesController do
   use Cog.Web, :controller
 
   alias Spanner.Config
-  alias Cog.Bundle.Install
-  alias Cog.Relay.Relays
+#  alias Cog.Relay.Relays
   alias Cog.Models.Bundle
-  alias Cog.Queries
-  alias Cog.Repo
+  #alias Cog.Queries
+ # alias Cog.Repo
 
   plug Cog.Plug.Authentication
   plug Cog.Plug.Authorization, permission: "#{Cog.embedded_bundle}:manage_commands"
 
-  def index(conn, _params) do
-    installed = Repo.all(Queries.Bundles.all)
-    render(conn, "index.json", %{bundles: installed})
-  end
+  alias Cog.Repository
 
-  def show(conn, %{"id" => id}) do
-    case Repo.one(Queries.Bundles.for_id(id)) do
+  def index(conn, _params),
+    do: render(conn, "index.json", %{bundles: Repository.Bundles.bundles})
+
+  def versions(conn, %{"id" => id}) do
+    case Repository.Bundles.bundle(id) do
       nil ->
         send_resp(conn, 404, Poison.encode!(%{error: "Bundle #{id} not found"}))
-      bundle ->
-        render(conn, "show.json", %{bundle: bundle})
+      %Bundle{}=bundle ->
+        versions = Repository.Bundles.versions(bundle)
+        render(conn, Cog.V1.BundleVersionsView, "index.json", %{bundle_versions: versions})
+    end
+  end
+
+  def bundle_version_show(conn, %{"name" => name, "version" => version}) do
+    case Repository.Bundles.version(name, version) do
+      nil ->
+        send_resp(conn, 404, Poison.encode!(%{error: "Bundle #{name} #{version} not found"}))
+      bundle_version ->
+        render(conn, Cog.V1.BundleVersionsView, "show.json", %{bundle_version: bundle_version})
     end
   end
 
   def delete(conn, %{"id" => id}) do
-    case Repo.one(Queries.Bundles.for_id(id)) do
+    case Repository.Bundles.bundle(id) do
       nil ->
         send_resp(conn, 404, Poison.encode!(%{error: "Bundle #{id} not found"}))
-      %Bundle{name: "operable"} ->
-        send_resp(conn, 403, Poison.encode!(%{error: "Cannot delete system bundle"}))
-      %Bundle{name: name}=bundle ->
-        :ok = Relays.drop_bundle(name)
-        {:ok, _} = Repo.transaction(fn -> Repo.delete(bundle.namespace)
-                                          Repo.delete(bundle) end)
-        send_resp(conn, 204, "")
+      %Bundle{}=bundle ->
+        case Repository.Bundles.delete(bundle) do
+          {:ok, _} ->
+            send_resp(conn, 204, "")
+          {:error, {:protected_bundle, name}} ->
+            send_resp(conn, 403, Poison.encode!(%{error: "Cannot delete #{name} bundle"}))
+        end
     end
   end
 
   def create(conn, %{"bundle" => params}) do
     case install_bundle(params) do
-      {:ok, bundle, warnings} ->
-        bundle = Repo.preload(bundle, [commands: [rules: [permissions: :namespace]], namespace: [permissions: :namespace]])
+      {:ok, bundle_version, warnings} ->
         conn
         |> put_status(:created)
-        |> put_resp_header("location", bundles_path(conn, :show, bundle))
-        |> render("show.json", %{bundle: bundle, warnings: warnings})
+#        |> put_resp_header("location", Cog.Router.Helpers.bundle_version_path(conn, :show, bundle_version)) # TODO: this needs to be different
+        |> render(Cog.V1.BundleVersionsView, "show.json", %{bundle_version: bundle_version, warnings: warnings})
       {:error, err} ->
         send_failure(conn, err)
     end
   end
-
-  def create(conn, _params) do
-    send_resp(conn, 400, "")
-  end
+  def create(conn, _params),
+    do: send_resp(conn, 400, "")
 
   #### BUNDLE CREATION HELPERS ####
 
@@ -67,18 +73,14 @@ defmodule Cog.V1.BundlesController do
     end
   end
 
-  defp parse_config(%{"config" => config}) when is_map(config) do
-    {:ok, config}
-  end
-
+  defp parse_config(%{"config" => config}) when is_map(config),
+    do: {:ok, config}
   defp parse_config(%{"config_file" => %Plug.Upload{}=config_file}) do
     with :ok <- validate_file_format(config_file),
          do: parse_config_file(config_file)
   end
-
-  defp parse_config(_) do
-    {:error, :no_config}
-  end
+  defp parse_config(_),
+    do: {:error, :no_config}
 
   # If we have a file, check to see if the filename has the correct extension
   defp validate_file_format(%Plug.Upload{filename: filename}) do
@@ -124,7 +126,7 @@ defmodule Cog.V1.BundlesController do
   # Create a new record in the DB for the deploy
   defp persist(params) do
     try do
-      Install.install_bundle(params)
+      Cog.Repository.Bundles.install(params)
     rescue
       err in [Ecto.InvalidChangesetError] ->
         {:error, {:db_error, err.changeset.errors}}

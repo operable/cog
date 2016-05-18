@@ -52,6 +52,7 @@ defmodule Cog.Relay.Relays do
     GenServer.call(__MODULE__, {:drop_relay, relay}, :infinity)
   end
 
+  # TODO: Consider just passing a BundleVersion model here instead
   @doc """
   Returns the IDs of all Relays currently running `bundle_name`. If no
   Relays are running the bundle, an empty list is returned.

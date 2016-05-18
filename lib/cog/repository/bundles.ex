@@ -10,11 +10,21 @@ defmodule Cog.Repository.Bundles do
   alias Cog.Models.BundleVersion
   alias Cog.Models.CommandVersion
 
+  alias Cog.Models.Types.VersionTriple
+  alias Ecto.Adapters.SQL
+  import Cog.UUID, only: [uuid_to_bin: 1]
+
+  @protected_bundle_names [Cog.embedded_bundle,
+                           Cog.site_namespace]
+
   @permanent_site_bundle_version "0.0.0"
+
+  ########################################################################
+  # CRUD Operations
 
   # TODO: toggle inner transaction on or off as needed
   @doc """
-  Install a new bundle version.
+  Install a new bundle version. Creates the parent bundle if necessary.
   """
   def install(%{"name" => _name, "version" => _version, "config_file" => _config}=params) do
     case install_bundle(params) do
@@ -24,6 +34,132 @@ defmodule Cog.Repository.Bundles do
         error
     end
   end
+
+  @doc """
+  Return all known versions for `bundle`. Ensures that all required
+  data is appropriately preloaded on the model.
+  """
+  def versions(%Bundle{}=bundle) do
+    bundle = Repo.preload(bundle, :versions)
+    preload(bundle.versions)
+  end
+
+  # TODO: error tuple or nil?
+  def version(id) do
+    case Repo.one(from bv in BundleVersion,
+                  where: bv.id == ^id,
+                  preload: :bundle) do
+      nil ->
+        nil
+      bundle_version ->
+        preload(bundle_version)
+    end
+  end
+
+  @doc """
+  Return all bundles in the system.
+  """
+  def bundles,
+    do: Repo.all(Bundle) |> preload
+
+  @doc """
+  Retrieve the bundle identified by `id`.
+  """
+  def bundle(id) do
+    case Repo.get(Bundle, id) do
+      nil -> nil
+      bundle ->
+        preload(bundle)
+    end
+  end
+
+  # TODO: Only delete if the bundle version is currently
+  # disabled. Only delete an entire bundle if no version is enabled.
+  def delete(%BundleVersion{bundle: %Bundle{name: protected}}, _) when protected in @protected_bundle_names,
+    do: {:error, {:protected_bundle, protected}}
+  def delete(%Bundle{name: protected}) when protected in @protected_bundle_names,
+    do: {:error, {:protected_bundle, protected}}
+  def delete(bundle_or_version),
+    do: Repo.delete(bundle_or_version)
+
+  ########################################################################
+  # Enabled/Disabled Status
+
+  def set_bundle_version_status(%BundleVersion{bundle: %Bundle{name: protected}}, _) when protected in @protected_bundle_names,
+    do: {:error, {:protected_bundle, protected}}
+  def set_bundle_version_status(bundle_version, status) when status in [:enabled, :disabled],
+    do: __set_bundle_version_status(bundle_version, status)
+
+  # Private implementation that we can use to ensure that the right
+  # thing happens for our protected bundles
+  defp __set_bundle_version_status(bundle_version, status) do
+    stored_procedure_name = case status do
+                              :enabled  -> "enable_bundle_version"
+                              :disabled -> "disable_bundle_version"
+                            end
+    with({:ok, db_version} <- VersionTriple.dump(bundle_version.version)) do
+      SQL.query!(Repo,
+                 "SELECT #{stored_procedure_name}($1, $2)",
+                 [uuid_to_bin(bundle_version.bundle.id),
+                  db_version])
+      :ok
+    end
+  end
+
+
+  @doc """
+  For the given `bundle`, retrieve the currently-enabled version of
+  that bundle, if any is enabled.
+  """
+  def enabled_version(%Bundle{id: id}) do
+    query = (from bv in BundleVersion,
+             join: b in assoc(bv, :bundle),
+             join: e in "enabled_bundle_versions", on: bv.bundle_id == e.bundle_id and bv.version == e.version,
+             where: b.id == ^id)
+
+    case Repo.one(query) do
+      nil -> nil
+      bundle_version -> bundle_version
+    end
+  end
+
+  def status(%Bundle{}=bundle) do
+    case enabled_version(bundle) do
+      %BundleVersion{}=bv ->
+        %{name: bv.bundle.name,
+          enabled: true,
+          enabled_version: bv.version,
+          relays: Cog.Relay.Relays.relays_running(bv.bundle.name, bv.version)}
+      nil ->
+        %{name: bundle.name,
+          enabled: false,
+          relays: []}
+    end
+  end
+
+  @doc """
+  Returns a map of bundle name to enabled version for all enabled
+  bundles. Currently, only one version of any bundle may be enabled at
+  a time.
+  """
+  def enabled_bundles do
+    query = (from e in "enabled_bundle_versions",
+             join: bv in "bundle_versions_v2", on: bv.bundle_id == e.bundle_id and bv.version == e.version,
+             join: b in "bundles_v2", on: bv.bundle_id == b.id,
+             select: {b.name, bv.version})
+
+    # TODO: Need to filter out "site" bundle (if some version of this
+    # query gets used in the end
+
+    query
+    |> Repo.all
+    |> Enum.reduce(%{}, fn({name, db_version}, acc) ->
+      {:ok, version} = VersionTriple.load(db_version)
+      Map.put(acc, name, version)
+    end)
+  end
+
+  ########################################################################
 
   # Used in Cog.Relay.Relays to verify the existence of the the bundle
   # versions a relay claims to be serving
@@ -39,28 +175,33 @@ defmodule Cog.Repository.Bundles do
     end
   end
 
+  @doc """
+  The embedded bundle version automatically gets upgraded with each
+  new release of Cog. This version is always enabled, by definition,
+  and cannot be disabled.
+  """
   def maybe_upgrade_embedded_bundle!(%{"name" => bundle_name, "version" => version} = config) do
     case Repo.one(bundle_version(bundle_name, version)) do
       %BundleVersion{}=bundle_version ->
-        preload(bundle_version)
+        postprocess_embedded_bundle_version(bundle_version)
       nil ->
         case install(%{"name" => bundle_name, "version" => version, "config_file" => config}) do
           {:ok, bundle_version} ->
-            # TODO: should install_bundle return preloads?
-            preload(bundle_version)
+            # TODO: Need to delete all other versions of the embedded
+            # bundle; only ever have the possibility of running the
+            # latest-and-greatest
+            postprocess_embedded_bundle_version(bundle_version)
           {:error, reason} ->
             raise "Unable to install embedded bundle: #{inspect reason}"
         end
     end
   end
 
-  # Consolidate what we need to preload for various things so we stay
-  # consistent
-  defp preload(%Bundle{}=bundle),
-    do: Repo.preload(bundle, [:permissions, :commands])
-  defp preload(%BundleVersion{}=bv),
-    do: Repo.preload(bv, bundle: [:permissions, :commands])
-
+  defp postprocess_embedded_bundle_version(bundle_version) do
+    bundle_version = preload(bundle_version)
+    __set_bundle_version_status(bundle_version, :enabled)
+    bundle_version
+  end
 
   # TODO: Might not need this function after all, pending refactorings
   # mentioned in Cog.Bundle.Embedded.
@@ -112,26 +253,6 @@ defmodule Cog.Repository.Bundles do
   end
 
   @doc """
-  Returns a map of bundle name to enabled version for all enabled
-  bundles. Currently, only one version of any bundle may be enabled at
-  a time.
-  """
-  def enabled_bundles do
-    # TODO: For now, *everything* is enabled. Once the whole system is
-    # plumbed for versioned bundles, this will (of course) be remedied.
-    query = from bv in BundleVersion,
-    join: b in assoc(bv, :bundle),
-    select: {b.name, bv.version}
-
-    # TODO: Need to filter out "site" bundle (if some version of this
-    # query gets used in the end
-
-    query
-    |> Repo.all
-    |> Enum.into(%{})
-  end
-
-  @doc """
   Given the name of a command, and the name and version of a bundle,
   return the specific details for that command in that bundle version.
 
@@ -176,9 +297,8 @@ defmodule Cog.Repository.Bundles do
   def bundle_versions_for_relay(relay_id) do
     # TODO: Consider just returning the config_file, since that's
     # apparently the only thing that's really needed
-
-    # TODO: Need to join into enabled bundles when that's in place
     Repo.all(from bv in BundleVersion,
+             join: e in "enabled_bundle_versions", on: bv.bundle_id == e.bundle_id and bv.version == e.version,
              join: b in assoc(bv, :bundle),
              join: rg in assoc(b, :relay_groups),
              join: r in assoc(rg, :relays),
@@ -222,18 +342,19 @@ defmodule Cog.Repository.Bundles do
     |> preload
   end
 
+  # Consolidate what we need to preload for various things so we stay
+  # consistent
+  @bundle_preloads [:permissions, :commands]
+  @bundle_version_preloads [bundle: @bundle_preloads]
 
-
-
-
-
-
-
-
-
-
-
-
+  defp preload(%Bundle{}=bundle),
+    do: Repo.preload(bundle, @bundle_preloads)
+  defp preload([%Bundle{} | _]=bs),
+    do: Repo.preload(bs, @bundle_preloads)
+  defp preload(%BundleVersion{}=bv),
+    do: Repo.preload(bv, @bundle_version_preloads)
+  defp preload([%BundleVersion{}, _]=bvs),
+    do: Repo.preload(bvs, @bundle_version_preloads)
 
 
   ########################################################################
@@ -302,10 +423,9 @@ defmodule Cog.Repository.Bundles do
   end
 
   defp create_option(command_version, {option_name, params}) do
-    option = Map.merge(%{
-      "name" => option_name,
-      "long_flag" => option_name
-    }, params)
+    option = Map.merge(%{"name" => option_name,
+                         "long_flag" => option_name},
+                       params)
 
     CommandOption.build_new(command_version, option)
     |> Repo.insert!
