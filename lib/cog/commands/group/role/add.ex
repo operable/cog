@@ -27,7 +27,7 @@ defmodule Cog.Commands.Group.Role.Add do
             {:ok, group} ->
               {:ok, "user-group-update-success", group}
             {:error, {:not_found, {kind, bad_names}}} ->
-              {:error, {:resource_not_found, kind, "in #{Enum.join(bad_names, ", ")}"}}
+              {:error, {:resource_not_found, kind, Enum.join(bad_names, ", ")}}
             {:error, error} ->
               {:error, {:db_errors, error}}
           end
@@ -40,7 +40,7 @@ defmodule Cog.Commands.Group.Role.Add do
   defp add(group_name, role_names) do
     case Groups.by_name(group_name) do
       {:ok, group} ->
-        Groups.manage_membership(group, %{"roles" => %{"add" => role_names}})
+        Groups.manage_membership(group, %{"members" => %{"roles" => %{"add" => role_names}}})
       {:error, :not_found} ->
         {:error, {:resource_not_found, "user group", group_name}}
     end

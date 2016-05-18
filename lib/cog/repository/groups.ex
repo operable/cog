@@ -1,3 +1,12 @@
+defmodule Cog.Repository.Groups.BadIdError do
+  defexception [:message]
+
+  def exception(value) do
+    msg = "'#{value}' is not a valid uuid"
+    %__MODULE__{message: msg}
+  end
+end
+
 defmodule Cog.Repository.Groups do
   @moduledoc """
   Behavioral API for interacting with user groups. Prefer these
@@ -10,16 +19,23 @@ defmodule Cog.Repository.Groups do
   alias Cog.Models.Role
   import Ecto.Query, only: [from: 1, from: 2]
 
-  @preloads [[user_membership: [:member]], :direct_group_members, :roles, :permissions]
+  @preloads [[user_membership: [:member]], :direct_user_members, :direct_group_members, :roles, :permissions]
 
   @doc """
   Creates a new user group given a map of attributes
   """
   @spec new(Map.t) :: {:ok, %Group{}} | {:error, Ecto.Changeset.t}
   def new(attrs) do
-    %Group{}
+    new_group = %Group{}
     |> Group.changeset(attrs)
     |> Repo.insert
+
+    case new_group do
+      {:ok, group} ->
+        {:ok, Repo.preload(group, @preloads)}
+      error ->
+        error
+    end
   end
 
   @doc """
@@ -67,6 +83,19 @@ defmodule Cog.Repository.Groups do
       end
     else
       {:error, :bad_id}
+    end
+  end
+
+  @doc """
+  Like by_id/1 but raises an error if no results are returned
+  """
+  @spec by_id!(String.t) :: %Group{} | no_return()
+  def by_id!(id) do
+    if Cog.UUID.is_uuid?(id) do
+      Repo.get!(Group, id)
+      |> Repo.preload(@preloads)
+    else
+      raise(Cog.Repository.Groups.BadIdError, id)
     end
   end
 
@@ -151,7 +180,11 @@ defmodule Cog.Repository.Groups do
       |> grant(roles_to_add ++ role_models_to_add)
       |> remove(users_to_remove ++ user_models_to_remove)
       |> revoke(roles_to_remove ++ role_models_to_remove)
-      |> Repo.preload(@preloads)
+
+
+      # We have to refetch the group here, otherwise the updates
+      # aren't loaded
+      by_id!(group.id)
     end)
   end
 

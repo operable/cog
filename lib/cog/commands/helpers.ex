@@ -144,7 +144,8 @@ defmodule Cog.Commands.Helpers do
 
   # Special errors that come when there are issues with the database.
   defp db_errors(errors) do
-    Enum.map_join(errors, "\n", fn({key, message}) ->
+    Enum.map_join(errors, "\n", fn
+      ({key, message}) ->
         "#{key}: #{message}"
     end)
   end

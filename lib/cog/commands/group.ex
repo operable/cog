@@ -40,6 +40,8 @@ defmodule Cog.Commands.Group do
         Group.Delete.delete_group(req, args)
       "member" ->
         Group.Member.manage_members(req, args)
+      "role" ->
+        Group.Role.manage_roles(req, args)
       nil ->
         if Helpers.flag?(req.options, "help") do
           show_usage

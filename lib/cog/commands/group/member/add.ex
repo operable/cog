@@ -43,9 +43,9 @@ defmodule Cog.Commands.Group.Member.Add do
           {:ok, users} ->
             Groups.manage_membership(group, %{"members" => %{"add" => users}})
           {:some, _users, not_found} ->
-            {:error, {:resource_not_found, "user", "in #{Enum.join(not_found, ", ")}"}}
+            {:error, {:resource_not_found, "user", Enum.join(not_found, ", ")}}
           {:error, :not_found} ->
-            {:error, {:resource_not_found, "user", "in #{Enum.join(usernames, ", ")}"}}
+            {:error, {:resource_not_found, "user", Enum.join(usernames, ", ")}}
         end
       {:error, :not_found} ->
         {:error, {:resource_not_found, "user group", group_name}}
