@@ -180,21 +180,41 @@ defmodule Cog.Repository.Bundles do
   new release of Cog. This version is always enabled, by definition,
   and cannot be disabled.
   """
+  # TODO: this all needs to be transactional, for maximum safety
   def maybe_upgrade_embedded_bundle!(%{"name" => bundle_name, "version" => version} = config) do
     case Repo.one(bundle_version(bundle_name, version)) do
       %BundleVersion{}=bundle_version ->
         postprocess_embedded_bundle_version(bundle_version)
       nil ->
         case install(%{"name" => bundle_name, "version" => version, "config_file" => config}) do
-          {:ok, bundle_version} ->
-            # TODO: Need to delete all other versions of the embedded
-            # bundle; only ever have the possibility of running the
-            # latest-and-greatest
-            postprocess_embedded_bundle_version(bundle_version)
+          {:ok, latest_version} ->
+            :ok = delete_outdated_embedded_version(latest_version)
+            postprocess_embedded_bundle_version(latest_version)
           {:error, reason} ->
             raise "Unable to install embedded bundle: #{inspect reason}"
         end
     end
+  end
+
+  # We only need to have the latest version of the embedded bundle in
+  # the system. Since it's currently implemented in Elixir, and uses
+  # core bot code directly, switching back to an older version of the
+  # bundle would likely break all the commands in the bundle,
+  # particularly since the actual Elixir code for those old versions
+  # isn't around!
+  #
+  # As such, we just make sure that the only version of the embedded
+  # bundle present is the one that corresponds to the currently
+  # running Cog software.
+  defp delete_outdated_embedded_version(%BundleVersion{}=current_version) do
+    bundle_id = current_version.bundle.id
+    version = current_version.version
+    query = (from bv in BundleVersion,
+             where: bv.bundle_id == ^bundle_id,
+             where: bv.version != ^version)
+
+    Repo.delete_all(query)
+    :ok
   end
 
   defp postprocess_embedded_bundle_version(bundle_version) do
