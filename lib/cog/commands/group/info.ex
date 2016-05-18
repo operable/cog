@@ -6,10 +6,10 @@ defmodule Cog.Commands.Group.Info do
   Get info about a user group.
 
   USAGE
-    group info <group_name>
+    group info <group-name>
 
   ARGS
-    group_name    The user group name to get info about
+    group-name    The user group name to get info about
 
   FLAGS
     -h, --help    Display this usage info

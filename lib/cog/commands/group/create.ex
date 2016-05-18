@@ -6,10 +6,10 @@ defmodule Cog.Commands.Group.Create do
   Creates new user groups.
 
   USAGE
-    group create [FLAGS] <group_name>
+    group create [FLAGS] <group-name>
 
   ARGS
-    group_name    The name of the user group to create
+    group-name    The name of the user group to create
 
   FLAGS
     -h, --help    Display this usage info

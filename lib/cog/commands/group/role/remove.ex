@@ -6,11 +6,11 @@ defmodule Cog.Commands.Group.Role.Remove do
   Remove roles from user groups.
 
   USAGE
-    group role remove [FLAGS] <group_name> <role_name ...>
+    group role remove [FLAGS] <group-name> <role-name ...>
 
   ARGS
-    group_name    The group to remove roles from
-    role_name     List of one or more roles to remove from the group
+    group-name    The group to remove roles from
+    role-name     List of one or more roles to remove from the group
 
   FLAGS
     -h, --help    Display this usage info

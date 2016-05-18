@@ -6,11 +6,11 @@ defmodule Cog.Commands.Group.Role.Add do
   Add roles to user groups.
 
   USAGE
-    group role add [FLAGS] <group_name> <role_name ...>
+    group role add [FLAGS] <group-name> <role-name ...>
 
   ARGS
-    group_name    The group to add roles to
-    role_name     List of one or more roles to add to the group
+    group-name    The group to add roles to
+    role-name     List of one or more roles to add to the group
 
   FLAGS
     -h, --help    Display this usage info

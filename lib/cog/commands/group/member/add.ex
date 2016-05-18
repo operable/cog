@@ -7,11 +7,11 @@ defmodule Cog.Commands.Group.Member.Add do
   Add users to user groups.
 
   USAGE
-    group member add [FLAGS] <group_name> <user_name ...>
+    group member add [FLAGS] <group-name> <user-name ...>
 
   ARGS
-    group_name    The group to add users to
-    user_name     List of one or more users to add to the group
+    group-name    The group to add users to
+    user-name     List of one or more users to add to the group
 
   FLAGS
     -h, --help    Display this usage info

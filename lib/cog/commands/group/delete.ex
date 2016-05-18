@@ -6,10 +6,10 @@ defmodule Cog.Commands.Group.Delete do
   Deletes user groups.
 
   USAGE
-    group delete [FLAGS] <group_name>
+    group delete [FLAGS] <group-name>
 
   ARGS
-    group_name    The name of the user group to delete
+    group-name    The name of the user group to delete
 
   FLAGS
     -h, --help    Display this usage info
