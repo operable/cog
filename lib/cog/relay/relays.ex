@@ -124,13 +124,9 @@ defmodule Cog.Relay.Relays do
 
   ########################################################################
 
-  # TODO: Consider upgrading the bundle elsewhere and only having one
-  # path for announcement processing. As it is, this is the only
-  # announcement that requires a config in it
   defp process_embedded_announcement(announcement, %__MODULE__{tracker: tracker}=state) do
-    [bundle_config] = Map.fetch!(announcement, "bundles")
-    bundle_version = Cog.Repository.Bundles.maybe_upgrade_embedded_bundle!(bundle_config)
-    tracker = update_tracker(announcement, tracker, [version_spec(bundle_version)], true)
+    [%{"name" => name, "version" => version}] = announcement["bundles"]
+    tracker = update_tracker(announcement, tracker, [{name, version}], true)
     %{state | tracker: tracker}
   end
 

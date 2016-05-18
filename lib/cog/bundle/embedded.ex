@@ -30,22 +30,14 @@ defmodule Cog.Bundle.Embedded do
     do: Supervisor.start_link(__MODULE__, [], name: __MODULE__)
 
   def init([]) do
-    # TODO: we should just install the latest version of the embedded
-    # bundle here and announce it. That way Cog.Relay.Relays doesn't
-    # need to concern itself with that extra logic. That's all
-    # synchronous right now anyway.
-    #
-    # Additionally, we wouldn't need the
-    # Cog.Repository.Bundles.active_embedded_bundle_version function,
-    # because we'd already have the bundle version in hand here.
-    #
-    # Should we consider additional ways to make the Cog bot appear as
+    # TODO: Should we consider additional ways to make the Cog bot appear as
     # a relay in a special relay group? That might reduce our
     # "special snowflake" code a bit more.
-    announce_embedded_bundle
+    bundle_version = Repository.Bundles.maybe_upgrade_embedded_bundle!(embedded_bundle)
+
+    announce_embedded_bundle(bundle_version)
     Logger.info("Embedded bundle announced; starting bundle supervision tree")
 
-    bundle_version = Repository.Bundles.active_embedded_bundle_version
     Logger.info("Loading embedded `#{Cog.embedded_bundle}` bundle")
     config = bundle_version.config_file
     children = Enum.map(config["commands"], fn({command_name, command}) ->
@@ -63,14 +55,14 @@ defmodule Cog.Bundle.Embedded do
   # case, so that we can block until the bundle is installed in the
   # database. At that point, we can proceed to fire up the various
   # command processes of the bundle
-  defp announce_embedded_bundle do
+  defp announce_embedded_bundle(bundle_version) do
     Logger.info("Announcing embedded bundle")
     {:ok, %Credentials{id: relay_id}} = CredentialManager.get()
-    bundle = embedded_bundle
     message = %{"announce" => %{"relay" => relay_id,
                                 "online" => true,
                                 "snapshot" => true,
-                                "bundles" => [bundle]}}
+                                "bundles" => [%{"name" => bundle_version .bundle.name,
+                                                "version" => bundle_version.version}]}}
     :ok = GenServer.call(Cog.Relay.Relays, {:announce_embedded_relay, message}, :infinity)
   end
 
