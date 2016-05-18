@@ -1,11 +1,10 @@
 defmodule Cog.V1.RuleController do
   use Cog.Web, :controller
-
-  require Logger
-
-  alias Cog.RuleIngestion
+  alias Cog.Models.Command
   alias Cog.Models.Rule
   alias Cog.Repository.Bundles
+  alias Cog.RuleIngestion
+  require Logger
 
   plug Cog.Plug.Authentication
   plug Cog.Plug.Authorization, permission: "#{Cog.embedded_bundle}:manage_commands"
@@ -27,14 +26,13 @@ defmodule Cog.V1.RuleController do
   end
 
   def show(conn, %{"for-command" => command}) do
-    rules = Repo.all(Cog.Queries.Command.rules_for_cmd(command))
-
-    case rules do
-      [] ->
+    case Command.parse_name(command) do
+      {:error, {:command_not_found, command}} ->
         conn
         |> put_status(:unprocessable_entity)
-        |> json(%{errors: "No rules for command found"})
-      _ ->
+        |> json(%{errors: "Command #{inspect command} not found"})
+      {:ok, command} ->
+        rules = Repo.all(Ecto.assoc(command, :rules))
         render(conn, "index.json", rules: rules)
     end
   end
