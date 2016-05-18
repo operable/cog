@@ -27,10 +27,6 @@ defmodule Cog.Command.CommandResolver do
     end
   end
 
-  # TODO: This treats "user" and "site" as bundle names. While "site"
-  # really is a bundle, "user" isn't - we should add logic to bundle
-  # creation that prevents the creation of a "user" bundle.
-
   def lookup(nil, name, user, enabled_bundles) do
     case lookup("user", name, user, enabled_bundles) do
       %UserCommandAlias{}=user_alias ->

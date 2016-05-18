@@ -14,8 +14,11 @@ defmodule Cog.Repository.Bundles do
   alias Ecto.Adapters.SQL
   import Cog.UUID, only: [uuid_to_bin: 1]
 
-  @protected_bundle_names [Cog.embedded_bundle,
-                           Cog.site_namespace]
+  @reserved_bundle_names [
+    Cog.embedded_bundle,
+    Cog.site_namespace,
+    "user" # a bundle named "user" would break alias resolution
+  ]
 
   @permanent_site_bundle_version "0.0.0"
 
@@ -25,8 +28,21 @@ defmodule Cog.Repository.Bundles do
   # TODO: toggle inner transaction on or off as needed
   @doc """
   Install a new bundle version. Creates the parent bundle if necessary.
+
+  Note that the following bundle names are reserved; you cannot create
+  a bundle with one of these names:
+
+      #{inspect @reserved_bundle_names}
+
   """
-  def install(%{"name" => _name, "version" => _version, "config_file" => _config}=params) do
+  def install(%{"name" => reserved}) when reserved in @reserved_bundle_names,
+    do: {:error, {:reserved_bundle, reserved}}
+  def install(params),
+    do: __install(params)
+
+  # TODO: clean this up so we only need the config file part;
+  # everything else is redundant
+  defp __install(%{"name" => _name, "version" => _version, "config_file" => _config}=params) do
     case install_bundle(params) do
       {:ok, bundle_version} ->
         {:ok, preload(bundle_version)}
@@ -75,9 +91,9 @@ defmodule Cog.Repository.Bundles do
 
   # TODO: Only delete if the bundle version is currently
   # disabled. Only delete an entire bundle if no version is enabled.
-  def delete(%BundleVersion{bundle: %Bundle{name: protected}}, _) when protected in @protected_bundle_names,
+  def delete(%BundleVersion{bundle: %Bundle{name: protected}}, _) when protected in @reserved_bundle_names,
     do: {:error, {:protected_bundle, protected}}
-  def delete(%Bundle{name: protected}) when protected in @protected_bundle_names,
+  def delete(%Bundle{name: protected}) when protected in @reserved_bundle_names,
     do: {:error, {:protected_bundle, protected}}
   def delete(bundle_or_version),
     do: Repo.delete(bundle_or_version)
@@ -85,7 +101,7 @@ defmodule Cog.Repository.Bundles do
   ########################################################################
   # Enabled/Disabled Status
 
-  def set_bundle_version_status(%BundleVersion{bundle: %Bundle{name: protected}}, _) when protected in @protected_bundle_names,
+  def set_bundle_version_status(%BundleVersion{bundle: %Bundle{name: protected}}, _) when protected in @reserved_bundle_names,
     do: {:error, {:protected_bundle, protected}}
   def set_bundle_version_status(bundle_version, status) when status in [:enabled, :disabled],
     do: __set_bundle_version_status(bundle_version, status)
@@ -183,7 +199,7 @@ defmodule Cog.Repository.Bundles do
   # TODO: this all needs to be transactional, for maximum safety
   def maybe_upgrade_embedded_bundle!(%{"name" => bundle_name, "version" => version} = config) do
     upgrade_to_current = fn() ->
-        case install(%{"name" => bundle_name, "version" => version, "config_file" => config}) do
+        case __install(%{"name" => bundle_name, "version" => version, "config_file" => config}) do
           {:ok, latest_version} ->
             :ok = delete_outdated_embedded_version(latest_version)
             postprocess_embedded_bundle_version(latest_version)
@@ -280,9 +296,9 @@ defmodule Cog.Repository.Bundles do
   Exposed here for use mainly for consistency in tests.
   """
   def create_site_bundle do
-    install(%{"name" => Cog.site_namespace,
-              "version" => @permanent_site_bundle_version,
-              "config_file" => %{}})
+    __install(%{"name" => Cog.site_namespace,
+                "version" => @permanent_site_bundle_version,
+                "config_file" => %{}})
   end
 
   @doc """
