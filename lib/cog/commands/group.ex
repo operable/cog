@@ -42,6 +42,8 @@ defmodule Cog.Commands.Group do
         Group.Member.manage_members(req, args)
       "role" ->
         Group.Role.manage_roles(req, args)
+      "info" ->
+        Group.Info.get_info(req, args)
       nil ->
         if Helpers.flag?(req.options, "help") do
           show_usage
@@ -49,7 +51,7 @@ defmodule Cog.Commands.Group do
           Group.List.list_groups(req, args)
         end
       invalid ->
-        suggestion = Enum.max_by(["list", "create", "delete", "member"],
+        suggestion = Enum.max_by(["list", "create", "delete", "member", "role", "info"],
                                  &String.jaro_distance(&1, invalid))
         show_usage(error({:unknown_subcommand, invalid, suggestion}))
     end

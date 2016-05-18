@@ -30,6 +30,14 @@ defmodule Integration.Commands.GroupTest do
     assert member.username == "belf"
   end
 
+  test "getting group info", %{user: user} do
+    cheer = group("cheer")
+
+    [response] = send_message(user, "@bot: operable:group info cheer")
+    |> decode_payload
+    assert response.name == "cheer"
+  end
+
   test "creating a group", %{user: user} do
     [response] = send_message(user, "@bot: operable:group create test")
     |> decode_payload
