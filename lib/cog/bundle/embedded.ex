@@ -8,9 +8,9 @@ defmodule Cog.Bundle.Embedded do
 
   alias Carrier.CredentialManager
   alias Carrier.Credentials
-  alias Cog.Models.Bundle
-  alias Cog.Repo
   alias Cog.Bundle.Config
+
+  alias Cog.Repository
 
   @embedded_bundle_root "lib/cog"
 
@@ -30,16 +30,21 @@ defmodule Cog.Bundle.Embedded do
     do: Supervisor.start_link(__MODULE__, [], name: __MODULE__)
 
   def init([]) do
-    announce_embedded_bundle
+    # TODO: Should we consider additional ways to make the Cog bot appear as
+    # a relay in a special relay group? That might reduce our
+    # "special snowflake" code a bit more.
+    bundle_version = Repository.Bundles.maybe_upgrade_embedded_bundle!(embedded_bundle)
+    :ok = Repository.Bundles.ensure_site_bundle
+
+    announce_embedded_bundle(bundle_version)
     Logger.info("Embedded bundle announced; starting bundle supervision tree")
 
-    bundle = Repo.get_by!(Bundle, name: Cog.embedded_bundle)
     Logger.info("Loading embedded `#{Cog.embedded_bundle}` bundle")
-    config = bundle.config_file
+    config = bundle_version.config_file
     children = Enum.map(config["commands"], fn({command_name, command}) ->
       name = command_name
       module = Module.concat([command["module"]])
-      worker(Cog.Command.GenCommand, [bundle.name, name, module, []], id: module)
+      worker(Cog.Command.GenCommand, [bundle_version.bundle.name, name, module, []], id: module)
     end)
     supervise(children, strategy: :rest_for_one, max_restarts: 5, max_seconds: 60)
   end
@@ -51,28 +56,26 @@ defmodule Cog.Bundle.Embedded do
   # case, so that we can block until the bundle is installed in the
   # database. At that point, we can proceed to fire up the various
   # command processes of the bundle
-  defp announce_embedded_bundle do
+  defp announce_embedded_bundle(bundle_version) do
     Logger.info("Announcing embedded bundle")
     {:ok, %Credentials{id: relay_id}} = CredentialManager.get()
-    bundle = embedded_bundle
     message = %{"announce" => %{"relay" => relay_id,
                                 "online" => true,
                                 "snapshot" => true,
-                                "bundles" => [bundle]}}
+                                "bundles" => [%{"name" => bundle_version .bundle.name,
+                                                "version" => bundle_version.version}]}}
     :ok = GenServer.call(Cog.Relay.Relays, {:announce_embedded_relay, message}, :infinity)
   end
 
   defp embedded_bundle do
-    config = Config.gen_config(Cog.embedded_bundle, cog_modules, @embedded_bundle_root)
+    version = Application.spec(:cog, :vsn) |> IO.chardata_to_string
+    modules = Application.spec(:cog, :modules)
+
+    config = Config.gen_config(Cog.embedded_bundle,
+                               version,
+                               modules,
+                               @embedded_bundle_root)
     update_in(config, ["permissions"], &Enum.concat(&1, @extra_permissions))
   end
 
-  defp cog_modules,
-    do: Keyword.fetch!(cog_app, :modules)
-
-  defp cog_app do
-    app_file = Application.app_dir(:cog, "ebin/cog.app")
-    {:ok, [{:application, :cog, app}]} = :file.consult(app_file)
-    app
-  end
 end

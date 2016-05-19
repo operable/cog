@@ -1,7 +1,7 @@
 defmodule Cog.ErrorResponse do
   alias Piper.Permissions.Ast
   alias Cog.Models.Bundle
-  alias Cog.Models.Command
+  alias Cog.Models.CommandVersion
 
   def render({:parse_error, msg}) when is_binary(msg),
     do: "Whoops! An error occurred. " <> msg
@@ -19,8 +19,8 @@ defmodule Cog.ErrorResponse do
     do: "Whoops! An error occurred. No Cog Relays supporting the `#{name}` bundle are currently online"
   def render({:disabled_bundle, %Bundle{name: name}}),
     do: "Whoops! An error occurred. The #{name} bundle is currently disabled"
-  def render({:timeout, %Command{}=command}) do
-    name = Command.full_name(command)
+  def render({:timeout, %CommandVersion{}=command_version}) do
+    name = CommandVersion.full_name(command_version)
     "The #{name} command timed out"
   end
   def render({:template_rendering_error, {error, template, adapter}}),

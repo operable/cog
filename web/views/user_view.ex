@@ -35,8 +35,7 @@ defmodule Cog.V1.UserView do
   defp preload_associations(user) do
     Cog.Repo.preload(user, [
       chat_handles: [:chat_provider],
-      direct_group_memberships: [roles: [permissions:
-          :namespace]]
+      direct_group_memberships: [roles: [permissions: :bundle]]
     ])
   end
 end

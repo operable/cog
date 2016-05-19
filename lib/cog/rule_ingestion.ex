@@ -1,6 +1,6 @@
 defmodule Cog.RuleIngestion do
 
-  defstruct rule_text: nil, expr: nil, command: nil, permissions: nil, all_permissions: [], errors: []
+  defstruct rule_text: nil, expr: nil, bundle_version: nil, command: nil, permissions: nil, all_permissions: [], errors: []
 
   alias Piper.Permissions.Parser
   alias Piper.Permissions.Ast
@@ -8,6 +8,14 @@ defmodule Cog.RuleIngestion do
   alias Cog.Models.Permission
   alias Cog.Queries
   alias Cog.Repo
+
+  require Ecto.Query
+  import Ecto.Query, only: [from: 2]
+
+  # TODO: consider having the bundle version here default to the site
+  # bundle version automatically.
+
+  # TODO: this code should really be in a rule repository
 
   @doc """
   Take the text of a rule and store it in the database as a Rule model.
@@ -27,14 +35,14 @@ defmodule Cog.RuleIngestion do
   Returns `{:ok, Rule}` or an error tuple with a list of all errors
   encountered in processing.
   """
-  def ingest(rule_text, start_txn \\ true)
-  def ingest(rule_text, true) do
+  def ingest(rule_text, bundle_version, start_txn \\ true)
+  def ingest(rule_text, bundle_version, true) do
     Repo.transaction(fn() ->
-      ingest(rule_text, false)
+      ingest(rule_text, bundle_version, false)
     end)
   end
-  def ingest(rule_text, false) do
-    case %__MODULE__{rule_text: rule_text}
+  def ingest(rule_text, bundle_version, false) do
+    case %__MODULE__{rule_text: rule_text, bundle_version: bundle_version}
       |> validate_rule_text
       |> validate_command
       |> validate_permissions
@@ -113,14 +121,26 @@ defmodule Cog.RuleIngestion do
   # database calls, and just return all the errors.
   def ingest_rule(%__MODULE__{expr: %Ast.Rule{}=expr,
                               command: command,
+                              bundle_version: bundle_version,
                               permissions: permissions,
                               errors: []}) do
-    case Rule.insert_new(command, %{parse_tree: Parser.rule_to_json!(expr),
-                                    score: expr.score}) do
+
+    # Need to retrieve-or-insert this rule, then link it to the bundle
+    # version.
+    case retrieve_or_insert(command, expr) do
       {:ok, rule} ->
+
         Enum.each(permissions, fn(p) ->
+          # Technically this only needs to happen when you're
+          # inserting a brand new rule (as opposed to processing a
+          # rule that already exists because it was installed with a
+          # previous version of a bundle). We're OK now, because the
+          # internal logic of `grant_to` only inserts if not present.
           :ok = Permittable.grant_to(rule, p)
         end)
+
+        link(rule, bundle_version)
+
         {:ok, rule}
       {:error, %Ecto.Changeset{}=changeset} ->
         {:error, changeset.errors}
@@ -128,5 +148,25 @@ defmodule Cog.RuleIngestion do
   end
   def ingest_rule(%__MODULE__{errors: errors}),
     do: {:error, errors}
+
+  ########################################################################
+
+  defp link(rule, bundle_version),
+    do: Cog.Models.JoinTable.associate(rule, bundle_version)
+
+  defp retrieve_or_insert(command, expr) do
+    command_id = command.id
+    parse_tree = Parser.rule_to_json!(expr)
+
+    case Repo.one(from r in Rule,
+                  where: r.command_id == ^command_id,
+                  where: r.parse_tree == ^parse_tree) do
+      nil ->
+        Rule.insert_new(command, %{parse_tree: parse_tree,
+                                   score: expr.score})
+      %Rule{}=rule ->
+        {:ok, rule}
+    end
+  end
 
 end

@@ -19,6 +19,7 @@ defmodule Cog.Models do
   defmacro __using__(_) do
     quote do
       alias Cog.Models.Bundle
+      alias Cog.Models.BundleVersion
       alias Cog.Models.ChatProvider
       alias Cog.Models.ChatHandle
       alias Cog.Models.User
@@ -36,6 +37,7 @@ defmodule Cog.Models do
       alias Cog.Models.Role
       alias Cog.Models.UserRole
       alias Cog.Models.Command
+      alias Cog.Models.CommandVersion
       alias Cog.Models.CommandOption
       alias Cog.Models.Rule
       alias Cog.Models.RulePermission

@@ -104,4 +104,3 @@ defmodule Cog.V1.UserController do
     end
   end
 end
-

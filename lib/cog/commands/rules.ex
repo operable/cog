@@ -35,6 +35,7 @@ defmodule Cog.Commands.Rules do
   require Logger
 
   defstruct [req: nil,
+             destination_bundle_version: nil,
              action: nil,
              permission: nil,
              command: nil,
@@ -60,7 +61,7 @@ defmodule Cog.Commands.Rules do
   # acceptable before executing the action
   @spec validate(%Request{}) :: %__MODULE__{}
   defp validate(req) do
-    %__MODULE__{req: req}
+    %__MODULE__{req: req, destination_bundle_version: Cog.Repository.Bundles.site_bundle_version}
     |> verify_one_action
     |> validate_action
     |> validate_input
@@ -191,7 +192,7 @@ defmodule Cog.Commands.Rules do
   defp execute(%{errors: [_|_]}=state),
     do: state
   defp execute(%__MODULE__{action: {:add, :expression}}=state) do
-    case Cog.RuleIngestion.ingest(state.expression) do
+    case Cog.RuleIngestion.ingest(state.expression, state.destination_bundle_version) do
       {:ok, rule} ->
         %{state | rules: [rule]}
       {:error, errors} ->
@@ -199,7 +200,7 @@ defmodule Cog.Commands.Rules do
     end
   end
   defp execute(%__MODULE__{action: {:add, :assemble_rule}}=state) do
-    case Cog.RuleIngestion.ingest("when command is #{state.command} must have #{state.permission}") do
+    case Cog.RuleIngestion.ingest("when command is #{state.command} must have #{state.permission}", state.destination_bundle_version) do
       {:ok, rule} ->
         %{state | rules: [rule]}
       {:error, errors} ->

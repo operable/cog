@@ -9,10 +9,10 @@ defmodule Cog.Relay.Relays do
   use GenServer
 
   alias Carrier.Messaging
-  alias Cog.Models.Bundle
   alias Cog.Models.Relay
   alias Cog.Repo
   alias Cog.Relay.Util
+  alias Cog.Models.BundleVersion
 
   @relays_discovery_topic "bot/relays/discover"
 
@@ -26,9 +26,9 @@ defmodule Cog.Relay.Relays do
   Returns the relay's ID, or `nil` if no relay is currently running
   `bundle`.
   """
-  @spec pick_one(String.t) :: String.t | nil
-  def pick_one(bundle),
-    do: GenServer.call(__MODULE__, {:random_relay, bundle}, :infinity)
+  @spec pick_one(String.t, String.t) :: String.t | nil
+  def pick_one(bundle, version),
+    do: GenServer.call(__MODULE__, {:random_relay, bundle, version}, :infinity)
 
   def drop_bundle(bundle) do
     GenServer.call(__MODULE__, {:drop_bundle, bundle}, :infinity)
@@ -52,13 +52,14 @@ defmodule Cog.Relay.Relays do
     GenServer.call(__MODULE__, {:drop_relay, relay}, :infinity)
   end
 
+  # TODO: Consider just passing a BundleVersion model here instead
   @doc """
   Returns the IDs of all Relays currently running `bundle_name`. If no
   Relays are running the bundle, an empty list is returned.
   """
-  @spec relays_running(String.t) :: [String.t]
-  def relays_running(bundle_name),
-    do: GenServer.call(__MODULE__, {:relays_running, bundle_name}, :infinity)
+  @spec relays_running(String.t, String.t) :: [String.t]
+  def relays_running(bundle_name, version),
+    do: GenServer.call(__MODULE__, {:relays_running, bundle_name, version}, :infinity)
 
   def init(_) do
     case Messaging.Connection.connect() do
@@ -84,11 +85,11 @@ defmodule Cog.Relay.Relays do
     # bundle is recorded in the database before proceeding.
     #
     # See `Cog.Bundle.Embedded` for more.
-    new_state = process_announcement(announcement, state, true)
+    new_state = process_embedded_announcement(announcement, state)
     {:reply, :ok, new_state}
   end
-  def handle_call({:random_relay, bundle}, _from, state),
-    do: {:reply, random_relay(state.tracker, bundle), state}
+  def handle_call({:random_relay, bundle, version}, _from, state),
+    do: {:reply, random_relay(state.tracker, bundle, version), state}
   def handle_call({:drop_bundle, bundle}, _from, state) do
     tracker = Tracker.drop_bundle(state.tracker, bundle)
     {:reply, :ok, %{state | tracker: tracker}}
@@ -105,8 +106,8 @@ defmodule Cog.Relay.Relays do
     tracker = remove_relay(state.tracker, relay.id)
     {:reply, :ok, %{state | tracker: tracker}}
   end
-  def handle_call({:relays_running, bundle_name} , _from, state),
-    do: {:reply, Tracker.relays(state.tracker, bundle_name), state}
+  def handle_call({:relays_running, bundle_name, version} , _from, state),
+    do: {:reply, Tracker.relays(state.tracker, bundle_name, version), state}
 
   def handle_info({:publish, @relays_discovery_topic, message}, state) do
     case Poison.decode(message) do
@@ -123,26 +124,28 @@ defmodule Cog.Relay.Relays do
 
   ########################################################################
 
-  defp process_announcement(announcement, %__MODULE__{tracker: tracker}=state, internal \\ false) do
-    {success_bundles, failed_bundles} = announcement
+  defp process_embedded_announcement(announcement, %__MODULE__{tracker: tracker}=state) do
+    [%{"name" => name, "version" => version}] = announcement["bundles"]
+    tracker = update_tracker(announcement, tracker, [{name, version}], true)
+    %{state | tracker: tracker}
+  end
+
+  defp process_announcement(announcement, %__MODULE__{tracker: tracker}=state) do
+    {success_bundle_versions, failed_bundles} = announcement
     |> Map.get("bundles", [])
-    |> Enum.map(&(lookup_or_install(&1, internal)))
+    |> Enum.map(&Cog.Repository.Bundles.verify_version_exists/1) # TODO: this is really just a lookup, now; we might be able to simplify this logic
     |> Enum.partition(&Util.is_ok?/1)
     |> Util.unwrap_partition_results
 
-    tracker = update_tracker(announcement, tracker, success_bundles, internal)
+    specs = Enum.map(success_bundle_versions, &version_spec/1)
+    tracker = update_tracker(announcement, tracker, specs, false)
 
-    case Map.fetch(announcement, "reply_to")  do
-      :error ->
-        :ok # The embedded bundle has no need for a reply
-      {:ok, reply_to} ->
-        # If the message has a `reply_to` field, it must also have an
-        # `announcement_id` field
-        announcement_id = Map.fetch!(announcement, "announcement_id")
-        receipt = receipt(announcement_id, failed_bundles)
-        Logger.debug("Sending receipt to #{reply_to}: #{inspect receipt}")
-        Messaging.Connection.publish(state.mq_conn, receipt, routed_by: reply_to)
-    end
+    reply_to        = Map.fetch!(announcement, "reply_to")
+    announcement_id = Map.fetch!(announcement, "announcement_id")
+    receipt = receipt(announcement_id, failed_bundles)
+    Logger.debug("Sending receipt to #{reply_to}: #{inspect receipt}")
+    Messaging.Connection.publish(state.mq_conn, receipt, routed_by: reply_to)
+
     %{state | tracker: tracker}
   end
 
@@ -151,13 +154,17 @@ defmodule Cog.Relay.Relays do
   defp receipt(announcement_id, failed_bundles),
     do: %{"announcement_id" => announcement_id, "status" => "failed", "bundles" => failed_bundles}
 
-  defp update_tracker(announcement, tracker, success_bundles, internal) do
+  defp update_tracker(announcement, tracker, specs, internal) do
     relay_id = Map.fetch!(announcement, "relay")
 
     online_status = case Map.fetch!(announcement, "online") do
                       true -> :online
                       false -> :offline
                     end
+
+    # TODO: just compare with the ID from credential manager; if it
+    # matches, it's the bot itself, and it's always enabled. That lets
+    # us dispense with the `internal` boolean
 
     enabled_status = if internal || relay_enabled?(relay_id) do
                        :enabled
@@ -174,60 +181,31 @@ defmodule Cog.Relay.Relays do
       {:offline, _} ->
         remove_relay(tracker, relay_id)
       {:online, :disabled} ->
-        load_bundles(snapshot_status, tracker, relay_id, success_bundles)
+        load_bundles(snapshot_status, tracker, relay_id, specs)
         |> disable_relay(relay_id)
       {:online, :enabled} ->
-        load_bundles(snapshot_status, tracker, relay_id, success_bundles)
+        load_bundles(snapshot_status, tracker, relay_id, specs)
         |> enable_relay(relay_id)
     end
   end
 
-  # If `config` exists in the database (by name), retrieves the
-  # database record. If not, installs the bundle and returns the
-  # database record.
-  defp lookup_or_install(%{"name" => name, "version" => version} = config, internal) do
-    case Repo.get_by(Bundle, name: name) do
-      %Bundle{version: ^version}=bundle ->
-        {:ok, bundle}
-      %Bundle{version: installed_version} ->
-        Logger.error("Error! Unable to install bundle #{inspect name} because version #{installed_version} already installed")
-        {:error, name}
-      nil ->
-        case internal do
-          # This is the embedded bundle
-          true ->
-            Logger.info("Installing bundle: #{inspect name}")
-            case Cog.Bundle.Install.install_bundle(%{name: name, version: version, config_file: config}) do
-              {:ok, bundle} ->
-                {:ok, bundle}
-              {:error, error} ->
-                Logger.error("Error! Unable to install bundle #{inspect name}: #{inspect error}")
-                {:error, name}
-            end
-          false ->
-            # TODO: Pass Relay ID into lookup_or_install/2 so we can generate a better error message
-            Logger.error("Relay announced unknown command bundle #{name}")
-            {:error, name}
-        end
-    end
-  end
-
-  defp random_relay(tracker, bundle) do
-    case Tracker.relays(tracker, bundle) do
+  defp random_relay(tracker, bundle, version) do
+    case Tracker.relays(tracker, bundle, version) do
       [] -> nil
       relays -> Enum.random(relays)
     end
   end
 
-  defp load_bundles(:incremental, tracker, relay_id, success_bundles) do
-    bundle_names = Enum.map(success_bundles, &Map.get(&1, :name)) # Just for logging purposes
-    Logger.info("Incrementally adding bundles for Relay #{relay_id}: #{inspect bundle_names}")
-    Tracker.add_bundles_for_relay(tracker, relay_id, success_bundles)
+  defp version_spec(%BundleVersion{}=bv),
+    do: {bv.bundle.name, bv.version}
+
+  defp load_bundles(:incremental, tracker, relay_id, specs) do
+    Logger.info("Incrementally adding bundles for Relay #{relay_id}: #{inspect specs}")
+    Tracker.add_bundle_versions_for_relay(tracker, relay_id, specs)
   end
-  defp load_bundles(:snapshot, tracker, relay_id, success_bundles) do
-    bundle_names = Enum.map(success_bundles, &Map.get(&1, :name)) # Just for logging purposes
-    Logger.info("Setting bundles list for Relay #{relay_id}: #{inspect bundle_names}")
-    Tracker.set_bundles_for_relay(tracker, relay_id, success_bundles)
+  defp load_bundles(:snapshot, tracker, relay_id, specs) do
+    Logger.info("Setting bundles list for Relay #{relay_id}: #{inspect specs}")
+    Tracker.set_bundle_versions_for_relay(tracker, relay_id, specs)
   end
 
   defp enable_relay(tracker, relay_id) do

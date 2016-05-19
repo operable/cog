@@ -14,6 +14,8 @@ defmodule Cog.Model do
       alias Cog.Repo
       use Ecto.Model
       use Cog.Models.EctoJson
+      alias Cog.Models.Types.VersionTriple
+
       import Ecto.Changeset
 
       # We have made a decision to use UUIDs as primary keys to

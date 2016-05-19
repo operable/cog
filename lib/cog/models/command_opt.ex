@@ -27,8 +27,9 @@ end
 defmodule Cog.Models.CommandOption do
   require Logger
   use Cog.Model
+
   alias Ecto.Changeset
-  alias Cog.Models.Command
+  alias Cog.Models.CommandVersion
   alias Cog.Models.CommandOptionType
 
   schema "command_options" do
@@ -38,12 +39,12 @@ defmodule Cog.Models.CommandOption do
     field :short_flag, :string
     field :long_flag, :string
     field :desc, :string
-    belongs_to :command, Cog.Models.Command
 
+    belongs_to :command_version, Cog.Models.CommandVersion
     belongs_to :option_type, Cog.Models.CommandOptionType
   end
 
-  @required_fields ~w(name required command_id)
+  @required_fields ~w(name required)
   @optional_fields ~w(desc type option_type_id short_flag long_flag)
 
   summary_fields [:id, :name, :required]
@@ -56,7 +57,7 @@ defmodule Cog.Models.CommandOption do
 
   Does _not_ insert anything into the database.
   """
-  def build_new(%Command{}=command, params) do
+  def build_new(%CommandVersion{}=command, params) do
     command
     |> Ecto.Model.build(:options)
     |> changeset(params)
@@ -68,10 +69,10 @@ defmodule Cog.Models.CommandOption do
 
   Use `build_new/2` instead.
   """
-  def insert_new(%Command{}=command, params) do
+  def insert_new(%CommandVersion{}=command_version, params) do
     Logger.warn "#{inspect __MODULE__}.insert_new/2 is deprecated! Favor `build_new/2` instead"
     %__MODULE__{}
-    |> changeset(Map.put(params, :command_id, command.id))
+    |> changeset(Map.put(params, :command_version_id, command_version.id))
     |> Repo.insert
   end
 

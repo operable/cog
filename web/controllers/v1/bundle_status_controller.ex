@@ -29,33 +29,33 @@ defmodule Cog.V1.BundleStatusController do
   use Cog.Web, :controller
 
   require Logger
-  alias Cog.Repo
   alias Cog.Models.Bundle
-  alias Cog.Queries
+  alias Cog.Models.BundleVersion
+  alias Cog.Repository
 
   plug Cog.Plug.Authentication
   plug Cog.Plug.Authorization, permission: "#{Cog.embedded_bundle}:manage_commands"
 
   def show(conn, %{"id" => id}) do
-    case Repo.one(Queries.Bundles.for_id(id)) do
+    case Repository.Bundles.bundle(id) do
+      %Bundle{}=bundle ->
+        json(conn, Repository.Bundles.status(bundle))
       nil ->
         send_resp(conn, 404, Poison.encode!(%{error: "Bundle #{id} not found"}))
-      bundle ->
-        json(conn, Bundle.Status.current(bundle))
     end
   end
-  def manage_status(conn, %{"id" => id, "status" => desired_status}) when desired_status in ["enabled", "disabled"] do
-    case Repo.one(Queries.Bundles.for_id(id)) do
-      %Bundle{}=bundle ->
-        case Bundle.Status.set(bundle, String.to_existing_atom(desired_status)) do
-          {:ok, bundle} ->
-            result = Bundle.Status.current(bundle)
-            json(conn, result)
-          {:error, :embedded_bundle} ->
-            send_resp(conn, 400, Poison.encode!(%{error: "Cannot modify the status of the embedded bundle!"}))
+
+  def set_status(conn, %{"id" => id, "status" => desired_status}) when desired_status in ["enabled", "disabled"] do
+    case Cog.Repository.Bundles.version(id) do
+      %BundleVersion{}=bundle_version ->
+        case Cog.Repository.Bundles.set_bundle_version_status(bundle_version, String.to_existing_atom(desired_status)) do
+          :ok ->
+            json(conn, Repository.Bundles.status(bundle_version.bundle))
+          {:error, {:protected_bundle, name}} ->
+            send_resp(conn, 400, Poison.encode!(%{error: "Cannot modify the status of the #{name} bundle!"}))
         end
       nil ->
-        send_resp(conn, 404, Poison.encode!(%{error: "Bundle #{id} not found"}))
+        send_resp(conn, 404, Poison.encode!(%{error: "Bundle version #{id} not found"}))
     end
   end
   def manage_status(conn, %{"status" => bad_status}),

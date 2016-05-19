@@ -185,33 +185,39 @@ defmodule Cog.Command.Pipeline.Executor do
     do: succeed_with_response(state)
 
   def execute_plan(:timeout, %__MODULE__{plans: [current_plan|remaining_plans], request: request, user: user}=state) do
-    bundle = current_plan.command.bundle
-    name   = current_plan.command.name
+    bundle  = current_plan.command_version.command.bundle
+    name    = current_plan.command_version.command.name
+    version = current_plan.command_version.bundle_version.version
 
-    if bundle.enabled do
-      case Cog.Relay.Relays.pick_one(bundle.name) do
-        nil ->
-          fail_pipeline_with_error({:no_relays, bundle}, state)
-        relay ->
-          topic = "/bot/commands/#{relay}/#{bundle.name}/#{name}"
-          reply_to_topic = "#{state.topic}/reply"
-          req = request_for_plan(current_plan, request, user, reply_to_topic, state.service_token)
-          updated_state =  %{state | current_plan: current_plan, plans: remaining_plans}
+    # TODO: Previously, we'd do a test here for whether the bundle was
+    # enabled or not. Now, we'll never make it this far if the bundle's not
+    # enabled... which means we need to handle the disabled bundle
+    # error higher up.
+    #
+    #   fail_pipeline_with_error({:disabled_bundle, bundle}, state)
+    #
 
-          dispatch_event(updated_state, relay)
-          Connection.publish(updated_state.mq_conn, Cog.Command.Request.encode!(req), routed_by: topic)
+    case Cog.Relay.Relays.pick_one(bundle.name, version) do
+      nil ->
+        fail_pipeline_with_error({:no_relays, bundle}, state)
+      relay ->
+        topic = "/bot/commands/#{relay}/#{bundle.name}/#{name}"
+        reply_to_topic = "#{state.topic}/reply"
+        req = request_for_plan(current_plan, request, user, reply_to_topic, state.service_token)
+        updated_state =  %{state | current_plan: current_plan, plans: remaining_plans}
 
-          {:next_state, :wait_for_command, updated_state, @command_timeout}
-      end
-    else
-      fail_pipeline_with_error({:disabled_bundle, bundle}, state)
+        dispatch_event(updated_state, relay)
+        Connection.publish(updated_state.mq_conn, Cog.Command.Request.encode!(req), routed_by: topic)
+
+        {:next_state, :wait_for_command, updated_state, @command_timeout}
     end
+
   end
   def execute_plan(:timeout, %__MODULE__{plans: []}=state),
     do: {:next_state, :plan_next_invocation, state, 0}
 
   def wait_for_command(:timeout, state),
-    do: fail_pipeline_with_error({:timeout, state.current_plan.command}, state)
+    do: fail_pipeline_with_error({:timeout, state.current_plan.command_version}, state)
 
   def handle_info({:publish, topic, message}, :wait_for_command, state) do
     reply_topic = "#{state.topic}/reply" # TODO: bake this into state for easier pattern-matching?
@@ -280,14 +286,14 @@ defmodule Cog.Command.Pipeline.Executor do
   # adapter/destination it is to be sent to, and send it to each.
   defp respond(%__MODULE__{}=state) do
     output = state.output
-    bundle = state.current_plan.command.bundle
+    bundle_version = state.current_plan.command_version.bundle_version
     by_output_level = Enum.group_by(state.destinations, &(&1.output_level))
 
     # Render full output first
     full = Map.get(by_output_level, :full, [])
     adapters = full |> Enum.map(&(&1.adapter)) |> Enum.uniq
 
-    case render_for_adapters(adapters, bundle, output) do
+    case render_for_adapters(adapters, bundle_version, output) do
       {:error, {error, template, adapter}} ->
         # TODO: need to send error, THEN fail at the end, since we may
         # need to do it for status-only destinations
@@ -342,12 +348,12 @@ defmodule Cog.Command.Pipeline.Executor do
   end
 
   # Return a map of adapter -> rendered message
-  @spec render_for_adapters([adapter_name], %Cog.Models.Bundle{}, List.t) ::
+  @spec render_for_adapters([adapter_name], %Cog.Models.BundleVersion{}, List.t) ::
                            %{adapter_name => String.t} |
                            {:error, {term, term, term}} # {error, template, adapter}
-  defp render_for_adapters(adapters, bundle, output) do
+  defp render_for_adapters(adapters, bundle_version, output) do
     Enum.reduce_while(adapters, %{}, fn(adapter, acc) ->
-      case render_templates(adapter, bundle, output) do
+      case render_templates(adapter, bundle_version, output) do
         {:error, _}=error ->
           {:halt, error}
         message ->
@@ -358,9 +364,9 @@ defmodule Cog.Command.Pipeline.Executor do
 
   # For a specific adapter, render each output, concatenating all
   # results into a single response string
-  defp render_templates(adapter, bundle, output) do
+  defp render_templates(adapter, bundle_version, output) do
     rendered_templates = Enum.reduce_while(output, [], fn({context, template}, acc) ->
-      case render_template(adapter, bundle, template, context) do
+      case render_template(adapter, bundle_version, template, context) do
         {:ok, result} ->
           {:cont, [result|acc]}
         {:error, error} ->
@@ -378,12 +384,12 @@ defmodule Cog.Command.Pipeline.Executor do
     end
   end
 
-  defp render_template(adapter, bundle, template, context) do
-    case Template.render(adapter, bundle.id, template, context) do
+  defp render_template(adapter, bundle_version, template, context) do
+    case Template.render(adapter, bundle_version.id, template, context) do
       {:ok, output} ->
         {:ok, output}
       {:error, :template_not_found} ->
-        Logger.warn("The template `#{template}` was not found for adapter `#{adapter}` in bundle `#{bundle.name}`; falling back to the json template")
+        Logger.warn("The template `#{template}` was not found for adapter `#{adapter}` in bundle `#{bundle_version.bundle.name} #{bundle_version.version}`; falling back to the json template")
         Template.render(adapter, "json", context)
       {:error, error} ->
         {:error, error}
@@ -608,7 +614,7 @@ defmodule Cog.Command.Pipeline.Executor do
     user      = Cog.Models.EctoJson.render(user)
 
     %Cog.Command.Request{
-      command:         Cog.Models.Command.full_name(plan.command),
+      command:         Cog.Models.CommandVersion.full_name(plan.command_version),
       options:         plan.options,
       args:            plan.args,
       cog_env:         plan.cog_env,

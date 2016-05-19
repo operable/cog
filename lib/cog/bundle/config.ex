@@ -79,6 +79,11 @@ defmodule Cog.Bundle.Config do
       do: Module.safe_concat("Elixir", module_name)
   end
 
+  # TODO: This entire module is now effectively one-use private code,
+  # as it is only used to generate the embedded bundle's config. We
+  # can consider moving this into Cog.Bundle.Embedded, as well as
+  # tailoring the code toward the embedded bundle. For instance, all
+  # the arguments for `gen_config` will always be known.
   @doc """
   Generate a bundle configuration via code introspection. Returns a
   map representing the configuration, ready for turning into JSON.
@@ -89,11 +94,11 @@ defmodule Cog.Bundle.Config do
   - `modules`: a list of modules to be included in the bundle
 
   """
-  def gen_config(name, modules, work_dir) do
+  def gen_config(name, version, modules, work_dir) do
     # We create single key/value pair maps for each
     # top-level key in the overall configuration, and then merge all
     # those maps together.
-    Enum.reduce([gen_bundle(name),
+    Enum.reduce([gen_bundle(name, version),
                  gen_commands(modules),
                  gen_permissions(name, modules),
                  gen_templates(work_dir)],
@@ -101,11 +106,10 @@ defmodule Cog.Bundle.Config do
   end
 
   # Generate top-level bundle configuration
-  defp gen_bundle(name) do
-    # TODO: Don't hardcode the version
+  defp gen_bundle(name, version) do
     %{"name" => name,
       "type" => "elixir",
-      "version" => "0.0.1"}
+      "version" => version}
   end
 
   # Generate the union of all permissions required by commands in the

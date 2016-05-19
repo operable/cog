@@ -250,7 +250,7 @@ defmodule Cog.V1.UserControllerTest do
                                           "name" => role.name,
                                           "permissions" => [%{"id" => permission.id,
                                                               "name" => "world",
-                                                              "namespace" => "site"}]
+                                                              "bundle" => "site"}]
                             }]
                         }],
               "chat_handles" => []

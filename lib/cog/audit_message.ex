@@ -1,6 +1,6 @@
 defmodule Cog.AuditMessage do
   alias Cog.Models.Bundle
-  alias Cog.Models.Command
+  alias Cog.Models.CommandVersion
   alias Cog.ErrorResponse
 
   # Turn an error tuple into a message intended for the audit log
@@ -25,8 +25,8 @@ defmodule Cog.AuditMessage do
     do: response.status_message || response.body["message"]
   def render({:template_rendering_error, {error, template, adapter}}, _request),
     do: "Error rendering template '#{template}' for '#{adapter}': #{inspect error}"
-  def render({:timeout, %Command{}=command}, _request) do
-    name = Command.full_name(command)
+  def render({:timeout, %CommandVersion{}=command}, _request) do
+    name = CommandVersion.full_name(command)
     "Timed out waiting on #{name} to reply"
   end
   def render({:no_rule, current_invocation}, _request),

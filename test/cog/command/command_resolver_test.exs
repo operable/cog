@@ -2,7 +2,7 @@ defmodule Cog.Command.CommandResolver.Test do
   use Cog.ModelCase
 
   alias Cog.Command.CommandResolver
-  alias Cog.Models.Command
+  alias Cog.Models.CommandVersion
   alias Cog.Models.UserCommandAlias
   alias Cog.Models.SiteCommandAlias
   alias Cog.Repo
@@ -11,7 +11,7 @@ defmodule Cog.Command.CommandResolver.Test do
     user = user("testuser")
 
     assert_command("operable", "echo",
-                   CommandResolver.lookup("operable", "echo", user))
+                   CommandResolver.lookup("operable", "echo", user, enabled_bundles))
   end
 
   test "an already-namespaced user-alias is resolved as itself" do
@@ -20,7 +20,7 @@ defmodule Cog.Command.CommandResolver.Test do
 
     assert_user_alias(user,
                       "echo 'this is my alias'",
-                      CommandResolver.lookup("user", "my-alias", user))
+                      CommandResolver.lookup("user", "my-alias", user, enabled_bundles))
   end
 
   test "an already-namespaced site-alias is resolved as itself" do
@@ -28,7 +28,7 @@ defmodule Cog.Command.CommandResolver.Test do
     site_alias("my-site-alias", "echo 'this is a site alias'")
 
     assert_site_alias("echo 'this is a site alias'",
-                      CommandResolver.lookup("site", "my-site-alias", user))
+                      CommandResolver.lookup("site", "my-site-alias", user, enabled_bundles))
   end
 
   test "a user alias is preferred over a site alias or command of the same name" do
@@ -40,7 +40,7 @@ defmodule Cog.Command.CommandResolver.Test do
 
     assert_user_alias(user,
                       "echo 'user alias'",
-                      CommandResolver.lookup(nil, alias_name, user))
+                      CommandResolver.lookup(nil, alias_name, user, enabled_bundles))
   end
 
   test "a site alias is preferred over a command of the same name (in absence of a user alias)" do
@@ -49,14 +49,14 @@ defmodule Cog.Command.CommandResolver.Test do
     site_alias(alias_name, "echo 'site alias'")
 
     assert_site_alias("echo 'site alias'",
-                      CommandResolver.lookup(nil, alias_name, user))
+                      CommandResolver.lookup(nil, alias_name, user, enabled_bundles))
   end
 
   test "a command is preferred when no aliases of the same name are present" do
     user = user("testuser")
 
     assert_command("operable", "echo",
-                   CommandResolver.lookup(nil, "echo", user))
+                   CommandResolver.lookup(nil, "echo", user, enabled_bundles))
   end
 
   test "user aliases are not shared" do
@@ -67,10 +67,10 @@ defmodule Cog.Command.CommandResolver.Test do
 
     assert_user_alias(user_with_alias,
                       "echo 'from user with alias'",
-                      CommandResolver.lookup(nil, "echo", user_with_alias))
+                      CommandResolver.lookup(nil, "echo", user_with_alias, enabled_bundles))
 
     assert_command("operable", "echo",
-                   CommandResolver.lookup(nil, "echo", user_without_alias))
+                   CommandResolver.lookup(nil, "echo", user_without_alias, enabled_bundles))
   end
 
   test "user aliases are distinct across users, even with the same name" do
@@ -83,11 +83,11 @@ defmodule Cog.Command.CommandResolver.Test do
 
     assert_user_alias(user1,
                       "echo 'hello from user1'",
-                      CommandResolver.lookup(nil, alias_name, user1))
+                      CommandResolver.lookup(nil, alias_name, user1, enabled_bundles))
 
     assert_user_alias(user2,
                       "echo 'hello from user2, who clearly writes better aliases'",
-                      CommandResolver.lookup(nil, alias_name, user2))
+                      CommandResolver.lookup(nil, alias_name, user2, enabled_bundles))
   end
 
   test "site aliases are shared" do
@@ -97,10 +97,10 @@ defmodule Cog.Command.CommandResolver.Test do
     site_alias(alias_name, "echo 'from site'")
 
     assert_site_alias("echo 'from site'",
-                      CommandResolver.lookup(nil, alias_name, user1))
+                      CommandResolver.lookup(nil, alias_name, user1, enabled_bundles))
 
     assert_site_alias("echo 'from site'",
-                      CommandResolver.lookup(nil, alias_name, user2))
+                      CommandResolver.lookup(nil, alias_name, user2, enabled_bundles))
   end
 
   test "a command in more than one bundle is ambiguous absent any explicit qualification" do
@@ -113,22 +113,26 @@ defmodule Cog.Command.CommandResolver.Test do
         "echo" => %{
           "module" => "Cog.Commands.Echo",
           "documentation" => "does stuff"}}}
-    Cog.Bundle.Install.install_bundle(%{name: "test_bundle",
-                                        version: "0.0.1",
-                                        config_file: config})
+    Cog.Repository.Bundles.install(%{"name" => "test_bundle",
+                                     "version" => "0.0.1",
+                                     "config_file" => config})
     user = user("testuser")
 
-    result = CommandResolver.lookup(nil, "echo", user)
+    result = CommandResolver.lookup(nil, "echo", user, enabled_bundles)
     assert result == {:ambiguous, ["operable", "test_bundle"]}
   end
 
   test "no aliases and no command mean nothing is found!" do
     user = user("testuser")
-    result = CommandResolver.lookup(nil, "there_is_nothing_named_this", user)
+    result = CommandResolver.lookup(nil, "there_is_nothing_named_this", user, enabled_bundles)
     assert result == :not_found
   end
 
   ########################################################################
+
+  defp enabled_bundles do
+    Cog.Repository.Bundles.enabled_bundles
+  end
 
   # Returns user for use in pipelines
   defp with_alias(user, name, pipeline_text) do
@@ -149,12 +153,13 @@ defmodule Cog.Command.CommandResolver.Test do
   end
 
   defp assert_command(bundle, name, actual) do
-    assert match?(%Command{}, actual)
-    assert actual.name == name
-    refute match?(%Ecto.Association.NotLoaded{}, actual.bundle), "Bundle should be preloaded"
-    assert actual.bundle.name == bundle
-    refute match?(%Ecto.Association.NotLoaded{}, actual.rules), "Rules should be preloaded"
+    assert match?(%CommandVersion{}, actual)
+    refute match?(%Ecto.Association.NotLoaded{}, actual.command), "Command should be preloaded"
+    assert actual.command.name == name
+    assert actual.command.bundle.name == bundle
+    refute match?(%Ecto.Association.NotLoaded{}, actual.command.rules), "Rules should be preloaded"
     refute match?(%Ecto.Association.NotLoaded{}, actual.options), "Options should be preloaded"
+    refute match?(%Ecto.Association.NotLoaded{}, actual.bundle_version), "Bundle Verison should be preloaded"
   end
 
   defp assert_user_alias(user, expected_pipeline, actual) do

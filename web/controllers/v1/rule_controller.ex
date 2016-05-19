@@ -5,12 +5,13 @@ defmodule Cog.V1.RuleController do
 
   alias Cog.RuleIngestion
   alias Cog.Models.Rule
+  alias Cog.Repository.Bundles
 
   plug Cog.Plug.Authentication
   plug Cog.Plug.Authorization, permission: "#{Cog.embedded_bundle}:manage_commands"
 
   def create(conn, %{"rule" => rule_text}) do
-    case RuleIngestion.ingest(rule_text) do
+    case RuleIngestion.ingest(rule_text, Bundles.site_bundle_version) do
       {:ok, rule} ->
         conn
         |> put_status(:created)
