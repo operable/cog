@@ -38,7 +38,9 @@ defmodule Cog.Bootstrap.Test do
 
   test "creates single site bundle version" do
     bundle = Repo.get_by!(Bundle, name: Cog.site_namespace) |> Repo.preload(:versions)
-    assert [%BundleVersion{version: "0.0.0"}] = bundle.versions
+
+    {:ok, version} = Version.parse("0.0.0")
+    assert [%BundleVersion{version: ^version}] = bundle.versions
   end
 
   test "the 'site' bundle contains no permissions" do

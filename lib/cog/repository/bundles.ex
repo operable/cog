@@ -212,14 +212,12 @@ defmodule Cog.Repository.Bundles do
       nil ->
         upgrade_to_current.()
       %BundleVersion{}=installed ->
-        {:ok, installed_version} = VersionTriple.dump(installed.version)
-        {:ok, current_version}   = VersionTriple.dump(version)
-        cond do
-          installed_version < current_version ->
+        case Version.compare(installed.version, version) do
+          :lt ->
             upgrade_to_current.()
-          installed_version == current_version ->
+          :eq ->
             postprocess_embedded_bundle_version(installed)
-          installed_version > current_version ->
+          :gt ->
             raise "Unable to downgrade from #{installed.version} to #{version}}"
         end
     end
