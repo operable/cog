@@ -50,7 +50,7 @@ defmodule Cog.Models.Group do
     model
     |> cast(params, @required_fields, @optional_fields)
     |> protect_admin_group
-    |> unique_constraint(:name)
+    |> unique_constraint(:name, name: :groups_name_index, message: "The group name is already in use.")
   end
 
   defp protect_admin_group(%Changeset{model: model}=changeset) do
@@ -109,4 +109,20 @@ defimpl Groupable, for: Cog.Models.Group do
   def remove_from(group_member,group),
     do: Cog.Models.JoinTable.dissociate(group_member, group)
 
+end
+
+defimpl Poison.Encoder, for: Cog.Models.Group do
+  def encode(struct, options) do
+    members = Enum.flat_map(struct.user_membership, fn
+      (%{member: member}) -> [member]
+      (_) -> []
+    end)
+
+    map = struct
+    |> Map.from_struct
+    |> Map.take([:id, :name, :roles])
+    |> Map.put(:members, members)
+
+    Poison.Encoder.Map.encode(map, options)
+  end
 end

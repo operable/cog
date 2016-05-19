@@ -35,6 +35,14 @@ defmodule Cog.V1.GroupMembershipController do
       {:ok, group} ->
         conn
         |> render("show.json", group: group)
+      {:error, :not_found} ->
+        conn
+        |> put_status(:not_found)
+        |> json(%{errors: "Group not found"})
+      {:error, :bad_id} ->
+        conn
+        |> put_status(:bad_request)
+        |> json(%{errors: "Bad ID format"})
       {:error, {:not_found, {key, names}}} ->
         conn
         |> put_status(:unprocessable_entity)

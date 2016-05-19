@@ -6,6 +6,7 @@ defmodule Cog.Repository.Users do
 
   alias Cog.Repo
   alias Cog.Models.User
+  import Ecto.Query, only: [from: 1, from: 2]
 
   @doc """
   Creates a new user given a map of attributes
@@ -23,6 +24,25 @@ defmodule Cog.Repository.Users do
   @spec all :: [%User{}]
   def all,
     do: Repo.all(User)
+
+  @doc """
+  Retrieves all users with a username in usernames. If only some
+  users can be found returns {:some, users, not_found_usernames}
+  """
+  @spec all_with_username([String.t]) :: {:ok, [%User{}]} | {:some, [%User{}], [String.t]} | {:error, :not_found}
+  def all_with_username(usernames) do
+    case Repo.all(from u in User, where: u.username in ^usernames) do
+      users when is_list(users) ->
+        if length(users) == length(usernames) do
+          {:ok, users}
+        else
+          not_found_usernames = usernames -- Enum.map(users, &(&1.username))
+          {:some, users, not_found_usernames}
+        end
+      nil ->
+        {:error, :not_found}
+    end
+  end
 
   @doc """
   Retrieves one user by name

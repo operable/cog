@@ -40,9 +40,9 @@ defmodule Cog.V1.GroupMembershipController.Test do
   test "fails if group doesn't exist", %{authed: requestor} do
     user = user("hal")
 
-    error = catch_error(api_request(requestor, :post, "/v1/groups/#{@bad_uuid}/users",
-                                    body: %{"users" => %{"add" => [user.email_address]}}))
-    assert %Ecto.NoResultsError{} = error
+    conn = api_request(requestor, :post, "/v1/groups/#{@bad_uuid}/users",
+                                    body: %{"users" => %{"add" => [user.email_address]}})
+    assert "Group not found" == json_response(conn, 404)["errors"]
   end
 
   # Add Users

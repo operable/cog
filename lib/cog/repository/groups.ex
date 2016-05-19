@@ -1,3 +1,12 @@
+defmodule Cog.Repository.Groups.BadIdError do
+  defexception [:message]
+
+  def exception(value) do
+    msg = "'#{value}' is not a valid uuid"
+    %__MODULE__{message: msg}
+  end
+end
+
 defmodule Cog.Repository.Groups do
   @moduledoc """
   Behavioral API for interacting with user groups. Prefer these
@@ -10,17 +19,23 @@ defmodule Cog.Repository.Groups do
   alias Cog.Models.Role
   import Ecto.Query, only: [from: 1, from: 2]
 
-  @preloads [:direct_user_members, :direct_group_members, :roles]
-
+  @preloads [[user_membership: [:member]], :direct_user_members, :direct_group_members, :roles, :permissions]
 
   @doc """
   Creates a new user group given a map of attributes
   """
   @spec new(Map.t) :: {:ok, %Group{}} | {:error, Ecto.Changeset.t}
   def new(attrs) do
-    %Group{}
+    new_group = %Group{}
     |> Group.changeset(attrs)
     |> Repo.insert
+
+    case new_group do
+      {:ok, group} ->
+        {:ok, Repo.preload(group, @preloads)}
+      error ->
+        error
+    end
   end
 
   @doc """
@@ -29,6 +44,28 @@ defmodule Cog.Repository.Groups do
   @spec all :: [%Group{}]
   def all,
     do: Repo.all(Group) |> Repo.preload(@preloads)
+
+  @doc """
+  Retrieves all user groups in the list of names.
+  """
+  @spec all_by_name(List.t) :: [%Group{}]
+  def all_by_name(names) do
+    Repo.all(from g in Group, where: g.name in ^names)
+    |> Repo.preload(@preloads)
+  end
+
+  @doc """
+  Retrieves a user group based on it's name
+  """
+  @spec by_name(String.t) :: %Group{}
+  def by_name(name) do
+    case Repo.get_by(Group, name: name) do
+      %Group{} = group ->
+        {:ok, Repo.preload(group, @preloads)}
+      nil ->
+        {:error, :not_found}
+    end
+  end
 
   @doc """
   Retrieves a single user group based on the id. The given id must be
@@ -46,6 +83,19 @@ defmodule Cog.Repository.Groups do
       end
     else
       {:error, :bad_id}
+    end
+  end
+
+  @doc """
+  Like by_id/1 but raises an error if no results are returned
+  """
+  @spec by_id!(String.t) :: %Group{} | no_return()
+  def by_id!(id) do
+    if Cog.UUID.is_uuid?(id) do
+      Repo.get!(Group, id)
+      |> Repo.preload(@preloads)
+    else
+      raise(Cog.Repository.Groups.BadIdError, id)
     end
   end
 
@@ -72,6 +122,9 @@ defmodule Cog.Repository.Groups do
   end
 
 
+  # NOTE: This could use a rewrite. It was basically copied from the
+  # user controller as is. It could some work to fit better with the
+  # repository.
   # Manage the membership of a group. Users and groups can be added
   # and removed (multiples of each, all at the same time!) using this
   # function. Everything is governed by the request body, which we'll
@@ -80,7 +133,9 @@ defmodule Cog.Repository.Groups do
   # %{"members" => %{"users" => %{"add" => ["user_to_add_1", "user_to_add_2"],
   #                               "remove" => ["user_to_remove"]},
   #                  "roles" => %{"add" => ["role_to_add_1", "role_to_add_2"],
-  #                               "remove" => ["role_to_remove"]}}
+  #                               "remove" => ["role_to_remove"]},
+  #                  "add" => [%User{}, %Role{}],
+  #                  "remove" => [%User{}, %Role{}]}
   #
   # Provide the email addresses of Users, that you want to be members (or not)
   # of the target group (as specified by `id`). All changes are made
@@ -100,21 +155,45 @@ defmodule Cog.Repository.Groups do
   # second-pass should be made. We can create a stored procedure that
   # takes all the names and does the resolution and membership changes
   # much more efficiently in a single operation.
-  def manage_membership(%{"id" => id, "members" => member_spec}) do
-    Repo.transaction(fn() ->
-      group = Repo.get!(Group, id)
+  def manage_membership(%{"id" => id}=params) do
+    case by_id(id) do
+      {:ok, group} ->
+        manage_membership(group, params)
+      error ->
+        error
+    end
+  end
 
+  def manage_membership(%Group{}=group, %{"members" => member_spec}) do
+    Repo.transaction(fn() ->
       users_to_add     = lookup_or_fail(member_spec, ["users", "add"])
-      roles_to_add    = lookup_or_fail(member_spec, ["roles", "grant"])
+      roles_to_add    = lookup_or_fail(member_spec, ["roles", "add"])
       users_to_remove  = lookup_or_fail(member_spec, ["users", "remove"])
-      roles_to_remove = lookup_or_fail(member_spec, ["roles", "revoke"])
+      roles_to_remove = lookup_or_fail(member_spec, ["roles", "remove"])
+
+      # If we already have a model, there is no need to look it up again
+      {user_models_to_add, role_models_to_add} = get_models("add", member_spec)
+      {user_models_to_remove, role_models_to_remove} = get_models("remove", member_spec)
 
       group
-      |> add(users_to_add)
-      |> grant(roles_to_add)
-      |> remove(users_to_remove)
-      |> revoke(roles_to_remove)
-      |> Repo.preload(@preloads)
+      |> add(users_to_add ++ user_models_to_add)
+      |> grant(roles_to_add ++ role_models_to_add)
+      |> remove(users_to_remove ++ user_models_to_remove)
+      |> revoke(roles_to_remove ++ role_models_to_remove)
+
+
+      # We have to refetch the group here, otherwise the updates
+      # aren't loaded
+      by_id!(group.id)
+    end)
+  end
+
+  # Extracts models from member_spec
+  defp get_models(action, member_spec) when action in ["add", "remove"] do
+    Map.get(member_spec, action, [])
+    |> Enum.reduce({[],[]}, fn
+      (%User{}=user, {users, roles}) -> {[user | users], roles}
+      (%Role{}=role, {users, roles}) -> {users, [role | roles]}
     end)
   end
 

@@ -75,3 +75,13 @@ defimpl Permittable, for: Cog.Models.Role do
   end
 
 end
+
+defimpl Poison.Encoder, for: Cog.Models.Role do
+  def encode(struct, options) do
+    map = struct
+    |> Map.from_struct
+    |> Map.take([:id, :name])
+
+    Poison.Encoder.Map.encode(map, options)
+  end
+end

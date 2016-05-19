@@ -67,7 +67,7 @@ defmodule Cog.Repository.RelayGroups do
   @spec by_id!(String.t) :: {:ok, %RelayGroup{}} | no_return()
   def by_id!(id) do
     valid_uuid!(id)
-    Repo.get!(RelayGroup, id) |> Repo.preload([:bundles, :relays])
+    Repo.get!(RelayGroup, id)
     |> Repo.preload([:bundles, :relays])
   end
 
