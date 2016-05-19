@@ -432,7 +432,7 @@ defmodule Cog.Repository.Bundles do
     do: Repo.preload(bs, @bundle_preloads)
   defp preload(%BundleVersion{}=bv),
     do: Repo.preload(bv, @bundle_version_preloads)
-  defp preload([%BundleVersion{}, _]=bvs),
+  defp preload([%BundleVersion{} | _]=bvs),
     do: Repo.preload(bvs, @bundle_version_preloads)
 
 
