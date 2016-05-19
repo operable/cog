@@ -67,12 +67,12 @@ defmodule Cog.V1.BundlesControllerTest do
     response = Poison.decode!(conn.resp_body)
 
     warnings = get_in(response, ["warnings"])
-    bundle_id = get_in(response, ["bundle", "id"])
-    bundle = Cog.Repo.get_by(Cog.Models.Bundle, id: bundle_id)
+    bundle_version_id = get_in(response, ["bundle_version", "id"])
+    bundle_version = Cog.Repository.Bundles.version(bundle_version_id)
     config = Spanner.Config.Parser.read_from_file!(config_path)
 
     assert conn.status == 201
-    assert bundle.name == config["name"]
+    assert bundle_version.bundle.name == config["name"]
     assert warnings == [
       "Warning near #/cog_bundle_version: Bundle config version 2 has been deprecated. Please update to version 3.",
       "Warning near #/commands/date/enforcing: Non-enforcing commands have been deprecated. Please update your bundle config to version 3."]
@@ -121,20 +121,17 @@ defmodule Cog.V1.BundlesControllerTest do
     config = config(:map)
     conn = api_request(requestor, :post, "/v1/bundles", body: %{"bundle" => %{"config" => config}})
 
-
-
     body = conn.resp_body
-    Logger.warn(">>>>>>> body = #{inspect body}")
 
     bundle_version_id = Poison.decode!(body)
                 |> get_in(["bundle_version", "id"])
 
 
-    bundle_version = Cog.Repo.get_by(Cog.Models.BundleVersion, id: bundle_version_id)
+    bundle_version = Cog.Repository.Bundles.version(bundle_version_id)
 
     assert conn.status == 201
     assert bundle_version.config_file == config
-#    assert bundle_version.bundle.name == config["name"]
+    assert bundle_version.bundle.name == config["name"]
   end
 
   test "rejects a bad config passed as json", %{authed: requestor} do
