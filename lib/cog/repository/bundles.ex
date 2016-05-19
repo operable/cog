@@ -171,7 +171,7 @@ defmodule Cog.Repository.Bundles do
       %BundleVersion{}=bv ->
         %{name: bv.bundle.name,
           enabled: true,
-          enabled_version: bv.version,
+          enabled_version: to_string(bv.version),
           relays: Cog.Relay.Relays.relays_running(bv.bundle.name, bv.version)}
       nil ->
         %{name: bundle.name,
