@@ -89,14 +89,30 @@ defmodule Cog.Repository.Bundles do
     end
   end
 
-  # TODO: Only delete if the bundle version is currently
-  # disabled. Only delete an entire bundle if no version is enabled.
+  @doc """
+  Delete a bundle version, or an entire bundle (i.e., all versions for
+  that bundle). You can only delete versions that are not currently
+  enabled, and can only delete bundles if no version is enabled.
+  """
   def delete(%BundleVersion{bundle: %Bundle{name: protected}}, _) when protected in @reserved_bundle_names,
     do: {:error, {:protected_bundle, protected}}
   def delete(%Bundle{name: protected}) when protected in @reserved_bundle_names,
     do: {:error, {:protected_bundle, protected}}
-  def delete(bundle_or_version),
-    do: Repo.delete(bundle_or_version)
+  def delete(%BundleVersion{}=bv) do
+    if enabled?(bv) do
+      {:error, :enabled_version}
+    else
+      Repo.delete(bv)
+    end
+  end
+  def delete(%Bundle{}=b) do
+    case enabled_version(b) do
+      nil ->
+        Repo.delete(b)
+      %BundleVersion{version: version} ->
+        {:error, {:enabled_version, version}}
+    end
+  end
 
   ########################################################################
   # Enabled/Disabled Status
@@ -122,6 +138,15 @@ defmodule Cog.Repository.Bundles do
     end
   end
 
+  def enabled?(%BundleVersion{id: id}) do
+    query = (from bv in BundleVersion,
+             join: e in "enabled_bundle_versions", on: bv.bundle_id == e.bundle_id and bv.version == e.version,
+             where: bv.id == ^id)
+    case Repo.one(query) do
+      nil -> false
+      %BundleVersion{id: ^id} -> true
+    end
+  end
 
   @doc """
   For the given `bundle`, retrieve the currently-enabled version of
@@ -134,8 +159,10 @@ defmodule Cog.Repository.Bundles do
              where: b.id == ^id)
 
     case Repo.one(query) do
-      nil -> nil
-      bundle_version -> bundle_version
+      nil ->
+        nil
+      bundle_version ->
+        preload(bundle_version)
     end
   end
 

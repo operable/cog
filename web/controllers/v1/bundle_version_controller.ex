@@ -22,6 +22,8 @@ defmodule Cog.V1.BundleVersionController do
         case Repository.Bundles.delete(bv) do
           {:ok, _} ->
             send_resp(conn, 204, "")
+          {:error, :enabled_version} ->
+            send_resp(conn, 403, Poison.encode! (%{error: "Cannot delete #{bv.bundle.name} #{inspect bv.version}, because it is currently enabled"}))
           {:error, {:protected_bundle, name}} ->
             send_resp(conn, 403, Poison.encode!(%{error: "Cannot delete #{name} bundle version"}))
         end
