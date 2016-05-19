@@ -6,6 +6,8 @@ defmodule Cog.V1.BundlesControllerTest do
   use Cog.ModelCase
   use Cog.ConnCase
 
+  @moduletag :skip
+
   setup do
     # Requests handled by the role controller require this permission
     required_permission = permission("#{Cog.embedded_bundle}:manage_commands")
