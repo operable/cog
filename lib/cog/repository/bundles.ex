@@ -94,7 +94,7 @@ defmodule Cog.Repository.Bundles do
   that bundle). You can only delete versions that are not currently
   enabled, and can only delete bundles if no version is enabled.
   """
-  def delete(%BundleVersion{bundle: %Bundle{name: protected}}, _) when protected in @reserved_bundle_names,
+  def delete(%BundleVersion{bundle: %Bundle{name: protected}}) when protected in @reserved_bundle_names,
     do: {:error, {:protected_bundle, protected}}
   def delete(%Bundle{name: protected}) when protected in @reserved_bundle_names,
     do: {:error, {:protected_bundle, protected}}
