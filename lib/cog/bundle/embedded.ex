@@ -34,6 +34,7 @@ defmodule Cog.Bundle.Embedded do
     # a relay in a special relay group? That might reduce our
     # "special snowflake" code a bit more.
     bundle_version = Repository.Bundles.maybe_upgrade_embedded_bundle!(embedded_bundle)
+    :ok = Repository.Bundles.ensure_site_bundle
 
     announce_embedded_bundle(bundle_version)
     Logger.info("Embedded bundle announced; starting bundle supervision tree")

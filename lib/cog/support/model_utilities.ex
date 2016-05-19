@@ -302,16 +302,6 @@ defmodule Cog.Support.ModelUtilities do
     {relay, bundle_version, relay_group}
   end
 
-  def ensure_site_bundle do
-    try do
-      Cog.Repository.Bundles.site_bundle_version
-    rescue
-      _ ->
-        {:ok, site} = Cog.Repository.Bundles.create_site_bundle
-        site
-    end
-  end
-
   @doc """
   Remove everything from the database.
 

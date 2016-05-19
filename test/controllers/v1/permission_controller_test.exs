@@ -7,7 +7,6 @@ defmodule Cog.V1.PermissionControllerTest do
   @bad_uuid "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
 
   setup do
-    ensure_site_bundle
     required_permission = permission("#{Cog.embedded_bundle}:manage_permissions")
 
     # This user will be used to test the normal operation of the controller

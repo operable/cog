@@ -304,26 +304,32 @@ defmodule Cog.Repository.Bundles do
   that there is only one version of it, ever. This returns that one
   version on-demand.
   """
-  def site_bundle_version do
-    site = Cog.site_namespace
-
-    Repo.one!(from bv in BundleVersion,
-              join: b in assoc(bv, :bundle),
-              where: b.name == ^site,
-              where: bv.version == @permanent_site_bundle_version,
-              preload: :bundle)
-  end
+  def site_bundle_version,
+    do: Repo.one!(site_bundle_version_query)
 
   @doc """
-  Called only once when bootstrapping the system to create the site
-  bundle and its single version.
-
-  Exposed here for use mainly for consistency in tests.
+  Called at system-startup to ensure the site bundle is appropriately set up.
   """
-  def create_site_bundle do
-    __install(%{"name" => Cog.site_namespace,
-                "version" => @permanent_site_bundle_version,
-                "config_file" => %{}})
+  def ensure_site_bundle do
+    case Repo.one(site_bundle_version_query) do
+      nil ->
+        {:ok, _} = __install(%{"name" => Cog.site_namespace,
+                               "version" => @permanent_site_bundle_version,
+                               "config_file" => %{}})
+        :ok
+      %BundleVersion{} ->
+        :ok
+    end
+  end
+
+  defp site_bundle_version_query do
+    site = Cog.site_namespace
+
+    from bv in BundleVersion,
+    join: b in assoc(bv, :bundle),
+    where: b.name == ^site,
+    where: bv.version == @permanent_site_bundle_version,
+    preload: :bundle
   end
 
   @doc """

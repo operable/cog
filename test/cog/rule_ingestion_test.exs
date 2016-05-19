@@ -3,7 +3,7 @@ defmodule RuleIngestionTest do
   alias Piper.Permissions.Parser
 
   setup do
-    site = ensure_site_bundle
+    site = Cog.Repository.Bundles.site_bundle_version
     {:ok, [site: site]}
   end
 

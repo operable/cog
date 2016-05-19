@@ -7,7 +7,6 @@ defmodule Cog.Bootstrap do
   alias Cog.Models.Role
   alias Cog.Models.User
   alias Cog.Repo
-  alias Cog.Repository.Bundles
 
   @default_admin_params %{
     "username"      => "admin",
@@ -50,8 +49,6 @@ defmodule Cog.Bootstrap do
       grant_embedded_permissions_to(role)
       Permittable.grant_to(group, role)
       Groupable.add_to(user, group)
-
-      Bundles.create_site_bundle
 
       user
     end)

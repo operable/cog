@@ -154,7 +154,7 @@ defmodule Cog.V1.BundlesControllerTest do
   end
 
   test "includes rules in bundle resource", %{authed: requestor} do
-    site = ensure_site_bundle
+    site = Cog.Repository.Bundles.site_version_bundle
 
     bundle = bundle_version("cog").bundle
     command = command("hola")
