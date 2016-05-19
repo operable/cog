@@ -102,7 +102,13 @@ defmodule Cog.Repository.Bundles do
     if enabled?(bv) do
       {:error, :enabled_version}
     else
-      Repo.delete(bv)
+      if length(versions(bv.bundle)) == 1 do
+        # this is the last version; just get rid of the entire bundle
+        Repo.delete(bv.bundle)
+      else
+        # Just delete the version
+        Repo.delete(bv)
+      end
     end
   end
   def delete(%Bundle{}=b) do
