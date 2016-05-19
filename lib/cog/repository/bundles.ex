@@ -251,7 +251,7 @@ defmodule Cog.Repository.Bundles do
           :eq ->
             postprocess_embedded_bundle_version(installed)
           :gt ->
-            raise "Unable to downgrade from #{installed.version} to #{version}}"
+            raise "Unable to downgrade from #{installed.version} to #{version}"
         end
     end
   end
