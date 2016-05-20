@@ -212,6 +212,8 @@ defmodule Cog.Repository.Bundles do
 
   # Used in Cog.Relay.Relays to verify the existence of the the bundle
   # versions a relay claims to be serving
+
+  # TODO: maybe turn this into `version_exists?(name, version_string)`?
   def verify_version_exists(%{"name" => bundle_name, "version" => version}) do
     case Repo.one(bundle_version(bundle_name, version)) do
       %BundleVersion{}=bundle_version ->
@@ -381,6 +383,12 @@ defmodule Cog.Repository.Bundles do
   versions that it is currently assigned.
   """
   def bundle_configs_for_relay(relay_id) do
+    # NOTE: This currently won't return anything for the bot's "relay
+    # ID", because there isn't a corresponding "fake relay group" that
+    # it belongs to, and which is assigned the embedded bundle.
+    #
+    # That ends up working out OK, though, because this function is
+    # only called in response to real Relays.
     Repo.all(from bv in BundleVersion,
              join: e in "enabled_bundle_versions", on: bv.bundle_id == e.bundle_id and bv.version == e.version,
              join: b in assoc(bv, :bundle),
