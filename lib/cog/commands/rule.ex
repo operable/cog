@@ -2,11 +2,11 @@ defmodule Cog.Commands.Rule do
   use Cog.Command.GenCommand.Base,
     bundle: Cog.embedded_bundle
 
-  alias Cog.Commands.Helpers
   alias Cog.Commands.Rule.{List, Create, Drop}
+  require Cog.Commands.Helper, as: Helpers
   require Logger
 
-  @moduledoc """
+  Helpers.usage :root, """
   Manages rules for commands.
 
   USAGE
@@ -21,7 +21,6 @@ defmodule Cog.Commands.Rule do
     drop    Drop a rule
   """
 
-  option "help", type: "bool", short: "h"
   option "command", type: "string", short: "c"
 
   permission "manage_commands"
@@ -74,7 +73,4 @@ defmodule Cog.Commands.Rule do
     do: "Could not drop rule with invalid id #{inspect uuid}"
   defp error(error),
     do: Helpers.error(error)
-
-  defp show_usage(error \\ nil),
-    do: {:ok, "usage", %{usage: @moduledoc, error: error}}
 end
