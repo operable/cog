@@ -45,7 +45,7 @@ defmodule Integration.Commands.BundleTest do
   @tag :skip
   test "disable a bundle", %{user: user} do
     # Create an enabled bundle
-    bundle = ModelUtilities.bundle_version("test_bundle", %{}, enabled: true).bundle
+    bundle = ModelUtilities.bundle_version("test_bundle", enabled: true).bundle
 
     # First disable the bundle
     response = send_message(user, "@bot: operable:bundle disable test_bundle")

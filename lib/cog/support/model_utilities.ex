@@ -207,7 +207,9 @@ defmodule Cog.Support.ModelUtilities do
   @doc """
   Creates a bundle version
   """
-  def bundle_version(name, commands \\ %{"echo" => %{"executable" => "/bin/echo"}}, opts \\ []) do
+  def bundle_version(name, opts \\ []) do
+
+    commands = Keyword.get(opts, :commands, %{"echo" => %{"executable" => "/bin/echo"}})
 
     bundle_template = %{
       "name" => name,
@@ -285,13 +287,14 @@ defmodule Cog.Support.ModelUtilities do
   Options:
   :token - sets the token for the new relay
   :relay_opts - set any additional options for the relay as described by `__MODULE__.relay/3`
+  :bundle_opts - options to pass to create a new bundle version
   """
   @spec create_relay_bundle_and_group(String.t, [{Atom.t, any()}]) :: {%Relay{}, %BundleVersion{}, %RelayGroup{}}
   def create_relay_bundle_and_group(name, opts \\ []) do
     relay = relay("relay-#{name}",
                   Keyword.get(opts, :token, "sekrit"),
                   Keyword.get(opts, :relay_opts, []))
-    bundle_version = bundle_version("bundle-#{name}")
+    bundle_version = bundle_version("bundle-#{name}", Keyword.get(opts, :bundle_opts, []))
 
     Cog.Repository.Bundles.set_bundle_version_status(bundle_version, :enabled)
 
