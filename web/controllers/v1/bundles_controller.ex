@@ -12,15 +12,19 @@ defmodule Cog.V1.BundlesController do
 
   alias Cog.Repository
 
-  def index(conn, _params),
-    do: render(conn, "index.json", %{bundles: Repository.Bundles.bundles})
+  def index(conn, _params) do
+    render(conn, "index.json",
+           %{bundles: Repository.Bundles.bundles,
+             enabled_bundles: Repository.Bundles.enabled_bundles})
+  end
 
   def show(conn, %{"id" => id}) do
     case Repository.Bundles.bundle(id) do
       nil ->
         send_resp(conn, 404, Poison.encode!(%{error: "Bundle #{id} not found"}))
       %Bundle{}=bundle ->
-        render(conn, "show.json", %{bundle: bundle})
+        render(conn, "show.json", %{bundle: bundle,
+                                    enabled_bundles: Repository.Bundles.enabled_bundles})
     end
   end
 

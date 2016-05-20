@@ -6,8 +6,6 @@ defmodule Cog.V1.BundlesControllerTest do
   use Cog.ModelCase
   use Cog.ConnCase
 
-  @moduletag :skip
-
   setup do
     # Requests handled by the role controller require this permission
     required_permission = permission("#{Cog.embedded_bundle}:manage_commands")
@@ -147,42 +145,10 @@ defmodule Cog.V1.BundlesControllerTest do
     conn = api_request(requestor, :get, "/v1/bundles/#{bundle.id}")
     assert %{"bundle" => %{"id" => bundle.id,
                            "name" => bundle.name,
-                           "enabled" => bundle.enabled,
+                           "enabled" => false,
                            "relay_groups" => [],
-                           "commands" => [],
-                           "permissions" => [],
                            "inserted_at" => "#{DateTime.to_iso8601(bundle.inserted_at)}",
                            "updated_at" => "#{DateTime.to_iso8601(bundle.updated_at)}"}} == json_response(conn, 200)
-  end
-
-  test "includes rules in bundle resource", %{authed: requestor} do
-    site = Cog.Repository.Bundles.site_version_bundle
-
-    bundle = bundle_version("cog").bundle
-    command = command("hola")
-    perm = permission("cog:hello")
-    rule_text = "when command is cog:hola must have cog:hello"
-    rule = rule(rule_text, site)
-
-    bundle_id = bundle.id
-    command_id = command.id
-    rule_id = rule.id
-    perm_id = perm.id
-
-    conn = api_request(requestor, :get, "/v1/bundles/#{bundle.id}")
-    assert %{"bundle" => %{"id" => ^bundle_id,
-                           "permissions" => [%{"id" => ^perm_id,
-                                               "name" => "hello",
-                                               "namespace" => "cog"}],
-                           "commands" => [
-                             %{"id" => ^command_id,
-                               "rules" => [
-                                 %{"id" => ^rule_id,
-                                   "command" => "cog:hola",
-                                   "permissions" => [%{"id" => ^perm_id,
-                                                       "name" => "hello",
-                                                       "namespace" => "cog"}],
-                                   "rule" => ^rule_text}]}]}} = json_response(conn, 200)
   end
 
   test "cannot view bundle without permission", %{unauthed: requestor} do
