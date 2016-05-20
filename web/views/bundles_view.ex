@@ -5,24 +5,28 @@ defmodule Cog.V1.BundlesView do
   # alias Cog.V1.CommandView
   # alias Cog.V1.PermissionView
 
+  defp ordered_version_strings(versions) do
+    versions
+    |> Enum.map(&(&1.version))
+    |> Enum.sort
+    |> Enum.map(&to_string/1)
+  end
+
+
   def render("bundle.json", %{bundle: bundle, enabled_bundles: enabled_bundles}=_params) do
-    case Map.get(enabled_bundles, bundle.name) do
-      nil ->
-        %{id: bundle.id,
-          name: bundle.name,
-          enabled: false,
-          inserted_at: bundle.inserted_at,
-          updated_at: bundle.updated_at,
-          relay_groups: []}
-          # |> Map.merge(render_includes(params, bundle))
-      version ->
-        %{id: bundle.id,
-          name: bundle.name,
-          enabled: true,
-          version: to_string(version),
-          inserted_at: bundle.inserted_at,
-          updated_at: bundle.updated_at}
-    end
+
+    enabled_version = case Map.get(enabled_bundles, bundle.name) do
+                        nil -> %{}
+                        version -> %{enabled_version: to_string(version)}
+                      end
+    %{id: bundle.id,
+      name: bundle.name,
+      versions: ordered_version_strings(bundle.versions),
+      inserted_at: bundle.inserted_at,
+      updated_at: bundle.updated_at,
+      relay_groups: []}
+    |> Map.merge(enabled_version)
+
   end
 
   def render("index.json", %{bundles: bundles}=assigns) do
