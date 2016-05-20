@@ -9,16 +9,16 @@ defmodule Cog.Commands.Rule.Drop do
   Drops rules by id or all rules for a specific command.
 
   USAGE
-    rule drop [FLAGS] [OPTIONS] [<id> ...] 
+    rule drop [FLAGS] [OPTIONS] <id...>
+
+  ARGS
+    id  Specifies the rule to drop
 
   FLAGS
     -h, --help  Display this usage info
 
   OPTIONS
     -c, --command  Drops rules belonging to the command
-
-  ARGS
-    id  Specifies the rule to drop
   """
 
   def drop(%{options: %{"help" => true}}, _args) do
