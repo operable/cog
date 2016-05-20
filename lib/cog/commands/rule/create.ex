@@ -1,5 +1,10 @@
 defmodule Cog.Commands.Rule.Create do
-  @moduledoc """
+  alias Cog.Models.Rule
+  alias Cog.RuleIngestion
+  alias Piper.Permissions.Parser
+  require Cog.Commands.Helper, as: Helpers
+
+  Helpers.usage """
   Create a rule by specifying the entire rule or by using the shorthand for a
   command and permission.
 
@@ -17,10 +22,6 @@ defmodule Cog.Commands.Rule.Create do
     rule create s3:delete site:admin
   """
 
-  alias Cog.Models.Rule
-  alias Cog.RuleIngestion
-  alias Piper.Permissions.Parser
-
   def create(%{options: %{"help" => true}}, _args),
     do: show_usage
   def create(_req, [command, permission]),
@@ -35,9 +36,6 @@ defmodule Cog.Commands.Rule.Create do
          {:ok, rule} <- create_rule(rule),
          do: {:ok, rule}
   end
-
-  defp show_usage(error \\ nil),
-    do: {:ok, "usage", %{usage: @moduledoc, error: error}}
 
   defp validate_permissions(rule) do
     case Parser.parse(rule) do

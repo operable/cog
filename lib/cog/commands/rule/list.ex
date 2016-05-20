@@ -1,5 +1,10 @@
 defmodule Cog.Commands.Rule.List do
-  @moduledoc """
+  alias Cog.Models.Command
+  alias Cog.Models.Rule
+  alias Cog.Repo
+  require Cog.Commands.Helper, as: Helpers
+
+  Helpers.usage """
   List all rules or rules for the provided command.
 
   USAGE
@@ -11,10 +16,6 @@ defmodule Cog.Commands.Rule.List do
   OPTIONS
     -c, --command  List rules belonging to command
   """
-
-  alias Cog.Models.Command
-  alias Cog.Models.Rule
-  alias Cog.Repo
 
   def list(%{options: %{"help" => true}}, _args) do
     show_usage
@@ -31,9 +32,5 @@ defmodule Cog.Commands.Rule.List do
 
   def list(_req, _args) do
     {:ok, "rule-list", Repo.all(Rule)}
-  end
-
-  defp show_usage(error \\ nil) do
-    {:ok, "usage", %{usage: @moduledoc, error: error}}
   end
 end

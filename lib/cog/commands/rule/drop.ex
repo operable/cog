@@ -1,5 +1,11 @@
 defmodule Cog.Commands.Rule.Drop do
-  @moduledoc """
+  use Cog.Queries
+  alias Cog.Models.Command
+  alias Cog.Models.Rule
+  alias Cog.Repo
+  require Cog.Commands.Helper, as: Helpers
+
+  Helpers.usage """
   Drops rules by id or all rules for a specific command.
 
   USAGE
@@ -14,11 +20,6 @@ defmodule Cog.Commands.Rule.Drop do
   ARGS
     id  Specifies the rule to drop
   """
-
-  use Cog.Queries
-  alias Cog.Models.Command
-  alias Cog.Models.Rule
-  alias Cog.Repo
 
   def drop(%{options: %{"help" => true}}, _args) do
     show_usage
@@ -45,10 +46,6 @@ defmodule Cog.Commands.Rule.Drop do
          {:ok, rules} <- find_rules(uuids),
          delete_rules(uuids),
          do: {:ok, "rule-drop", rules}
-  end
-
-  defp show_usage(error \\ nil) do
-    {:ok, "usage", %{usage: @moduledoc, error: error}}
   end
 
   defp validate_uuids(uuids) do
