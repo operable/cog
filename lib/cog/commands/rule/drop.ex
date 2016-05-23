@@ -3,7 +3,7 @@ defmodule Cog.Commands.Rule.Drop do
   alias Cog.Models.Command
   alias Cog.Models.Rule
   alias Cog.Repo
-  require Cog.Commands.Helper, as: Helpers
+  require Cog.Commands.Helpers, as: Helpers
 
   Helpers.usage """
   Drops rules by id or all rules for a specific command.
