@@ -153,7 +153,7 @@ defmodule Cog.V1.BundlesControllerTest do
     assert %{"bundle" => %{"id" => bundle.id,
                            "name" => bundle.name,
                            "enabled_version" => nil,
-                           "versions" => ["1.0.0", "2.0.0", "3.0.0"],
+                           "versions" => ["3.0.0", "2.0.0", "1.0.0"],
                            "relay_groups" => [],
                            "inserted_at" => "#{DateTime.to_iso8601(bundle.inserted_at)}",
                            "updated_at" => "#{DateTime.to_iso8601(bundle.updated_at)}"}} == json_response(conn, 200)
@@ -173,10 +173,10 @@ defmodule Cog.V1.BundlesControllerTest do
                            "enabled_version" => %{"id" => version2.id,
                                                   "version" => "2.0.0",
                                                   "name" => "foo",
-                                                  # "permissions" => [],
+                                                  "permissions" => [],
                                                   # "commands" => []
                                                  },
-                           "versions" => ["1.0.0", "2.0.0", "3.0.0"],
+                           "versions" => ["3.0.0", "2.0.0", "1.0.0"],
                            "relay_groups" => [],
                            "inserted_at" => "#{DateTime.to_iso8601(bundle.inserted_at)}",
                            "updated_at" => "#{DateTime.to_iso8601(bundle.updated_at)}"}} == json_response(conn, 200)

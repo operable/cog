@@ -10,6 +10,7 @@ defmodule Cog.V1.BundlesView do
     versions
     |> Enum.map(&(&1.version))
     |> Enum.sort
+    |> Enum.reverse
     |> Enum.map(&to_string/1)
   end
 
