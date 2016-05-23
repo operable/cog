@@ -437,7 +437,7 @@ defmodule Cog.Repository.Bundles do
 
   # Consolidate what we need to preload for various things so we stay
   # consistent
-  @bundle_preloads [:versions]
+  @bundle_preloads [:versions, :relay_groups]
   @bundle_version_preloads [:bundle,
                             permissions: [:bundle],
                             commands: [:command]]
@@ -461,7 +461,6 @@ defmodule Cog.Repository.Bundles do
   # rightfully belongs in the module now, though
   #
   ########################################################################
-
 
   use Cog.Models
 
