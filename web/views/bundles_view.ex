@@ -4,6 +4,7 @@ defmodule Cog.V1.BundlesView do
   # alias Cog.V1.RelayGroupView
   # alias Cog.V1.CommandView
   # alias Cog.V1.PermissionView
+  alias Cog.V1.BundleVersionsView
 
   defp ordered_version_strings(versions) do
     versions
@@ -13,12 +14,17 @@ defmodule Cog.V1.BundlesView do
   end
 
 
-  def render("bundle.json", %{bundle: bundle, enabled_bundles: enabled_bundles}=_params) do
+  def render("bundle.json", %{bundle: bundle}=_params) do
+    enabled_version = Map.fetch!(bundle, :enabled_version)
+    enabled_version = if Ecto.assoc_loaded?(enabled_version) do
+      %{enabled_version: render_one(enabled_version,
+                                    BundleVersionsView,
+                                    "bundle_version.json",
+                                    as: :bundle_version)}
+    else
+      %{}
+    end
 
-    enabled_version = case Map.get(enabled_bundles, bundle.name) do
-                        nil -> %{}
-                        version -> %{enabled_version: to_string(version)}
-                      end
     %{id: bundle.id,
       name: bundle.name,
       versions: ordered_version_strings(bundle.versions),

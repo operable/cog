@@ -438,11 +438,13 @@ defmodule Cog.Repository.Bundles do
   # consistent
   @bundle_preloads [:versions, :permissions, :commands]
   @bundle_version_preloads [bundle: @bundle_preloads]
-
+  @enabled_version_preloads [enabled_version: [:bundle,
+                                               :permissions,
+                                               commands: [:command]]]
   defp preload(%Bundle{}=bundle),
-    do: Repo.preload(bundle, @bundle_preloads)
+    do: Repo.preload(bundle, @bundle_preloads ++ @enabled_version_preloads)
   defp preload([%Bundle{} | _]=bs),
-    do: Repo.preload(bs, @bundle_preloads)
+    do: Repo.preload(bs, @bundle_preloads ++ @enabled_version_preloads)
   defp preload(%BundleVersion{}=bv),
     do: Repo.preload(bv, @bundle_version_preloads)
   defp preload([%BundleVersion{} | _]=bvs),

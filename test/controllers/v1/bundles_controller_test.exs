@@ -152,6 +152,7 @@ defmodule Cog.V1.BundlesControllerTest do
     conn = api_request(requestor, :get, "/v1/bundles/#{bundle.id}")
     assert %{"bundle" => %{"id" => bundle.id,
                            "name" => bundle.name,
+                           "enabled_version" => nil,
                            "versions" => ["1.0.0", "2.0.0", "3.0.0"],
                            "relay_groups" => [],
                            "inserted_at" => "#{DateTime.to_iso8601(bundle.inserted_at)}",
@@ -160,8 +161,8 @@ defmodule Cog.V1.BundlesControllerTest do
 
   test "shows enabled bundle", %{authed: requestor} do
     {:ok, _version3} = Bundles.install(%{"name" => "foo", "version" => "3.0.0", "config_file" => %{}})
-    {:ok, version2} = Bundles.install(%{"name" => "foo", "version" => "2.0.0", "config_file" => %{}})
-    {:ok, version1} = Bundles.install(%{"name" => "foo", "version" => "1.0.0", "config_file" => %{}})
+    {:ok, version2}  = Bundles.install(%{"name" => "foo", "version" => "2.0.0", "config_file" => %{}})
+    {:ok, version1}  = Bundles.install(%{"name" => "foo", "version" => "1.0.0", "config_file" => %{}})
 
     :ok = Bundles.set_bundle_version_status(version2, :enabled)
     bundle = version1.bundle
@@ -169,7 +170,12 @@ defmodule Cog.V1.BundlesControllerTest do
     conn = api_request(requestor, :get, "/v1/bundles/#{bundle.id}")
     assert %{"bundle" => %{"id" => bundle.id,
                            "name" => bundle.name,
-                           "enabled_version" => "2.0.0",
+                           "enabled_version" => %{"id" => version2.id,
+                                                  "version" => "2.0.0",
+                                                  "name" => "foo",
+                                                  # "permissions" => [],
+                                                  # "commands" => []
+                                                 },
                            "versions" => ["1.0.0", "2.0.0", "3.0.0"],
                            "relay_groups" => [],
                            "inserted_at" => "#{DateTime.to_iso8601(bundle.inserted_at)}",
