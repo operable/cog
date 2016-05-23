@@ -166,9 +166,12 @@ defmodule Cog.Adapters.Slack.API do
     {:reply, reply, state}
   end
   def handle_call({:lookup_room, [name: name]}, _from, state) do
-    result = call_api!("channels.list", state.token, body: %{exclude_archived: 1})
-    reply = if result["ok"] do
-      channels = result["channels"]
+    channels_result = call_api!("channels.list", state.token, body: %{exclude_archived: 1})
+    groups_result   = call_api!("groups.list",   state.token, body: %{exclude_archived: 1})
+
+    reply = if channels_result["ok"] and groups_result["ok"] do
+      # We treat both channels and private groups as channels
+      channels = channels_result["channels"] ++ groups_result["groups"]
 
       # Cache all the channels and return their cache representations
       cached = Enum.map(channels, &cache(&1, state.ttl))
@@ -180,7 +183,7 @@ defmodule Cog.Adapters.Slack.API do
           {:error, :not_found}
       end
     else
-      {:error, result["error"]}
+      {:error, channels_result["error"] || groups_result["error"]}
     end
     {:reply, reply, state}
   end
