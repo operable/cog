@@ -31,9 +31,7 @@ defmodule Cog.V1.RelayGroupView do
   end
 
   defp render_include(:bundles, relay_group) do
-    render_many(relay_group.bundles, BundlesView, "bundle.json",
-                as: :bundle,
-                enabled_bundles: Cog.Repository.Bundles.enabled_bundles)
+    render_many(relay_group.bundles, BundlesView, "bundle.json", as: :bundle)
   end
   defp render_include(:relays, relay_group) do
     render_many(relay_group.relays, RelayView, "relay.json", as: :relay)
