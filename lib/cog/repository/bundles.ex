@@ -420,7 +420,8 @@ defmodule Cog.Repository.Bundles do
                  |> Bundle.changeset(%{name: name})
                  |> Repo.insert!
              end
-    preload(bundle)
+    # These bundle preloads are only needed for installation at the moment.
+    Repo.preload(bundle, [:permissions, :commands])
   end
 
 
@@ -436,7 +437,7 @@ defmodule Cog.Repository.Bundles do
 
   # Consolidate what we need to preload for various things so we stay
   # consistent
-  @bundle_preloads [:versions, :permissions, :commands]
+  @bundle_preloads [:versions]
   @bundle_version_preloads [:bundle,
                             permissions: [:bundle],
                             commands: [:command]]
