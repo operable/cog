@@ -5,7 +5,8 @@ defmodule Cog.V1.BundleVersionsView do
     %{id: bundle_version.id,
       name: bundle_version.bundle.name,
       version: to_string(bundle_version.version),
-#      commands: bundle_version |> command_names |> Enum.sort
+      permissions: render_many(bundle_version.permissions, Cog.V1.PermissionView, "permission.json", as: :permission),
+      commands: bundle_version |> command_names |> Enum.sort
 #      inserted_at: bundle_version.inserted_at,
 #      updated_at: bundle_version.updated_at
      }
@@ -23,10 +24,10 @@ defmodule Cog.V1.BundleVersionsView do
     %{bundle_version: render_one(bundle_version, __MODULE__, "bundle_version.json", as: :bundle_version)}
   end
 
-  # defp command_names(bundle_version) do
-  #   bundle_name = bundle_version.bundle.name
-  #   Enum.map(bundle_version.commands,
-  #            &("#{bundle_name}:#{&1.command.name}"))
-  # end
+  defp command_names(bundle_version) do
+    bundle_name = bundle_version.bundle.name
+    Enum.map(bundle_version.commands,
+             &("#{bundle_name}:#{&1.command.name}"))
+  end
 
 end

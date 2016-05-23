@@ -161,25 +161,33 @@ defmodule Cog.V1.BundlesControllerTest do
 
   test "shows enabled bundle", %{authed: requestor} do
     {:ok, _version3} = Bundles.install(%{"name" => "foo", "version" => "3.0.0", "config_file" => %{}})
-    {:ok, version2}  = Bundles.install(%{"name" => "foo", "version" => "2.0.0", "config_file" => %{}})
+    {:ok, version2}  = Bundles.install(%{"name" => "foo", "version" => "2.0.0", "config_file" => %{
+                                          "permissions" => ["foo:bar"],
+                                          "commands" => %{"blah" => %{}}}})
     {:ok, version1}  = Bundles.install(%{"name" => "foo", "version" => "1.0.0", "config_file" => %{}})
 
     :ok = Bundles.set_bundle_version_status(version2, :enabled)
     bundle = version1.bundle
 
     conn = api_request(requestor, :get, "/v1/bundles/#{bundle.id}")
-    assert %{"bundle" => %{"id" => bundle.id,
-                           "name" => bundle.name,
-                           "enabled_version" => %{"id" => version2.id,
+
+
+    bundle_id = bundle.id
+    bundle_name = bundle.name
+    version_id = version2.id
+    assert %{"bundle" => %{"id" => ^bundle_id,
+                           "name" => ^bundle_name,
+                           "enabled_version" => %{"id" => ^version_id,
                                                   "version" => "2.0.0",
                                                   "name" => "foo",
-                                                  "permissions" => [],
-                                                  # "commands" => []
-                                                 },
+                                                  "permissions" => [%{"id" => _,
+                                                                      "bundle" => "foo",
+                                                                      "name" => "bar"}],
+                                                  "commands" => ["foo:blah"]},
                            "versions" => ["3.0.0", "2.0.0", "1.0.0"],
                            "relay_groups" => [],
-                           "inserted_at" => "#{DateTime.to_iso8601(bundle.inserted_at)}",
-                           "updated_at" => "#{DateTime.to_iso8601(bundle.updated_at)}"}} == json_response(conn, 200)
+                           "inserted_at" => _,
+                           "updated_at" => _}} = json_response(conn, 200)
   end
 
   test "cannot view bundle without permission", %{unauthed: requestor} do

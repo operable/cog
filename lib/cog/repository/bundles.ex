@@ -437,10 +437,13 @@ defmodule Cog.Repository.Bundles do
   # Consolidate what we need to preload for various things so we stay
   # consistent
   @bundle_preloads [:versions, :permissions, :commands]
-  @bundle_version_preloads [bundle: @bundle_preloads]
+  @bundle_version_preloads [:bundle,
+                            permissions: [:bundle],
+                            commands: [:command]]
   @enabled_version_preloads [enabled_version: [:bundle,
-                                               :permissions,
+                                               permissions: [:bundle],
                                                commands: [:command]]]
+
   defp preload(%Bundle{}=bundle),
     do: Repo.preload(bundle, @bundle_preloads ++ @enabled_version_preloads)
   defp preload([%Bundle{} | _]=bs),
@@ -471,10 +474,10 @@ defmodule Cog.Repository.Bundles do
       version = new_version(bundle, bundle_params)
 
       # Add permissions, after deduping
-      :ok = register_permissions_for_version(version)
+      :ok = register_permissions_for_version(bundle, version)
 
       # Add commands, after deduping
-      commands = register_commands_for_version(version)
+      commands = register_commands_for_version(bundle, version)
 
       # Add command_versions; rules get ingested in this process as
       # well
@@ -482,13 +485,19 @@ defmodule Cog.Repository.Bundles do
       |> Map.get("commands", %{})
       |> Enum.each(&create_command_version(version, commands, &1))
 
-
       # Add templates
       version.config_file
       |> Map.get("templates", %{})
       |> Enum.each(&create_template(version, &1))
 
-      version
+      # Once we go to Ecto 2.0 and there's a Repo.preload/3, I'd like
+      # to add the ability to selectively force preloading on our
+      # private preload/2 function. Until then, without having to muck
+      # around too much with the internals of the model, I'm just
+      # going to grab a fresh version from the database.
+      #
+      # :(
+      Cog.Repo.get(BundleVersion, version.id)
     end)
   end
 
@@ -540,9 +549,7 @@ defmodule Cog.Repository.Bundles do
     end)
   end
 
-  defp register_permissions_for_version(bundle_version) do
-    bundle = bundle_version.bundle
-
+  defp register_permissions_for_version(bundle, bundle_version) do
     # Get just raw names... they'll come in as fully-qualified
     raw_names = bundle_version.config_file
     |> Map.get("permissions", [])
@@ -568,10 +575,7 @@ defmodule Cog.Repository.Bundles do
     :ok
   end
 
-  defp register_commands_for_version(bundle_version) do
-    # TODO: preload commands onto bundle
-    bundle = bundle_version.bundle
-
+  defp register_commands_for_version(bundle, bundle_version) do
     # Figure out what commands we need for this bundle version
     command_names = bundle_version.config_file
     |> Map.get("commands", %{})
