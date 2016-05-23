@@ -6,7 +6,7 @@ defmodule Cog.V1.BundlesControllerTest do
   use Cog.ModelCase
   use Cog.ConnCase
 
-  @moduletag :skip
+  alias Cog.Repository.Bundles
 
   setup do
     # Requests handled by the role controller require this permission
@@ -142,47 +142,38 @@ defmodule Cog.V1.BundlesControllerTest do
     assert conn.status == 400
   end
 
-  test "shows chosen resource", %{authed: requestor} do
-    bundle = bundle_version("test-1").bundle
+  test "shows disabled bundle", %{authed: requestor} do
+    {:ok, _version3} = Bundles.install(%{"name" => "foo", "version" => "3.0.0", "config_file" => %{}})
+    {:ok, _version2} = Bundles.install(%{"name" => "foo", "version" => "2.0.0", "config_file" => %{}})
+    {:ok, version1} = Bundles.install(%{"name" => "foo", "version" => "1.0.0", "config_file" => %{}})
+
+    bundle = version1.bundle
+
     conn = api_request(requestor, :get, "/v1/bundles/#{bundle.id}")
     assert %{"bundle" => %{"id" => bundle.id,
                            "name" => bundle.name,
-                           "enabled" => bundle.enabled,
+                           "versions" => ["1.0.0", "2.0.0", "3.0.0"],
                            "relay_groups" => [],
-                           "commands" => [],
-                           "permissions" => [],
                            "inserted_at" => "#{DateTime.to_iso8601(bundle.inserted_at)}",
                            "updated_at" => "#{DateTime.to_iso8601(bundle.updated_at)}"}} == json_response(conn, 200)
   end
 
-  test "includes rules in bundle resource", %{authed: requestor} do
-    site = Cog.Repository.Bundles.site_version_bundle
+  test "shows enabled bundle", %{authed: requestor} do
+    {:ok, _version3} = Bundles.install(%{"name" => "foo", "version" => "3.0.0", "config_file" => %{}})
+    {:ok, version2} = Bundles.install(%{"name" => "foo", "version" => "2.0.0", "config_file" => %{}})
+    {:ok, version1} = Bundles.install(%{"name" => "foo", "version" => "1.0.0", "config_file" => %{}})
 
-    bundle = bundle_version("cog").bundle
-    command = command("hola")
-    perm = permission("cog:hello")
-    rule_text = "when command is cog:hola must have cog:hello"
-    rule = rule(rule_text, site)
-
-    bundle_id = bundle.id
-    command_id = command.id
-    rule_id = rule.id
-    perm_id = perm.id
+    :ok = Bundles.set_bundle_version_status(version2, :enabled)
+    bundle = version1.bundle
 
     conn = api_request(requestor, :get, "/v1/bundles/#{bundle.id}")
-    assert %{"bundle" => %{"id" => ^bundle_id,
-                           "permissions" => [%{"id" => ^perm_id,
-                                               "name" => "hello",
-                                               "namespace" => "cog"}],
-                           "commands" => [
-                             %{"id" => ^command_id,
-                               "rules" => [
-                                 %{"id" => ^rule_id,
-                                   "command" => "cog:hola",
-                                   "permissions" => [%{"id" => ^perm_id,
-                                                       "name" => "hello",
-                                                       "namespace" => "cog"}],
-                                   "rule" => ^rule_text}]}]}} = json_response(conn, 200)
+    assert %{"bundle" => %{"id" => bundle.id,
+                           "name" => bundle.name,
+                           "enabled_version" => "2.0.0",
+                           "versions" => ["1.0.0", "2.0.0", "3.0.0"],
+                           "relay_groups" => [],
+                           "inserted_at" => "#{DateTime.to_iso8601(bundle.inserted_at)}",
+                           "updated_at" => "#{DateTime.to_iso8601(bundle.updated_at)}"}} == json_response(conn, 200)
   end
 
   test "cannot view bundle without permission", %{unauthed: requestor} do

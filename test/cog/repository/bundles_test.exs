@@ -174,8 +174,8 @@ defmodule Cog.Repository.BundlesTest do
     assert %Bundle{name: "testing"} = bundle_after # bundle's still there!
     versions = Bundles.versions(bundle_after)
     assert 2 == length(versions)
-    assert Enum.member?(versions, version1)
-    assert Enum.member?(versions, version2)
+    assert Enum.find(versions, &(&1.id == version1.id))
+    assert Enum.find(versions, &(&1.id == version2.id))
   end
 
   test "deleting an enabled version is not allowed" do

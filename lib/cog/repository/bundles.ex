@@ -437,7 +437,7 @@ defmodule Cog.Repository.Bundles do
 
   # Consolidate what we need to preload for various things so we stay
   # consistent
-  @bundle_preloads [:permissions, :commands]
+  @bundle_preloads [:versions, :permissions, :commands]
   @bundle_version_preloads [bundle: @bundle_preloads]
 
   defp preload(%Bundle{}=bundle),

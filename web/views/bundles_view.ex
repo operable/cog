@@ -5,26 +5,51 @@ defmodule Cog.V1.BundlesView do
   # alias Cog.V1.CommandView
   # alias Cog.V1.PermissionView
 
-  def render("bundle.json", %{bundle: bundle}=_params) do
+  defp ordered_version_strings(versions) do
+    versions
+    |> Enum.map(&(&1.version))
+    |> Enum.sort
+    |> Enum.map(&to_string/1)
+  end
+
+
+  def render("bundle.json", %{bundle: bundle, enabled_bundles: enabled_bundles}=_params) do
+
+    enabled_version = case Map.get(enabled_bundles, bundle.name) do
+                        nil -> %{}
+                        version -> %{enabled_version: to_string(version)}
+                      end
     %{id: bundle.id,
-      name: bundle.name}
-#      enabled: bundle.enabled,
- #     inserted_at: bundle.inserted_at,
- #     updated_at: bundle.updated_at}
-#    |> Map.merge(render_includes(params, bundle))
+      name: bundle.name,
+      versions: ordered_version_strings(bundle.versions),
+      inserted_at: bundle.inserted_at,
+      updated_at: bundle.updated_at,
+      relay_groups: []}
+    |> Map.merge(enabled_version)
+
   end
 
-  def render("index.json", %{bundles: bundles}) do
-    %{bundles: render_many(bundles, __MODULE__, "bundle.json", as: :bundle)}
+  def render("index.json", %{bundles: bundles}=assigns) do
+    %{bundles: render_many(bundles, __MODULE__,
+                           "bundle.json",
+                           Map.put(assigns, :as, :bundle))}
   end
 
-  def render("show.json", %{bundle: bundle, warnings: warnings}) when length(warnings) > 0 do
+  def render("show.json", %{bundle: bundle, warnings: warnings}=assigns)
+  when length(warnings) > 0 do
     warnings = Enum.map(warnings, fn({msg, meta}) -> ~s(Warning near #{meta}: #{msg}) end)
     %{warnings: warnings,
-      bundle: render_one(bundle, __MODULE__, "bundle.json", as: :bundle, include: [:commands, :relay_groups, :namespace])}
+      bundle: render_one(bundle, __MODULE__, "bundle.json",
+                         Map.merge(assigns,
+                                   %{as: :bundle,
+                                     include: [:commands, :relay_groups, :namespace]}))}
   end
-  def render("show.json", %{bundle: bundle}) do
-    %{bundle: render_one(bundle, __MODULE__, "bundle.json", as: :bundle, include: [:commands, :relay_groups, :namespace])}
+  def render("show.json", %{bundle: bundle}=assigns) do
+    %{bundle: render_one(bundle, __MODULE__,
+                         "bundle.json",
+                         Map.merge(assigns,
+                                   %{as: :bundle,
+                                     include: [:commands, :relay_groups, :namespace]}))}
   end
 
   # defp render_includes(inc_fields, resource) do
