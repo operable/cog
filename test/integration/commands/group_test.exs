@@ -35,7 +35,7 @@ defmodule Integration.Commands.GroupTest do
   end
 
   test "adding and removing roles to groups", %{user: user} do
-    cheer = group("cheer")
+    group("cheer")
     role("admin")
 
     [response] = send_message(user, "@bot: operable:group role add cheer admin")
@@ -56,7 +56,7 @@ defmodule Integration.Commands.GroupTest do
   end
 
   test "getting group info", %{user: user} do
-    cheer = group("cheer")
+    group("cheer")
 
     [response] = send_message(user, "@bot: operable:group info cheer")
     |> decode_payload

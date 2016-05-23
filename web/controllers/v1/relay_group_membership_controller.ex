@@ -12,13 +12,13 @@ defmodule Cog.V1.RelayGroupMembershipController do
 
   def relay_index(conn, %{"id" => id}) do
     relay_group = Repo.get!(RelayGroup, id)
-    |> Repo.preload([:relays])
+    |> Repo.preload([:relays, [bundles: :versions]])
     render(conn, "relays.json", relay_group: relay_group)
   end
 
   def bundle_index(conn, %{"id" => id}) do
     relay_group = Repo.get!(RelayGroup, id)
-    |> Repo.preload([:bundles])
+    |> Repo.preload([bundles: :versions])
     render(conn, "bundles.json", relay_group: relay_group)
   end
 
@@ -45,7 +45,7 @@ defmodule Cog.V1.RelayGroupMembershipController do
       relay_group
       |> add(members_to_add)
       |> remove(members_to_remove)
-      |> Repo.preload([:bundles, :relays])
+      |> Repo.preload([[bundles: :versions], :relays])
     end)
 
     case result do
