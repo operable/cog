@@ -2,7 +2,7 @@ defmodule Cog.Commands.Rule.Create do
   alias Cog.Models.Rule
   alias Cog.RuleIngestion
   alias Piper.Permissions.Parser
-  require Cog.Commands.Helper, as: Helpers
+  require Cog.Commands.Helpers, as: Helpers
 
   Helpers.usage """
   Create a rule by specifying the entire rule or by using the shorthand for a

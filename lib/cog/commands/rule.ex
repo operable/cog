@@ -3,7 +3,7 @@ defmodule Cog.Commands.Rule do
     bundle: Cog.embedded_bundle
 
   alias Cog.Commands.Rule.{List, Create, Drop}
-  require Cog.Commands.Helper, as: Helpers
+  require Cog.Commands.Helpers, as: Helpers
   require Logger
 
   Helpers.usage :root, """

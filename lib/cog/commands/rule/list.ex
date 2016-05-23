@@ -2,7 +2,7 @@ defmodule Cog.Commands.Rule.List do
   alias Cog.Models.Command
   alias Cog.Models.Rule
   alias Cog.Repo
-  require Cog.Commands.Helper, as: Helpers
+  require Cog.Commands.Helpers, as: Helpers
 
   Helpers.usage """
   List all rules or rules for the provided command.
