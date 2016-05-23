@@ -169,11 +169,18 @@ defmodule Cog.V1.BundlesControllerTest do
     :ok = Bundles.set_bundle_version_status(version2, :enabled)
     bundle = version1.bundle
 
-    conn = api_request(requestor, :get, "/v1/bundles/#{bundle.id}")
+    relay_group = relay_group("test-group")
+    relay = relay("test-relay", "seekrit_token")
+    add_relay_to_group(relay_group.id, relay.id)
+    assign_bundle_to_group(relay_group.id, bundle.id)
 
+    conn = api_request(requestor, :get, "/v1/bundles/#{bundle.id}")
 
     bundle_id = bundle.id
     bundle_name = bundle.name
+    relay_group_id = relay_group.id
+    relay_group_name = relay_group.name
+
     version_id = version2.id
     assert %{"bundle" => %{"id" => ^bundle_id,
                            "name" => ^bundle_name,
@@ -185,7 +192,8 @@ defmodule Cog.V1.BundlesControllerTest do
                                                                       "name" => "bar"}],
                                                   "commands" => ["foo:blah"]},
                            "versions" => ["3.0.0", "2.0.0", "1.0.0"],
-                           "relay_groups" => [],
+                           "relay_groups" => [%{"id" => ^relay_group_id,
+                                                "name" => ^relay_group_name}],
                            "inserted_at" => _,
                            "updated_at" => _}} = json_response(conn, 200)
   end
