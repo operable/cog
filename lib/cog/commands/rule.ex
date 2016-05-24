@@ -75,8 +75,6 @@ defmodule Cog.Commands.Rule do
     do: "Rule #{inspect uuid} could not be found"
   defp error({:rule_not_found, uuids}),
     do: "Rules #{Enum.map_join(uuids, ", ", &inspect/1)} could not be found"
-  defp error(:rule_non_site_namespace),
-    do: "Could not create rule with permission outside of the \"site\" namespace"
   defp error({:rule_uuid_invalid, uuid}),
     do: "Could not drop rule with invalid id #{inspect uuid}"
   defp error(error),
