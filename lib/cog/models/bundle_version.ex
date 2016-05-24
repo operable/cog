@@ -11,6 +11,9 @@ defmodule Cog.Models.BundleVersion do
     has_many :commands, CommandVersion # TODO: or `:command_versions`?
     has_many :templates, Template
 
+    has_many :permission_registration, Cog.Models.PermissionBundleVersion
+    has_many :permissions, through: [:permission_registration, :permission]
+
     timestamps
   end
 

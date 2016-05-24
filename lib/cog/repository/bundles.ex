@@ -548,18 +548,20 @@ defmodule Cog.Repository.Bundles do
     |> MapSet.new
 
     # Determine which of those already exist in the database
+    bundle_permission_names = Enum.map(bundle.permissions, &(&1.name)) |> MapSet.new
 
-    existing_permissions = bundle.permissions
-    existing_permission_names = Enum.map(existing_permissions, &(&1.name)) |> MapSet.new
-    missing_permission_names  = MapSet.difference(raw_names, existing_permission_names)
+    new_to_this_version  = MapSet.difference(raw_names, bundle_permission_names)
 
-    # Create new permissions for the remaining ones
-    missing_permission_names
+    already_existing_names = MapSet.intersection(raw_names, bundle_permission_names)
+    already_existing = Enum.filter(bundle.permissions, &(Enum.member?(already_existing_names, &1.name)))
+
+    # Create new permissions the ones we haven't seen yet
+    new_to_this_version
     |> Enum.map(&Cog.Repository.Permissions.create_permission(bundle_version, &1))
     |> Enum.map(fn({:ok, p}) -> p end)
 
     # Link preexisting permissions to the current bundle version
-    Enum.each(existing_permissions, &Cog.Repository.Permissions.link_permission_to_bundle_version(bundle_version, &1))
+    Enum.each(already_existing, &Cog.Repository.Permissions.link_permission_to_bundle_version(bundle_version, &1))
 
     :ok
   end
