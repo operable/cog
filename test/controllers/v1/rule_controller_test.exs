@@ -73,8 +73,8 @@ defmodule Cog.V1.RuleController.Test do
 
   test "cannot create a rule without required permissions", %{unauthed: requestor} do
     command("s3")
-    permission("s3:delete")
-    rule_text = "when command is cog:s3 with option[op] == 'delete' must have s3:delete"
+    permission("cog:delete")
+    rule_text = "when command is cog:s3 with option[op] == 'delete' must have cog:delete"
 
     conn = api_request(requestor, :post, "/v1/rules",
                        body: %{"rule" => rule_text})
@@ -90,8 +90,8 @@ defmodule Cog.V1.RuleController.Test do
 
   test "delete an existing rule", %{authed: requestor} do
     command("s3")
-    permission("s3:delete")
-    rule_text = "when command is cog:s3 with option[op] == 'delete' must have s3:delete"
+    permission("cog:delete")
+    rule_text = "when command is cog:s3 with option[op] == 'delete' must have cog:delete"
     rule = rule(rule_text)
 
     assert_rule_is_persisted(rule.id, rule_text)
@@ -110,8 +110,8 @@ defmodule Cog.V1.RuleController.Test do
 
   test "cannot delete a rule without required permissions", %{unauthed: requestor} do
     command("s3")
-    permission("s3:delete")
-    rule_text = "when command is cog:s3 with option[op] == 'delete' must have s3:delete"
+    permission("cog:delete")
+    rule_text = "when command is cog:s3 with option[op] == 'delete' must have cog:delete"
     rule = rule(rule_text)
 
     conn = api_request(requestor, :delete, "/v1/rules/#{rule.id}")

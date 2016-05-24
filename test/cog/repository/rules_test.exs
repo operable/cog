@@ -1,16 +1,28 @@
 defmodule Cog.Repository.RulesTest do
   use Cog.ModelCase
-  alias Cog.Models.Rule
+  alias Cog.Models.{Rule, Bundle, Command}
   alias Cog.Repository.{Rules, Bundles}
   alias Piper.Permissions.Parser
 
+  setup do
+    bundle = %Bundle{}
+    |> Bundle.changeset(%{name: "s3"})
+    |> Repo.insert!
+
+    command = %Command{}
+    |> Command.changeset(%{name: "put", bundle_id: bundle.id})
+    |> Repo.insert!
+
+    permission = permission("s3:delete")
+
+    {:ok, bundle: bundle, command: command, permission: permission}
+  end
+
   test "a valid rule gets parsed and saved" do
-    command("s3")
-    permission("s3:delete")
-    rule_text = "when command is cog:s3 with option[op] == 'delete' must have s3:delete"
+    rule_text = "when command is s3:put with option[op] == 'replace' must have s3:delete"
     expr = Parser.rule_to_json!(expr(rule_text))
 
-    {:ok, %Rule{parse_tree: ^expr}} = Rules.ingest(rule_text)
+    assert {:ok, %Rule{parse_tree: ^expr}} = Rules.ingest(rule_text)
   end
 
   test "invalid rules are not ingested and return a syntax error message" do
@@ -19,27 +31,30 @@ defmodule Cog.Repository.RulesTest do
     assert ^expected = actual
   end
 
+  test "rules referencing permissions from a different bundle return an error" do
+    permission("aws:write")
+
+    rule_text = "when command is s3:put must have aws:write"
+
+    assert {:error, {:permission_bundle_mismatch, "aws:write"}} = Rules.ingest(rule_text)
+  end
+
   test "a rule for an unrecognized command is not inserted" do
-    permission("s3:delete")
-    rule_text = "when command is cog:monkeys with option[op] == 'delete' must have s3:delete"
+    rule_text = "when command is s3:monkeys with option[op] == 'replace' must have s3:delete"
 
     actual = Rules.ingest(rule_text)
-    assert({:error, {:unrecognized_command, "cog:monkeys"}} = actual)
+    assert({:error, {:unrecognized_command, "s3:monkeys"}} = actual)
   end
 
   test "ingesting a rule you've already ingested returns the exact same rule that was inserted earlier" do
-    command("s3")
-    permission("s3:delete")
-    rule_text = "when command is cog:s3 with option[op] == 'delete' must have s3:delete"
+    rule_text = "when command is s3:put with option[op] == 'replace' must have s3:delete"
 
     {:ok, %Rule{id: id}} = Rules.ingest(rule_text)
     assert {:ok, %Rule{id: ^id}} = Rules.ingest(rule_text)
   end
 
-  test "a rule is linked by database references to the required permissions" do
-    command("s3")
-    permission = permission("s3:delete")
-    rule_text = "when command is cog:s3 with option[op] == 'delete' must have s3:delete"
+  test "a rule is linked by database references to the required permissions", %{permission: permission} do
+    rule_text = "when command is s3:put with option[op] == 'replace' must have s3:delete"
     site = Bundles.site_bundle_version
 
     rule = rule_text
@@ -50,17 +65,16 @@ defmodule Cog.Repository.RulesTest do
   end
 
   test "if multiple permissions are required, all are linked" do
-    command("s3")
-    permissions = ["s3:delete", "s3:admin", "system:superpower"]
+    permissions = ["s3:delete", "s3:admin", "site:ops"]
     |> Enum.map(&permission/1)
     |> Enum.sort
 
     rule_text = """
-    when command is cog:s3
-    with option[op] == 'delete'
+    when command is s3:put
+    with option[op] == 'replace'
     must have s3:delete or
               s3:admin or
-              system:superpower
+              site:ops
     """
     rule = rule(rule_text) |> Repo.preload(:permissions)
     retrieved_permissions = rule.permissions |> Enum.sort
@@ -69,16 +83,13 @@ defmodule Cog.Repository.RulesTest do
   end
 
   test "all permissions must be present in the database to ingest a rule" do
-    command("s3")
-    rule_text = "when command is cog:s3 with option[op] == 'delete' must have s3:delete"
+    rule_text = "when command is s3:put with option[op] == 'replace' must have s3:deletez"
 
-    assert {:error, {:unrecognized_permission, "s3:delete"}} = Rules.ingest(rule_text)
+    assert {:error, {:unrecognized_permission, "s3:deletez"}} = Rules.ingest(rule_text)
   end
 
-  test "a parse tree can round-trip to and from the database" do
-    command = command("s3")
-    permission("s3:delete")
-    inserted_rule = rule("when command is cog:s3 with option[op] == 'delete' must have s3:delete")
+  test "a parse tree can round-trip to and from the database", %{command: command} do
+    inserted_rule = rule("when command is s3:put with option[op] == 'replace' must have s3:delete")
 
     %Rule{parse_tree: retrieved_tree} = Repo.one!(Ecto.assoc(command, :rules))
     assert ^retrieved_tree = inserted_rule.parse_tree

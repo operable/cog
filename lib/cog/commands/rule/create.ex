@@ -1,7 +1,5 @@
 defmodule Cog.Commands.Rule.Create do
-  alias Cog.Models.Rule
   alias Cog.Repository.Rules
-  alias Piper.Permissions.Parser
   require Cog.Commands.Helpers, as: Helpers
 
   Helpers.usage """
@@ -32,30 +30,6 @@ defmodule Cog.Commands.Rule.Create do
     do: {:error, {:invalid_args, 1, 2}}
 
   defp do_create(rule) do
-    with :ok <- validate_permissions(rule),
-         {:ok, rule} <- create_rule(rule),
-         do: {:ok, rule}
-  end
-
-  defp validate_permissions(rule) do
-    case Parser.parse(rule) do
-      {:ok, _ast, permissions} ->
-        Enum.reduce_while(permissions, :ok, fn permission, :ok ->
-          case Rule.parse_name(permission) do
-            {:ok, {"site", _permission}} ->
-              {:cont, :ok}
-            {:ok, {_non_site_namesapce, _permission}} ->
-              {:halt, {:error, :rule_non_site_namespace}}
-            {:error, error} ->
-              {:halt, {:error, error}}
-          end
-        end)
-      {:error, error} ->
-        {:error, {:rule_invalid, error}}
-    end
-  end
-
-  defp create_rule(rule) do
     case Rules.ingest(rule) do
       {:ok, rule} ->
         {:ok, "rule-create", rule}
