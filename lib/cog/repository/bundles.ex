@@ -440,10 +440,10 @@ defmodule Cog.Repository.Bundles do
   @bundle_preloads [:versions, :relay_groups]
   @bundle_version_preloads [:bundle,
                             permissions: [:bundle],
-                            commands: [:command]]
+                            commands: [command: :bundle]]
   @enabled_version_preloads [enabled_version: [:bundle,
                                                permissions: [:bundle],
-                                               commands: [:command]]]
+                                               commands: [command: :bundle]]]
 
   defp preload(%Bundle{}=bundle),
     do: Repo.preload(bundle, @bundle_preloads ++ @enabled_version_preloads)
