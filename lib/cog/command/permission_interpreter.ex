@@ -10,6 +10,7 @@ defmodule Cog.Command.PermissionInterpreter do
                                       options: options,
                                       args: args)
     results = command_version.command.rules
+    |> Enum.filter(&(&1.enabled))
     |> Enum.map(&(evaluate(&1, context)))
     |> Enum.reject(&(&1 == :nomatch))
     |> Enum.sort(&by_score/2)
