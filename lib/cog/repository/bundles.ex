@@ -6,9 +6,8 @@ defmodule Cog.Repository.Bundles do
   require Logger
 
   alias Cog.Repo
-  alias Cog.Models.Bundle
-  alias Cog.Models.BundleVersion
-  alias Cog.Models.CommandVersion
+  alias Cog.Models.{Bundle, BundleVersion, CommandVersion}
+  alias Cog.Repository.Rules
 
   alias Cog.Models.Types.VersionTriple
   alias Ecto.Adapters.SQL
@@ -500,7 +499,7 @@ defmodule Cog.Repository.Bundles do
 
     command_spec
     |> Map.get("rules", [])
-    |> Enum.each(&(Cog.RuleIngestion.ingest(&1, bundle_version, false)))
+    |> Enum.each(&(Rules.ingest_without_transaction(&1, bundle_version)))
 
     command_spec
     |> Map.get("options", [])
