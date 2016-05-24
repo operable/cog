@@ -59,7 +59,10 @@ defmodule Cog.V1.BundleVersionControllerTest do
                 "version" => "1.0.0",
                 "inserted_at" => _,
                 "updated_at" => _,
-                "commands" => ["test-bundle:bar", "test-bundle:foo"],
+                "commands" => [
+                  %{"bundle" => "test-bundle", "name" => "bar"},
+                  %{"bundle" => "test-bundle", "name" => "foo"}
+                ],
                 "permissions" => [%{"id" => _,
                                     "bundle" => "test-bundle",
                                     "name" => "permission"}]}} = json_response(conn, 200)
