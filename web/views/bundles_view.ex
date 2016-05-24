@@ -20,7 +20,7 @@ defmodule Cog.V1.BundlesView do
 
     %{id: bundle.id,
       name: bundle.name,
-      versions: ordered_version_strings(bundle.versions),
+      versions: ordered_versions(bundle.versions),
       inserted_at: bundle.inserted_at,
       updated_at: bundle.updated_at}
     |> Map.merge(enabled_version)
@@ -35,12 +35,11 @@ defmodule Cog.V1.BundlesView do
 
   ########################################################################
 
-  defp ordered_version_strings(versions) do
+  defp ordered_versions(versions) do
     versions
-    |> Enum.map(&(&1.version))
-    |> Enum.sort
-    |> Enum.reverse
-    |> Enum.map(&to_string/1)
+    |> Enum.sort_by(&(&1.version), &>=/2)
+    |> Enum.map(&(%{"id" => &1.id,
+                    "version" => to_string(&1.version)}))
   end
 
 end

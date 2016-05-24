@@ -1,5 +1,4 @@
 defmodule Cog.V1.BundlesControllerTest do
-  alias Ecto.DateTime
 
   require Logger
 
@@ -151,13 +150,18 @@ defmodule Cog.V1.BundlesControllerTest do
     bundle = version1.bundle
 
     conn = api_request(requestor, :get, "/v1/bundles/#{bundle.id}")
-    assert %{"bundle" => %{"id" => bundle.id,
-                           "name" => bundle.name,
+
+    bundle_id = bundle.id
+    bundle_name = bundle.name
+    assert %{"bundle" => %{"id" => ^bundle_id,
+                           "name" => ^bundle_name,
                            "enabled_version" => nil,
-                           "versions" => ["3.0.0", "2.0.0", "1.0.0"],
+                           "versions" => [%{"id" => _, "version" => "3.0.0"},
+                                          %{"id" => _, "version" => "2.0.0"},
+                                          %{"id" => _, "version" => "1.0.0"}],
                            "relay_groups" => [],
-                           "inserted_at" => "#{DateTime.to_iso8601(bundle.inserted_at)}",
-                           "updated_at" => "#{DateTime.to_iso8601(bundle.updated_at)}"}} == json_response(conn, 200)
+                           "inserted_at" => _,
+                           "updated_at" => _}} = json_response(conn, 200)
   end
 
   test "shows enabled bundle", %{authed: requestor} do
@@ -193,7 +197,9 @@ defmodule Cog.V1.BundlesControllerTest do
                                                                       "name" => "bar"}],
                                                   "commands" => [%{"bundle" => "foo",
                                                                    "name" => "blah"}]},
-                           "versions" => ["3.0.0", "2.0.0", "1.0.0"],
+                           "versions" => [%{"id" => _, "version" => "3.0.0"},
+                                          %{"id" => _, "version" => "2.0.0"},
+                                          %{"id" => _, "version" => "1.0.0"}],
                            "relay_groups" => [%{"id" => ^relay_group_id,
                                                 "name" => ^relay_group_name}],
                            "inserted_at" => _,
@@ -259,17 +265,17 @@ defmodule Cog.V1.BundlesControllerTest do
                              "name" => "operable",
                              "enabled_version" => %{"version" => version},
                              "relay_groups" => [], # embedded bundle isn't in relay groups
-                             "versions" => [version]}, # only one, and it's the enabled one
+                             "versions" => [%{"id" => _, "version" => version}]}, # only one, and it's the enabled on}e
                            %{"id" => _,
                              "name" => "site",
                              "enabled_version" => nil, # nothing to enable with the site bundle
                              "relay_groups" => [], # not assigned to any groups either
-                             "versions" => ["0.0.0"]}, # always
+                             "versions" => [%{"id" => _, "version" => "0.0.0"}]}, # always
                            %{"id" => _,
                              "name" => "test-1",
                              "enabled_version" => nil,
                              "relay_groups" => [],
-                             "versions" => ["0.1.0"]}]} = json_response(conn, 200)
+                             "versions" => [%{"id" => _, "version" => "0.1.0"}]}]} = json_response(conn, 200)
   end
 
   test "cannot show bundles without permission", %{unauthed: requestor} do
@@ -280,10 +286,10 @@ defmodule Cog.V1.BundlesControllerTest do
 
   test "shows bundle versions", %{authed: requestor} do
     {:ok, version1}  = Bundles.install(%{"name" => "foo", "version" => "1.0.0", "config_file" => %{}})
-    {:ok, version2}  = Bundles.install(%{"name" => "foo", "version" => "2.0.0", "config_file" => %{
+    {:ok, _version2}  = Bundles.install(%{"name" => "foo", "version" => "2.0.0", "config_file" => %{
                                           "permissions" => ["foo:bar"],
                                           "commands" => %{"blah" => %{}}}})
-    {:ok, version3} = Bundles.install(%{"name" => "foo", "version" => "3.0.0", "config_file" => %{}})
+    {:ok, _version3} = Bundles.install(%{"name" => "foo", "version" => "3.0.0", "config_file" => %{}})
 
     conn = api_request(requestor, :get, "/v1/bundles/#{version1.bundle.id}/versions")
 
