@@ -1,7 +1,7 @@
 defmodule Cog.Models.Command do
   use Cog.Model
   use Cog.Models
-
+  alias Cog.Queries
   require Logger
 
   schema "commands_v2" do
@@ -46,6 +46,46 @@ defmodule Cog.Models.Command do
           [_] ->
             {name, name}
         end
+    end
+  end
+
+  def parse_name(name) do
+    case parse_qualified_name(name) do
+      {:ok, command} ->
+        {:ok, command}
+      {:error, _} ->
+        parse_ambiguous_name(name)
+    end
+  end
+
+  def parse_qualified_name(name) do
+    case String.split(name, ":", parts: 2) do
+      [bundle, command] ->
+        result = Queries.Command.named(bundle, command)
+        |> Repo.one
+
+        case result do
+          nil ->
+            {:error, {:command_not_found, name}}
+          command ->
+            {:ok, command}
+        end
+      _ ->
+        {:error, {:command_invalid, name}}
+    end
+  end
+
+  def parse_ambiguous_name(name) do
+    result = Queries.Command.by_name(name)
+    |> Repo.all
+
+    case result do
+      [command] ->
+        {:ok, command}
+      [] ->
+        {:error, {:command_not_found, name}}
+      _ ->
+        {:error, {:command_ambiguous, name}}
     end
   end
 

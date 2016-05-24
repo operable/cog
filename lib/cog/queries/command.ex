@@ -1,6 +1,5 @@
 defmodule Cog.Queries.Command do
   use Cog.Queries
-  alias Cog.Models
 
   def names do
     from c in Command,
@@ -34,6 +33,11 @@ defmodule Cog.Queries.Command do
     where: c.name == ^command
   end
 
+  def by_name(command) do
+    from c in Command,
+    where: c.name == ^command
+  end
+
   def with_bundle(queryable),
     do: from c in queryable, preload: [:bundle]
 
@@ -42,16 +46,6 @@ defmodule Cog.Queries.Command do
 
   def with_options(queryable),
     do: from c in queryable, preload: [options: :option_type]
-
-  def rules_for_cmd(name) do
-    {ns, name} = Models.Command.split_name(name)
-    bundle = Cog.Repo.one(Ecto.Query.from(b in Cog.Models.Bundle,
-                                           where: b.name == ^ns))
-    from r in Rule,
-    join: c in assoc(r, :command),
-    where: c.name == ^name,
-    where: c.bundle_id == ^bundle.id
-  end
 
   @doc """
   Retrieve all information about a command

@@ -41,14 +41,33 @@ defmodule Cog.Models.Rule do
     |> unique_constraint(:no_dupes, name: :rules_v2_command_id_parse_tree_index)
   end
 
+  def parse_name(name) do
+    case String.split(name, ":", parts: 2) do
+      [namespace, permission] ->
+        {:ok, {namespace, permission}}
+      _ ->
+        {:error, {:invalid_permission, name}}
+    end
+  end
 end
 
 defimpl Permittable, for: Cog.Models.Rule do
-
   def grant_to(rule, permission),
     do: Cog.Models.JoinTable.associate(rule, permission)
 
   def revoke_from(_, _),
     do: raise "unimplemented"
+end
 
+defimpl Poison.Encoder, for: Cog.Models.Rule do
+  def encode(rule, options) do
+    ast = Piper.Permissions.Parser.json_to_rule!(rule.parse_tree)
+
+    rule
+    |> Map.from_struct
+    |> Map.take([:id])
+    |> Map.put_new(:command, ast.command)
+    |> Map.put_new(:rule, to_string(ast))
+    |> Poison.Encoder.Map.encode(options)
+  end
 end

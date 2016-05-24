@@ -10,21 +10,18 @@ defmodule Integration.Commands.RuleTest do
   end
 
   ########################################################################
-  # General
+  # List
 
-  test "error when unknown options for rules command", %{user: user} do
-    assert_error(user, "@bot: operable:rules --doit 'when command is operable:st-echo must have operable:st-echo'",
-                 "Whoops! An error occurred. \n* You must specify either an `--add`, `--drop`, or `--list` action\n\n")
+  test "listing rules", %{user: user} do
+    response = interact(user, "@bot: rule -c operable:st-echo")
+
+    assert response["command"] == "operable:st-echo"
+    assert response["rule"] == "when command is operable:st-echo must have operable:st-echo"
   end
 
-  test "error when no action is specified", %{user: user} do
-    assert_error(user, "@bot: operable:rules",
-                 "Whoops! An error occurred. \n* You must specify either an `--add`, `--drop`, or `--list` action\n\n")
-  end
-
-  test "error when too many actions are specified", %{user: user} do
-    assert_error(user, "@bot: operable:rules --add --drop",
-                 "Whoops! An error occurred. \n* You must specify only one of `--add`, `--drop`, or `--list` as an action\n\n")
+  test "error when listing rules for an unrecognized command", %{user: user} do
+    assert_error(user, "@bot: rule -c not_really:a_command",
+                 ~s(Whoops! An error occurred. Command "not_really:a_command" could not be found))
   end
 
   ########################################################################
@@ -33,7 +30,7 @@ defmodule Integration.Commands.RuleTest do
   test "adding a rule for a command", %{user: user} do
     permission("site:permission")
 
-    response = interact(user, "@bot: operable:rules --add 'when command is operable:st-echo must have site:permission'")
+    response = interact(user, ~s(@bot: rule create "when command is operable:st-echo must have site:permission"))
 
     assert_uuid(response["id"])
     assert response["command"] == "operable:st-echo"
@@ -41,145 +38,75 @@ defmodule Integration.Commands.RuleTest do
   end
 
   test "error when specifying too many arguments for manual rule creation", %{user: user} do
-    assert_error(user, "@bot: operable:rules --add \"blah\" \"blah\"",
-                 "Whoops! An error occurred. \n* The `--add` action expects 1 argument\n\n")
-  end
-
-  test "error when rule argument is not a string", %{user: user} do
-    assert_error(user, "@bot: operable:rules --add 123",
-                 "Whoops! An error occurred. \n* The argument `<expression>` must be a string; you gave `123`\n\n")
+    assert_error(user, ~s(@bot: rule create "blah" "blah" "blah"),
+                 "Whoops! An error occurred. Invalid args. Please pass between 1 and 2 arguments.")
   end
 
   test "error when creating rule for an unrecognized command", %{user: user} do
     permission("site:permission")
-    assert_error(user, "@bot: operable:rules --add --for-command=\"not_really:a_command\" --permission=\"site:permission\"",
-                 "Whoops! An error occurred. \n* Could not find command `not_really:a_command`\n\n")
-  end
-
-  test "error when creating rule for an unqualified command", %{user: user} do
-    permission("site:permission")
-    assert_error(user, "@bot: operable:rules --add --for-command=\"something\" --permission=\"site:permission\"",
-                 "Whoops! An error occurred. \n* The value of the `--for-command` option must be a bundle-qualified command, like `operable:help`\n\n")
-  end
-
-  test "error when creating a rule without specifying a command", %{user: user} do
-    permission("site:permission")
-    assert_error(user, "@bot: operable:rules --add --permission=\"site:permission\"",
-                 "Whoops! An error occurred. \n* You must specify a `--for-command` option\n\n")
-  end
-
-  test "error when creating a rule without specifying a permission", %{user: user} do
-    assert_error(user, "@bot: operable:rules --add --for-command=\"operable:st-echo\"",
-                 "Whoops! An error occurred. \n* You must specify a `--permission` option\n\n")
-  end
-
-  test "error when creating a rule specifying a non-string permission", %{user: user} do
-    assert_error(user, "@bot: operable:rules --add --for-command=\"operable:st-echo\" --permission=123",
-                 "Whoops! An error occurred. Type Error: `123` is not of type `string`")
-  end
-
-  test "error when creating a rule specifying an unqualified permission", %{user: user} do
-    assert_error(user, "@bot: operable:rules --add --for-command=\"operable:st-echo\" --permission=foo",
-                 "Whoops! An error occurred. \n* The value of the `--permission` option must be a fully-qualified permission, like `site:admin`\n\n")
+    assert_error(user, ~s(@bot: rule create "not_really:a_command" "site:permission"),
+                 ~s(Whoops! An error occurred. Could not create rule: Unrecognized command "not_really:a_command"))
   end
 
   test "error when creating rule with an unrecognized permission", %{user: user} do
-    assert_error(user, "@bot: operable:rules --add --for-command=\"operable:st-echo\" --permission=\"site:permission\"",
-                 "Whoops! An error occurred. \n* Could not find permission `site:permission`\n\n")
+    assert_error(user, ~s(@bot: rule create "operable:st-echo" "site:permission"),
+                 ~s(Could not create rule: Unrecognized permission "site:permission"))
   end
 
   test "error when creating a rule specifying a permission from an unacceptable namespace", %{user: user} do
     permission("foo:bar")
-    assert_error(user, "@bot: operable:rules --add --for-command=\"operable:st-echo\" --permission=\"foo:bar\"",
-                 "Whoops! An error occurred. \n* The namespace of the permission must either be `site` or the bundle from which the command comes\n\n")
-  end
-
-  test "error when creating a rule without specifying a command or a permission catches both errors", %{user: user} do
-    assert_error(user, "@bot: operable:rules --add",
-                 "Whoops! An error occurred. \n* You must specify a `--for-command` option\n* You must specify a `--permission` option\n\n")
+    assert_error(user, ~s(@bot: rule create "operable:st-echo" "foo:bar"),
+                 ~s(Whoops! An error occurred. Could not create rule with permission outside of command bundle or the \"site\" namespace))
   end
 
   test "error when manually creating a rule with invalid syntax", %{user: user} do
-    assert_error(user, "@bot: operable:rules --add \"this is totally not a valid rule\"",
-                 "Whoops! An error occurred. \n* Invalid rule: (Line: 1, Col: 0) syntax error before: \"this\".\n\n")
+    assert_error(user, ~s(@bot: rule create "this is totally not a valid rule"),
+                 ~s{Whoops! An error occurred. Could not create rule: \"(Line: 1, Col: 0) syntax error before: \\"this\\".})
   end
 
   ########################################################################
   # Drop
 
   test "dropping a rule via the command name", %{user: user} do
-    response = interact(user, "@bot: operable:rules --drop --for-command=\"operable:st-echo\"")
+    response = interact(user, "@bot: rule drop -c operable:st-echo")
 
     assert_uuid(response["id"])
     assert response["command"] == "operable:st-echo"
     assert response["rule"] == "when command is operable:st-echo must have operable:st-echo"
 
-    assert Cog.Queries.Command.rules_for_cmd("operable:st-echo") |> Cog.Repo.all == []
+    rules = rules_for_command_name("operable:st-echo")
+    assert rules == []
   end
 
   test "dropping a rule via a rule id", %{user: user} do
     # Get an ID we can use to drop
-    response = interact(user, "@bot: operable:rules --list --for-command=\"operable:st-echo\"")
+    response = interact(user, "@bot: rule list -c operable:st-echo")
     id = response["id"]
 
-    response = interact(user, "@bot: operable:rules --drop --id=\"#{id}\"")
+    response = interact(user, "@bot: rule drop #{id}")
 
     # TODO: why is this response not a list?
     assert response["id"] == id
     assert response["command"] == "operable:st-echo"
     assert response["rule"] == "when command is operable:st-echo must have operable:st-echo"
 
-    assert Cog.Queries.Command.rules_for_cmd("operable:st-echo") |> Cog.Repo.all == []
-  end
-
-  test "error when dropping rule with non-string id", %{user: user} do
-    assert_error(user, "@bot: operable:rules --drop --id=123",
-                 "Whoops! An error occurred. Type Error: `123` is not of type `string`")
+    rules = rules_for_command_name("operable:st-echo")
+    assert rules == []
   end
 
   test "error when dropping rule with non-UUID string id", %{user: user} do
-    assert_error(user, "@bot: operable:rules --drop --id=\"not-a-uuid\"",
-                 "Whoops! An error occurred. \n* The option `id` must be a UUID; you gave `\"not-a-uuid\"`\n\n")
+    assert_error(user, "@bot: rule drop not-a-uuid",
+                 ~s(Whoops! An error occurred. Could not drop rule with invalid id "not-a-uuid"))
   end
 
   test "error when dropping rule with unknown id", %{user: user} do
-    assert_error(user, "@bot: operable:rules --drop --id=\"aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee\"",
-                 "Whoops! An error occurred. \n* There are no rules with the ID `aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee`\n\n")
-  end
-
-  test "error when dropping rule without `--for-command` or `--id` option", %{user: user} do
-    assert_error(user, "@bot: operable:rules --drop",
-                 "Whoops! An error occurred. \n* The `--drop` action expects either an `--id` option or a `--for-command` option\n\n")
+    assert_error(user, "@bot: rule drop aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+                 ~s(Whoops! An error occurred. Rule "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee" could not be found))
   end
 
   test "error when dropping rules by command with an unrecognized command", %{user: user} do
-    assert_error(user, "@bot: operable:rules --drop --for-command=\"not_really:a_command\"",
-                 "Whoops! An error occurred. \n* Could not find command `not_really:a_command`\n\n")
-  end
-
-  test "error when dropping rules for an unqualified command", %{user: user} do
-    assert_error(user, "@bot: operable:rules --drop --for-command=\"something\"",
-                 "Whoops! An error occurred. \n* The value of the `--for-command` option must be a bundle-qualified command, like `operable:help`\n\n")
-  end
-
-  ########################################################################
-  # List
-
-  test "listing rules", %{user: user} do
-    response = interact(user, "@bot: operable:rules --list --for-command=\"operable:st-echo\"")
-
-    assert response["command"] == "operable:st-echo"
-    assert response["rule"] == "when command is operable:st-echo must have operable:st-echo"
-  end
-
-  test "error when listing rules for an unrecognized command", %{user: user} do
-    assert_error(user, "@bot: operable:rules --list --for-command=\"not_really:a_command\"",
-                 "Whoops! An error occurred. \n* Could not find command `not_really:a_command`\n\n")
-  end
-
-  test "error when listing rules for an unqualified command", %{user: user} do
-    assert_error(user, "@bot: operable:rules --list --for-command=\"something\"",
-                 "Whoops! An error occurred. \n* The value of the `--for-command` option must be a bundle-qualified command, like `operable:help`\n\n")
+    assert_error(user, "@bot: rule drop -c not_really:a_command",
+                 ~s(Whoops! An error occurred. Command \"not_really:a_command\" could not be found))
   end
 
   ########################################################################
@@ -207,4 +134,8 @@ defmodule Integration.Commands.RuleTest do
   defp assert_error(user, pipeline, expected_message) when is_binary(expected_message),
     do: assert_error_message_contains(send_message(user, pipeline), expected_message)
 
+  defp rules_for_command_name(command_name) do
+    {:ok, command} = Cog.Models.Command.parse_name(command_name)
+    Cog.Repo.all(Ecto.assoc(command, :rules))
+  end
 end

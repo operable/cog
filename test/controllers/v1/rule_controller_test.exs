@@ -71,25 +71,10 @@ defmodule Cog.V1.RuleController.Test do
     refute_rule_is_persisted(rule_text)
   end
 
-  test "errors accumulate", %{authed: requestor} do
-    permission("site:admin")
-    rule_text = "when command is cog:do_stuff must have site:admin and do_stuff:things and do_stuff:other_stuff"
-
-    conn = api_request(requestor, :post, "/v1/rules",
-                       body: %{"rule" => rule_text})
-
-    assert %{"errors" =>
-              %{"unrecognized_command" => ["cog:do_stuff"],
-                "unrecognized_permission" => ["do_stuff:things",
-                                              "do_stuff:other_stuff"]}} == json_response(conn, 422)
-
-    refute_rule_is_persisted(rule_text)
-  end
-
   test "cannot create a rule without required permissions", %{unauthed: requestor} do
     command("s3")
-    permission("s3:delete")
-    rule_text = "when command is cog:s3 with option[op] == 'delete' must have s3:delete"
+    permission("cog:delete")
+    rule_text = "when command is cog:s3 with option[op] == 'delete' must have cog:delete"
 
     conn = api_request(requestor, :post, "/v1/rules",
                        body: %{"rule" => rule_text})
@@ -105,8 +90,8 @@ defmodule Cog.V1.RuleController.Test do
 
   test "delete an existing rule", %{authed: requestor} do
     command("s3")
-    permission("s3:delete")
-    rule_text = "when command is cog:s3 with option[op] == 'delete' must have s3:delete"
+    permission("cog:delete")
+    rule_text = "when command is cog:s3 with option[op] == 'delete' must have cog:delete"
     rule = rule(rule_text)
 
     assert_rule_is_persisted(rule.id, rule_text)
@@ -125,8 +110,8 @@ defmodule Cog.V1.RuleController.Test do
 
   test "cannot delete a rule without required permissions", %{unauthed: requestor} do
     command("s3")
-    permission("s3:delete")
-    rule_text = "when command is cog:s3 with option[op] == 'delete' must have s3:delete"
+    permission("cog:delete")
+    rule_text = "when command is cog:s3 with option[op] == 'delete' must have cog:delete"
     rule = rule(rule_text)
 
     conn = api_request(requestor, :delete, "/v1/rules/#{rule.id}")
@@ -157,7 +142,7 @@ defmodule Cog.V1.RuleController.Test do
     permission("cog:hola")
 
     conn = api_request(requestor, :get, "/v1/rules?for-command=cog:nada")
-    assert %{"errors" => "No rules for command found"} == json_response(conn, 422)
+    assert %{"errors" => "Command \"cog:nada\" not found"} == json_response(conn, 422)
 
     conn = api_request(requestor, :get, "/v1/rules?command=cog:hola")
     assert %{"errors" => "Unknown parameters %{\"command\" => \"cog:hola\"}"} == json_response(conn, 422)
