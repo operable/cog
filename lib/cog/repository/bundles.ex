@@ -439,9 +439,11 @@ defmodule Cog.Repository.Bundles do
   # consistent
   @bundle_preloads [:versions, :relay_groups]
   @bundle_version_preloads [:bundle,
+                            :enabled_version_registration,
                             permissions: [:bundle],
                             commands: [command: :bundle]]
   @enabled_version_preloads [enabled_version: [:bundle,
+                                               :enabled_version_registration,
                                                permissions: [:bundle],
                                                commands: [command: :bundle]]]
 

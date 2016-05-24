@@ -50,6 +50,8 @@ defmodule Cog.V1.BundleVersionControllerTest do
                                          "permissions" => ["test-bundle:permission"]
                                        }})
 
+    :ok = Bundles.set_bundle_version_status(version, :enabled)
+
     conn = api_request(requestor, :get,
                        "/v1/bundles/#{version.bundle.id}/versions/#{version.id}")
 
@@ -57,6 +59,7 @@ defmodule Cog.V1.BundleVersionControllerTest do
               %{"id" => _,
                 "name" => "test-bundle",
                 "version" => "1.0.0",
+                "enabled" => true,
                 "inserted_at" => _,
                 "updated_at" => _,
                 "commands" => [

@@ -293,7 +293,8 @@ defmodule Cog.V1.BundlesControllerTest do
                                      "name" => "foo",
                                      "permissions" => [],
                                      "updated_at" => _,
-                                     "version" => "1.0.0"},
+                                     "version" => "1.0.0",
+                                     "enabled" => false},
                                    %{"commands" => [%{"bundle" => "foo",
                                                       "name" => "blah"}],
                                      "id" => _,
@@ -303,14 +304,16 @@ defmodule Cog.V1.BundlesControllerTest do
                                                          "bundle" => "foo",
                                                          "name" => "bar"}],
                                      "updated_at" => _,
-                                     "version" => "2.0.0"},
+                                     "version" => "2.0.0",
+                                     "enabled" => false},
                                    %{"commands" => [],
                                      "id" => _,
                                      "inserted_at" => _,
                                      "name" => "foo",
                                      "permissions" => [],
                                      "updated_at" => _,
-                                     "version" => "3.0.0"}]} = json_response(conn, 200)
+                                     "version" => "3.0.0",
+                                     "enabled" => false}]} = json_response(conn, 200)
   end
 
   test "cannot show versions without permission", %{unauthed: requestor} do
