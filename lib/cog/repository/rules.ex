@@ -1,5 +1,5 @@
 defmodule Cog.Repository.Rules do
-  alias Cog.Models.{Rule, Command, Permission, BundleVersion, JoinTable}
+  alias Cog.Models.{Rule, Command, Permission, Bundle, BundleVersion, JoinTable}
   alias Cog.Queries
   alias Cog.Repo
   alias Cog.Repository.Bundles
@@ -27,6 +27,7 @@ defmodule Cog.Repository.Rules do
     with {:ok, ast, permission_names} <- validate_syntax(rule),
          {:ok, command}               <- validate_command(ast),
          {:ok, permissions}           <- validate_permissions(permission_names),
+         :ok                          <- validate_matching_permissions(command, permissions),
          do: create_rule(ast, command, permissions, bundle_version)
   end
 
@@ -83,7 +84,7 @@ defmodule Cog.Repository.Rules do
       nil ->
         {:error, {:unrecognized_command, name}}
       %Command{}=command ->
-        {:ok, command}
+        {:ok, Repo.preload(command, :bundle)}
     end
   end
 
@@ -107,7 +108,25 @@ defmodule Cog.Repository.Rules do
       nil ->
         {:error, {:unrecognized_permission, permission_name}}
       %Permission{}=permission ->
-        {:ok, permission}
+        {:ok, Repo.preload(permission, :bundle)}
     end
   end
+
+  defp validate_matching_permissions(command, permissions) do
+    Enum.reduce_while(permissions, :ok, fn permission, :ok ->
+      case validate_matching_permission(command, permission) do
+        :ok ->
+          {:cont, :ok}
+        error ->
+          {:halt, error}
+      end
+    end)
+  end
+
+  defp validate_matching_permission(_command, %Permission{bundle: %Bundle{name: "site"}}),
+    do: :ok
+  defp validate_matching_permission(%Command{bundle: %Bundle{name: name}}, %Permission{bundle: %Bundle{name: name}}),
+    do: :ok
+  defp validate_matching_permission(_command, %Permission{bundle: %Bundle{name: bundle_name}, name: permission_name}),
+    do: {:error, {:permission_bundle_mismatch, bundle_name <> ":" <> permission_name}}
 end

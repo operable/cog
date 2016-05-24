@@ -67,6 +67,8 @@ defmodule Cog.Commands.Rule do
     do: "Could not create rule: Unrecognized command #{inspect command}"
   defp error({:rule_invalid, {:unrecognized_permission, permission}}),
     do: "Could not create rule: Unrecognized permission #{inspect permission}"
+  defp error({:rule_invalid, {:permission_bundle_mismatch, _permission}}),
+    do: "Could not create rule with permission outside of command bundle or the \"site\" namespace"
   defp error({:rule_invalid, error}),
     do: "Could not create rule: #{inspect error}"
   defp error({:rule_not_found, [uuid]}),

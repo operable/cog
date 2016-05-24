@@ -56,7 +56,7 @@ defmodule Integration.Commands.RuleTest do
   test "error when creating a rule specifying a permission from an unacceptable namespace", %{user: user} do
     permission("foo:bar")
     assert_error(user, ~s(@bot: rule create "operable:st-echo" "foo:bar"),
-                 ~s(Whoops! An error occurred. Could not create rule with permission outside of the "site" namespace))
+                 ~s(Whoops! An error occurred. Could not create rule with permission outside of command bundle or the \"site\" namespace))
   end
 
   test "error when manually creating a rule with invalid syntax", %{user: user} do
