@@ -2,24 +2,22 @@ defmodule Cog.V1.BundlesController do
   use Cog.Web, :controller
 
   alias Spanner.Config
-#  alias Cog.Relay.Relays
   alias Cog.Models.Bundle
-  #alias Cog.Queries
- # alias Cog.Repo
 
   plug Cog.Plug.Authentication
   plug Cog.Plug.Authorization, permission: "#{Cog.embedded_bundle}:manage_commands"
 
   alias Cog.Repository
 
-  def index(conn, _params) do
-    render(conn, "index.json", %{bundles: Repository.Bundles.bundles})
-  end
+  def index(conn, _params),
+    do: render(conn, "index.json", %{bundles: Repository.Bundles.bundles})
 
   def show(conn, %{"id" => id}) do
     case Repository.Bundles.bundle(id) do
       nil ->
-        send_resp(conn, 404, Poison.encode!(%{error: "Bundle #{id} not found"}))
+        conn
+        |> put_status(:not_found)
+        |> json(%{error: "Bundle #{id} not found"})
       %Bundle{}=bundle ->
         render(conn, "show.json", %{bundle: bundle})
     end
@@ -28,25 +26,33 @@ defmodule Cog.V1.BundlesController do
   def versions(conn, %{"id" => id}) do
     case Repository.Bundles.bundle(id) do
       nil ->
-        send_resp(conn, 404, Poison.encode!(%{error: "Bundle #{id} not found"}))
+        conn
+        |> put_status(:not_found)
+        |> json(%{error: "Bundle #{id} not found"})
       %Bundle{}=bundle ->
         versions = Repository.Bundles.versions(bundle)
-        render(conn, Cog.V1.BundleVersionsView, "index.json", %{bundle_versions: versions})
+        render(conn, Cog.V1.BundleVersionView, "index.json", %{bundle_versions: versions})
     end
   end
 
   def delete(conn, %{"id" => id}) do
     case Repository.Bundles.bundle(id) do
       nil ->
-        send_resp(conn, 404, Poison.encode!(%{error: "Bundle #{id} not found"}))
+        conn
+        |> put_status(:not_found)
+        |> json(%{error: "Bundle #{id} not found"})
       %Bundle{}=bundle ->
         case Repository.Bundles.delete(bundle) do
           {:ok, _} ->
             send_resp(conn, 204, "")
           {:error, {:enabled_version, version}} ->
-            send_resp(conn, 403, Poison.encode!(%{error: "Cannot delete #{bundle.name} bundle, because version #{inspect version} is currently enabled"}))
+            conn
+            |> put_status(:forbidden)
+            |> json(%{error: "Cannot delete #{bundle.name} bundle, because version #{version} is currently enabled"})
           {:error, {:protected_bundle, name}} ->
-            send_resp(conn, 403, Poison.encode!(%{error: "Cannot delete #{name} bundle"}))
+            conn
+            |> put_status(:forbidden)
+            |> json(%{error: "Cannot delete #{name} bundle"})
         end
     end
   end
@@ -56,8 +62,8 @@ defmodule Cog.V1.BundlesController do
       {:ok, bundle_version, warnings} ->
         conn
         |> put_status(:created)
-#        |> put_resp_header("location", Cog.Router.Helpers.bundle_version_path(conn, :show, bundle_version)) # TODO: this needs to be different
-        |> render(Cog.V1.BundleVersionsView, "show.json", %{bundle_version: bundle_version, warnings: warnings})
+   #     |> put_resp_header("location", Cog.Router.Helpers.bundle_version_path(conn, :show, bundle_version)) # TODO: this needs to be different
+        |> render(Cog.V1.BundleVersionView, "show.json", %{bundle_version: bundle_version, warnings: warnings})
       {:error, err} ->
         send_failure(conn, err)
     end

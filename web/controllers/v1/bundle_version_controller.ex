@@ -12,23 +12,31 @@ defmodule Cog.V1.BundleVersionController do
       %BundleVersion{}=bundle_version ->
         render(conn, "show.json", %{bundle_version: bundle_version})
       nil ->
-        send_resp(conn, 404, Poison.encode!(%{error: "Bundle #{id} not found"}))
+        conn
+        |> put_status(:not_found)
+        |> json(%{error: "Bundle version #{id} not found"})
     end
   end
 
-  def delete(conn, %{"id" => id}) do
+  def delete(conn, %{"bundle_version_id" => id}) do
     case Repository.Bundles.version(id) do
       %BundleVersion{}=bv ->
         case Repository.Bundles.delete(bv) do
           {:ok, _} ->
             send_resp(conn, 204, "")
           {:error, :enabled_version} ->
-            send_resp(conn, 403, Poison.encode! (%{error: "Cannot delete #{bv.bundle.name} #{inspect bv.version}, because it is currently enabled"}))
+            conn
+            |> put_status(:forbidden)
+            |> json(%{error: "Cannot delete #{bv.bundle.name} #{bv.version}, because it is currently enabled"})
           {:error, {:protected_bundle, name}} ->
-            send_resp(conn, 403, Poison.encode!(%{error: "Cannot delete #{name} bundle version"}))
+            conn
+            |> put_status(:forbidden)
+            |> json(%{error: "Cannot delete #{name} bundle version"})
         end
       nil ->
-        send_resp(conn, 404, Poison.encode!(%{error: "Bundle #{id} not found"}))
+        conn
+        |> put_status(:not_found)
+        |> json(%{error: "Bundle version #{id} not found"})
     end
   end
 

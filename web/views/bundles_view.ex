@@ -2,12 +2,12 @@ defmodule Cog.V1.BundlesView do
   use Cog.Web, :view
 
   alias Cog.V1.RelayGroupView
-  alias Cog.V1.BundleVersionsView
+  alias Cog.V1.BundleVersionView
 
   def render("bundle.json", %{bundle: bundle}=_params) do
     enabled_version = Map.fetch!(bundle, :enabled_version)
     enabled_version = if Ecto.assoc_loaded?(enabled_version) do
-      %{enabled_version: render_one(enabled_version, BundleVersionsView, "bundle_version.json", as: :bundle_version)}
+      %{enabled_version: render_one(enabled_version, BundleVersionView, "bundle_version.json", as: :bundle_version)}
     else
       %{}
     end

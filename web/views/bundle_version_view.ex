@@ -1,4 +1,4 @@
-defmodule Cog.V1.BundleVersionsView do
+defmodule Cog.V1.BundleVersionView do
   use Cog.Web, :view
 
   def render("bundle_version.json", %{bundle_version: bundle_version}) do

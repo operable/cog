@@ -45,11 +45,10 @@ defmodule Cog.Router do
     get    "/v1/bundles/:id", V1.BundlesController, :show
     delete "/v1/bundles/:id", V1.BundlesController, :delete
 
-    # TODO: Maybe this is just :show on /bundles/:id?
     get "/v1/bundles/:id/versions", V1.BundlesController, :versions
 
-    # TODO: maybe this is just /v1/bundle_versions/:bundle_version_id
-    resources "/v1/bundles/:id/versions/:bundle_version_id", V1.BundleVersionController, only: [:show, :delete]
+    get    "/v1/bundles/:id/versions/:bundle_version_id", V1.BundleVersionController, :show
+    delete "/v1/bundles/:id/versions/:bundle_version_id", V1.BundleVersionController, :delete
 
     get  "/v1/bundles/:id/status", V1.BundleStatusController, :show
     post "/v1/bundles/:id/versions/:bundle_version_id/status", V1.BundleStatusController, :set_status
