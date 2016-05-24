@@ -55,8 +55,11 @@ defmodule Cog.V1.BundleVersionControllerTest do
     conn = api_request(requestor, :get,
                        "/v1/bundles/#{version.bundle.id}/versions/#{version.id}")
 
+    bundle_id = version.bundle.id
+    version_id = version.id
     assert %{"bundle_version" =>
-              %{"id" => _,
+              %{"id" => ^version_id,
+                "bundle_id" => ^bundle_id,
                 "name" => "test-bundle",
                 "version" => "1.0.0",
                 "enabled" => true,

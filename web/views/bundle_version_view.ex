@@ -3,6 +3,7 @@ defmodule Cog.V1.BundleVersionView do
 
   def render("bundle_version.json", %{bundle_version: bundle_version}) do
     %{id: bundle_version.id,
+      bundle_id: bundle_version.bundle.id,
       name: bundle_version.bundle.name,
       version: to_string(bundle_version.version),
       enabled: Cog.Models.BundleVersion.enabled?(bundle_version),
