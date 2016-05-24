@@ -5,6 +5,18 @@ defmodule Cog.Repository.Rules do
   alias Cog.Repository.Bundles
   alias Piper.Permissions.{Ast, Parser}
 
+  @doc """
+  Parse, validate and store the rule in the database. Ingesting is idempotent.
+
+  Rules are run through a series of validations before being created. First, we
+  parse the rule to check its syntax. Then, we check to make sure the
+  referenced command and permissions exist and that the permissions belong to
+  the same bundle as the command (or the "site" namespace). 
+
+  When creating the rule we also make sure that the permissions have been
+  correctly granted and that the rule is associated with the correct bundle
+  version.
+  """
   def ingest(rule),
     do: ingest(rule, Bundles.site_bundle_version)
   def ingest(rule, bundle_version) do
