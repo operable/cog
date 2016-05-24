@@ -6,7 +6,7 @@ defmodule Cog.Models.Rule do
  alias Piper.Permissions.Parser
 
   schema "rules_v2" do
-   field :parse_tree, :string
+   field :parse_tree, :map
    field :score, :integer
    field :enabled, :boolean, default: true
 
