@@ -1,27 +1,24 @@
 defmodule Cog.V1.RuleController do
   use Cog.Web, :controller
-  alias Cog.Models.Command
-  alias Cog.Models.Rule
-  alias Cog.Repository.Bundles
-  alias Cog.RuleIngestion
+  alias Cog.Models.{Command, Rule}
+  alias Cog.Repository.Rules
   require Logger
 
   plug Cog.Plug.Authentication
   plug Cog.Plug.Authorization, permission: "#{Cog.embedded_bundle}:manage_commands"
 
   def create(conn, %{"rule" => rule_text}) do
-    case RuleIngestion.ingest(rule_text, Bundles.site_bundle_version) do
+    case Rules.ingest(rule_text) do
       {:ok, rule} ->
         conn
         |> put_status(:created)
         |> render("rule.json", rule: rule)
-      {:error, errors} ->
-        for error <- errors do
-          Logger.error("Error ingesting \"#{rule_text}\": #{inspect error}")
-        end
+      {:error, error} ->
+        Logger.error("Error ingesting \"#{rule_text}\": #{inspect error}")
+
         conn
         |> put_status(:unprocessable_entity)
-        |> json(%{"errors" => keyword_list_to_string_map(errors)})
+        |> json(%{"errors" => keyword_list_to_string_map([error])})
     end
   end
 

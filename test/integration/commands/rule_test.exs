@@ -45,12 +45,12 @@ defmodule Integration.Commands.RuleTest do
   test "error when creating rule for an unrecognized command", %{user: user} do
     permission("site:permission")
     assert_error(user, ~s(@bot: rule create "not_really:a_command" "site:permission"),
-                 ~s(Whoops! An error occurred. Could not create rule: [unrecognized_command: "not_really:a_command"]))
+                 ~s(Whoops! An error occurred. Could not create rule: Unrecognized command "not_really:a_command"))
   end
 
   test "error when creating rule with an unrecognized permission", %{user: user} do
     assert_error(user, ~s(@bot: rule create "operable:st-echo" "site:permission"),
-                 ~s(Could not create rule: [unrecognized_permission: "site:permission"]))
+                 ~s(Could not create rule: Unrecognized permission "site:permission"))
   end
 
   test "error when creating a rule specifying a permission from an unacceptable namespace", %{user: user} do

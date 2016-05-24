@@ -61,8 +61,12 @@ defmodule Cog.Commands.Rule do
     do: "Command #{inspect command} could not be found"
   defp error({:ambiguous, command}),
     do: "Command #{inspect command} refers to multiple commands. Please include a bundle in a fully qualified command name."
-  defp error({:rule_invalid, [{:invalid_rule_syntax, error}]}),
+  defp error({:rule_invalid, {:invalid_rule_syntax, error}}),
     do: "Could not create rule: #{inspect error}"
+  defp error({:rule_invalid, {:unrecognized_command, command}}),
+    do: "Could not create rule: Unrecognized command #{inspect command}"
+  defp error({:rule_invalid, {:unrecognized_permission, permission}}),
+    do: "Could not create rule: Unrecognized permission #{inspect permission}"
   defp error({:rule_invalid, error}),
     do: "Could not create rule: #{inspect error}"
   defp error({:rule_not_found, [uuid]}),

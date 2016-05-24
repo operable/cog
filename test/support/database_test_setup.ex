@@ -38,7 +38,7 @@ defmodule DatabaseTestSetup do
   database beforehand.
   """
   def rule(rule_text, bundle_version \\ Cog.Repository.Bundles.site_bundle_version) do
-    {:ok, rule} = Cog.RuleIngestion.ingest(rule_text, bundle_version)
+    {:ok, rule} = Cog.Repository.Rules.ingest(rule_text, bundle_version)
     rule
   end
 

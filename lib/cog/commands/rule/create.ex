@@ -1,7 +1,6 @@
 defmodule Cog.Commands.Rule.Create do
   alias Cog.Models.Rule
-  alias Cog.Repository.Bundles
-  alias Cog.RuleIngestion
+  alias Cog.Repository.Rules
   alias Piper.Permissions.Parser
   require Cog.Commands.Helpers, as: Helpers
 
@@ -57,7 +56,7 @@ defmodule Cog.Commands.Rule.Create do
   end
 
   defp create_rule(rule) do
-    case RuleIngestion.ingest(rule, Bundles.site_bundle_version) do
+    case Rules.ingest(rule) do
       {:ok, rule} ->
         {:ok, "rule-create", rule}
       {:error, error} ->

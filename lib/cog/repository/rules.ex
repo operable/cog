@@ -7,7 +7,23 @@ defmodule Cog.Repository.Rules do
 
   def ingest(rule),
     do: ingest(rule, Bundles.site_bundle_version)
-  def ingest(rule, %BundleVersion{}=bundle_version) when is_binary(rule) do
+  def ingest(rule, bundle_version) do
+    Repo.transaction(fn ->
+      case do_ingest(rule, bundle_version) do
+        {:ok, rule} ->
+          rule
+        {:error, error} ->
+          Repo.rollback(error)
+      end
+    end)
+  end
+
+  def ingest_without_transaction(rule),
+    do: ingest(rule, Bundles.site_bundle_version)
+  def ingest_without_transaction(rule, bundle_version),
+    do: do_ingest(rule, bundle_version)
+
+  defp do_ingest(rule, %BundleVersion{}=bundle_version) when is_binary(rule) do
     with {:ok, ast, permission_names} <- validate_syntax(rule),
          {:ok, command}               <- validate_command(ast),
          {:ok, permissions}           <- validate_permissions(permission_names),

@@ -71,21 +71,6 @@ defmodule Cog.V1.RuleController.Test do
     refute_rule_is_persisted(rule_text)
   end
 
-  test "errors accumulate", %{authed: requestor} do
-    permission("site:admin")
-    rule_text = "when command is cog:do_stuff must have site:admin and do_stuff:things and do_stuff:other_stuff"
-
-    conn = api_request(requestor, :post, "/v1/rules",
-                       body: %{"rule" => rule_text})
-
-    assert %{"errors" =>
-              %{"unrecognized_command" => ["cog:do_stuff"],
-                "unrecognized_permission" => ["do_stuff:things",
-                                              "do_stuff:other_stuff"]}} == json_response(conn, 422)
-
-    refute_rule_is_persisted(rule_text)
-  end
-
   test "cannot create a rule without required permissions", %{unauthed: requestor} do
     command("s3")
     permission("s3:delete")
