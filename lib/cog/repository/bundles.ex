@@ -171,6 +171,11 @@ defmodule Cog.Repository.Bundles do
     end
   end
 
+  # Find the currently enabled version of the bundle this command is
+  # part of. Further refactorings might put this into a "command repository"
+  def enabled_version(%Cog.Models.Command{}=command),
+    do: enabled_version(command.bundle)
+
   def status(%Bundle{}=bundle) do
     case enabled_version(bundle) do
       %BundleVersion{}=bv ->
@@ -313,6 +318,11 @@ defmodule Cog.Repository.Bundles do
   """
   def site_bundle_version,
     do: Repo.one!(site_bundle_version_query)
+
+  def is_site_version?(version) do
+    (version.bundle.name == Cog.site_namespace) and
+    (to_string(version.version) == @permanent_site_bundle_version)
+  end
 
   @doc """
   Called at system-startup to ensure the site bundle is appropriately set up.

@@ -23,8 +23,15 @@ defmodule Cog.V1.TriggerView do
   # may need to use information from the `conn` to generate this if
   # installed behind a proxy that handles routing between the two
   # endpoints.
-  defp invocation_url(trigger),
-    do: Cog.TriggerRouter.Helpers.trigger_execution_url(Cog.TriggerEndpoint, :execute_trigger, trigger.id)
-
+  defp invocation_url(trigger) do
+    case Application.get_env(:cog, :trigger_url_base) do
+      "" ->
+        Cog.TriggerRouter.Helpers.trigger_execution_url(Cog.TriggerEndpoint, :execute_trigger, trigger.id)
+      base ->
+        Enum.join([base, Cog.TriggerRouter.Helpers.trigger_execution_path(Cog.TriggerEndpoint,
+                                                                          :execute_trigger,
+                                                                          trigger.id)])
+    end
+  end
 
 end

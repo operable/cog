@@ -99,6 +99,14 @@ defmodule Cog.Models.JoinTable do
     execute_dissociate_query(table_name, lhs_id, rhs_id, member, relay_group)
     :ok
   end
+  def dissociate(%Rule{}=rule, %BundleVersion{}=bv) do
+    table_name = table_name(rule, bv)
+    lhs_id = "rule_id"
+    rhs_id = "bundle_version_id"
+
+    execute_dissociate_query(table_name, lhs_id, rhs_id, rule, bv)
+    :ok
+  end
 
   defp execute_associate_query(table_name, lhs_id, rhs_id, lhs, rhs) do
     SQL.query!(Repo,

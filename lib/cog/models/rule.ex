@@ -6,7 +6,7 @@ defmodule Cog.Models.Rule do
  alias Piper.Permissions.Parser
 
   schema "rules_v2" do
-   field :parse_tree, :string
+   field :parse_tree, :map
    field :score, :integer
    field :enabled, :boolean, default: true
 
@@ -15,11 +15,14 @@ defmodule Cog.Models.Rule do
    has_many :permission_grants, Cog.Models.RulePermission
    has_many :permissions, through: [:permission_grants, :permission]
 
+   has_many :bundle_version_registration, Cog.Models.RuleBundleVersion
+   has_many :bundle_versions, through: [:bundle_version_registration, :bundle_version]
+
    timestamps
   end
 
   @required_fields ~w(parse_tree score)
-  @optional_fields ~w()
+  @optional_fields ~w(enabled)
 
   summary_fields [:id, :score, :parse_tree]
   detail_fields [:id, :score, :parse_tree]

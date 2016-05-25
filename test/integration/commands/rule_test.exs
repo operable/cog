@@ -1,6 +1,8 @@
 defmodule Integration.Commands.RuleTest do
   use Cog.AdapterCase, adapter: "test"
 
+  require Ecto.Query
+
   setup do
     user = user("belf", first_name: "Buddy", last_name: "Elf")
     |> with_chat_handle_for("test")
@@ -22,6 +24,20 @@ defmodule Integration.Commands.RuleTest do
   test "error when listing rules for an unrecognized command", %{user: user} do
     assert_error(user, "@bot: rule -c not_really:a_command",
                  ~s(Whoops! An error occurred. Command "not_really:a_command" could not be found))
+  end
+
+  test "listing rules for a disabled command fails", %{user: user} do
+    # Create a bundle that we won't enable
+    {:ok, version} = Cog.Repository.Bundles.install(
+      %{"name" => "cog",
+        "version" => "1.0.0",
+        "config_file" => %{
+          "name" => "cog",
+          "version" => "1.0.0",
+          "commands" => %{"hola" => %{"rules" => ["when command is cog:hola allow"]}}}})
+
+    assert_error(user, "@bot: rule -c cog:hola",
+              ~s(Whoops! An error occurred. cog:hola is not enabled. Enable a bundle version and try again))
   end
 
   ########################################################################
@@ -67,17 +83,6 @@ defmodule Integration.Commands.RuleTest do
   ########################################################################
   # Drop
 
-  test "dropping a rule via the command name", %{user: user} do
-    response = interact(user, "@bot: rule drop -c operable:st-echo")
-
-    assert_uuid(response["id"])
-    assert response["command"] == "operable:st-echo"
-    assert response["rule"] == "when command is operable:st-echo must have operable:st-echo"
-
-    rules = rules_for_command_name("operable:st-echo")
-    assert rules == []
-  end
-
   test "dropping a rule via a rule id", %{user: user} do
     # Get an ID we can use to drop
     response = interact(user, "@bot: rule list -c operable:st-echo")
@@ -102,11 +107,6 @@ defmodule Integration.Commands.RuleTest do
   test "error when dropping rule with unknown id", %{user: user} do
     assert_error(user, "@bot: rule drop aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
                  ~s(Whoops! An error occurred. Rule "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee" could not be found))
-  end
-
-  test "error when dropping rules by command with an unrecognized command", %{user: user} do
-    assert_error(user, "@bot: rule drop -c not_really:a_command",
-                 ~s(Whoops! An error occurred. Command \"not_really:a_command\" could not be found))
   end
 
   ########################################################################
@@ -136,6 +136,6 @@ defmodule Integration.Commands.RuleTest do
 
   defp rules_for_command_name(command_name) do
     {:ok, command} = Cog.Models.Command.parse_name(command_name)
-    Cog.Repo.all(Ecto.assoc(command, :rules))
+    Cog.Repo.all(Ecto.assoc(command, :rules) |> Ecto.Query.where(enabled: true))
   end
 end

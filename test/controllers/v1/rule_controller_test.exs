@@ -104,8 +104,8 @@ defmodule Cog.V1.RuleController.Test do
   end
 
   test "404 if rule doesn't exist", %{authed: requestor} do
-    error = catch_error(api_request(requestor, :delete, "/v1/rules/#{@bad_uuid}"))
-    assert %Ecto.NoResultsError{} = error
+    conn = api_request(requestor, :delete, "/v1/rules/#{@bad_uuid}")
+    assert "Rule #{@bad_uuid} not found" = json_response(conn, 404)["error"]
   end
 
   test "cannot delete a rule without required permissions", %{unauthed: requestor} do
@@ -125,16 +125,36 @@ defmodule Cog.V1.RuleController.Test do
   # Show
   ########################################################################
   test "show the rules for a particular command", %{authed: requestor} do
-    command("hola")
-    permission("cog:hola")
     rule_text = "when command is cog:hola must have cog:hola"
-    rule = rule(rule_text)
+    {:ok, version} = Cog.Repository.Bundles.install(
+      %{"name" => "cog",
+        "version" => "1.0.0",
+        "config_file" => %{
+          "name" => "cog",
+          "version" => "1.0.0",
+          "permissions" => ["cog:hola"],
+          "commands" => %{"hola" => %{"rules" => [rule_text]}}}})
 
+    permission("site:test")
+    site_rule_text = "when command is cog:hola must have site:test"
+    rule(site_rule_text)
+
+    # Returns nothing if there isn't an enabled version
+    conn = api_request(requestor, :get, "/v1/rules?for-command=cog:hola")
+    assert "Command cog:hola not currently enabled; try enabling a bundle version first" = json_response(conn, 404)["errors"]
+
+    # If we do enable a version, though, we get rules, including any
+    # site rules we've specified
+    Cog.Repository.Bundles.set_bundle_version_status(version, :enabled)
     conn = api_request(requestor, :get, "/v1/rules?for-command=cog:hola")
 
-    assert %{"rules" => [%{"id" => rule.id,
-                           "command" => "cog:hola",
-                           "rule" => rule_text}]} == json_response(conn, 200)
+    rules = json_response(conn, 200)["rules"] |> Enum.sort_by(&Map.get(&1, "rule"))
+    assert [%{"id" => _,
+              "command" => "cog:hola",
+              "rule" => ^rule_text},
+            %{"id" => _,
+              "command" => "cog:hola",
+              "rule" => ^site_rule_text}] = rules
   end
 
   test "show error message for a non-existant command", %{authed: requestor} do

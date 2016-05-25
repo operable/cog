@@ -94,4 +94,122 @@ defmodule Cog.Repository.RulesTest do
     %Rule{parse_tree: retrieved_tree} = Repo.one!(Ecto.assoc(command, :rules))
     assert ^retrieved_tree = inserted_rule.parse_tree
   end
+
+  test "deleting a bundle rule actually disables it" do
+    rule_text = "when command is foo:bar allow"
+    {:ok, version} = Cog.Repository.Bundles.install(
+      %{"name" => "foo",
+        "version" => "1.0.0",
+        "config_file" => %{
+          "name" => "foo",
+          "version" => "1.0.0",
+          "commands" => %{"bar" => %{"rules" => [rule_text]}}}})
+
+    [rule] = Cog.Repo.preload(version, [rules: :bundle_versions]).rules
+
+    assert rule.enabled
+
+    Cog.Repository.Rules.delete_or_disable(rule)
+
+    %Rule{}=rule = retrieve_by_id(rule.id)
+
+    refute rule.enabled
+  end
+
+  test "deleting a site bundle rule actually deletes it" do
+    permission("site:testing")
+
+    {:ok, version} = Cog.Repository.Bundles.install(
+      %{"name" => "foo",
+        "version" => "1.0.0",
+        "config_file" => %{
+          "name" => "foo",
+          "version" => "1.0.0",
+          "commands" => %{"bar" => %{"rules" => ["when command is foo:bar allow"]}}}})
+
+    {:ok, rule} = Cog.Repository.Rules.ingest("when command is foo:bar must have site:testing",
+                                              Cog.Repository.Bundles.site_bundle_version)
+
+    assert rule.enabled
+
+    Cog.Repository.Rules.delete_or_disable(rule)
+
+    refute retrieve_by_id(rule.id)
+  end
+
+  test "Creating a site bundle rule that's the same as a disabled bundle rule re-enables it" do
+    rule_text = "when command is foo:bar allow"
+    {:ok, version} = Cog.Repository.Bundles.install(
+      %{"name" => "foo",
+        "version" => "1.0.0",
+        "config_file" => %{
+          "name" => "foo",
+          "version" => "1.0.0",
+          "commands" => %{"bar" => %{"rules" => [rule_text]}}}})
+
+    [rule] = Cog.Repo.preload(version, [rules: :bundle_versions]).rules
+    Cog.Repository.Rules.delete_or_disable(rule)
+    %Rule{}=rule = retrieve_by_id(rule.id)
+    refute rule.enabled
+
+    # Now add the same rule for the site bundle
+    {:ok, site_rule} = Cog.Repository.Rules.ingest(rule_text,
+                                                   Cog.Repository.Bundles.site_bundle_version)
+
+    # It's the same rule! But it's enabled now
+    assert site_rule.id == rule.id
+    assert site_rule.enabled
+  end
+
+  test "Deleting a site bundle rule that shadows the an identical disabled bundle rule re-disables it" do
+    rule_text = "when command is foo:bar allow"
+    {:ok, version} = Cog.Repository.Bundles.install(
+      %{"name" => "foo",
+        "version" => "1.0.0",
+        "config_file" => %{
+          "name" => "foo",
+          "version" => "1.0.0",
+          "commands" => %{"bar" => %{"rules" => [rule_text]}}}})
+
+    [rule] = Cog.Repo.preload(version, [rules: :bundle_versions]).rules
+    Cog.Repository.Rules.delete_or_disable(rule)
+    %Rule{}=rule = retrieve_by_id(rule.id)
+    refute rule.enabled
+
+    site_version = Cog.Repository.Bundles.site_bundle_version
+
+    # Now add the same rule for the site bundle
+    {:ok, site_rule} = Cog.Repository.Rules.ingest(rule_text, site_version)
+
+    # It's the same rule! But it's enabled now
+    assert site_rule.id == rule.id
+    assert site_rule.enabled
+
+    # Now delete the rule
+    Cog.Repository.Rules.delete_or_disable(site_rule)
+
+    %Rule{}=final_rule = retrieve_by_id(site_rule.id)
+
+    # The rule is still there, and still the same
+    assert final_rule.id == rule.id
+
+    # Now it's back to being disabled
+    refute final_rule.enabled
+
+    # It's no longer associated with the site bundle, but it is
+    # associated with the original bundle
+    refute final_rule.bundle_versions |> Enum.map(&(&1.id)) |> Enum.member?(site_version.id)
+    assert final_rule.bundle_versions |> Enum.map(&(&1.id)) |> Enum.member?(version.id)
+  end
+
+  ########################################################################
+
+  # Use this instead of repository functions, as they will filter out
+  # disabled rules
+  defp retrieve_by_id(id) do
+    require Ecto.Query
+    Cog.Repo.one(Ecto.Query.from r in Rule,
+                 where: r.id == ^id,
+                 preload: [:bundle_versions])
+  end
 end
