@@ -1,7 +1,5 @@
 defmodule Cog.Commands.Rule.List do
-  alias Cog.Models.Command
-  alias Cog.Models.Rule
-  alias Cog.Repo
+  alias Cog.Repository.Rules
   require Cog.Commands.Helpers, as: Helpers
 
   Helpers.usage """
@@ -22,15 +20,15 @@ defmodule Cog.Commands.Rule.List do
   end
 
   def list(%{options: %{"command" => command}}, _args) do
-    case Command.parse_name(command) do
-      {:ok, command} ->
-        {:ok, "rule-list", Repo.all(Ecto.assoc(command, :rules))}
+    case Rules.rules_for_command(command) do
+      {:ok, rules} ->
+        {:ok, "rule-list", rules}
       error ->
         error
     end
   end
 
   def list(_req, _args) do
-    {:ok, "rule-list", Repo.all(Rule)}
+    {:ok, "rule-list", Rules.all_rules}
   end
 end

@@ -26,6 +26,20 @@ defmodule Integration.Commands.RuleTest do
                  ~s(Whoops! An error occurred. Command "not_really:a_command" could not be found))
   end
 
+  test "listing rules for a disabled command fails", %{user: user} do
+    # Create a bundle that we won't enable
+    {:ok, version} = Cog.Repository.Bundles.install(
+      %{"name" => "cog",
+        "version" => "1.0.0",
+        "config_file" => %{
+          "name" => "cog",
+          "version" => "1.0.0",
+          "commands" => %{"hola" => %{"rules" => ["when command is cog:hola allow"]}}}})
+
+    assert_error(user, "@bot: rule -c cog:hola",
+              ~s(Whoops! An error occurred. cog:hola is not enabled. Enable a bundle version and try again))
+  end
+
   ########################################################################
   # Add
 
