@@ -30,11 +30,7 @@ defmodule Cog.Models.BundleVersion do
 
   def enabled?(bundle_version) do
     if Ecto.assoc_loaded?(bundle_version.enabled_version_registration) do
-      if bundle_version.enabled_version_registration do
-        true
-      else
-        false
-      end
+      bundle_version.enabled_version_registration != nil
     else
       # Everywhere this function is called should already have this
       # preloaded; if not, this gives us an easy way to find out
