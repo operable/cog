@@ -148,6 +148,9 @@ config :cog, Cog.ServiceEndpoint,
   check_origin: true,
   render_errors: [accepts: ~w(json)]
 
+config :cog, :trigger_url_base, (String.replace((System.get_env("COG_TRIGGER_URL_BASE") || ""), ~r/\/$/, ""))
+config :cog, :services_url_base, (String.replace((System.get_env("COG_SERVICE_URL_BASE") || ""), ~r/\/$/, ""))
+
 config :cog, :token_lifetime, {1, :week}
 config :cog, :token_reap_period, {1, :day}
 
