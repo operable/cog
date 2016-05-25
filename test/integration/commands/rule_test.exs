@@ -67,17 +67,6 @@ defmodule Integration.Commands.RuleTest do
   ########################################################################
   # Drop
 
-  test "dropping a rule via the command name", %{user: user} do
-    response = interact(user, "@bot: rule drop -c operable:st-echo")
-
-    assert_uuid(response["id"])
-    assert response["command"] == "operable:st-echo"
-    assert response["rule"] == "when command is operable:st-echo must have operable:st-echo"
-
-    rules = rules_for_command_name("operable:st-echo")
-    assert rules == []
-  end
-
   test "dropping a rule via a rule id", %{user: user} do
     # Get an ID we can use to drop
     response = interact(user, "@bot: rule list -c operable:st-echo")
@@ -102,11 +91,6 @@ defmodule Integration.Commands.RuleTest do
   test "error when dropping rule with unknown id", %{user: user} do
     assert_error(user, "@bot: rule drop aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
                  ~s(Whoops! An error occurred. Rule "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee" could not be found))
-  end
-
-  test "error when dropping rules by command with an unrecognized command", %{user: user} do
-    assert_error(user, "@bot: rule drop -c not_really:a_command",
-                 ~s(Whoops! An error occurred. Command \"not_really:a_command\" could not be found))
   end
 
   ########################################################################
