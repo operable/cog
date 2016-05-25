@@ -111,7 +111,7 @@ defmodule Cog.Repository.RulesTest do
 
     Cog.Repository.Rules.delete_or_disable(rule)
 
-    %Rule{}=rule = Cog.Repository.Rules.rule(rule.id)
+    %Rule{}=rule = retrieve_by_id(rule.id)
 
     refute rule.enabled
   end
@@ -134,7 +134,7 @@ defmodule Cog.Repository.RulesTest do
 
     Cog.Repository.Rules.delete_or_disable(rule)
 
-    refute Cog.Repository.Rules.rule(rule.id)
+    refute retrieve_by_id(rule.id)
   end
 
   test "Creating a site bundle rule that's the same as a disabled bundle rule re-enables it" do
@@ -149,7 +149,7 @@ defmodule Cog.Repository.RulesTest do
 
     [rule] = Cog.Repo.preload(version, [rules: :bundle_versions]).rules
     Cog.Repository.Rules.delete_or_disable(rule)
-    %Rule{}=rule = Cog.Repository.Rules.rule(rule.id)
+    %Rule{}=rule = retrieve_by_id(rule.id)
     refute rule.enabled
 
     # Now add the same rule for the site bundle
@@ -173,7 +173,7 @@ defmodule Cog.Repository.RulesTest do
 
     [rule] = Cog.Repo.preload(version, [rules: :bundle_versions]).rules
     Cog.Repository.Rules.delete_or_disable(rule)
-    %Rule{}=rule = Cog.Repository.Rules.rule(rule.id)
+    %Rule{}=rule = retrieve_by_id(rule.id)
     refute rule.enabled
 
     site_version = Cog.Repository.Bundles.site_bundle_version
@@ -188,7 +188,7 @@ defmodule Cog.Repository.RulesTest do
     # Now delete the rule
     Cog.Repository.Rules.delete_or_disable(site_rule)
 
-    %Rule{}=final_rule = Cog.Repository.Rules.rule(site_rule.id)
+    %Rule{}=final_rule = retrieve_by_id(site_rule.id)
 
     # The rule is still there, and still the same
     assert final_rule.id == rule.id
@@ -202,5 +202,14 @@ defmodule Cog.Repository.RulesTest do
     assert final_rule.bundle_versions |> Enum.map(&(&1.id)) |> Enum.member?(version.id)
   end
 
+  ########################################################################
 
+  # Use this instead of repository functions, as they will filter out
+  # disabled rules
+  defp retrieve_by_id(id) do
+    require Ecto.Query
+    Cog.Repo.one(Ecto.Query.from r in Rule,
+                 where: r.id == ^id,
+                 preload: [:bundle_versions])
+  end
 end

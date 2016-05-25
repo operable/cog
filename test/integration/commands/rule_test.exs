@@ -1,6 +1,8 @@
 defmodule Integration.Commands.RuleTest do
   use Cog.AdapterCase, adapter: "test"
 
+  require Ecto.Query
+
   setup do
     user = user("belf", first_name: "Buddy", last_name: "Elf")
     |> with_chat_handle_for("test")
@@ -120,6 +122,6 @@ defmodule Integration.Commands.RuleTest do
 
   defp rules_for_command_name(command_name) do
     {:ok, command} = Cog.Models.Command.parse_name(command_name)
-    Cog.Repo.all(Ecto.assoc(command, :rules))
+    Cog.Repo.all(Ecto.assoc(command, :rules) |> Ecto.Query.where(enabled: true))
   end
 end

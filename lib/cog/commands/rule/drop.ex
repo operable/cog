@@ -1,7 +1,5 @@
 defmodule Cog.Commands.Rule.Drop do
-  use Cog.Queries
-  alias Cog.Models.Rule
-  alias Cog.Repo
+  alias Cog.Repository.Rules
   require Cog.Commands.Helpers, as: Helpers
 
   Helpers.usage """
@@ -29,7 +27,7 @@ defmodule Cog.Commands.Rule.Drop do
   def drop(_req, args) do
     with {:ok, uuids} <- validate_uuids(args),
          {:ok, rules} <- find_rules(uuids),
-         delete_rules(uuids),
+         delete_rules(rules),
          do: {:ok, "rule-drop", rules}
   end
 
@@ -45,7 +43,7 @@ defmodule Cog.Commands.Rule.Drop do
   end
 
   defp find_rules(uuids) do
-    case Repo.all(rule_query(uuids)) do
+    case Rules.rules(uuids) do
       [] ->
         {:error, {:rule_not_found, uuids}}
       rules ->
@@ -53,9 +51,7 @@ defmodule Cog.Commands.Rule.Drop do
     end
   end
 
-  defp delete_rules(uuids),
-    do: Repo.delete_all(rule_query(uuids))
+  defp delete_rules(rules),
+    do: Enum.each(rules, &Rules.delete_or_disable/1)
 
-  defp rule_query(uuids),
-    do: from r in Rule, where: r.id in ^uuids
 end
