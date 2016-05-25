@@ -5,6 +5,11 @@ defmodule Cog.Repository.Rules do
   alias Cog.Repository.Bundles
   alias Piper.Permissions.{Ast, Parser}
 
+  require Ecto.Query
+  import Ecto.Query, only: [from: 2]
+
+  @preloads [:bundle_versions]
+
   @doc """
   Parse, validate and store the rule in the database. Ingesting is idempotent.
 
@@ -61,11 +66,26 @@ defmodule Cog.Repository.Rules do
   Retrieve the rule identified by `id`.
   """
   def rule(id) do
-    case Repo.get(Rule, id) do
-      nil -> nil
-      rule ->
-        preload(rule)
+    case rules([id]) do
+      [rule] ->
+        rule
+      [] ->
+        nil
     end
+  end
+
+  def rules(ids) do
+    Repo.all(from r in Rule,
+             where: r.enabled,
+             where: r.id in ^ids,
+             preload: ^@preloads)
+    end
+  end
+
+  def all_rules do
+    Repo.all(from r in Rule,
+             where: r.enabled,
+             preload: ^@preloads)
   end
 
   ########################################################################
@@ -211,8 +231,7 @@ defmodule Cog.Repository.Rules do
   defp validate_matching_permission(_command, %Permission{bundle: %Bundle{name: bundle_name}, name: permission_name}),
     do: {:error, {:permission_bundle_mismatch, bundle_name <> ":" <> permission_name}}
 
-  defp preload(rule) do
-    Repo.preload(rule, [:bundle_versions])
-  end
+  defp preload(rule_or_rules),
+    do: Repo.preload(rule_or_rules, @preloads)
 
 end
