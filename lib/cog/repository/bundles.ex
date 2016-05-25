@@ -185,6 +185,28 @@ defmodule Cog.Repository.Bundles do
     end
   end
 
+  @ doc """
+  Returns all bundle that are currently enabled
+  """
+  def enabled do
+    query = from bv in BundleVersion,
+            join: e in "enabled_bundle_versions",
+              on: bv.bundle_id == e.bundle_id and bv.version == e.version
+
+    Repo.all(query)
+  end
+
+  def highest_disabled_versions do
+    query = from bv in BundleVersion,
+            left_join: e in "enabled_bundle_versions",
+              on: bv.bundle_id == e.bundle_id and bv.version == e.version,
+            where: is_nil(e.bundle_id),
+            distinct: bv.bundle_id,
+            order_by: [desc: bv.version]
+
+    Repo.all(query)
+  end
+
   @doc """
   Returns a map of bundle name to enabled version for all enabled
   bundles. Currently, only one version of any bundle may be enabled at

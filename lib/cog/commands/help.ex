@@ -3,8 +3,7 @@ defmodule Cog.Commands.Help do
     bundle: Cog.embedded_bundle
 
   use Cog.Models
-  alias Cog.Repo
-  alias Cog.Queries
+  alias Cog.Repository.Commands
 
   @moduledoc """
   Prints help documentation for all commands.
@@ -16,7 +15,6 @@ defmodule Cog.Commands.Help do
     command  prints long form documentation
 
   FLAGS
-    -a, --all       Lists all enabled and disabled commands
     -d, --disabled  Lists all disabled commands
 
   EXAMPLES
@@ -47,25 +45,29 @@ defmodule Cog.Commands.Help do
 
   rule "when command is #{Cog.embedded_bundle}:help allow"
 
-  option "all",      short: "a", type: "bool", required: false
   option "disabled", short: "d", type: "bool", required: false
 
   def handle_message(%{args: [], options: options} = req, state) do
-    commands = Repo.all(find_commands_query(options))
+    commands = options
+    |> find_commands
+    |> Enum.sort_by(&CommandVersion.full_name/1)
+
     {:reply, req.reply_to, "help", commands, state}
   end
 
   def handle_message(%{args: [command]} = req, state) do
-    case Repo.all(find_command_query(command)) do
+    case find_command(command) do
       [%{documentation: documentation} = command] when is_binary(documentation) ->
         {:reply, req.reply_to, "help-command", [command], state}
-      [%{documentation: nil} = command] ->
-        name = Command.full_name(command)
+      [%{documentation: nil} = command_version] ->
+        name = CommandVersion.full_name(command_version.command)
         {:error, req.reply_to, "Command #{inspect name} does not have any documentation", state}
       [] ->
         {:error, req.reply_to, "Command #{inspect command} does not exist", state}
       commands when is_list(commands) ->
-        names = Enum.map_join(commands, "\n", &Command.full_name/1)
+        names = commands
+        |> Enum.map(&(&1.command))
+        |> Enum.map_join("\n", &CommandVersion.full_name/1)
 
         message = """
         Multiple commands found for command #{inspect command}. Please choose one:
@@ -81,24 +83,11 @@ defmodule Cog.Commands.Help do
     {:reply, req.reply_to, "usage", %{usage: @moduledoc}, state}
   end
 
-  defp find_commands_query(%{"all" => true}) do
-    Command
-    |> Queries.Command.sorted_by_qualified_name
-  end
+  defp find_commands(%{"disabled" => true}),
+    do: Commands.highest_disabled_versions
+  defp find_commands(%{}),
+    do: Commands.enabled
 
-  defp find_commands_query(%{"disabled" => true}) do
-    Command
-    |> Queries.Command.disabled
-    |> Queries.Command.sorted_by_qualified_name
-  end
-
-  defp find_commands_query(%{}) do
-    Command
-    |> Queries.Command.enabled
-    |> Queries.Command.sorted_by_qualified_name
-  end
-
-  defp find_command_query(command) do
-    Queries.Command.by_any_name(command)
-  end
+  defp find_command(command),
+    do: Commands.enabled_by_any_name(command)
 end

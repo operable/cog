@@ -15,7 +15,7 @@ defmodule Cog.Models.CommandVersion do
     timestamps
   end
 
-  @required_fields ~w()
+  @required_fields ~w(command_id bundle_version_id)
   @optional_fields ~w(documentation)
 
   summary_fields [:documentation]
@@ -42,4 +42,17 @@ defmodule Cog.Models.CommandVersion do
 
   def full_name(%Cog.Models.CommandVersion{}=cv),
     do: "#{cv.command.bundle.name}:#{cv.command.name}"
+end
+
+defimpl Poison.Encoder, for: Cog.Models.CommandVersion do
+  def encode(%Cog.Models.CommandVersion{} = command_version, options) do
+    command = Map.from_struct(command_version.command)
+    command_version = Map.from_struct(command_version)
+
+    map = %{}
+    |> Map.merge(Map.take(command, [:name, :bundle]))
+    |> Map.merge(Map.take(command_version, [:version, :documentation]))
+
+    Poison.Encoder.Map.encode(map, options)
+  end
 end
