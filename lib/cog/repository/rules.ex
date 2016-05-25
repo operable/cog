@@ -79,6 +79,31 @@ defmodule Cog.Repository.Rules do
              where: r.enabled,
              where: r.id in ^ids,
              preload: ^@preloads)
+  end
+
+  def rules_for_command(command_name) do
+    case Cog.Models.Command.parse_name(command_name) do
+      {:ok, command} ->
+        command = Repo.preload(command, :bundle)
+
+        case Cog.Repository.Bundles.enabled_version(command) do
+          %BundleVersion{id: version_id} ->
+            id = command.id
+            %BundleVersion{id: site_id} = Bundles.site_bundle_version
+
+            rules = Repo.all(from r in Rule,
+                             join: c in assoc(r, :command),
+                             join: bv in assoc(r, :bundle_versions),
+                             where: c.id == ^id,
+                             where: r.enabled,
+                             where: bv.id in ^[version_id, site_id],
+                             preload: ^@preloads)
+            {:ok, rules}
+          nil ->
+            {:error, {:disabled, command_name}}
+        end
+      {:error, _}=error ->
+        error
     end
   end
 
