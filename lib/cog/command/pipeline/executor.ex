@@ -625,7 +625,7 @@ defmodule Cog.Command.Pipeline.Executor do
       room:            room,
       reply_to:        reply_to,
       service_token:   service_token,
-      services_root:   ServiceEndpoint.url
+      services_root:   ServiceEndpoint.public_url
     }
   end
 
