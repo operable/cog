@@ -104,8 +104,8 @@ defmodule Cog.V1.RuleController.Test do
   end
 
   test "404 if rule doesn't exist", %{authed: requestor} do
-    error = catch_error(api_request(requestor, :delete, "/v1/rules/#{@bad_uuid}"))
-    assert %Ecto.NoResultsError{} = error
+    conn = api_request(requestor, :delete, "/v1/rules/#{@bad_uuid}")
+    assert "Rule #{@bad_uuid} not found" = json_response(conn, 404)["error"]
   end
 
   test "cannot delete a rule without required permissions", %{unauthed: requestor} do
