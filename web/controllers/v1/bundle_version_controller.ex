@@ -7,7 +7,7 @@ defmodule Cog.V1.BundleVersionController do
   plug Cog.Plug.Authentication
   plug Cog.Plug.Authorization, permission: "#{Cog.embedded_bundle}:manage_commands"
 
-  def show(conn, %{"bundle_version_id" => id}) do
+  def show(conn, %{"id" => id}) do
     case Repository.Bundles.version(id) do
       %BundleVersion{}=bundle_version ->
         render(conn, "show.json", %{bundle_version: bundle_version})
@@ -18,7 +18,7 @@ defmodule Cog.V1.BundleVersionController do
     end
   end
 
-  def delete(conn, %{"bundle_version_id" => id}) do
+  def delete(conn, %{"id" => id}) do
     case Repository.Bundles.version(id) do
       %BundleVersion{}=bv ->
         case Repository.Bundles.delete(bv) do
