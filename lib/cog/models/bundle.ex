@@ -12,6 +12,9 @@ defmodule Cog.Models.Bundle do
     has_many :group_assignments, RelayGroupAssignment, foreign_key: :bundle_id
     has_many :relay_groups, through: [:group_assignments, :group]
 
+    has_one :enabled_version_registration, Cog.Models.EnabledBundleVersionRegistration
+    has_one :enabled_version, through: [:enabled_version_registration, :bundle_version]
+
     timestamps
   end
 

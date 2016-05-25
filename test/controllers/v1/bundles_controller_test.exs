@@ -1,5 +1,4 @@
 defmodule Cog.V1.BundlesControllerTest do
-  alias Ecto.DateTime
 
   require Logger
 
@@ -7,6 +6,8 @@ defmodule Cog.V1.BundlesControllerTest do
   use Cog.ConnCase
 
   alias Cog.Repository.Bundles
+
+  @bad_uuid "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
 
   setup do
     # Requests handled by the role controller require this permission
@@ -128,7 +129,6 @@ defmodule Cog.V1.BundlesControllerTest do
     bundle_version_id = Poison.decode!(body)
                 |> get_in(["bundle_version", "id"])
 
-
     bundle_version = Cog.Repository.Bundles.version(bundle_version_id)
 
     assert conn.status == 201
@@ -150,30 +150,65 @@ defmodule Cog.V1.BundlesControllerTest do
     bundle = version1.bundle
 
     conn = api_request(requestor, :get, "/v1/bundles/#{bundle.id}")
-    assert %{"bundle" => %{"id" => bundle.id,
-                           "name" => bundle.name,
-                           "versions" => ["1.0.0", "2.0.0", "3.0.0"],
+
+    bundle_id = bundle.id
+    bundle_name = bundle.name
+    assert %{"bundle" => %{"id" => ^bundle_id,
+                           "name" => ^bundle_name,
+                           "enabled_version" => nil,
+                           "versions" => [%{"id" => _, "version" => "3.0.0"},
+                                          %{"id" => _, "version" => "2.0.0"},
+                                          %{"id" => _, "version" => "1.0.0"}],
                            "relay_groups" => [],
-                           "inserted_at" => "#{DateTime.to_iso8601(bundle.inserted_at)}",
-                           "updated_at" => "#{DateTime.to_iso8601(bundle.updated_at)}"}} == json_response(conn, 200)
+                           "inserted_at" => _,
+                           "updated_at" => _}} = json_response(conn, 200)
   end
 
   test "shows enabled bundle", %{authed: requestor} do
     {:ok, _version3} = Bundles.install(%{"name" => "foo", "version" => "3.0.0", "config_file" => %{}})
-    {:ok, version2} = Bundles.install(%{"name" => "foo", "version" => "2.0.0", "config_file" => %{}})
-    {:ok, version1} = Bundles.install(%{"name" => "foo", "version" => "1.0.0", "config_file" => %{}})
+    {:ok, version2}  = Bundles.install(%{"name" => "foo", "version" => "2.0.0", "config_file" => %{
+                                          "permissions" => ["foo:bar"],
+                                          "commands" => %{"blah" => %{}}}})
+    {:ok, version1}  = Bundles.install(%{"name" => "foo", "version" => "1.0.0", "config_file" => %{}})
 
     :ok = Bundles.set_bundle_version_status(version2, :enabled)
     bundle = version1.bundle
 
+    relay_group = relay_group("test-group")
+    relay = relay("test-relay", "seekrit_token")
+    add_relay_to_group(relay_group.id, relay.id)
+    assign_bundle_to_group(relay_group.id, bundle.id)
+
     conn = api_request(requestor, :get, "/v1/bundles/#{bundle.id}")
-    assert %{"bundle" => %{"id" => bundle.id,
-                           "name" => bundle.name,
-                           "enabled_version" => "2.0.0",
-                           "versions" => ["1.0.0", "2.0.0", "3.0.0"],
-                           "relay_groups" => [],
-                           "inserted_at" => "#{DateTime.to_iso8601(bundle.inserted_at)}",
-                           "updated_at" => "#{DateTime.to_iso8601(bundle.updated_at)}"}} == json_response(conn, 200)
+
+    bundle_id = bundle.id
+    bundle_name = bundle.name
+    relay_group_id = relay_group.id
+    relay_group_name = relay_group.name
+
+    version_id = version2.id
+    assert %{"bundle" => %{"id" => ^bundle_id,
+                           "name" => ^bundle_name,
+                           "enabled_version" => %{"id" => ^version_id,
+                                                  "version" => "2.0.0",
+                                                  "name" => "foo",
+                                                  "permissions" => [%{"id" => _,
+                                                                      "bundle" => "foo",
+                                                                      "name" => "bar"}],
+                                                  "commands" => [%{"bundle" => "foo",
+                                                                   "name" => "blah"}]},
+                           "versions" => [%{"id" => _, "version" => "3.0.0"},
+                                          %{"id" => _, "version" => "2.0.0"},
+                                          %{"id" => _, "version" => "1.0.0"}],
+                           "relay_groups" => [%{"id" => ^relay_group_id,
+                                                "name" => ^relay_group_name}],
+                           "inserted_at" => _,
+                           "updated_at" => _}} = json_response(conn, 200)
+  end
+
+  test "cannot view bundle that doesn't exist", %{authed: requestor} do
+    conn = api_request(requestor, :get, "/v1/bundles/#{@bad_uuid}")
+    assert "Bundle #{@bad_uuid} not found" = json_response(conn, 404)["error"]
   end
 
   test "cannot view bundle without permission", %{unauthed: requestor} do
@@ -182,6 +217,126 @@ defmodule Cog.V1.BundlesControllerTest do
     assert conn.halted
     assert conn.status == 403
   end
+
+  test "cannot delete the embedded bundle", %{authed: requestor} do
+    bundle = Bundles.active_embedded_bundle_version().bundle
+    conn = api_request(requestor, :delete, "/v1/bundles/#{bundle.id}")
+    assert "Cannot delete operable bundle" == json_response(conn, 403)["error"]
+  end
+
+  test "cannot delete the site bundle", %{authed: requestor} do
+    bundle = Bundles.site_bundle_version().bundle
+    conn = api_request(requestor, :delete, "/v1/bundles/#{bundle.id}")
+    assert "Cannot delete site bundle" == json_response(conn, 403)["error"]
+  end
+
+  test "cannot delete a bundle with an enabled version", %{authed: requestor} do
+    version = bundle_version("test-1")
+    :ok = Bundles.set_bundle_version_status(version, :enabled)
+
+    conn = api_request(requestor, :delete, "/v1/bundles/#{version.bundle.id}")
+    assert "Cannot delete test-1 bundle, because version 0.1.0 is currently enabled" = json_response(conn, 403)["error"]
+  end
+
+  test "can delete a bundle without an enabled version", %{authed: requestor} do
+    version = bundle_version("test-1")
+
+    conn = api_request(requestor, :delete, "/v1/bundles/#{version.bundle.id}")
+    assert response(conn, 204)
+  end
+
+  test "can't delete a bundle without permission", %{unauthed: requestor} do
+    version = bundle_version("test-1")
+
+    conn = api_request(requestor, :delete, "/v1/bundles/#{version.bundle.id}")
+    assert conn.halted
+    assert conn.status == 403
+  end
+
+  test "cannot delete bundle that doesn't exist", %{authed: requestor} do
+    conn = api_request(requestor, :delete, "/v1/bundles/#{@bad_uuid}")
+    assert "Bundle #{@bad_uuid} not found" = json_response(conn, 404)["error"]
+  end
+
+  test "show bundles", %{authed: requestor} do
+    bundle_version("test-1")
+    conn = api_request(requestor, :get, "/v1/bundles/")
+    assert %{"bundles" => [%{"id" => _,
+                             "name" => "operable",
+                             "enabled_version" => %{"version" => version},
+                             "relay_groups" => [], # embedded bundle isn't in relay groups
+                             "versions" => [%{"id" => _, "version" => version}]}, # only one, and it's the enabled on}e
+                           %{"id" => _,
+                             "name" => "site",
+                             "enabled_version" => nil, # nothing to enable with the site bundle
+                             "relay_groups" => [], # not assigned to any groups either
+                             "versions" => [%{"id" => _, "version" => "0.0.0"}]}, # always
+                           %{"id" => _,
+                             "name" => "test-1",
+                             "enabled_version" => nil,
+                             "relay_groups" => [],
+                             "versions" => [%{"id" => _, "version" => "0.1.0"}]}]} = json_response(conn, 200)
+  end
+
+  test "cannot show bundles without permission", %{unauthed: requestor} do
+    conn = api_request(requestor, :get, "/v1/bundles")
+    assert conn.halted
+    assert conn.status == 403
+  end
+
+  test "shows bundle versions", %{authed: requestor} do
+    {:ok, version1}  = Bundles.install(%{"name" => "foo", "version" => "1.0.0", "config_file" => %{}})
+    {:ok, _version2}  = Bundles.install(%{"name" => "foo", "version" => "2.0.0", "config_file" => %{
+                                          "permissions" => ["foo:bar"],
+                                          "commands" => %{"blah" => %{}}}})
+    {:ok, _version3} = Bundles.install(%{"name" => "foo", "version" => "3.0.0", "config_file" => %{}})
+
+    conn = api_request(requestor, :get, "/v1/bundles/#{version1.bundle.id}/versions")
+
+    assert %{"bundle_versions" => [%{"commands" => [],
+                                     "id" => _,
+                                     "inserted_at" => _,
+                                     "name" => "foo",
+                                     "permissions" => [],
+                                     "updated_at" => _,
+                                     "version" => "1.0.0",
+                                     "enabled" => false},
+                                   %{"commands" => [%{"bundle" => "foo",
+                                                      "name" => "blah"}],
+                                     "id" => _,
+                                     "inserted_at" => _,
+                                     "name" => "foo",
+                                     "permissions" => [%{"id" => _,
+                                                         "bundle" => "foo",
+                                                         "name" => "bar"}],
+                                     "updated_at" => _,
+                                     "version" => "2.0.0",
+                                     "enabled" => false},
+                                   %{"commands" => [],
+                                     "id" => _,
+                                     "inserted_at" => _,
+                                     "name" => "foo",
+                                     "permissions" => [],
+                                     "updated_at" => _,
+                                     "version" => "3.0.0",
+                                     "enabled" => false}]} = json_response(conn, 200)
+  end
+
+  test "cannot show versions without permission", %{unauthed: requestor} do
+    bundle = Bundles.active_embedded_bundle_version().bundle
+    conn = api_request(requestor, :get, "/v1/bundles/#{bundle.id}/versions")
+
+    assert conn.halted
+    assert conn.status == 403
+  end
+
+  test "cannot show bundle versions for a bundle that doesn't exist", %{authed: requestor} do
+    conn = api_request(requestor, :get, "/v1/bundles/#{@bad_uuid}/versions")
+    assert "Bundle #{@bad_uuid} not found" = json_response(conn, 404)["error"]
+  end
+
+
+  ########################################################################
 
   defp make_config_file(filename, options \\ []) do
     options = Keyword.merge([

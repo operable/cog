@@ -186,7 +186,7 @@ defmodule Cog.Repository.BundlesTest do
 
     # Check that the version is still there
     bundle = bundle_named("testing")
-    assert ^version1 = Bundles.enabled_version(bundle)
+    assert version1.id == Bundles.enabled_version(bundle).id
   end
 
   test "deleting a bundle with an enabled version is not allowed" do
@@ -197,7 +197,7 @@ defmodule Cog.Repository.BundlesTest do
     assert {:error, {:enabled_version, version("1.0.0")}} == Bundles.delete(bundle)
 
     # Check that the version is still there
-    assert ^version1 = Bundles.enabled_version(bundle)
+    assert version1.id == Bundles.enabled_version(bundle).id
   end
 
   test "enabling one bundle version disables the others for that bundle" do

@@ -420,7 +420,8 @@ defmodule Cog.Repository.Bundles do
                  |> Bundle.changeset(%{name: name})
                  |> Repo.insert!
              end
-    preload(bundle)
+    # These bundle preloads are only needed for installation at the moment.
+    Repo.preload(bundle, [:permissions, :commands])
   end
 
 
@@ -436,13 +437,20 @@ defmodule Cog.Repository.Bundles do
 
   # Consolidate what we need to preload for various things so we stay
   # consistent
-  @bundle_preloads [:versions, :permissions, :commands]
-  @bundle_version_preloads [bundle: @bundle_preloads]
+  @bundle_preloads [:versions, :relay_groups]
+  @bundle_version_preloads [:bundle,
+                            :enabled_version_registration,
+                            permissions: [:bundle],
+                            commands: [command: :bundle]]
+  @enabled_version_preloads [enabled_version: [:bundle,
+                                               :enabled_version_registration,
+                                               permissions: [:bundle],
+                                               commands: [command: :bundle]]]
 
   defp preload(%Bundle{}=bundle),
-    do: Repo.preload(bundle, @bundle_preloads)
+    do: Repo.preload(bundle, @bundle_preloads ++ @enabled_version_preloads)
   defp preload([%Bundle{} | _]=bs),
-    do: Repo.preload(bs, @bundle_preloads)
+    do: Repo.preload(bs, @bundle_preloads ++ @enabled_version_preloads)
   defp preload(%BundleVersion{}=bv),
     do: Repo.preload(bv, @bundle_version_preloads)
   defp preload([%BundleVersion{} | _]=bvs),
@@ -456,7 +464,6 @@ defmodule Cog.Repository.Bundles do
   #
   ########################################################################
 
-
   use Cog.Models
 
   defp install_bundle(bundle_params) do
@@ -469,10 +476,10 @@ defmodule Cog.Repository.Bundles do
       version = new_version(bundle, bundle_params)
 
       # Add permissions, after deduping
-      :ok = register_permissions_for_version(version)
+      :ok = register_permissions_for_version(bundle, version)
 
       # Add commands, after deduping
-      commands = register_commands_for_version(version)
+      commands = register_commands_for_version(bundle, version)
 
       # Add command_versions; rules get ingested in this process as
       # well
@@ -480,13 +487,19 @@ defmodule Cog.Repository.Bundles do
       |> Map.get("commands", %{})
       |> Enum.each(&create_command_version(version, commands, &1))
 
-
       # Add templates
       version.config_file
       |> Map.get("templates", %{})
       |> Enum.each(&create_template(version, &1))
 
-      version
+      # Once we go to Ecto 2.0 and there's a Repo.preload/3, I'd like
+      # to add the ability to selectively force preloading on our
+      # private preload/2 function. Until then, without having to muck
+      # around too much with the internals of the model, I'm just
+      # going to grab a fresh version from the database.
+      #
+      # :(
+      Cog.Repo.get(BundleVersion, version.id)
     end)
   end
 
@@ -538,9 +551,7 @@ defmodule Cog.Repository.Bundles do
     end)
   end
 
-  defp register_permissions_for_version(bundle_version) do
-    bundle = bundle_version.bundle
-
+  defp register_permissions_for_version(bundle, bundle_version) do
     # Get just raw names... they'll come in as fully-qualified
     raw_names = bundle_version.config_file
     |> Map.get("permissions", [])
@@ -548,26 +559,25 @@ defmodule Cog.Repository.Bundles do
     |> MapSet.new
 
     # Determine which of those already exist in the database
+    bundle_permission_names = Enum.map(bundle.permissions, &(&1.name)) |> MapSet.new
 
-    existing_permissions = bundle.permissions
-    existing_permission_names = Enum.map(existing_permissions, &(&1.name)) |> MapSet.new
-    missing_permission_names  = MapSet.difference(raw_names, existing_permission_names)
+    new_to_this_version  = MapSet.difference(raw_names, bundle_permission_names)
 
-    # Create new permissions for the remaining ones
-    missing_permission_names
+    already_existing_names = MapSet.intersection(raw_names, bundle_permission_names)
+    already_existing = Enum.filter(bundle.permissions, &(Enum.member?(already_existing_names, &1.name)))
+
+    # Create new permissions the ones we haven't seen yet
+    new_to_this_version
     |> Enum.map(&Cog.Repository.Permissions.create_permission(bundle_version, &1))
     |> Enum.map(fn({:ok, p}) -> p end)
 
     # Link preexisting permissions to the current bundle version
-    Enum.each(existing_permissions, &Cog.Repository.Permissions.link_permission_to_bundle_version(bundle_version, &1))
+    Enum.each(already_existing, &Cog.Repository.Permissions.link_permission_to_bundle_version(bundle_version, &1))
 
     :ok
   end
 
-  defp register_commands_for_version(bundle_version) do
-    # TODO: preload commands onto bundle
-    bundle = bundle_version.bundle
-
+  defp register_commands_for_version(bundle, bundle_version) do
     # Figure out what commands we need for this bundle version
     command_names = bundle_version.config_file
     |> Map.get("commands", %{})

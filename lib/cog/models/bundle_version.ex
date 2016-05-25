@@ -11,6 +11,11 @@ defmodule Cog.Models.BundleVersion do
     has_many :commands, CommandVersion # TODO: or `:command_versions`?
     has_many :templates, Template
 
+    has_many :permission_registration, Cog.Models.PermissionBundleVersion
+    has_many :permissions, through: [:permission_registration, :permission]
+
+    has_one :enabled_version_registration, Cog.Models.EnabledBundleVersionRegistration, foreign_key: :bundle_version_id
+
     timestamps
   end
 
@@ -21,6 +26,16 @@ defmodule Cog.Models.BundleVersion do
 
   def changeset(model, params \\ :empty) do
     model |> cast(params, @required_fields, [])
+  end
+
+  def enabled?(bundle_version) do
+    if Ecto.assoc_loaded?(bundle_version.enabled_version_registration) do
+      bundle_version.enabled_version_registration != nil
+    else
+      # Everywhere this function is called should already have this
+      # preloaded; if not, this gives us an easy way to find out
+      raise "Association not loaded: :enabled_version_registration"
+    end
   end
 
 end
