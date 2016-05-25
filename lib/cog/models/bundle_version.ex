@@ -14,6 +14,9 @@ defmodule Cog.Models.BundleVersion do
     has_many :permission_registration, Cog.Models.PermissionBundleVersion
     has_many :permissions, through: [:permission_registration, :permission]
 
+    has_many :rule_registration, Cog.Models.RuleBundleVersion
+    has_many :rules, through: [:rule_registration, :rule]
+
     has_one :enabled_version_registration, Cog.Models.EnabledBundleVersionRegistration, foreign_key: :bundle_version_id
 
     timestamps

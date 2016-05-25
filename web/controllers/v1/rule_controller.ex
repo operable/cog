@@ -33,7 +33,6 @@ defmodule Cog.V1.RuleController do
         render(conn, "index.json", rules: rules)
     end
   end
-
   def show(conn, params) do
     conn
     |> put_status(:unprocessable_entity)
@@ -41,8 +40,15 @@ defmodule Cog.V1.RuleController do
   end
 
   def delete(conn, %{"id" => id}) do
-    Rule |> Repo.get!(id) |> Repo.delete!
-    send_resp(conn, :no_content, "")
+    case Rules.rule(id) do
+      %Rule{}=rule ->
+        Rules.delete_or_disable(rule)
+        send_resp(conn, :no_content, "")
+      nil ->
+        conn
+        |> put_status(:not_found)
+        |> json(%{error: "Rule #{id} not found"})
+    end
   end
 
   @doc """

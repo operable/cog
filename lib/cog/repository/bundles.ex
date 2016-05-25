@@ -314,6 +314,11 @@ defmodule Cog.Repository.Bundles do
   def site_bundle_version,
     do: Repo.one!(site_bundle_version_query)
 
+  def is_site_version?(version) do
+    (version.bundle.name == Cog.site_namespace) and
+    (to_string(version.version) == @permanent_site_bundle_version)
+  end
+
   @doc """
   Called at system-startup to ensure the site bundle is appropriately set up.
   """
