@@ -31,8 +31,7 @@ defmodule Cog.Models.BundleVersion do
     model
     |> cast(params, @required_fields, [])
     |> unique_constraint(:version,
-                         name: :bundle_versions_v2_bundle_id_version_index,
-                         message: "The bundle version already exists.")
+                         name: :bundle_versions_v2_bundle_id_version_index)
   end
 
   def enabled?(bundle_version) do

@@ -150,7 +150,7 @@ defmodule Cog.V1.BundlesControllerTest do
     # Now try to do the same thing again
     conn = api_request(requestor, :post, "/v1/bundles", body: %{"bundle" => %{"config" => config}})
     assert ["Could not save bundle.",
-            "The bundle version already exists."] = json_response(conn, 422)["errors"] # TODO: want it to be 409 in this case
+            "version has already been taken"] = json_response(conn, 409)["errors"]
   end
 
   test "shows disabled bundle", %{authed: requestor} do
