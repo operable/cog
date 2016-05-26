@@ -1,5 +1,5 @@
 defmodule Cog.TemplateTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: false
   alias Cog.Template
 
   test "rendering json for the slack adapter" do

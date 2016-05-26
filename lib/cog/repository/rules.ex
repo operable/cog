@@ -5,6 +5,11 @@ defmodule Cog.Repository.Rules do
   alias Cog.Repository.Bundles
   alias Piper.Permissions.{Ast, Parser}
 
+  require Ecto.Query
+  import Ecto.Query, only: [from: 2]
+
+  @preloads [:bundle_versions]
+
   @doc """
   Parse, validate and store the rule in the database. Ingesting is idempotent.
 
@@ -23,7 +28,7 @@ defmodule Cog.Repository.Rules do
     Repo.transaction(fn ->
       case do_ingest(rule, bundle_version) do
         {:ok, rule} ->
-          rule
+          preload(rule)
         {:error, error} ->
           Repo.rollback(error)
       end
@@ -34,6 +39,100 @@ defmodule Cog.Repository.Rules do
     do: ingest(rule, Bundles.site_bundle_version)
   def ingest_without_transaction(rule, bundle_version),
     do: do_ingest(rule, bundle_version)
+
+  def delete_or_disable(%Rule{}=rule) do
+    # If the rule is from the site version (i.e., the user wrote it), delete it
+    # Otherwise it came in with a bundle, so disable it
+    site = Cog.Repository.Bundles.site_bundle_version
+
+    case rule_association_status(rule, site) do
+      :exclusive ->
+        Repo.delete!(rule)
+      :inclusive ->
+        remove_from_bundle_version(rule, site)
+        set_rule_status(rule, :disabled)
+      false ->
+        set_rule_status(rule, :disabled)
+    end
+  end
+
+  def set_rule_status(rule, status) when status in [:enabled, :disabled] do
+    rule
+    |> Rule.changeset(%{enabled: (status == :enabled)})
+    |> Repo.update!
+  end
+
+  @doc """
+  Retrieve the rule identified by `id`.
+  """
+  def rule(id) do
+    case rules([id]) do
+      [rule] ->
+        rule
+      [] ->
+        nil
+    end
+  end
+
+  def rules(ids) do
+    Repo.all(from r in Rule,
+             where: r.enabled,
+             where: r.id in ^ids,
+             preload: ^@preloads)
+  end
+
+  def rules_for_command(command_name) do
+    case Cog.Models.Command.parse_name(command_name) do
+      {:ok, command} ->
+        command = Repo.preload(command, :bundle)
+
+        case Cog.Repository.Bundles.enabled_version(command) do
+          %BundleVersion{id: version_id} ->
+            id = command.id
+            %BundleVersion{id: site_id} = Bundles.site_bundle_version
+
+            rules = Repo.all(from r in Rule,
+                             join: c in assoc(r, :command),
+                             join: bv in assoc(r, :bundle_versions),
+                             where: c.id == ^id,
+                             where: r.enabled,
+                             where: bv.id in ^[version_id, site_id],
+                             preload: ^@preloads)
+            {:ok, rules}
+          nil ->
+            {:error, {:disabled, command_name}}
+        end
+      {:error, _}=error ->
+        error
+    end
+  end
+
+  def all_rules do
+    Repo.all(from r in Rule,
+             where: r.enabled,
+             preload: ^@preloads)
+  end
+
+  ########################################################################
+
+  # Indicate whether a rule is associated with a bundle version
+  # exclusively (i.e., it only exists in that one version),
+  # inclusively (it is associated with that version, but with others
+  # as well), or not at all.
+  defp rule_association_status(rule, bundle_version) do
+    is_version_rule = rule.bundle_versions
+    |> Enum.map(&(&1.id))
+    |> Enum.member?(bundle_version.id)
+
+    cond do
+      is_version_rule and length(rule.bundle_versions) == 1 ->
+        :exclusive
+      is_version_rule ->
+        :inclusive
+      true ->
+        false
+    end
+  end
 
   defp do_ingest(rule, %BundleVersion{}=bundle_version) when is_binary(rule) do
     with {:ok, ast, permission_names} <- validate_syntax(rule),
@@ -47,6 +146,16 @@ defmodule Cog.Repository.Rules do
     case find_or_create_rule(ast, command) do
       {:ok, rule} ->
         grant_permissions(rule, permissions)
+
+        # If we have disabled a bundle rule, but then add the same
+        # rule ourselves as a site rule, we need to ensure it's
+        # enabled here.
+        rule = if Cog.Repository.Bundles.is_site_version?(bundle_version) do
+          set_rule_status(rule, :enabled)
+        else
+          rule
+        end
+
         add_to_bundle_version(rule, bundle_version)
         {:ok, rule}
       {:error, %Ecto.Changeset{}=changeset} ->
@@ -54,6 +163,7 @@ defmodule Cog.Repository.Rules do
     end
   end
 
+  # If a rule exists and is disabled, this won't change that
   defp find_or_create_rule(ast, command) do
     parse_tree = Parser.rule_to_json!(ast)
     rule = Repo.get_by(Rule, command_id: command.id, parse_tree: parse_tree)
@@ -74,6 +184,10 @@ defmodule Cog.Repository.Rules do
 
   defp add_to_bundle_version(rule, bundle_version) do
     JoinTable.associate(rule, bundle_version)
+  end
+
+  defp remove_from_bundle_version(rule, bundle_version) do
+    JoinTable.dissociate(rule, bundle_version)
   end
 
   defp validate_syntax(rule_text) do
@@ -141,4 +255,8 @@ defmodule Cog.Repository.Rules do
     do: :ok
   defp validate_matching_permission(_command, %Permission{bundle: %Bundle{name: bundle_name}, name: permission_name}),
     do: {:error, {:permission_bundle_mismatch, bundle_name <> ":" <> permission_name}}
+
+  defp preload(rule_or_rules),
+    do: Repo.preload(rule_or_rules, @preloads)
+
 end

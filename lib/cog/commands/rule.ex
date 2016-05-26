@@ -57,6 +57,8 @@ defmodule Cog.Commands.Rule do
     end
   end
 
+  defp error({:disabled, command}),
+    do: "#{command} is not enabled. Enable a bundle version and try again"
   defp error({:command_not_found, command}),
     do: "Command #{inspect command} could not be found"
   defp error({:ambiguous, command}),

@@ -1,6 +1,6 @@
 defmodule Cog.V1.RuleController do
   use Cog.Web, :controller
-  alias Cog.Models.{Command, Rule}
+  alias Cog.Models.Rule
   alias Cog.Repository.Rules
   require Logger
 
@@ -23,17 +23,19 @@ defmodule Cog.V1.RuleController do
   end
 
   def show(conn, %{"for-command" => command}) do
-    case Command.parse_name(command) do
+    case Rules.rules_for_command(command) do
       {:error, {:command_not_found, command}} ->
         conn
         |> put_status(:unprocessable_entity)
         |> json(%{errors: "Command #{inspect command} not found"})
-      {:ok, command} ->
-        rules = Repo.all(Ecto.assoc(command, :rules))
+      {:error, {:disabled, command_name}} ->
+        conn
+        |> put_status(:not_found)
+        |> json(%{errors: "Command #{command_name} not currently enabled; try enabling a bundle version first"})
+      {:ok, rules} ->
         render(conn, "index.json", rules: rules)
     end
   end
-
   def show(conn, params) do
     conn
     |> put_status(:unprocessable_entity)
@@ -41,8 +43,15 @@ defmodule Cog.V1.RuleController do
   end
 
   def delete(conn, %{"id" => id}) do
-    Rule |> Repo.get!(id) |> Repo.delete!
-    send_resp(conn, :no_content, "")
+    case Rules.rule(id) do
+      %Rule{}=rule ->
+        Rules.delete_or_disable(rule)
+        send_resp(conn, :no_content, "")
+      nil ->
+        conn
+        |> put_status(:not_found)
+        |> json(%{error: "Rule #{id} not found"})
+    end
   end
 
   @doc """
