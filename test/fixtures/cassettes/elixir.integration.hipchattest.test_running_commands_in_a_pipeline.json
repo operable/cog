@@ -13,19 +13,19 @@
       "url": "https://api.hipchat.com/v2/room/ci_bot_testing"
     },
     "response": {
-      "body": "{\"avatar_url\": null, \"created\": \"2015-12-03T15:56:20+00:00\", \"delegate_admin_visibility\": null, \"guest_access_url\": null, \"id\": 2223837, \"is_archived\": false, \"is_guest_accessible\": false, \"last_active\": \"2016-04-18T21:28:58+00:00\", \"links\": {\"participants\": \"https://api.hipchat.com/v2/room/2223837/participant\", \"self\": \"https://api.hipchat.com/v2/room/2223837\", \"webhooks\": \"https://api.hipchat.com/v2/room/2223837/webhook\"}, \"name\": \"ci_bot_testing\", \"owner\": {\"id\": 3152608, \"links\": {\"self\": \"https://api.hipchat.com/v2/user/3152608\"}, \"mention_name\": \"vanstee\", \"name\": \"Patrick Van Stee\", \"version\": \"WYXXCU3K\"}, \"participants\": [{\"id\": 3152641, \"links\": {\"self\": \"https://api.hipchat.com/v2/user/3152641\"}, \"mention_name\": \"deckard\", \"name\": \"Rich Van Deckard\", \"version\": \"C9A71432\"}], \"privacy\": \"public\", \"statistics\": {\"links\": {\"self\": \"https://api.hipchat.com/v2/room/2223837/statistics\"}}, \"topic\": \"\", \"version\": \"GQNWMY4Y\", \"xmpp_jid\": \"479543_ci_bot_testing@conf.hipchat.com\"}",
+      "body": "{\"avatar_url\": null, \"created\": \"2015-12-03T15:56:20+00:00\", \"delegate_admin_visibility\": null, \"guest_access_url\": null, \"id\": 2223837, \"is_archived\": false, \"is_guest_accessible\": false, \"last_active\": \"2016-05-26T20:25:24+00:00\", \"links\": {\"participants\": \"https://api.hipchat.com/v2/room/2223837/participant\", \"self\": \"https://api.hipchat.com/v2/room/2223837\", \"webhooks\": \"https://api.hipchat.com/v2/room/2223837/webhook\"}, \"name\": \"ci_bot_testing\", \"owner\": {\"id\": 3152608, \"links\": {\"self\": \"https://api.hipchat.com/v2/user/3152608\"}, \"mention_name\": \"vanstee\", \"name\": \"Patrick Van Stee\", \"version\": \"WYXXCU3K\"}, \"participants\": [{\"id\": 3152641, \"links\": {\"self\": \"https://api.hipchat.com/v2/user/3152641\"}, \"mention_name\": \"deckard\", \"name\": \"Rich Van Deckard\", \"version\": \"C9A71432\"}], \"privacy\": \"public\", \"statistics\": {\"links\": {\"self\": \"https://api.hipchat.com/v2/room/2223837/statistics\"}}, \"topic\": \"\", \"version\": \"GQNWMY4Y\", \"xmpp_jid\": \"479543_ci_bot_testing@conf.hipchat.com\"}",
       "headers": {
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Expose-Headers": "Date, ETag, Link, X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset, X-Backoff",
         "Content-Type": "application/json",
-        "Date": "Mon, 18 Apr 2016 21:28:59 GMT",
+        "Date": "Thu, 26 May 2016 20:25:25 GMT",
         "ETag": "W/\"GQNWMY4Y\"",
         "Server": "nginx",
         "Strict-Transport-Security": "max-age=31536000",
         "X-Content-Type-Options": "nosniff",
         "X-Ratelimit-Limit": "100",
-        "X-Ratelimit-Remaining": "83",
-        "X-Ratelimit-Reset": "1461015000",
+        "X-Ratelimit-Remaining": "97",
+        "X-Ratelimit-Reset": "1464294624",
         "X-XSS-Protection": "1; mode=block",
         "Content-Length": "995",
         "Connection": "keep-alive"
@@ -48,19 +48,19 @@
       "url": "https://api.hipchat.com/v2/user/@ciuser"
     },
     "response": {
-      "body": "{\"created\": \"2015-12-03T20:53:14+00:00\", \"email\": \"patrick+ci_user@operable.io\", \"group\": {\"id\": 479543, \"links\": {\"self\": \"https://api.hipchat.com/v2/group/479543\"}, \"name\": \"Operable\"}, \"id\": 3197110, \"is_deleted\": false, \"is_group_admin\": false, \"is_guest\": false, \"last_active\": \"2016-04-18T21:28:53+0000\", \"links\": {\"self\": \"https://api.hipchat.com/v2/user/3197110\"}, \"mention_name\": \"ciuser\", \"name\": \"Testy McTesterson\", \"photo_url\": \"https://secure.gravatar.com/avatar/966ec385db7aa10350fc7daa2d9c0fe6?s=125&r=g&d=https%3A%2F%2Fwww.hipchat.com%2Fimg%2Fsilhouette_125.png\", \"presence\": null, \"roles\": [\"user\"], \"timezone\": \"America/New_York\", \"title\": \"Doing test things\", \"version\": \"85C4829D\", \"xmpp_jid\": \"479543_3197110@chat.hipchat.com\"}",
+      "body": "{\"created\": \"2015-12-03T20:53:14+00:00\", \"email\": \"patrick+ci_user@operable.io\", \"group\": {\"id\": 479543, \"links\": {\"self\": \"https://api.hipchat.com/v2/group/479543\"}, \"name\": \"Operable\"}, \"id\": 3197110, \"is_deleted\": false, \"is_group_admin\": false, \"is_guest\": false, \"last_active\": \"2016-05-26T20:19:56+0000\", \"links\": {\"self\": \"https://api.hipchat.com/v2/user/3197110\"}, \"mention_name\": \"ciuser\", \"name\": \"Testy McTesterson\", \"photo_url\": \"https://secure.gravatar.com/avatar/966ec385db7aa10350fc7daa2d9c0fe6?s=125&r=g&d=https%3A%2F%2Fwww.hipchat.com%2Fimg%2Fsilhouette_125.png\", \"presence\": null, \"roles\": [\"user\"], \"timezone\": \"America/New_York\", \"title\": \"Doing test things\", \"version\": \"85C4829D\", \"xmpp_jid\": \"479543_3197110@chat.hipchat.com\"}",
       "headers": {
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Expose-Headers": "Date, ETag, Link, X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset, X-Backoff",
         "Content-Type": "application/json",
-        "Date": "Mon, 18 Apr 2016 21:28:58 GMT",
+        "Date": "Thu, 26 May 2016 20:25:24 GMT",
         "ETag": "W/\"85C4829D\"",
         "Server": "nginx",
         "Strict-Transport-Security": "max-age=31536000",
         "X-Content-Type-Options": "nosniff",
         "X-Ratelimit-Limit": "100",
-        "X-Ratelimit-Remaining": "85",
-        "X-Ratelimit-Reset": "1461015000",
+        "X-Ratelimit-Remaining": "99",
+        "X-Ratelimit-Reset": "1464294624",
         "X-XSS-Protection": "1; mode=block",
         "Content-Length": "749",
         "Connection": "keep-alive"
@@ -83,22 +83,22 @@
       "url": "https://api.hipchat.com/v2/room/ci_bot_testing/message"
     },
     "response": {
-      "body": "{\"id\": \"6558dd60-47f6-4642-99ad-03cad03bb7ff\", \"timestamp\": \"2016-04-18T21:28:58Z 805344\"}",
+      "body": "{\"id\": \"efb699ee-8ddf-4d9f-a0c2-c66991e01809\", \"timestamp\": \"2016-05-26T20:25:24Z 715939\"}",
       "headers": {
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Expose-Headers": "Date, ETag, Link, X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset, X-Backoff",
         "Content-Type": "application/json",
-        "Date": "Mon, 18 Apr 2016 21:28:58 GMT",
-        "Location": "/v2/room/ci_bot_testing/history/6558dd60-47f6-4642-99ad-03cad03bb7ff",
+        "Date": "Thu, 26 May 2016 20:25:24 GMT",
+        "Location": "/v2/room/ci_bot_testing/history/efb699ee-8ddf-4d9f-a0c2-c66991e01809",
         "Server": "nginx",
         "Strict-Transport-Security": "max-age=31536000",
         "X-Content-Type-Options": "nosniff",
         "X-Floodcontrol-Limit": "30",
-        "X-Floodcontrol-Remaining": "28",
-        "X-Floodcontrol-Reset": "1461014986",
+        "X-Floodcontrol-Remaining": "30",
+        "X-Floodcontrol-Reset": "1464294385",
         "X-Ratelimit-Limit": "100",
-        "X-Ratelimit-Remaining": "84",
-        "X-Ratelimit-Reset": "1461015000",
+        "X-Ratelimit-Remaining": "98",
+        "X-Ratelimit-Reset": "1464294624",
         "X-XSS-Protection": "1; mode=block",
         "Content-Length": "90",
         "Connection": "keep-alive"
@@ -126,13 +126,13 @@
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Expose-Headers": "Date, ETag, Link, X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset, X-Backoff",
         "Content-Type": "application/json",
-        "Date": "Mon, 18 Apr 2016 21:28:59 GMT",
+        "Date": "Thu, 26 May 2016 20:25:25 GMT",
         "Server": "nginx",
         "Strict-Transport-Security": "max-age=31536000",
         "X-Content-Type-Options": "nosniff",
         "X-Ratelimit-Limit": "100",
-        "X-Ratelimit-Remaining": "82",
-        "X-Ratelimit-Reset": "1461015000",
+        "X-Ratelimit-Remaining": "96",
+        "X-Ratelimit-Reset": "1464294624",
         "X-XSS-Protection": "1; mode=block",
         "Content-Length": "2128",
         "Connection": "keep-alive"
@@ -143,7 +143,7 @@
   },
   {
     "request": {
-      "body": "{\"message\":\"þis is a test\"}",
+      "body": "{\"message\":\"The thorn command has been deprecated and will be removed in a future release\"}",
       "headers": {
         "Accept": "application/json",
         "Content-Type": "application/json",
@@ -155,22 +155,22 @@
       "url": "https://api.hipchat.com/v2/room/2223837/message"
     },
     "response": {
-      "body": "{\"id\": \"ebf9b00c-63b3-4142-af30-bf7931326648\", \"timestamp\": \"2016-04-18T21:28:59Z 463635\"}",
+      "body": "{\"id\": \"c37000ad-7e0e-430a-9763-448ff8c4d4f5\", \"timestamp\": \"2016-05-26T20:25:25Z 251151\"}",
       "headers": {
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Expose-Headers": "Date, ETag, Link, X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset, X-Backoff",
         "Content-Type": "application/json",
-        "Date": "Mon, 18 Apr 2016 21:28:59 GMT",
-        "Location": "/v2/room/2223837/history/ebf9b00c-63b3-4142-af30-bf7931326648",
+        "Date": "Thu, 26 May 2016 20:25:25 GMT",
+        "Location": "/v2/room/2223837/history/c37000ad-7e0e-430a-9763-448ff8c4d4f5",
         "Server": "nginx",
         "Strict-Transport-Security": "max-age=31536000",
         "X-Content-Type-Options": "nosniff",
         "X-Floodcontrol-Limit": "30",
-        "X-Floodcontrol-Remaining": "28",
-        "X-Floodcontrol-Reset": "1461014988",
+        "X-Floodcontrol-Remaining": "30",
+        "X-Floodcontrol-Reset": "1464294386",
         "X-Ratelimit-Limit": "100",
-        "X-Ratelimit-Remaining": "81",
-        "X-Ratelimit-Reset": "1461015000",
+        "X-Ratelimit-Remaining": "95",
+        "X-Ratelimit-Reset": "1464294624",
         "X-XSS-Protection": "1; mode=block",
         "Content-Length": "90",
         "Connection": "keep-alive"
@@ -190,23 +190,23 @@
       "method": "get",
       "options": [],
       "request_body": "",
-      "url": "https://api.hipchat.com/v2/room/2223837/history/latest?max-results=2&not-before=6558dd60-47f6-4642-99ad-03cad03bb7ff"
+      "url": "https://api.hipchat.com/v2/room/2223837/history/latest?max-results=2&not-before=efb699ee-8ddf-4d9f-a0c2-c66991e01809"
     },
     "response": {
-      "body": "{\"items\": [{\"date\": \"2016-04-18T21:28:58.805344+00:00\", \"from\": {\"id\": 3197110, \"links\": {\"self\": \"https://api.hipchat.com/v2/user/3197110\"}, \"mention_name\": \"ciuser\", \"name\": \"Testy McTesterson\", \"version\": \"85C4829D\"}, \"id\": \"6558dd60-47f6-4642-99ad-03cad03bb7ff\", \"mentions\": [{\"id\": 3152641, \"links\": {\"self\": \"https://api.hipchat.com/v2/user/3152641\"}, \"mention_name\": \"deckard\", \"name\": \"Rich Van Deckard\", \"version\": \"C9A71432\"}], \"message\": \"@deckard operable:echo \\\"this is a test\\\" | operable:thorn $body\", \"type\": \"message\"}, {\"date\": \"2016-04-18T21:28:59.463635+00:00\", \"from\": {\"id\": 3197110, \"links\": {\"self\": \"https://api.hipchat.com/v2/user/3197110\"}, \"mention_name\": \"ciuser\", \"name\": \"Testy McTesterson\", \"version\": \"85C4829D\"}, \"id\": \"ebf9b00c-63b3-4142-af30-bf7931326648\", \"mentions\": [], \"message\": \"\\u00feis is a test\", \"type\": \"message\"}], \"links\": {\"self\": \"https://api.hipchat.com/v2/room/2223837/history/latest\"}, \"maxResults\": 2, \"startIndex\": 0}",
+      "body": "{\"items\": [{\"date\": \"2016-05-26T20:25:24.715939+00:00\", \"from\": {\"id\": 3197110, \"links\": {\"self\": \"https://api.hipchat.com/v2/user/3197110\"}, \"mention_name\": \"ciuser\", \"name\": \"Testy McTesterson\", \"version\": \"85C4829D\"}, \"id\": \"efb699ee-8ddf-4d9f-a0c2-c66991e01809\", \"mentions\": [{\"id\": 3152641, \"links\": {\"self\": \"https://api.hipchat.com/v2/user/3152641\"}, \"mention_name\": \"deckard\", \"name\": \"Rich Van Deckard\", \"version\": \"C9A71432\"}], \"message\": \"@deckard operable:echo \\\"this is a test\\\" | operable:thorn $body\", \"type\": \"message\"}, {\"date\": \"2016-05-26T20:25:25.251151+00:00\", \"from\": {\"id\": 3197110, \"links\": {\"self\": \"https://api.hipchat.com/v2/user/3197110\"}, \"mention_name\": \"ciuser\", \"name\": \"Testy McTesterson\", \"version\": \"85C4829D\"}, \"id\": \"c37000ad-7e0e-430a-9763-448ff8c4d4f5\", \"mentions\": [], \"message\": \"The thorn command has been deprecated and will be removed in a future release\", \"type\": \"message\"}], \"links\": {\"self\": \"https://api.hipchat.com/v2/room/2223837/history/latest\"}, \"maxResults\": 2, \"startIndex\": 0}",
       "headers": {
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Expose-Headers": "Date, ETag, Link, X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset, X-Backoff",
         "Content-Type": "application/json",
-        "Date": "Mon, 18 Apr 2016 21:29:04 GMT",
+        "Date": "Thu, 26 May 2016 20:25:30 GMT",
         "Server": "nginx",
         "Strict-Transport-Security": "max-age=31536000",
         "X-Content-Type-Options": "nosniff",
         "X-Ratelimit-Limit": "100",
-        "X-Ratelimit-Remaining": "80",
-        "X-Ratelimit-Reset": "1461015000",
+        "X-Ratelimit-Remaining": "94",
+        "X-Ratelimit-Reset": "1464294624",
         "X-XSS-Protection": "1; mode=block",
-        "Content-Length": "973",
+        "Content-Length": "1032",
         "Connection": "keep-alive"
       },
       "status_code": 200,

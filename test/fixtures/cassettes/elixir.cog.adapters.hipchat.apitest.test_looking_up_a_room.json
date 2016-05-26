@@ -18,13 +18,13 @@
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Expose-Headers": "Date, ETag, Link, X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset, X-Backoff",
         "Content-Type": "application/json",
-        "Date": "Mon, 18 Apr 2016 21:31:16 GMT",
+        "Date": "Thu, 26 May 2016 20:19:34 GMT",
         "Server": "nginx",
         "Strict-Transport-Security": "max-age=31536000",
         "X-Content-Type-Options": "nosniff",
         "X-Ratelimit-Limit": "100",
         "X-Ratelimit-Remaining": "95",
-        "X-Ratelimit-Reset": "1461015335",
+        "X-Ratelimit-Reset": "1464294274",
         "X-XSS-Protection": "1; mode=block",
         "Content-Length": "1604",
         "Connection": "keep-alive"
@@ -47,19 +47,19 @@
       "url": "https://api.hipchat.com/v2/room/ci_bot_testing"
     },
     "response": {
-      "body": "{\"avatar_url\": null, \"created\": \"2015-12-03T15:56:20+00:00\", \"delegate_admin_visibility\": null, \"guest_access_url\": null, \"id\": 2223837, \"is_archived\": false, \"is_guest_accessible\": false, \"last_active\": \"2016-04-18T21:30:35+00:00\", \"links\": {\"participants\": \"https://api.hipchat.com/v2/room/2223837/participant\", \"self\": \"https://api.hipchat.com/v2/room/2223837\", \"webhooks\": \"https://api.hipchat.com/v2/room/2223837/webhook\"}, \"name\": \"ci_bot_testing\", \"owner\": {\"id\": 3152608, \"links\": {\"self\": \"https://api.hipchat.com/v2/user/3152608\"}, \"mention_name\": \"vanstee\", \"name\": \"Patrick Van Stee\", \"version\": \"WYXXCU3K\"}, \"participants\": [], \"privacy\": \"public\", \"statistics\": {\"links\": {\"self\": \"https://api.hipchat.com/v2/room/2223837/statistics\"}}, \"topic\": \"\", \"version\": \"GQNWMY4Y\", \"xmpp_jid\": \"479543_ci_bot_testing@conf.hipchat.com\"}",
+      "body": "{\"avatar_url\": null, \"created\": \"2015-12-03T15:56:20+00:00\", \"delegate_admin_visibility\": null, \"guest_access_url\": null, \"id\": 2223837, \"is_archived\": false, \"is_guest_accessible\": false, \"last_active\": \"2016-05-26T20:19:34+00:00\", \"links\": {\"participants\": \"https://api.hipchat.com/v2/room/2223837/participant\", \"self\": \"https://api.hipchat.com/v2/room/2223837\", \"webhooks\": \"https://api.hipchat.com/v2/room/2223837/webhook\"}, \"name\": \"ci_bot_testing\", \"owner\": {\"id\": 3152608, \"links\": {\"self\": \"https://api.hipchat.com/v2/user/3152608\"}, \"mention_name\": \"vanstee\", \"name\": \"Patrick Van Stee\", \"version\": \"WYXXCU3K\"}, \"participants\": [], \"privacy\": \"public\", \"statistics\": {\"links\": {\"self\": \"https://api.hipchat.com/v2/room/2223837/statistics\"}}, \"topic\": \"\", \"version\": \"GQNWMY4Y\", \"xmpp_jid\": \"479543_ci_bot_testing@conf.hipchat.com\"}",
       "headers": {
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Expose-Headers": "Date, ETag, Link, X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset, X-Backoff",
         "Content-Type": "application/json",
-        "Date": "Mon, 18 Apr 2016 21:31:17 GMT",
+        "Date": "Thu, 26 May 2016 20:19:34 GMT",
         "ETag": "W/\"GQNWMY4Y\"",
         "Server": "nginx",
         "Strict-Transport-Security": "max-age=31536000",
         "X-Content-Type-Options": "nosniff",
         "X-Ratelimit-Limit": "100",
         "X-Ratelimit-Remaining": "94",
-        "X-Ratelimit-Reset": "1461015335",
+        "X-Ratelimit-Reset": "1464294274",
         "X-XSS-Protection": "1; mode=block",
         "Content-Length": "840",
         "Connection": "keep-alive"
