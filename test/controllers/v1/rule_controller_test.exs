@@ -162,7 +162,7 @@ defmodule Cog.V1.RuleController.Test do
     permission("cog:hola")
 
     conn = api_request(requestor, :get, "/v1/rules?for-command=cog:nada")
-    assert %{"errors" => "Command \"cog:nada\" not found"} == json_response(conn, 422)
+    assert %{"errors" => "Command cog:nada not found"} == json_response(conn, 422)
 
     conn = api_request(requestor, :get, "/v1/rules?command=cog:hola")
     assert %{"errors" => "Unknown parameters %{\"command\" => \"cog:hola\"}"} == json_response(conn, 422)
