@@ -147,6 +147,11 @@ defmodule Cog.Repository.BundlesTest do
 
   end
 
+  test "installing the same version multiple times is an error" do
+    {:ok, _version} = Bundles.install(%{"name" => "testing", "version" => "1.0.0", "config_file" => %{}})
+    assert {:error, {:db_errors, [version: "The bundle version already exists."]}} = Bundles.install(%{"name" => "testing", "version" => "1.0.0", "config_file" => %{}})
+  end
+
   test "deleting the last version of a bundle deletes the bundle itself" do
     {:ok, version} = Bundles.install(%{"name" => "testing", "version" => "1.0.0", "config_file" => %{}})
 
