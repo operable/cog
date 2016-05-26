@@ -28,7 +28,10 @@ defmodule Cog.Models.BundleVersion do
   detail_fields [:id, :inserted_at]
 
   def changeset(model, params \\ :empty) do
-    model |> cast(params, @required_fields, [])
+    model
+    |> cast(params, @required_fields, [])
+    |> unique_constraint(:version,
+                         name: :bundle_versions_v2_bundle_id_version_index)
   end
 
   def enabled?(bundle_version) do

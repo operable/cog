@@ -78,7 +78,7 @@ defmodule Cog.V1.BundlesController do
     with {:ok, config}                 <- parse_config(params),
          {:ok, valid_config, warnings} <- validate_config(config),
          {:ok, params}                 <- merge_config(params, valid_config),
-         {:ok, bundle}                 <- persist(params) do
+         {:ok, bundle}                 <- Repository.Bundles.install(params) do
            {:ok, bundle, warnings}
     end
   end
@@ -133,16 +133,6 @@ defmodule Cog.V1.BundlesController do
     {:ok, merged_params}
   end
 
-  # Create a new record in the DB for the deploy
-  defp persist(params) do
-    try do
-      Cog.Repository.Bundles.install(params)
-    rescue
-      err in [Ecto.InvalidChangesetError] ->
-        {:error, {:db_error, err.changeset.errors}}
-    end
-  end
-
   # Helper functions
 
   defp send_failure(conn, err) do
@@ -171,7 +161,15 @@ defmodule Cog.V1.BundlesController do
     warnings = Enum.map(warnings, fn({msg, meta}) -> ~s(Warning near #{meta}: #{msg}) end)
     {:unprocessable_entity, %{errors: msg ++ errors, warnings: warnings}}
   end
-  defp error({:db_error, errors}) do
+  defp error({:db_errors, [{_, "has already been taken"}]=errors}) do
+    # A bit fragile, relying as it does on the specific message that
+    # Ecto uses by default for unique constraint violations, but
+    # allows us to fail with a more appropriate HTTP 409
+    msg = ["Could not save bundle."]
+    errors = Enum.map(errors, fn({field, message}) -> "#{Atom.to_string(field)} #{message}" end)
+    {:conflict, %{errors: msg ++ errors}}
+  end
+  defp error({:db_errors, errors}) do
     msg = ["Could not save bundle."]
     errors = Enum.map(errors, fn({_, message}) -> message end)
     {:unprocessable_entity, %{errors: msg ++ errors}}

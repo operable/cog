@@ -458,11 +458,6 @@ defmodule Cog.Repository.Bundles do
     where: bv.version == ^version
   end
 
-
-
-
-
-
   defp find_or_create_bundle(name) do
     bundle = case Repo.get_by(Bundle, name: name) do
                %Bundle{}=bundle ->
@@ -476,9 +471,6 @@ defmodule Cog.Repository.Bundles do
     Repo.preload(bundle, [:permissions, :commands])
   end
 
-
-  # TODO: This raises an exception if it can't insert... is this
-  # globally OK?
   defp new_version(bundle, params) do
     bundle
     |> Ecto.Model.build(:versions)
@@ -520,38 +512,42 @@ defmodule Cog.Repository.Bundles do
 
   defp install_bundle(bundle_params) do
     Repo.transaction(fn ->
+      try do
+        # Create a bundle record if it doesn't exist yet
+        bundle = find_or_create_bundle(bundle_params["name"])
 
-      # Create a bundle record if it doesn't exist yet
-      bundle = find_or_create_bundle(bundle_params["name"])
+        # Create a new version record
+        version = new_version(bundle, bundle_params)
 
-      # Create a new version record
-      version = new_version(bundle, bundle_params)
+        # Add permissions, after deduping
+        :ok = register_permissions_for_version(bundle, version)
 
-      # Add permissions, after deduping
-      :ok = register_permissions_for_version(bundle, version)
+        # Add commands, after deduping
+        commands = register_commands_for_version(bundle, version)
 
-      # Add commands, after deduping
-      commands = register_commands_for_version(bundle, version)
+        # Add command_versions; rules get ingested in this process as
+        # well
+        version.config_file
+        |> Map.get("commands", %{})
+        |> Enum.each(&create_command_version(version, commands, &1))
 
-      # Add command_versions; rules get ingested in this process as
-      # well
-      version.config_file
-      |> Map.get("commands", %{})
-      |> Enum.each(&create_command_version(version, commands, &1))
+        # Add templates
+        version.config_file
+        |> Map.get("templates", %{})
+        |> Enum.each(&create_template(version, &1))
 
-      # Add templates
-      version.config_file
-      |> Map.get("templates", %{})
-      |> Enum.each(&create_template(version, &1))
-
-      # Once we go to Ecto 2.0 and there's a Repo.preload/3, I'd like
-      # to add the ability to selectively force preloading on our
-      # private preload/2 function. Until then, without having to muck
-      # around too much with the internals of the model, I'm just
-      # going to grab a fresh version from the database.
-      #
-      # :(
-      Cog.Repo.get(BundleVersion, version.id)
+        # Once we go to Ecto 2.0 and there's a Repo.preload/3, I'd like
+        # to add the ability to selectively force preloading on our
+        # private preload/2 function. Until then, without having to muck
+        # around too much with the internals of the model, I'm just
+        # going to grab a fresh version from the database.
+        #
+        # :(
+        Cog.Repo.get(BundleVersion, version.id)
+      rescue
+        e in [Ecto.InvalidChangesetError] ->
+          Repo.rollback({:db_errors, e.changeset.errors})
+      end
     end)
   end
 

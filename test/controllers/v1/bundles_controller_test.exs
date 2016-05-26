@@ -142,6 +142,17 @@ defmodule Cog.V1.BundlesControllerTest do
     assert conn.status == 400
   end
 
+  test "fails to install the same version twice", %{authed: requestor} do
+    config = config(:map)
+    conn = api_request(requestor, :post, "/v1/bundles", body: %{"bundle" => %{"config" => config}})
+    assert response(conn, 201)
+
+    # Now try to do the same thing again
+    conn = api_request(requestor, :post, "/v1/bundles", body: %{"bundle" => %{"config" => config}})
+    assert ["Could not save bundle.",
+            "version has already been taken"] = json_response(conn, 409)["errors"]
+  end
+
   test "shows disabled bundle", %{authed: requestor} do
     {:ok, _version3} = Bundles.install(%{"name" => "foo", "version" => "3.0.0", "config_file" => %{}})
     {:ok, _version2} = Bundles.install(%{"name" => "foo", "version" => "2.0.0", "config_file" => %{}})
