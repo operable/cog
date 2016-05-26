@@ -27,7 +27,7 @@ defmodule Cog.V1.RuleController do
       {:error, {:command_not_found, command}} ->
         conn
         |> put_status(:unprocessable_entity)
-        |> json(%{errors: "Command #{inspect command} not found"})
+        |> json(%{errors: "Command #{command} not found"})
       {:error, {:disabled, command_name}} ->
         conn
         |> put_status(:not_found)
