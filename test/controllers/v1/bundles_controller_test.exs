@@ -267,11 +267,6 @@ defmodule Cog.V1.BundlesControllerTest do
                              "relay_groups" => [], # embedded bundle isn't in relay groups
                              "versions" => [%{"id" => _, "version" => version}]}, # only one, and it's the enabled on}e
                            %{"id" => _,
-                             "name" => "site",
-                             "enabled_version" => nil, # nothing to enable with the site bundle
-                             "relay_groups" => [], # not assigned to any groups either
-                             "versions" => [%{"id" => _, "version" => "0.0.0"}]}, # always
-                           %{"id" => _,
                              "name" => "test-1",
                              "enabled_version" => nil,
                              "relay_groups" => [],

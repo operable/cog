@@ -89,8 +89,11 @@ defmodule Cog.Repository.Bundles do
   @doc """
   Return all bundles in the system.
   """
-  def bundles,
-    do: Repo.all(Bundle) |> preload
+  def bundles do
+    Repo.all(from b in Bundle,
+             where: b.name != "site",
+             order_by: b.name) |> preload
+  end
 
   @doc """
   Retrieve the bundle identified by `id`.
@@ -236,6 +239,7 @@ defmodule Cog.Repository.Bundles do
     query = (from e in "enabled_bundle_versions",
              join: bv in "bundle_versions_v2", on: bv.bundle_id == e.bundle_id and bv.version == e.version,
              join: b in "bundles_v2", on: bv.bundle_id == b.id,
+             where: b.name != "site",
              select: {b.name, bv.version})
 
     # TODO: Need to filter out "site" bundle (if some version of this
