@@ -192,30 +192,29 @@ defmodule Cog.Support.ModelUtilities do
   Create a command with the given name
   """
   def command(name) do
-    bundle = case Repo.get_by(Bundle, name: "cog") do
-      nil ->
-        bundle_version("cog").bundle
-      bundle ->
-        bundle
-    end
+    bundle_version = bundle_version("cog")
+    bundle = bundle_version.bundle
 
-    %Command{}
+    command = %Command{}
     |> Command.changeset(%{name: name, bundle_id: bundle.id})
     |> Repo.insert!
+
+    %CommandVersion{}
+    |> CommandVersion.changeset(%{command_id: command.id, bundle_version_id: bundle_version.id})
+    |> Repo.insert!
+
+    command
   end
 
   @doc """
   Creates a bundle version
   """
   def bundle_version(name, opts \\ []) do
-
-    commands = Keyword.get(opts, :commands, %{"echo" => %{"executable" => "/bin/echo"}})
-
     bundle_template = %{
       "name" => name,
       "version" => "0.1.0",
       "cog_bundle_version" => 2,
-      "commands" => commands
+      "commands" => %{}
     }
 
     bundle_config = Enum.into(opts, bundle_template, fn

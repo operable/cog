@@ -8,6 +8,7 @@ defmodule Cog.Models.Command do
     field :name, :string
     belongs_to :bundle, Bundle
 
+    has_many :versions, CommandVersion
     has_many :rules, Rule
 
     timestamps
@@ -109,7 +110,6 @@ defmodule Cog.Models.Command do
     |> validate_format(:name, ~r/\A[A-Za-z0-9\_\-\.]+\z/)
     |> foreign_key_constraint(:bundle_id)
   end
-
 end
 
 # TODO: Is this used anywhere?
