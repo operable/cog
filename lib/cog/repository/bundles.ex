@@ -50,6 +50,21 @@ defmodule Cog.Repository.Bundles do
     end
   end
 
+
+  # Deletes the embedded bundle version so Cog can recreate it.
+  # Should only ever be called when Mix.env == :dev
+  defp __reset_embedded() do
+    # Belt and suspenders check to ensure this function is only
+    # used as intended.
+    unless Mix.env == :dev do
+      raise "Attempted to embedded bundle with wrong environment: #{Mix.env}"
+    end
+    Logger.info("Dev mode detected. Resetting embedded bundle.")
+    Repo.delete_all(from bv in BundleVersion,
+                    join: b in assoc(bv, :bundle),
+                    where: b.name == ^Cog.embedded_bundle)
+  end
+
   @doc """
   Return all known versions for `bundle`. Ensures that all required
   data is appropriately preloaded on the model.
@@ -277,7 +292,12 @@ defmodule Cog.Repository.Bundles do
           :lt ->
             upgrade_to_current.()
           :eq ->
-            postprocess_embedded_bundle_version(installed)
+            if Mix.env == :dev do
+              __reset_embedded()
+              upgrade_to_current.()
+            else
+              postprocess_embedded_bundle_version(installed)
+            end
           :gt ->
             raise "Unable to downgrade from #{installed.version} to #{version}"
         end
