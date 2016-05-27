@@ -48,7 +48,7 @@ defmodule Cog.Repository.BundlesTest do
       assert {:error, {:reserved_bundle, unquote(protected_name)}} = Bundles.install(%{"name" => unquote(protected_name)})
     end
 
-    unless protected_name == "user" do # There's no actual "user" bundle
+    unless protected_name == "user" or protected_name == "site" do # There's no actual "user" bundle and "site" bundle is special
       test "Cannot delete the #{protected_name} bundle" do
         bundle = bundle_named(unquote(protected_name))
         assert {:error, {:protected_bundle, unquote(protected_name)}} = Bundles.delete(bundle)
@@ -85,13 +85,6 @@ defmodule Cog.Repository.BundlesTest do
                  enabled_version: app_version_string,
                  relays: [bot_relay_id]}
     assert expected == Bundles.status(bundle_named("operable"))
-  end
-
-  test "status of site bundle" do
-    expected = %{name: "site",
-                 enabled: false,
-                 relays: []}
-    assert expected == Bundles.status(bundle_named("site"))
   end
 
   test "upgrading the embedded bundle activates the new version and deletes the old" do
