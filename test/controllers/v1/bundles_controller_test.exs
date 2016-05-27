@@ -56,6 +56,9 @@ defmodule Cog.V1.BundlesControllerTest do
       config = Spanner.Config.Parser.read_from_file!(config_path)
 
       assert conn.status == 201
+      [location_header] = Plug.Conn.get_resp_header(conn, "location")
+      assert "/v1/bundles/#{bundle_version.bundle.id}/versions/#{bundle_version.id}" == location_header
+
       assert bundle_version.config_file == config
       assert bundle_version.bundle.name == config["name"]
     end
