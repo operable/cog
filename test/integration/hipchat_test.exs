@@ -56,8 +56,8 @@ defmodule Integration.HipChatTest do
     |> with_permission("operable:echo")
     |> with_permission("operable:thorn")
 
-    message = send_message user, ~s(@deckard operable:echo "this is a test" | operable:thorn $body)
-    assert_response "þis is a test", after: message
+    message = send_message user, ~s(@deckard operable:seed '[{"message": "hello"}]' | operable:echo $message)
+    assert_response "hello", after: message
   end
 
   test "running commands in a pipeline without permission", %{user: user} do
