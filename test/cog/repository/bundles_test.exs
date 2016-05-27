@@ -43,12 +43,12 @@ defmodule Cog.Repository.BundlesTest do
     assert %BundleVersion{version: ^fixed_version, bundle: %Bundle{name: "site"}} = Bundles.site_bundle_version
   end
 
-  Enum.each(["operable", "user"], fn(protected_name) ->
+  Enum.each(["operable", "site", "user"], fn(protected_name) ->
     test "Cannot create a bundle named #{protected_name}" do
       assert {:error, {:reserved_bundle, unquote(protected_name)}} = Bundles.install(%{"name" => unquote(protected_name)})
     end
 
-    unless protected_name == "user" do # There's no actual "user" bundle
+    unless protected_name == "user" or protected_name == "site" do # There's no actual "user" bundle and "site" bundle is special
       test "Cannot delete the #{protected_name} bundle" do
         bundle = bundle_named(unquote(protected_name))
         assert {:error, {:protected_bundle, unquote(protected_name)}} = Bundles.delete(bundle)
