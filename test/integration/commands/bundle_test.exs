@@ -1,63 +1,34 @@
 defmodule Integration.Commands.BundleTest do
   use Cog.AdapterCase, adapter: "test"
+  alias Cog.Repository.Bundles
   alias Cog.Support.ModelUtilities
-  alias Cog.Models.Bundle
-  alias Cog.Repo
 
   setup do
     user = user("vanstee", first_name: "Patrick", last_name: "Van Stee")
     |> with_chat_handle_for("test")
     |> with_permission("operable:manage_commands")
 
-    {:ok, %{user: user}}
+    bundle_version = ModelUtilities.bundle_version("test_bundle")
+
+    {:ok, %{user: user, bundle_version: bundle_version}}
   end
 
-  @tag :skip
   test "checking bundle status", %{user: user} do
-    ModelUtilities.bundle_version("test_bundle")
-
-    response = send_message(user, "@bot: operable:bundle status test_bundle")
-
-    [bundle_status] = decode_payload(response)
-
-    assert bundle_status.bundle == "test_bundle"
-    assert bundle_status.status == "disabled"
+    response = send_message(user, "@bot: bundle status test_bundle")
+    assert_payload(response, %{name: "test_bundle", status: "disabled", version: "0.1.0"})
   end
 
-  @tag :skip
-  test "enable a bundle", %{user: user} do
-    bundle = ModelUtilities.bundle_version("test_bundle").bundle
-
-    # First enable the bundle and check the response
-    response = send_message(user, "@bot: operable:bundle enable test_bundle")
-
-    [bundle_status] = decode_payload(response)
-
-    assert bundle_status.bundle == "test_bundle"
-    assert bundle_status.status == "enabled"
-
-    # Confirm that we enabled the bundle
-    updated_bundle = Repo.get(Bundle, bundle.id)
-
-    assert updated_bundle.enabled == true
+  test "enable a bundle", %{user: user, bundle_version: bundle_version} do
+    response = send_message(user, "@bot: bundle enable test_bundle")
+    assert_payload(response, %{name: "test_bundle", status: "enabled", version: "0.1.0"})
+    assert Bundles.enabled?(bundle_version)
   end
 
-  @tag :skip
-  test "disable a bundle", %{user: user} do
-    # Create an enabled bundle
-    bundle = ModelUtilities.bundle_version("test_bundle", enabled: true).bundle
+  test "disable a bundle", %{user: user, bundle_version: bundle_version} do
+    Bundles.set_bundle_version_status(bundle_version, :enabled)
 
-    # First disable the bundle
-    response = send_message(user, "@bot: operable:bundle disable test_bundle")
-
-    [bundle_status] = decode_payload(response)
-
-    assert bundle_status.bundle == "test_bundle"
-    assert bundle_status.status == "disabled"
-
-    # Confirm that we disabled the bundle
-    updated_bundle = Repo.get(Bundle, bundle.id)
-
-    assert updated_bundle.enabled == false
+    response = send_message(user, "@bot: bundle disable test_bundle")
+    assert_payload(response, %{name: "test_bundle", status: "disabled", version: "0.1.0"})
+    refute Bundles.enabled?(bundle_version)
   end
 end
