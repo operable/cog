@@ -475,7 +475,7 @@ defmodule Cog.Repository.Bundles do
     Repo.preload(bundle, [:permissions, :commands])
   end
 
-  defp new_version(bundle, params) do
+  defp new_version!(bundle, params) do
     bundle
     |> Ecto.Model.build(:versions)
     |> BundleVersion.changeset(params)
@@ -521,7 +521,7 @@ defmodule Cog.Repository.Bundles do
         bundle = find_or_create_bundle(bundle_params["name"])
 
         # Create a new version record
-        version = new_version(bundle, bundle_params)
+        version = new_version!(bundle, bundle_params)
 
         # Add permissions, after deduping
         :ok = register_permissions_for_version(bundle, version)
@@ -533,12 +533,12 @@ defmodule Cog.Repository.Bundles do
         # well
         version.config_file
         |> Map.get("commands", %{})
-        |> Enum.each(&create_command_version(version, commands, &1))
+        |> Enum.each(&create_command_version!(version, commands, &1))
 
         # Add templates
         version.config_file
         |> Map.get("templates", %{})
-        |> Enum.each(&create_template(version, &1))
+        |> Enum.each(&create_template!(version, &1))
 
         # Once we go to Ecto 2.0 and there's a Repo.preload/3, I'd like
         # to add the ability to selectively force preloading on our
@@ -551,6 +551,8 @@ defmodule Cog.Repository.Bundles do
       rescue
         e in [Ecto.InvalidChangesetError] ->
           Repo.rollback({:db_errors, e.changeset.errors})
+        e in [Cog.RuleIngestionError] ->
+          Repo.rollback({:rule_ingestion, e.reason})
       end
     end)
   end
@@ -558,7 +560,7 @@ defmodule Cog.Repository.Bundles do
   # Given the parent `bundle` and the bundle configuration schema for a
   # single command, inserts records into the database for that
   # command. This includes any command options.
-  defp create_command_version(%BundleVersion{}=bundle_version,
+  defp create_command_version!(%BundleVersion{}=bundle_version,
                               all_commands,
                               {command_name, command_spec}) do
 
@@ -572,14 +574,14 @@ defmodule Cog.Repository.Bundles do
 
     command_spec
     |> Map.get("rules", [])
-    |> Enum.each(&(Rules.ingest_without_transaction(&1, bundle_version)))
+    |> Enum.each(&(Rules.ingest_without_transaction!(&1, bundle_version)))
 
     command_spec
     |> Map.get("options", [])
-    |> Enum.each(&create_option(command_version, &1))
+    |> Enum.each(&create_option!(command_version, &1))
   end
 
-  defp create_option(command_version, {option_name, params}) do
+  defp create_option!(command_version, {option_name, params}) do
     option = Map.merge(%{"name" => option_name,
                          "long_flag" => option_name},
                        params)
@@ -588,7 +590,7 @@ defmodule Cog.Repository.Bundles do
     |> Repo.insert!
   end
 
-  defp create_template(bundle_version, {name, template}) do
+  defp create_template!(bundle_version, {name, template}) do
     Enum.each(template, fn({provider, contents}) ->
       params = %{
         adapter: provider,

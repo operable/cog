@@ -1,3 +1,12 @@
+defmodule Cog.RuleIngestionError do
+  defexception [:message, :reason]
+
+  def exception(reason),
+    do: %__MODULE__{message: "Rule ingestion failed: #{inspect reason}",
+                   reason: reason}
+
+end
+
 defmodule Cog.Repository.Rules do
   alias Cog.Models.{Rule, Command, Permission, Bundle, BundleVersion, JoinTable}
   alias Cog.Queries
@@ -26,19 +35,18 @@ defmodule Cog.Repository.Rules do
     do: ingest(rule, Bundles.site_bundle_version)
   def ingest(rule, bundle_version) do
     Repo.transaction(fn ->
-      case do_ingest(rule, bundle_version) do
-        {:ok, rule} ->
-          preload(rule)
-        {:error, error} ->
-          Repo.rollback(error)
+      try do
+        {:ok, rule} = do_ingest!(rule, bundle_version)
+        rule
+      rescue
+        e in [Cog.RuleIngestionError] ->
+          Repo.rollback(e.reason)
       end
     end)
   end
 
-  def ingest_without_transaction(rule),
-    do: ingest(rule, Bundles.site_bundle_version)
-  def ingest_without_transaction(rule, bundle_version),
-    do: do_ingest(rule, bundle_version)
+  def ingest_without_transaction!(rule, bundle_version),
+    do: do_ingest!(rule, bundle_version)
 
   def delete_or_disable(%Rule{}=rule) do
     # If the rule is from the site version (i.e., the user wrote it), delete it
@@ -131,12 +139,20 @@ defmodule Cog.Repository.Rules do
     end
   end
 
-  defp do_ingest(rule, %BundleVersion{}=bundle_version) when is_binary(rule) do
-    with {:ok, ast, permission_names} <- validate_syntax(rule),
-         {:ok, command}               <- validate_command(ast),
-         {:ok, permissions}           <- validate_permissions(permission_names),
-         :ok                          <- validate_matching_permissions(command, permissions),
-         do: create_rule(ast, command, permissions, bundle_version)
+  defp do_ingest!(rule, %BundleVersion{}=bundle_version) when is_binary(rule) do
+    result = with({:ok, ast, permission_names} <- validate_syntax(rule),
+                  {:ok, command}               <- validate_command(ast),
+                  {:ok, permissions}           <- validate_permissions(permission_names),
+                  :ok                          <- validate_matching_permissions(command, permissions)) do
+      create_rule(ast, command, permissions, bundle_version)
+    end
+
+    case result do
+      {:ok, %Rule{}=rule} ->
+        {:ok, preload(rule)}
+      {:error, reason} ->
+        raise Cog.RuleIngestionError, reason
+    end
   end
 
   defp create_rule(ast, command, permissions, bundle_version) do
