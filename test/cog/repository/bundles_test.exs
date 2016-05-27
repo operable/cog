@@ -291,6 +291,40 @@ defmodule Cog.Repository.BundlesTest do
 
   end
 
+  test "bundle installation is transactional" do
+
+    result = Cog.Repository.Bundles.install(
+      %{"name" => "testing",
+        "version" => "1.0.0",
+        "config_file" => %{"name" => "testing",
+                           "version" => "1.0.0",
+                           "permissions" => [], # missing a permission mentioned in a rule!
+                           "commands" => %{"hello" => %{"rules" => ["when command is testing:hello must have testing:foo"]}}}})
+    assert {:error, {:rule_ingestion, {:unrecognized_permission, "testing:foo"}}} == result
+    refute bundle_named("testing")
+
+    result = Cog.Repository.Bundles.install(
+      %{"name" => "testing",
+        "version" => "1.0.0",
+        "config_file" => %{"name" => "testing",
+                           "version" => "1.0.0",
+                           "permissions" => [],
+                           "commands" => %{"hello" => %{"rules" => ["This ain't valid syntax"]}}}})
+    assert {:error, {:rule_ingestion, {:invalid_rule_syntax, _}}} = result
+    refute bundle_named("testing")
+
+    result = Cog.Repository.Bundles.install(
+      %{"name" => "testing",
+        "version" => "the_ultimate",
+        "config_file" => %{"name" => "testing",
+                           "version" => "the_ultimate",
+                           "permissions" => [],
+                           "commands" => %{"hello" => %{"rules" => ["This ain't valid syntax"]}}}})
+    assert {:error, {:db_errors, [version: "is invalid"]}} = result
+    refute bundle_named("testing")
+
+  end
+
   ########################################################################
 
   defp bundle_named(name),
