@@ -1,9 +1,12 @@
 defmodule Cog.Command.CommandResolver do
-  alias Cog.Repo
-  alias Cog.Models.CommandVersion
-  alias Cog.Models.UserCommandAlias
+
+  alias Cog.Command.Pipeline.ParserMeta
   alias Cog.Models.SiteCommandAlias
+  alias Cog.Models.UserCommandAlias
   alias Cog.Queries
+  alias Cog.Repo
+  alias Cog.Repository.Bundles
+  alias Cog.Repository.Rules
 
   @doc """
   Resolver function for use in `Piper.Command.ParserOptions.resolver`.
@@ -13,8 +16,8 @@ defmodule Cog.Command.CommandResolver do
 
     fn(bundle_name, name) ->
       case lookup(bundle_name, name, user, enabled_bundles) do
-        %CommandVersion{}=c ->
-          {:command, {c.command.bundle.name, c.command.name, c}}
+        %ParserMeta{}=parser_meta ->
+          {:command, {parser_meta.bundle_name, parser_meta.command_name, parser_meta}}
         %UserCommandAlias{pipeline: pipeline} ->
           {:pipeline, pipeline}
         %SiteCommandAlias{pipeline: pipeline} ->
@@ -50,19 +53,25 @@ defmodule Cog.Command.CommandResolver do
         # No enabled version of the requested bundle was found
         :not_found
       version ->
-        case Cog.Repository.Bundles.command_for_bundle_version(command_name, bundle_name, version) do
+        case Bundles.command_for_bundle_version(command_name, bundle_name, version) do
           nil ->
             # The enabled bundle version does not contain the
             # requested command
             :not_found
           result ->
-            result
+            {:ok, rules} = Rules.rules_for_command(result.command)
+            Cog.Command.Pipeline.ParserMeta.new(result.command.bundle.name,
+                                                result.command.name,
+                                                result.bundle_version.version,
+                                                result.bundle_version.id,
+                                                result.options,
+                                                rules)
         end
     end
   end
 
   defp lookup(bare_command_name, enabled_bundles) do
-    case Cog.Repository.Bundles.bundle_names_for_command(bare_command_name) do
+    case Bundles.bundle_names_for_command(bare_command_name) do
       [] ->
         :not_found
       [bundle_name] ->

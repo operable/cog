@@ -35,7 +35,7 @@ defmodule Cog.Command.Pipeline.Planner do
     with {:ok, bound} <- Binder.bind(invocation, binding_map),
          {:ok, options, args} <- OptionInterpreter.initialize(bound),
          :allowed <- PermissionInterpreter.check(invocation.meta, options, args, permissions),
-      do: %Plan{command_version: invocation.meta,
+      do: %Plan{parser_meta: invocation.meta,
                 options: options,
                 args: args,
                 cog_env: cog_env,

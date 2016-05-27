@@ -1,6 +1,6 @@
 defmodule Cog.Command.Pipeline.Plan do
 
-  @type t :: %__MODULE__{command_version: %Cog.Models.CommandVersion{},
+  @type t :: %__MODULE__{parser_meta: %Cog.Command.Pipeline.ParserMeta{},
                          invocation_id: String.t,
                          invocation_text: String.t,
                          invocation_step: String.t,
@@ -8,7 +8,7 @@ defmodule Cog.Command.Pipeline.Plan do
                          args: [term],
                          cog_env: Map.t | [Map.t]}
   defstruct [
-    command_version: nil,
+    parser_meta: nil,
     invocation_id: nil,
     invocation_text: nil,
     invocation_step: nil,
