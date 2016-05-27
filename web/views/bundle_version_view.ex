@@ -1,12 +1,13 @@
 defmodule Cog.V1.BundleVersionView do
   use Cog.Web, :view
+  alias Cog.Repository.Bundles
 
   def render("bundle_version.json", %{bundle_version: bundle_version}) do
     %{id: bundle_version.id,
       bundle_id: bundle_version.bundle.id,
       name: bundle_version.bundle.name,
       version: to_string(bundle_version.version),
-      enabled: Cog.Models.BundleVersion.enabled?(bundle_version),
+      enabled: Bundles.enabled?(bundle_version),
       permissions: render_many(bundle_version.permissions, Cog.V1.PermissionView, "permission.json", as: :permission),
       commands: render_many(bundle_version.commands, Cog.V1.CommandVersionView, "command_version.json", as: :command_version),
       inserted_at: bundle_version.inserted_at,
