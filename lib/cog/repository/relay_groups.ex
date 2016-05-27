@@ -136,16 +136,21 @@ defmodule Cog.Repository.RelayGroups do
        {:error, {:bad_id, {Atom.t, List.t}}}
   def manage_association(%RelayGroup{}=relay_group, member_spec) do
     Repo.transaction(fn() ->
-      member_keys = Map.keys(member_spec)
+      try do
+        member_keys = Map.keys(member_spec)
 
-      members_to_add = Enum.flat_map(member_keys, &lookup_or_fail(member_spec, [&1, "add"]))
-      members_to_remove = Enum.flat_map(member_keys, &lookup_or_fail(member_spec, [&1, "remove"]))
+        members_to_add = Enum.flat_map(member_keys, &lookup_or_fail(member_spec, [&1, "add"]))
+        members_to_remove = Enum.flat_map(member_keys, &lookup_or_fail(member_spec, [&1, "remove"]))
 
-      relay_group
-      |> add(members_to_add)
-      |> remove(members_to_remove)
+        relay_group
+        |> add(members_to_add)
+        |> remove(members_to_remove)
 
-      by_id!(relay_group.id)
+        by_id!(relay_group.id)
+      rescue
+        e in Cog.ProtectedBundleError ->
+          Repo.rollback(e.reason)
+      end
     end)
   end
   def manage_association(id, member_spec) do

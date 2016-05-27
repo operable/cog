@@ -44,6 +44,10 @@ defmodule Cog.V1.RelayGroupMembershipController do
         conn
         |> put_status(:unprocessable_entity)
         |> json(%{"errors" => %{"bad_id" => %{type => ids}}})
+      {:error, {:protected_bundle, bundle_name}} ->
+        conn
+        |> put_status(:unprocessable_entity)
+        |> json(%{"errors" => %{"protected_bundle" => bundle_name}})
     end
   end
 

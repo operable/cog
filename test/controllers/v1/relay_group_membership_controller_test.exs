@@ -262,7 +262,7 @@ defmodule Cog.V1.RelayGroupMembershipControllerTest do
       conn = api_request(requestor, :post, "/v1/relay_groups/#{relay_group.id}/bundles",
                          body: %{"bundles" => %{"add" => [id]}})
 
-      assert json_response(conn, 422)
+      assert %{"protected_bundle" => unquote(bundle_name)} = json_response(conn, 422)["errors"]
     end
   end)
 
