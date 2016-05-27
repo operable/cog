@@ -2,8 +2,7 @@ defmodule Cog.Command.Pipeline.Binder.Test do
   use ExUnit.Case
 
   alias Cog.Command.Pipeline.Binder
-  alias Cog.Models.Command
-  alias Cog.Models.CommandVersion
+  alias Cog.Command.Pipeline.ParserMeta
   alias Piper.Command.Ast
 
   import Cog.ExecutorHelpers, only: [unbound_invocation: 1]
@@ -13,7 +12,7 @@ defmodule Cog.Command.Pipeline.Binder.Test do
     invocation =  unbound_invocation("ec2 --tags=foo")
     {:ok, bound} = Binder.bind(invocation, %{})
     assert %Piper.Command.Ast.Invocation{args: [%Piper.Command.Ast.Option{name: %Piper.Command.Ast.String{col: 7, line: 1, value: "tags"}, opt_type: :long, value: "foo"}],
-                                         meta: %CommandVersion{command: %Command{name: "ec2"}},
+                                         meta: %ParserMeta{command_name: "ec2"},
                                          name: %Piper.Command.Ast.Name{bundle: %Piper.Command.Ast.String{col: 1, line: 1, value: "test-bundle"},
                                                                        entity: %Piper.Command.Ast.String{col: 1, line: 1, value: "ec2"}}, redir: nil} = bound
   end
@@ -28,7 +27,7 @@ defmodule Cog.Command.Pipeline.Binder.Test do
                                           opt_type: :long,
                                           value: %Ast.Variable{col: 12, line: 1 , name: 'tag', value: "monkey"}}
                             ],
-                           meta: %CommandVersion{command: %Command{name: "ec2"}},
+                           meta: %ParserMeta{command_name: "ec2"},
                            name: %Piper.Command.Ast.Name{bundle: %Piper.Command.Ast.String{col: 1, line: 1, value: "test-bundle"},
                                                          entity: %Piper.Command.Ast.String{col: 1, line: 1, value: "ec2"}},
                            redir: nil} = bound

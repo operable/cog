@@ -3,8 +3,7 @@ defmodule Cog.ExecutorHelpers do
   require Logger
 
   alias Cog.Command.Pipeline.Binder
-  alias Cog.Models.Command
-  alias Cog.Models.CommandVersion
+  alias Cog.Command.Pipeline.ParserMeta
   alias Cog.Models.CommandOption
   alias Cog.Models.CommandOptionType
   alias Piper.Command.Parser
@@ -40,18 +39,19 @@ defmodule Cog.ExecutorHelpers do
                  _ ->
                    bundle
                end
-      {:command, {bundle, name, command_from_spec([name: name,
-                                                   bundle: bundle] ++ command_spec)}}
+      {:command, {bundle, name, parser_meta_from_spec([name: name,
+                                                       bundle: bundle] ++ command_spec)}}
     end
   end
 
-  defp command_from_spec(spec) do
-    %CommandVersion{
-      command: %Command{name: Keyword.fetch!(spec, :name),
-                        rules: Enum.map(Keyword.get(spec, :rules, []), &rule_from_text/1),
-                        bundle: %Cog.Models.Bundle{name: Keyword.fetch!(spec, :bundle)}},
-      bundle_version: %Cog.Models.BundleVersion{version: "1.0.0"},
-      options: Enum.map(Keyword.get(spec, :options, []), &option_from_spec/1)}
+  defp parser_meta_from_spec(spec) do
+    {:ok, version} = Version.parse("1.0.0")
+    ParserMeta.new(Keyword.fetch!(spec, :bundle),
+                   Keyword.fetch!(spec, :name),
+                   version,
+                   "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+                   Enum.map(Keyword.get(spec, :options, []), &option_from_spec/1),
+                   Enum.map(Keyword.get(spec, :rules, []), &rule_from_text/1))
   end
 
   defp option_from_spec(spec) do

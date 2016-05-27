@@ -1,7 +1,6 @@
 defmodule Cog.ErrorResponse do
   alias Piper.Permissions.Ast
   alias Cog.Models.Bundle
-  alias Cog.Models.CommandVersion
 
   def render({:parse_error, msg}) when is_binary(msg),
     do: "Whoops! An error occurred. " <> msg
@@ -15,14 +14,12 @@ defmodule Cog.ErrorResponse do
     do: "No rules match the supplied invocation of '#{current_invocation}'. Check your args and options, then confirm that the proper rules are in place."
   def render({:denied, {%Ast.Rule{}=rule, current_invocation}}),
     do: "Sorry, you aren't allowed to execute '#{current_invocation}' :(\n You will need the '#{rule.permission_selector.perms.value}' permission to run this command."
-  def render({:no_relays, %Bundle{name: name}}),
-    do: "Whoops! An error occurred. No Cog Relays supporting the `#{name}` bundle are currently online"
+  def render({:no_relays, bundle_name}), # TODO: Add version, too?
+    do: "Whoops! An error occurred. No Cog Relays supporting the `#{bundle_name}` bundle are currently online"
   def render({:disabled_bundle, %Bundle{name: name}}),
     do: "Whoops! An error occurred. The #{name} bundle is currently disabled"
-  def render({:timeout, %CommandVersion{}=command_version}) do
-    name = CommandVersion.full_name(command_version)
-    "The #{name} command timed out"
-  end
+  def render({:timeout, full_command_name}),
+    do: "The #{full_command_name} command timed out"
   def render({:template_rendering_error, {error, template, adapter}}),
     do: "Whoops! An error occurred. There was an error rendering the template '#{template}' for the adapter '#{adapter}': #{inspect error}"
   def render({:command_error, response}) do

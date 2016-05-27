@@ -1,16 +1,15 @@
 defmodule Cog.Command.PermissionInterpreter do
 
   alias Piper.Permissions.Parser
+  alias Cog.Command.Pipeline.ParserMeta
   alias Cog.Permissions
-  alias Cog.Models.CommandVersion
 
-  def check(%CommandVersion{}=command_version, options, args, perms) do
+  def check(%ParserMeta{}=meta, options, args, perms) do
     context = Permissions.Context.new(permissions: perms,
-                                      command: CommandVersion.full_name(command_version),
+                                      command: meta.full_command_name,
                                       options: options,
                                       args: args)
-    results = command_version.command.rules
-    |> Enum.filter(&(&1.enabled))
+    results = meta.rules
     |> Enum.map(&(evaluate(&1, context)))
     |> Enum.reject(&(&1 == :nomatch))
     |> Enum.sort(&by_score/2)

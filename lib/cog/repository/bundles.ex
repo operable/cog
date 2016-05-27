@@ -415,7 +415,7 @@ defmodule Cog.Repository.Bundles do
              # TODO: Do we need bundle on bundle_version?
              preload: [:bundle_version,
                        options: :option_type,
-                       command: [:bundle, :rules]])
+                       command: [:bundle]])
     Repo.one(query)
   end
 

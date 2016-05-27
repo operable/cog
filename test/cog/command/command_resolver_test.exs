@@ -2,7 +2,7 @@ defmodule Cog.Command.CommandResolver.Test do
   use Cog.ModelCase
 
   alias Cog.Command.CommandResolver
-  alias Cog.Models.CommandVersion
+  alias Cog.Command.Pipeline.ParserMeta
   alias Cog.Models.UserCommandAlias
   alias Cog.Models.SiteCommandAlias
   alias Cog.Repo
@@ -128,7 +128,95 @@ defmodule Cog.Command.CommandResolver.Test do
     assert result == :not_found
   end
 
+
+  test "appropriately versioned rules and site rules are returned in the parser metadata" do
+    user = user("test-user")
+    permission("site:all_the_things")
+
+    v1_rule   = "when command is testing:hello must have testing:foo"
+    v2_rule   = "when command is testing:hello must have testing:bar"
+    site_rule = "when command is testing:hello must have site:all_the_things"
+
+    # Create two versions of a bundle, with different rules for a
+    # single command
+    {:ok, version1} = Cog.Repository.Bundles.install(
+      %{"name" => "testing",
+        "version" => "1.0.0",
+        "config_file" => %{"name" => "testing",
+                           "version" => "1.0.0",
+                           "permissions" => ["testing:foo"],
+                           "commands" => %{"hello" => %{"rules" => [v1_rule]}}}})
+    {:ok, version2} = Cog.Repository.Bundles.install(
+      %{"name" => "testing",
+        "version" => "2.0.0",
+        "config_file" => %{"name" => "testing",
+                           "version" => "2.0.0",
+                           "permissions" => ["testing:bar"],
+                           "commands" => %{"hello" => %{"rules" => [v2_rule]}}}})
+
+    # Add a site rule for that same command
+    rule(site_rule)
+
+    # Enable the first version and verify that the right bundle rule
+    # AND the site rule come back
+    :ok = Cog.Repository.Bundles.set_bundle_version_status(version1, :enabled)
+
+    parser_meta = CommandResolver.lookup("testing", "hello", user, enabled_bundles)
+
+    version1_version = version1.version
+    version1_id = version1.id
+    assert %ParserMeta{bundle_name: "testing",
+                       command_name: "hello",
+                       version: ^version1_version,
+                       bundle_version_id: ^version1_id,
+                       options: [],
+                       rules: _} = parser_meta
+
+    # We got the right rules back
+    assert [site_rule, v1_rule] == rules_to_text(parser_meta.rules)
+
+    # Now, enable the OTHER version and verify that the SECOND rule comes
+    # back along with the SAME site rule
+    :ok = Cog.Repository.Bundles.set_bundle_version_status(version2, :enabled)
+
+    parser_meta = CommandResolver.lookup("testing", "hello", user, enabled_bundles)
+
+    version2_version = version2.version
+    version2_id = version2.id
+    assert %ParserMeta{bundle_name: "testing",
+                       command_name: "hello",
+                       version: ^version2_version,
+                       bundle_version_id: ^version2_id,
+                       options: [],
+                       rules: _} = parser_meta
+
+    # We get the rule from version 2, as well as our site rule
+    assert [site_rule, v2_rule] == rules_to_text(parser_meta.rules)
+
+    # Let's also just double-check that disabled rules don't show up,
+    # either; we'll "delete" the bundle rule, leaving only the site rule
+    [rule_to_delete] = Cog.Repo.preload(version2, [rules: :bundle_versions]).rules
+    Cog.Repository.Rules.delete_or_disable(rule_to_delete)
+
+    # Retrieve the rules again; we should only get the site one
+    %ParserMeta{rules: rules} = CommandResolver.lookup("testing", "hello", user, enabled_bundles)
+    assert [site_rule] == rules_to_text(rules)
+
+    # And the rule we "deleted" really is disabled
+    assert %Cog.Models.Rule{enabled: false} = Cog.Repo.get(Cog.Models.Rule, rule_to_delete.id)
+
+  end
+
   ########################################################################
+
+  # Convenience function to take a list of Rule models and turn them
+  # back into plain rule text
+  defp rules_to_text(rules) do
+    rules
+    |> Enum.map(&(Piper.Permissions.Parser.json_to_rule!(&1.parse_tree)))
+    |> Enum.map(&to_string/1)
+    |> Enum.sort
+  end
 
   defp enabled_bundles do
     Cog.Repository.Bundles.enabled_bundles
@@ -153,13 +241,9 @@ defmodule Cog.Command.CommandResolver.Test do
   end
 
   defp assert_command(bundle, name, actual) do
-    assert match?(%CommandVersion{}, actual)
-    refute match?(%Ecto.Association.NotLoaded{}, actual.command), "Command should be preloaded"
-    assert actual.command.name == name
-    assert actual.command.bundle.name == bundle
-    refute match?(%Ecto.Association.NotLoaded{}, actual.command.rules), "Rules should be preloaded"
-    refute match?(%Ecto.Association.NotLoaded{}, actual.options), "Options should be preloaded"
-    refute match?(%Ecto.Association.NotLoaded{}, actual.bundle_version), "Bundle Verison should be preloaded"
+    assert match?(%ParserMeta{}, actual)
+    assert actual.command_name == name
+    assert actual.bundle_name == bundle
   end
 
   defp assert_user_alias(user, expected_pipeline, actual) do

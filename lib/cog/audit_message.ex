@@ -17,8 +17,8 @@ defmodule Cog.AuditMessage do
   end
   def render({:denied, {_rule, current_invocation}}, request),
     do: "User #{request["sender"]["handle"]} denied access to '#{current_invocation}'"
-  def render({:no_relays, bundle}, _request),
-    do: ErrorResponse.render({:no_relays, bundle}) # Uses same user message for now
+  def render({:no_relays, bundle_name}, _request),
+    do: ErrorResponse.render({:no_relays, bundle_name}) # Uses same user message for now
   def render({:disabled_bundle, %Bundle{name: name}}, _request),
     do: "The #{name} bundle is currently disabled"
   def render({:command_error, response}, _request),

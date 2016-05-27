@@ -5,8 +5,8 @@ defmodule Cog.Command.OptionInterpreter do
 
   @truthy_values ["true", "t", "y", "yes", "on"]
 
-  def initialize(%Ast.Invocation{args: args, meta: command_model}=invocation) do
-    defs = Enum.reduce(command_model.options, %{}, &prepare_option/2)
+  def initialize(%Ast.Invocation{args: args, meta: parser_meta}=invocation) do
+    defs = Enum.reduce(parser_meta.options, %{}, &prepare_option/2)
     with({:ok, options, args} <- interpret(defs, args, [], %{}),
          :ok <- check_required_options(defs, options)) do
       options = set_defaults(invocation, options)
