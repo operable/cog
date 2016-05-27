@@ -54,7 +54,7 @@ defmodule Cog.Repository.RelayGroups do
     with :ok <- valid_uuid(id) do
       case Repo.get(RelayGroup, id) do
         %RelayGroup{} = relay_group ->
-          {:ok, Repo.preload(relay_group, [:bundles, :relays])}
+          {:ok, Repo.preload(relay_group, [[bundles: :versions], :relays])}
         nil ->
           {:error, :not_found}
       end
@@ -68,7 +68,7 @@ defmodule Cog.Repository.RelayGroups do
   def by_id!(id) do
     valid_uuid!(id)
     Repo.get!(RelayGroup, id)
-    |> Repo.preload([:bundles, :relays])
+    |> Repo.preload([[bundles: :versions], :relays])
   end
 
   @doc """
