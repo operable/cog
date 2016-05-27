@@ -62,7 +62,7 @@ defmodule Cog.V1.BundlesController do
       {:ok, bundle_version, warnings} ->
         conn
         |> put_status(:created)
-   #     |> put_resp_header("location", Cog.Router.Helpers.bundle_version_path(conn, :show, bundle_version)) # TODO: this needs to be different
+        |> put_resp_header("location", Cog.Router.Helpers.bundle_version_path(conn, :show, bundle_version.bundle.id, bundle_version.id))
         |> render(Cog.V1.BundleVersionView, "show.json", %{bundle_version: bundle_version, warnings: warnings})
       {:error, err} ->
         send_failure(conn, err)
