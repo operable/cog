@@ -96,7 +96,21 @@ defmodule Carrier.Messaging.Connection do
   """
   def publish(conn, message, kw_args) when is_map(message) do
     topic = Keyword.fetch!(kw_args, :routed_by)
-    :emqttc.publish(conn, topic, Poison.encode!(message))
+
+    encoded = Poison.encode!(message)
+    case Keyword.fetch(kw_args, :threshold) do
+      {:ok, threshold} ->
+        size = byte_size(encoded)
+        if size > threshold do
+          Logger.warn("Message potentially too long (#{size} bytes)")
+        else
+          :ok
+        end
+      :error ->
+        :ok
+    end
+
+    :emqttc.publish(conn, topic, encoded)
   end
 
   defp add_system_config(opts) do
