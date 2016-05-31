@@ -38,7 +38,7 @@ defimpl Groupable, for: Cog.Models.Bundle do
 
   def add_to(bundle, relay_group) do
     if bundle.name in [Cog.embedded_bundle, Cog.site_namespace] do
-      raise Cog.ProtectedBundleError, {:protected_bundle, bundle.name}
+      raise Cog.ProtectedBundleError, bundle.name
     else
       Cog.Models.JoinTable.associate(bundle, relay_group)
     end

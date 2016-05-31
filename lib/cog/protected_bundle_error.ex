@@ -1,8 +1,8 @@
 defmodule Cog.ProtectedBundleError do
-  defexception [:message, :reason]
+  defexception [:message, :bundle]
 
-  def exception(reason),
-    do: %__MODULE__{message: "Operation not permitted on a protected bundle: #{inspect reason}",
-                    reason: reason}
+  def exception(bundle_name),
+    do: %__MODULE__{message: "Operation not permitted on a protected bundle #{inspect bundle_name}",
+                    bundle: bundle_name}
 
 end

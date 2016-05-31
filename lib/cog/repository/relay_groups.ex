@@ -149,7 +149,7 @@ defmodule Cog.Repository.RelayGroups do
         by_id!(relay_group.id)
       rescue
         e in Cog.ProtectedBundleError ->
-          Repo.rollback(e.reason)
+          Repo.rollback({:protected_bundle, e.bundle})
       end
     end)
   end
