@@ -75,14 +75,12 @@ defmodule Cog.Commands.Permissions do
               |> Enum.map(&Enum.join(&1, ":"))
               {:list, names}
             :create ->
-              {bundle, name} = Permission.split_name(result.permission)
-              bundle = Repo.get_by(Bundle, name: bundle)
-              permission = Permission.build_new(bundle, %{name: name})
-              case Repo.insert(permission) do
-                {:ok, _} ->
+              {"site", name} = Permission.split_name(result.permission)
+              case Cog.Repository.Permissions.create_permission(name) do
+                {:ok, _permission} ->
                   {:create, result.permission}
                 {:error, changeset} ->
-                  Repo.rollback(changeset.errors)
+                  {:error, changeset}
               end
             :delete ->
               permission = Cog.Queries.Permission.from_full_name(result.permission)|> Repo.one!
