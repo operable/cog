@@ -6,6 +6,7 @@ defmodule Cog.Models.CommandVersion do
 
   schema "command_versions_v2" do
     field :documentation, :string
+    field :status, :string, virtual: true
 
     belongs_to :command, Command
     belongs_to :bundle_version, BundleVersion

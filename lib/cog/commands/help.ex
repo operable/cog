@@ -57,17 +57,19 @@ defmodule Cog.Commands.Help do
 
   def handle_message(%{args: [command]} = req, state) do
     case find_command(command) do
-      [%{documentation: documentation} = command] when is_binary(documentation) ->
-        {:reply, req.reply_to, "help-command", [command], state}
-      [%{documentation: nil} = command_version] ->
-        name = CommandVersion.full_name(command_version.command)
+      {:ok, %CommandVersion{documentation: documentation} = command_version} when is_binary(documentation) ->
+        {:reply, req.reply_to, "help-command", [command_version], state}
+      {:ok, %CommandVersion{documentation: nil} = command_version} ->
+        name = CommandVersion.full_name(command_version)
         {:error, req.reply_to, "Command #{inspect name} does not have any documentation", state}
-      [] ->
-        {:error, req.reply_to, "Command #{inspect command} does not exist", state}
-      commands when is_list(commands) ->
-        names = commands
-        |> Enum.map(&(&1.command))
-        |> Enum.map_join("\n", &CommandVersion.full_name/1)
+      {:error, {:disabled, command_version}} ->
+        name = CommandVersion.full_name(command_version)
+        bundle_name = command_version.command.bundle.name
+        {:error, req.reply_to, "Command #{inspect name} is disabled. Run \"bundle enable #{bundle_name}\" to enable it.", state}
+      {:error, {:not_found, name}} ->
+        {:error, req.reply_to, "Command #{inspect name} does not exist", state}
+      {:error, {:ambigious_name, commands}} ->
+        names = Enum.map_join(commands, "\n", &CommandVersion.full_name/1)
 
         message = """
         Multiple commands found for command #{inspect command}. Please choose one:
@@ -88,6 +90,20 @@ defmodule Cog.Commands.Help do
   defp find_commands(%{}),
     do: Commands.enabled
 
-  defp find_command(command),
-    do: Commands.enabled_by_any_name(command)
+  defp find_command(name) do
+    commands = Commands.with_status_by_any_name(name)
+    enabled  = Enum.filter(commands, &match?(%{status: "enabled"}, &1))
+    disabled = Enum.filter(commands, &match?(%{status: "disabled"}, &1))
+
+    case {commands, enabled, disabled} do
+      {[], _, _} ->
+        {:error, {:not_found, name}}
+      {_, [command], []} ->
+        {:ok, command}
+      {_, [], [command]} ->
+        {:error, {:disabled, command}}
+      {commands, _, _} ->
+        {:error, {:ambigious_name, commands}}
+    end
+  end
 end
