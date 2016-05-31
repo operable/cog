@@ -24,8 +24,15 @@ defmodule Cog.Models.Types.VersionTriple do
         # Major and minor version; e.g. "1.0" == "1.0.0"
         Version.parse(text <> ".0")
       true ->
-        # Treat it like semver
-        Version.parse(text)
+        # Treat it like semver, but only if it's just
+        # major.minor.patch... we don't handle prerelease or build
+        # metadata at the moment
+        case Version.parse(text) do
+          {:ok, %Version{pre: [], build: nil}=v} ->
+            {:ok, v}
+          _ ->
+            :error
+        end
     end
   end
   def cast(%Version{}=v),

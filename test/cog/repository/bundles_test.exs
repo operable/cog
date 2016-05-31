@@ -357,6 +357,14 @@ defmodule Cog.Repository.BundlesTest do
     assert new_version.version == version("1.0.0")
   end
 
+  test "prerelease metadata on versions are not allowed" do
+    assert {:error, {:db_errors, [version: "is invalid"]}} = Bundles.install(%{"name" => "bundle-testing",
+                                                                               "version" => "1.0.0-pre1",
+                                                                               "config_file" => %{"name" => "bundle-testing",
+                                                                                                  "version" => "1.0.0-pre1"}})
+  end
+
+
   ########################################################################
 
   defp bundle_named(name),

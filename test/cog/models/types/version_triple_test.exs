@@ -11,6 +11,18 @@ defmodule Cog.Models.Types.VersionTripleTest do
     assert_version_casts_to("1.0.0", "1.0.0")
   end
 
+  test "prerelease metadata are not allowed" do
+    assert :error = VersionTriple.cast("1.0.0-pre1")
+  end
+
+  test "build metadata are not allowed" do
+    assert :error = VersionTriple.cast("1.0.0+0123")
+  end
+
+  test "prerelease and build metadata together are not allowed" do
+    assert :error = VersionTriple.cast("1.0.0-pre1+0123")
+  end
+
   ########################################################################
 
   defp assert_version_casts_to(input, expected_string),
