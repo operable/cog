@@ -92,7 +92,6 @@ defmodule Cog.Commands.Bundle do
 
   def handle_message(%{args: ["enable", bundle_name|args]} = req, state) do
     result = with {:ok, bundle_version}  <- parse_and_find_version(bundle_name, args),
-                  {:ok, _bundle_version} <- check_for_enabled_version(bundle_name),
                   {:ok, bundle_version}  <- enable_bundle_version(bundle_version),
                   do: {:ok, bundle_version}
 
@@ -162,17 +161,6 @@ defmodule Cog.Commands.Bundle do
     end
   end
 
-  def check_for_enabled_version(bundle_name) do
-    case Bundles.enabled_version_by_name(bundle_name) do
-      {:error, {:not_found, bundle_name}} ->
-        {:error, {:not_found, bundle_name}}
-      {:error, {:disabled, bundle_version}} ->
-        {:ok, bundle_version}
-      {:ok, bundle_version} ->
-        {:error, {:already_enabled, bundle_version}}
-    end
-  end
-
   def find_enabled_bundle(bundle_name) do
     case Bundles.enabled_version_by_name(bundle_name) do
       {:error, {:not_found, bundle_name}} ->
@@ -196,8 +184,6 @@ defmodule Cog.Commands.Bundle do
     do: "Bundle #{inspect bundle_name} is protected and cannot be enabled or disabled."
   defp error_message({:invalid_version, version}),
     do: "Version #{inspect version} could not be parsed."
-  defp error_message({:already_enabled, %BundleVersion{bundle: %Bundle{name: bundle_name}, version: version}}),
-    do: "Bundle #{inspect bundle_name} version #{inspect to_string(version)} is already enabled."
   defp error_message({:already_disabled, %BundleVersion{bundle: %Bundle{name: bundle_name}}}),
     do: "Bundle #{inspect bundle_name} is already disabled."
   defp error_message(:invalid_invocation),
