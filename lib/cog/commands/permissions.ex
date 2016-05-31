@@ -75,9 +75,9 @@ defmodule Cog.Commands.Permissions do
               |> Enum.map(&Enum.join(&1, ":"))
               {:list, names}
             :create ->
-              {ns,name} = Permission.split_name(result.permission)
-              namespace = Repo.get_by(Namespace, name: ns)
-              permission = Permission.build_new(namespace, %{name: name})
+              {bundle, name} = Permission.split_name(result.permission)
+              bundle = Repo.get_by(Bundle, name: bundle)
+              permission = Permission.build_new(bundle, %{name: name})
               case Repo.insert(permission) do
                 {:ok, _} ->
                   {:create, result.permission}
