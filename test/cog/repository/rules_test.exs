@@ -119,7 +119,7 @@ defmodule Cog.Repository.RulesTest do
   test "deleting a site bundle rule actually deletes it" do
     permission("site:testing")
 
-    {:ok, version} = Cog.Repository.Bundles.install(
+    {:ok, _version} = Cog.Repository.Bundles.install(
       %{"name" => "foo",
         "version" => "1.0.0",
         "config_file" => %{

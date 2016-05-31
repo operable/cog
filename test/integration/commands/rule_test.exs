@@ -28,7 +28,7 @@ defmodule Integration.Commands.RuleTest do
 
   test "listing rules for a disabled command fails", %{user: user} do
     # Create a bundle that we won't enable
-    {:ok, version} = Cog.Repository.Bundles.install(
+    {:ok, _version} = Cog.Repository.Bundles.install(
       %{"name" => "cog",
         "version" => "1.0.0",
         "config_file" => %{
