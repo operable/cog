@@ -3,6 +3,8 @@ defmodule Cog.V1.RelayGroupMembershipControllerTest do
   use Cog.ModelCase
   use Cog.ConnCase
 
+  alias Cog.Models.Bundle
+
   @relay_create_attrs %{name: "test-relay-1", token: "foo"}
   @relay_group_create_attrs %{name: "test-relay-group-1"}
 
@@ -251,6 +253,18 @@ defmodule Cog.V1.RelayGroupMembershipControllerTest do
       |> Enum.sort
     assert bundle_ids == sorted_response
   end
+
+  Enum.each([Cog.embedded_bundle, Cog.site_namespace], fn(bundle_name)->
+    test "cannot assign protected bundle #{bundle_name} to a relay", %{authed: requestor} do
+      relay_group = relay_group("test-group")
+
+      %Bundle{id: id} = Cog.Repo.get_by!(Bundle, name: unquote(bundle_name))
+      conn = api_request(requestor, :post, "/v1/relay_groups/#{relay_group.id}/bundles",
+                         body: %{"bundles" => %{"add" => [id]}})
+
+      assert %{"protected_bundle" => unquote(bundle_name)} = json_response(conn, 422)["errors"]
+    end
+  end)
 
   test "adding bundles fails if a bundle does not exist", %{authed: requestor} do
     relay_group = relay_group("test-relay-group-3")

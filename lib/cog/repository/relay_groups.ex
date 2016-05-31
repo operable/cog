@@ -54,7 +54,7 @@ defmodule Cog.Repository.RelayGroups do
     with :ok <- valid_uuid(id) do
       case Repo.get(RelayGroup, id) do
         %RelayGroup{} = relay_group ->
-          {:ok, Repo.preload(relay_group, [:bundles, :relays])}
+          {:ok, Repo.preload(relay_group, [[bundles: :versions], :relays])}
         nil ->
           {:error, :not_found}
       end
@@ -68,7 +68,7 @@ defmodule Cog.Repository.RelayGroups do
   def by_id!(id) do
     valid_uuid!(id)
     Repo.get!(RelayGroup, id)
-    |> Repo.preload([:bundles, :relays])
+    |> Repo.preload([[bundles: :versions], :relays])
   end
 
   @doc """
@@ -136,16 +136,21 @@ defmodule Cog.Repository.RelayGroups do
        {:error, {:bad_id, {Atom.t, List.t}}}
   def manage_association(%RelayGroup{}=relay_group, member_spec) do
     Repo.transaction(fn() ->
-      member_keys = Map.keys(member_spec)
+      try do
+        member_keys = Map.keys(member_spec)
 
-      members_to_add = Enum.flat_map(member_keys, &lookup_or_fail(member_spec, [&1, "add"]))
-      members_to_remove = Enum.flat_map(member_keys, &lookup_or_fail(member_spec, [&1, "remove"]))
+        members_to_add = Enum.flat_map(member_keys, &lookup_or_fail(member_spec, [&1, "add"]))
+        members_to_remove = Enum.flat_map(member_keys, &lookup_or_fail(member_spec, [&1, "remove"]))
 
-      relay_group
-      |> add(members_to_add)
-      |> remove(members_to_remove)
+        relay_group
+        |> add(members_to_add)
+        |> remove(members_to_remove)
 
-      by_id!(relay_group.id)
+        by_id!(relay_group.id)
+      rescue
+        e in Cog.ProtectedBundleError ->
+          Repo.rollback({:protected_bundle, e.bundle})
+      end
     end)
   end
   def manage_association(id, member_spec) do
