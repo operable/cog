@@ -325,6 +325,38 @@ defmodule Cog.Repository.BundlesTest do
 
   end
 
+  test "providing only a major version works" do
+    {:ok, new_version} = Bundles.install(%{"name" => "bundle-testing",
+                                           "version" => "1",
+                                           "config_file" => %{"name" => "bundle-testing",
+                                                              "version" => "1"}})
+    assert new_version.version == version("1.0.0")
+  end
+
+  test "providing only a major and minor version works" do
+    {:ok, new_version} = Bundles.install(%{"name" => "bundle-testing",
+                                           "version" => "1.0",
+                                           "config_file" => %{"name" => "bundle-testing",
+                                                              "version" => "1.0"}})
+    assert new_version.version == version("1.0.0")
+  end
+
+  test "providing an integer major version works" do
+    {:ok, new_version} = Bundles.install(%{"name" => "bundle-testing",
+                                           "version" => 1,
+                                           "config_file" => %{"name" => "bundle-testing",
+                                                              "version" => 1}})
+    assert new_version.version == version("1.0.0")
+  end
+
+  test "providing a float for major and minor version works" do
+    {:ok, new_version} = Bundles.install(%{"name" => "bundle-testing",
+                                           "version" => 1.0,
+                                           "config_file" => %{"name" => "bundle-testing",
+                                                              "version" => 1.0}})
+    assert new_version.version == version("1.0.0")
+  end
+
   ########################################################################
 
   defp bundle_named(name),

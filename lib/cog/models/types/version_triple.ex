@@ -13,8 +13,21 @@ defmodule Cog.Models.Types.VersionTriple do
   def type,
     do: :array
 
-  def cast(text) when is_binary(text),
-    do: Version.parse(text)
+  def cast(num) when is_integer(num) or is_float(num),
+    do: cast(to_string(num))
+  def cast(text) when is_binary(text) do
+    cond do
+      Regex.match?(~r/\A\d+\z/, text) ->
+        # Just a major version; e.g. "1" == "1.0.0"
+        Version.parse(text <> ".0.0")
+      Regex.match?(~r/\A\d+\.\d+\z/, text) ->
+        # Major and minor version; e.g. "1.0" == "1.0.0"
+        Version.parse(text <> ".0")
+      true ->
+        # Treat it like semver
+        Version.parse(text)
+    end
+  end
   def cast(%Version{}=v),
     do: {:ok, v}
   def cast(_),
