@@ -222,17 +222,13 @@ defmodule Cog.Repository.Bundles do
   end
 
   def enabled_version_by_name(bundle_name) do
-    query = from bv in Queries.BundleVersions.with_bundle_name(bundle_name),
-            join: b in assoc(bv, :bundle),
-            join: e in "enabled_bundle_versions",
-              on: bv.bundle_id == e.bundle_id and bv.version == e.version,
-            where: b.name == ^bundle_name
-
-    case Repo.one(query) do
+    case with_status_by_name(bundle_name) do
       nil ->
-        nil
-      bundle ->
-        preload(bundle)
+        {:error, {:not_found, bundle_name}}
+      %BundleVersion{status: "disabled"}=bundle_version ->
+        {:error, {:disabled, bundle_version}}
+      %BundleVersion{status: "enabled"}=bundle_version ->
+        {:ok, bundle_version}
     end
   end
 
@@ -249,11 +245,11 @@ defmodule Cog.Repository.Bundles do
         nil
      %{bundle_version: bundle_version, enabled: true} ->
        bundle_version
-       |> Map.put(:status, :enabled)
+       |> Map.put(:status, "enabled")
        |> preload
      %{bundle_version: bundle_version, enabled: false} ->
        bundle_version
-       |> Map.put(:status, :disabled)
+       |> Map.put(:status, "disabled")
        |> preload
     end
   end
