@@ -78,7 +78,6 @@ defmodule Cog.Mixfile do
      {:fumanchu, github: "operable/fumanchu"},
      {:exirc, "~> 0.9.2"},
      {:exjsx, "~> 3.2", override: true},
-     {:inflex, "~> 1.5.0"},
 
      {:credo, "~> 0.3", only: [:dev, :test]},
      {:phoenix_live_reload, "~> 1.0.3", only: :dev},

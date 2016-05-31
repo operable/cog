@@ -34,7 +34,6 @@
   "httpotion": {:hex, :httpotion, "2.2.2"},
   "ibrowse": {:hex, :ibrowse, "4.2.2"},
   "idna": {:hex, :idna, "1.2.0"},
-  "inflex": {:hex, :inflex, "1.5.0"},
   "jsx": {:hex, :jsx, "2.8.0"},
   "lager": {:hex, :lager, "3.0.2"},
   "lager_logger": {:hex, :lager_logger, "1.0.2"},
