@@ -5,6 +5,7 @@ defmodule Cog.Models.BundleVersion do
   schema "bundle_versions_v2" do
     field :version, VersionTriple
     field :config_file, :map
+    field :status, :string, virtual: true
 
     belongs_to :bundle, Bundle
 
@@ -34,14 +35,19 @@ defmodule Cog.Models.BundleVersion do
                          name: :bundle_versions_v2_bundle_id_version_index)
   end
 
-  def enabled?(bundle_version) do
-    if Ecto.assoc_loaded?(bundle_version.enabled_version_registration) do
-      bundle_version.enabled_version_registration != nil
-    else
-      # Everywhere this function is called should already have this
-      # preloaded; if not, this gives us an easy way to find out
-      raise "Association not loaded: :enabled_version_registration"
-    end
-  end
+end
 
+defimpl Poison.Encoder, for: Cog.Models.BundleVersion do
+  def encode(%Cog.Models.BundleVersion{} = bundle_version, options) do
+    bundle = bundle_version.bundle
+    bundle_version = Map.from_struct(bundle_version)
+
+    map = %{}
+    |> Map.merge(Map.take(bundle, [:name]))
+    |> Map.merge(Map.take(bundle_version, [:version, :status]))
+
+    map = Map.update!(map, :version, &to_string/1)
+
+    Poison.Encoder.Map.encode(map, options)
+  end
 end

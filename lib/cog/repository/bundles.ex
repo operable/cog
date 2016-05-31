@@ -8,6 +8,7 @@ defmodule Cog.Repository.Bundles do
   alias Cog.Repo
   alias Cog.Models.{Bundle, BundleVersion, CommandVersion}
   alias Cog.Repository.Rules
+  alias Cog.Queries
 
   alias Cog.Models.Types.VersionTriple
   alias Ecto.Adapters.SQL
@@ -193,6 +194,65 @@ defmodule Cog.Repository.Bundles do
   # part of. Further refactorings might put this into a "command repository"
   def enabled_version(%Cog.Models.Command{}=command),
     do: enabled_version(command.bundle)
+
+  def highest_version_by_name(bundle_name) do
+    query = from bv in Queries.BundleVersions.with_bundle_name(bundle_name),
+            distinct: bv.bundle_id,
+            order_by: [desc: bv.version],
+            limit: 1
+
+    case Repo.one(query) do
+      nil ->
+        nil
+      bundle ->
+        preload(bundle)
+    end
+  end
+
+  def with_name_and_version(bundle_name, version) do
+    query = from bv in Queries.BundleVersions.with_bundle_name(bundle_name),
+            where: bv.version == ^version
+
+    case Repo.one(query) do
+      nil ->
+        nil
+      bundle ->
+        preload(bundle)
+    end
+  end
+
+  def enabled_version_by_name(bundle_name) do
+    case with_status_by_name(bundle_name) do
+      nil ->
+        {:error, {:not_found, bundle_name}}
+      %BundleVersion{status: "disabled"}=bundle_version ->
+        {:error, {:disabled, bundle_version}}
+      %BundleVersion{status: "enabled"}=bundle_version ->
+        {:ok, bundle_version}
+    end
+  end
+
+  def with_status_by_name(bundle_name) when is_binary(bundle_name) do
+    query = from bv in Queries.BundleVersions.with_bundle_name(bundle_name),
+            left_join: e in "enabled_bundle_versions",
+              on: bv.bundle_id == e.bundle_id and bv.version == e.version,
+            select: %{bundle_version: bv, enabled: not(is_nil(e.bundle_id))},
+            order_by: [desc: not(is_nil(e.version)), desc: bv.version],
+            limit: 1
+
+    case Repo.one(query) do
+      nil ->
+        nil
+     %{bundle_version: bundle_version, enabled: true} ->
+       bundle_version
+       |> Map.put(:status, "enabled")
+       |> preload
+     %{bundle_version: bundle_version, enabled: false} ->
+       bundle_version
+       |> Map.put(:status, "disabled")
+       |> preload
+    end
+  end
 
   def status(%Bundle{}=bundle) do
     case enabled_version(bundle) do

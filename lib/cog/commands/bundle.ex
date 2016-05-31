@@ -1,4 +1,10 @@
 defmodule Cog.Commands.Bundle do
+  use Cog.Command.GenCommand.Base,
+    bundle: Cog.embedded_bundle
+
+  alias Cog.Models.{Bundle, BundleVersion}
+  alias Cog.Repository.Bundles
+
   @moduledoc """
   Manipulate and interrogate command bundle status.
 
@@ -46,7 +52,7 @@ defmodule Cog.Commands.Bundle do
 
     enable
 
-            bundle enable <bundle_name>
+            bundle enable <bundle_name> [version]
 
       Enabling a bundle allows chat commands to be routed to it. Running
       this subcommand has no effect if a bundle is already enabled.
@@ -69,70 +75,131 @@ defmodule Cog.Commands.Bundle do
        disabled.
 
        Cannot be used on the `#{Cog.embedded_bundle}` bundle.
-
   """
-
-  use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle
-
-  alias Cog.Repo
-  alias Cog.Models.Bundle
 
   permission "manage_commands"
 
   rule "when command is #{Cog.embedded_bundle}:bundle must have #{Cog.embedded_bundle}:manage_commands"
 
-   def handle_message(req, state) do
-     case run(req.args) do
-       {:ok, response} ->
-         {:reply, req.reply_to, "bundle", response, state}
-       {:error, error} ->
-         {:error, req.reply_to, error_message(error), state}
-     end
-   end
+  def handle_message(%{args: ["status", bundle_name]} = req, state) do
+    case Bundles.with_status_by_name(bundle_name) do
+      nil ->
+        {:error, req.reply_to, error_message({:not_found, bundle_name}), state}
+      bundle ->
+        {:reply, req.reply_to, "bundle-status", bundle, state}
+    end
+  end
 
-   defp run([action, bundle_name]) when is_binary(bundle_name)
-                                    and action in ["enable", "disable"] do
-     case find_bundle(bundle_name) do
-       {:ok, bundle} ->
-         case Bundle.Status.set(bundle, action_to_status(action)) do
-           {:ok, bundle} ->
-             {:ok, Bundle.Status.current(bundle)}
-           {:error, :embedded_bundle}=error ->
-             error
-         end
-       {:error, _}=error ->
-         error
-     end
-   end
-   defp run(["status", bundle_name]) when is_binary(bundle_name) do
-     case find_bundle(bundle_name) do
-       {:ok, bundle} ->
-         {:ok, Bundle.Status.current(bundle)}
-       {:error, _}=error ->
-         error
-     end
-   end
-   defp run(_) do
-     {:error, :invalid_invocation}
-   end
+  def handle_message(%{args: ["enable", bundle_name|args]} = req, state) do
+    result = with {:ok, bundle_version}  <- parse_and_find_version(bundle_name, args),
+                  {:ok, _bundle_version} <- check_for_enabled_version(bundle_name),
+                  {:ok, bundle_version}  <- enable_bundle_version(bundle_version),
+                  do: {:ok, bundle_version}
 
-   defp action_to_status("enable"), do: :enabled
-   defp action_to_status("disable"), do: :disabled
+    case result do
+      {:ok, bundle} ->
+        {:reply, req.reply_to, "bundle-enable", Map.put(bundle, :status, :enabled), state}
+      {:error, error} ->
+        {:error, req.reply_to, error_message(error), state}
+    end
+  end
 
-   defp find_bundle(name) do
-     case Repo.get_by(Bundle, name: name) do
-       nil ->
-         {:error, {:not_found, name}}
-       %Bundle{}=bundle ->
-         {:ok, bundle}
-     end
-   end
+  def handle_message(%{args: ["disable", bundle_name]} = req, state) do
+    result = with {:ok, bundle} <- find_enabled_bundle(bundle_name),
+                  {:ok, bundle} <- disable_bundle(bundle),
+                  do: {:ok, bundle}
 
-   defp error_message(:embedded_bundle),
-     do: "The status of the embedded bundle `#{Cog.embedded_bundle}` cannot be changed!"
-   defp error_message({:not_found, name}),
-     do: "The bundle `#{name}` cannot be found!"
-   defp error_message(:invalid_invocation),
-     do: "That is not a valid invocation of the `bundle` command"
+    case result do
+      {:ok, bundle} ->
+        {:reply, req.reply_to, "bundle-disable", Map.put(bundle, :status, :disabled), state}
+      {:error, error} ->
+        {:error, req.reply_to, error_message(error), state}
+    end
+  end
 
+  def handle_message(req, state) do
+    {:error, req.reply_to, error_message(:invalid_invocation), state}
+  end
+
+  defp enable_bundle_version(%BundleVersion{}=bundle_version) do
+    case Bundles.set_bundle_version_status(bundle_version, :enabled) do
+      :ok ->
+        {:ok, bundle_version}
+      error ->
+        error
+    end
+  end
+
+  defp disable_bundle(%BundleVersion{}=bundle_version) do
+    case Bundles.set_bundle_version_status(bundle_version, :disabled) do
+      :ok ->
+        {:ok, bundle_version}
+      error ->
+        error
+    end
+  end
+
+  defp parse_and_find_version(bundle_name, []) do
+    case Bundles.highest_version_by_name(bundle_name) do
+      nil ->
+        {:error, {:not_found, bundle_name}}
+      bundle ->
+        {:ok, bundle}
+    end
+  end
+
+  defp parse_and_find_version(bundle_name, [version]) do
+    case Version.parse(version) do
+      {:ok, version} ->
+        case Bundles.with_name_and_version(bundle_name, version) do
+          nil ->
+            {:error, {:not_found, bundle_name, version}}
+          bundle ->
+            {:ok, bundle}
+        end
+      :error ->
+        {:error, {:invalid_version, version}}
+    end
+  end
+
+  def check_for_enabled_version(bundle_name) do
+    case Bundles.enabled_version_by_name(bundle_name) do
+      {:error, {:not_found, bundle_name}} ->
+        {:error, {:not_found, bundle_name}}
+      {:error, {:disabled, bundle_version}} ->
+        {:ok, bundle_version}
+      {:ok, bundle_version} ->
+        {:error, {:already_enabled, bundle_version}}
+    end
+  end
+
+  def find_enabled_bundle(bundle_name) do
+    case Bundles.enabled_version_by_name(bundle_name) do
+      {:error, {:not_found, bundle_name}} ->
+        {:error, {:not_found, bundle_name}}
+      {:error, {:disabled, bundle_version}} ->
+        {:error, {:already_disabled, bundle_version}}
+      {:ok, bundle_version} ->
+        {:ok, bundle_version}
+    end
+  end
+
+  defp error_message({:not_found, name}),
+    do: "Bundle #{inspect name} cannot be found."
+  defp error_message({:not_found, name, version}),
+    do: "Bundle #{inspect name} with version #{inspect to_string(version)} cannot be found."
+  defp error_message({:protected_bundle, unquote(Cog.embedded_bundle)}),
+    do: "Bundle #{inspect Cog.embedded_bundle} is protected and cannot be disabled."
+  defp error_message({:protected_bundle, unquote(Cog.site_namespace)}),
+    do: "Bundle #{inspect Cog.site_namespace} is protected and cannot be enabled."
+  defp error_message({:protected_bundle, bundle_name}),
+    do: "Bundle #{inspect bundle_name} is protected and cannot be enabled or disabled."
+  defp error_message({:invalid_version, version}),
+    do: "Version #{inspect version} could not be parsed."
+  defp error_message({:already_enabled, %BundleVersion{bundle: %Bundle{name: bundle_name}, version: version}}),
+    do: "Bundle #{inspect bundle_name} version #{inspect to_string(version)} is already enabled."
+  defp error_message({:already_disabled, %BundleVersion{bundle: %Bundle{name: bundle_name}}}),
+    do: "Bundle #{inspect bundle_name} is already disabled."
+  defp error_message(:invalid_invocation),
+    do: "That is not a valid invocation of the bundle command"
 end
