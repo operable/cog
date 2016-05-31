@@ -90,11 +90,6 @@ defmodule Cog.Commands.Bundle do
     end
   end
 
-  def handle_message(%{args: [action, "operable"|_]} = req, state)
-      when action in ["enable", "disable"] do
-    {:error, req.reply_to, error_message({:embedded_bundle, action}), state}
-  end
-
   def handle_message(%{args: ["enable", bundle_name|args]} = req, state) do
     result = with {:ok, bundle_version}  <- parse_and_find_version(bundle_name, args),
                   {:ok, _bundle_version} <- check_for_enabled_version(bundle_name),
@@ -193,10 +188,12 @@ defmodule Cog.Commands.Bundle do
     do: "Bundle #{inspect name} cannot be found."
   defp error_message({:not_found, name, version}),
     do: "Bundle #{inspect name} with version #{inspect to_string(version)} cannot be found."
-  defp error_message({:embedded_bundle, "enable"}),
-    do: "Bundle #{inspect Cog.embedded_bundle} is already enabled."
-  defp error_message({:embedded_bundle, "disable"}),
-    do: "Bundle #{inspect Cog.embedded_bundle} cannot be disabled because it is embedded."
+  defp error_message({:protected_bundle, unquote(Cog.embedded_bundle)}),
+    do: "Bundle #{inspect Cog.embedded_bundle} is protected and cannot be disabled."
+  defp error_message({:protected_bundle, unquote(Cog.site_namespace)}),
+    do: "Bundle #{inspect Cog.site_namespace} is protected and cannot be enabled."
+  defp error_message({:protected_bundle, bundle_name}),
+    do: "Bundle #{inspect bundle_name} is protected and cannot be enabled or disabled."
   defp error_message({:invalid_version, version}),
     do: "Version #{inspect version} could not be parsed."
   defp error_message({:already_enabled, %BundleVersion{bundle: %Bundle{name: bundle_name}, version: version}}),
