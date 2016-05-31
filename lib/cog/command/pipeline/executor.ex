@@ -403,8 +403,18 @@ defmodule Cog.Command.Pipeline.Executor do
                  room: room}
     # Remember, it might not be a *chat* adapter we're responding to
     {:ok, adapter_mod} = Cog.adapter_module(adapter)
+
     reply_topic = adapter_mod.reply_topic
-    Connection.publish(state.mq_conn, response, routed_by: reply_topic)
+
+    # Slack has a limit of 16kb (https://api.slack.com/rtm#limits),
+    # while HipChat has 10,000 characters
+    # (https://developer.atlassian.com/hipchat/guide/sending-messages). Eventually,
+    # over-long messages will need adapter-specific customization
+    # (breaking into multiple messages, using alternative formats
+    # (e.g. Slack attachments), etc.). For now, though, we can at the
+    # very least tell Carrier to emit a warning when we get a message
+    # that looks like it is potentially too big.
+    Connection.publish(state.mq_conn, response, routed_by: reply_topic, threshold: 10000)
   end
 
   ########################################################################
