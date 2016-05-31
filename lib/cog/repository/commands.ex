@@ -16,27 +16,38 @@ defmodule Cog.Repository.Commands do
     |> Enum.flat_map(&(&1.commands))
   end
 
-  def enabled_by_any_name(name) do
-    bundle_version_ids = Bundles.enabled
-    |> Enum.map(&(&1.id))
+  def with_status_by_any_name(name) do
+    query = from cv in CommandVersion,
+            join: c in assoc(cv, :command),
+            join: b in assoc(c, :bundle),
+            join: bv in assoc(cv, :bundle_version),
+            left_join: e in "enabled_bundle_versions",
+              on: bv.bundle_id == e.bundle_id and bv.version == e.version,
+            order_by: [desc: not(is_nil(e.version)), desc: bv.version],
+            distinct: b.id,
+            select: %{command_version: cv, enabled: not(is_nil(e.bundle_id))}
 
     query = case String.split(name, ":", parts: 2) do
       [bundle, command] ->
-        from cv in CommandVersion,
+        from cv in query,
         join: c in assoc(cv, :command),
         join: b in assoc(c, :bundle),
-        where: cv.bundle_version_id in ^bundle_version_ids and
-          b.name == ^bundle and
-          c.name == ^command,
-        preload: [command: :bundle]
+        where: b.name == ^bundle and c.name == ^command
       [command] ->
-        from cv in CommandVersion,
+        from cv in query,
         join: c in assoc(cv, :command),
-        where: cv.bundle_version_id in ^bundle_version_ids and
-          c.name == ^command,
-        preload: [command: :bundle]
+        where: c.name == ^command
     end
 
-    Repo.all(query)
+    Enum.map(Repo.all(query), fn
+      %{command_version: command_version, enabled: true} ->
+        command_version
+        |> Map.put(:status, "enabled")
+        |> Repo.preload(command: :bundle)
+      %{command_version: command_version, enabled: false} ->
+        command_version
+        |> Map.put(:status, "disabled")
+        |> Repo.preload(command: :bundle)
+    end)
   end
 end
