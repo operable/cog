@@ -91,11 +91,11 @@ defmodule Cog.Adapters.HipChat.API do
     result = case get(state.client, "/room/#{room_name}") do
       {:ok, room} ->
         {:ok, normalize_room(room)}
-      _error ->
+      error ->
         case get(state.client, "/room/#{String.capitalize(room_name)}") do
           {:ok, room} ->
             {:ok, normalize_room(room)}
-          error ->
+          _error ->
             error
         end
     end
