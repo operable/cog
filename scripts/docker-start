@@ -13,7 +13,7 @@ echo "Waiting for Postgres to become available..."
 wait-for-it.sh -s -t 0 -h "${host}" -p "${port}" && true
 
 echo "Apply database migrations..."
-mix ecto.migrate --no-compile --no-deps-check
+mix ecto.migrate --no-deps-check
 
 echo "Launching Cog server..."
 elixir --no-halt --name cog@127.0.0.1 -S mix phoenix.server --no-compile --no-deps-check
