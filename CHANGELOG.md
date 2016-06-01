@@ -1,5 +1,19 @@
 #  Changelog
 
+## v0.7.0
+
+### Enhancements
+
+- Command Bundle Versioning w/upgrade and downgrade support [#635](https://github.com/operable/cog/issues/635),[#636](https://github.com/operable/cog/issues/636), [#637](https://github.com/operable/cog/issues/637), [#638](https://github.com/operable/cog/issues/638), [#642](https://github.com/operable/cog/issues/642), [#644](https://github.com/operable/cog/issues/644), [#657](https://github.com/operable/cog/issues/657), [#706](https://github.com/operable/cog/issues/706)
+- Redesigned UX of 'group', 'rules', and 'help' commands [#671](https://github.com/operable/cog/issues/671), [#680](https://github.com/operable/cog/issues/680), [#672](https://github.com/operable/cog/issues/672)
+- Auto-upgrade embedded commands when running Cog in dev mode [#721](https://github.com/operable/cog/issues/721)
+- Log warning message when potentially exceeding chat provider's max message size [#739](https://github.com/operable/cog/issues/739)
+
+### Bug Fixes
+
+- Fixed incorrect YAML prelude in `my_bundle.yaml` [#718](https://github.com/operable/cog/issues/718) (reported by Tom Bortels)
+- Allow administrators to override service and trigger base URLs [#694](https://github.com/operable/cog/issues/694)
+
 ## v0.6.0
 
 ### Enhancements
