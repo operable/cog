@@ -88,12 +88,17 @@ defmodule Cog.Adapters.HipChat.API do
   end
 
   def handle_call({:lookup_room, name: room_name}, _from, state) do
-    uri = "/room/#{room_name}"
-
-    result = with {:ok, room} <- get(state.client, uri) do
-      {:ok, normalize_room(room)}
+    result = case get(state.client, "/room/#{room_name}") do
+      {:ok, room} ->
+        {:ok, normalize_room(room)}
+      error ->
+        case get(state.client, "/room/#{String.capitalize(room_name)}") do
+          {:ok, room} ->
+            {:ok, normalize_room(room)}
+          _error ->
+            error
+        end
     end
-
     {:reply, result, state}
   end
 
