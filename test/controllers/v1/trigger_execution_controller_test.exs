@@ -7,9 +7,14 @@ defmodule Cog.V1.TriggerExecutionControllerTest do
   @endpoint Cog.TriggerEndpoint
   @bad_uuid "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
 
-  setup do
+  setup context do
+    content_type = case context[:content_type] do
+      nil  -> "application/json"
+      type -> type
+    end
+
     conn = conn()
-    |> put_req_header("content-type", "application/json")
+    |> put_req_header("content-type", content_type)
     {:ok, conn: conn}
   end
 
@@ -256,17 +261,47 @@ defmodule Cog.V1.TriggerExecutionControllerTest do
              "response" => ^expected_response} = message
   end
 
-  test "requires JSON content" do
+  @tag content_type: "text/plain"
+  test "requires JSON or x-www-form-urlencoded content", %{conn: conn} do
     user("cog")
     trigger = trigger(%{name: "echo",
                   pipeline: "echo foo",
                   as_user: "cog"})
-    conn = conn()
-    |> put_req_header("content-type", "text/plain")
-    |> post("/v1/triggers/#{trigger.id}", "Hello World")
+    conn = post(conn, "/v1/triggers/#{trigger.id}", "Hello World")
 
     assert conn.halted
     assert 415 = conn.status
+  end
+
+  test "JSON payloads are mapped to cog_env variables", %{conn: conn} do
+    assert {:ok, Cog.Adapters.Test} = Cog.chat_adapter_module
+
+    user("cog")
+    trigger = trigger(%{name: "echo",
+                  pipeline: "echo $body.test_key $body.other_key",
+                  as_user: "cog"})
+
+    payload = %{test_key: "test_value", other_key: "other_value"}
+    conn = post(conn, "/v1/triggers/#{trigger.id}", Poison.encode!(payload))
+    message = json_response(conn, 200)
+
+    assert "#{payload[:test_key]} #{payload[:other_key]}" == message
+  end
+
+  @tag content_type: "application/x-www-form-urlencoded"
+  test "x-www-form-urlencoded payloads are mapped to cog_env variables", %{conn: conn} do
+    assert {:ok, Cog.Adapters.Test} = Cog.chat_adapter_module
+
+    user("cog")
+    trigger = trigger(%{name: "echo",
+                  pipeline: "echo $body.test_key $body.other_key",
+                  as_user: "cog"})
+
+    payload = %{test_key: "test_value", other_key: "other_value"}
+    conn = post(conn, "/v1/triggers/#{trigger.id}", URI.encode_query(payload))
+    message = json_response(conn, 200)
+
+    assert "#{payload[:test_key]} #{payload[:other_key]}" == message
   end
 
   test "an empty body is treated as an empty JSON map", %{conn: conn} do
