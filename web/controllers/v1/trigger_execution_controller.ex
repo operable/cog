@@ -164,6 +164,10 @@ defmodule Cog.V1.TriggerExecutionController do
     Poison.decode(body)
   end
 
+  defp parse_type(type, _body) do
+    {:error, "invalid trigger content-type: #{type}"}
+  end
+
   defp set_raw_body(conn, raw_body),
     do: assign(conn, :raw_body, raw_body)
 
