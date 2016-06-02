@@ -135,7 +135,12 @@ defmodule Cog.V1.TriggerExecutionController do
                     "" ->
                       {:ok, %{}}
                     _ ->
-                      Poison.decode(raw_body)
+                      case :proplists.get_value("content-type", conn.req_headers) do
+                        :undefined ->
+                          {:error, "missing content-type"}
+                        type ->
+                          parse_type(type, raw_body)
+                      end
                   end
 
     case parsed_body do
@@ -148,6 +153,19 @@ defmodule Cog.V1.TriggerExecutionController do
         |> put_status(:unsupported_media_type)
         |> halt
     end
+  end
+
+  defp parse_type("application/x-www-form-urlencoded", body) do
+    Plug.Conn.Utils.validate_utf8!(body, Plug.Parsers.BadEncodingError, "urlencoded body")
+    {:ok, Plug.Conn.Query.decode(body)}
+  end
+
+  defp parse_type("application/json", body) do
+    Poison.decode(body)
+  end
+
+  defp parse_type(type, _body) do
+    {:error, "invalid trigger content-type: #{type}"}
   end
 
   defp set_raw_body(conn, raw_body),
