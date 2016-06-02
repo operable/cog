@@ -1,4 +1,4 @@
-FROM alpine:3.3
+FROM operable/alpine:3.4
 
 # Setup Operable APK repository
 COPY config/docker/operable-56f35cdd.rsa.pub /etc/apk/keys/operable-56f35cdd.rsa.pub
@@ -15,7 +15,7 @@ ENV MIX_ENV ${MIX_ENV:-dev}
 # build stage layer.
 RUN apk update -U && \
     apk add erlang erlang-crypto erlang-dev erlang-ssh erlang-ssl erlang-mnesia erlang-syntax-tools erlang-parsetools \
-            erlang-xmerl bash git postgresql-client elixir@operable
+            erlang-xmerl bash git postgresql-client elixir
 
 # Setup operable user
 RUN adduser -h /home/operable -D operable
