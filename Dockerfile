@@ -1,4 +1,4 @@
-FROM operable/alpine:3.4
+FROM alpine:3.4
 
 # Setup Operable APK repository
 COPY config/docker/operable-56f35cdd.rsa.pub /etc/apk/keys/operable-56f35cdd.rsa.pub
