@@ -6,6 +6,7 @@ defmodule Cog.V1.BundleVersionView do
     %{id: bundle_version.id,
       bundle_id: bundle_version.bundle.id,
       name: bundle_version.bundle.name,
+      description: bundle_version.description,
       version: to_string(bundle_version.version),
       enabled: Bundles.enabled?(bundle_version),
       permissions: render_many(bundle_version.permissions, Cog.V1.PermissionView, "permission.json", as: :permission),

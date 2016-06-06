@@ -5,6 +5,7 @@ defmodule Cog.Models.BundleVersion do
   schema "bundle_versions_v2" do
     field :version, VersionTriple
     field :config_file, :map
+    field :description, :string
     field :status, :string, virtual: true
 
     belongs_to :bundle, Bundle
@@ -24,13 +25,14 @@ defmodule Cog.Models.BundleVersion do
   end
 
   @required_fields ~w(version config_file)
+  @optional_fields ~w(description)
 
   summary_fields [:id, :inserted_at]
   detail_fields [:id, :inserted_at]
 
   def changeset(model, params \\ :empty) do
     model
-    |> cast(params, @required_fields, [])
+    |> cast(params, @required_fields, @optional_fields)
     |> unique_constraint(:version,
                          name: :bundle_versions_v2_bundle_id_version_index)
   end

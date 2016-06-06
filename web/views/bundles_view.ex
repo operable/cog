@@ -39,7 +39,8 @@ defmodule Cog.V1.BundlesView do
     versions
     |> Enum.sort_by(&(&1.version), &>=/2)
     |> Enum.map(&(%{"id" => &1.id,
-                    "version" => to_string(&1.version)}))
+                    "version" => to_string(&1.version),
+                    "description" => &1.description}))
   end
 
 end
