@@ -18,7 +18,8 @@ RUN apk update -U && \
             erlang-xmerl bash git postgresql-client elixir
 
 # Setup operable user
-RUN adduser -h /home/operable -D operable
+RUN addgroup -g 1000 operable && \
+    adduser -h /home/operable -D -u 1000 -G operable -s /bin/ash operable
 
 # Create directories and upload cog source
 RUN mkdir -p /home/operable/cog /home/operable/cogctl
