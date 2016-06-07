@@ -42,9 +42,7 @@ defmodule Cog.Router do
 
     resources "/v1/bundles", V1.BundlesController, only: [:index, :create, :show, :delete]
 
-    get "/v1/bundles/:id/versions", V1.BundlesController, :versions
-
-    resources "/v1/bundles/:bundle_id/versions/", V1.BundleVersionController, only: [:show, :delete]
+    resources "/v1/bundles/:bundle_id/versions/", V1.BundleVersionController, only: [:index, :show, :delete]
 
     get  "/v1/bundles/:id/status", V1.BundleStatusController, :show
     post "/v1/bundles/:id/versions/:bundle_version_id/status", V1.BundleStatusController, :set_status

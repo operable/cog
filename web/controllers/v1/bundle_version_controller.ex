@@ -1,11 +1,23 @@
 defmodule Cog.V1.BundleVersionController do
   use Cog.Web, :controller
 
-  alias Cog.Models.BundleVersion
+  alias Cog.Models.{BundleVersion, Bundle}
   alias Cog.Repository
 
   plug Cog.Plug.Authentication
   plug Cog.Plug.Authorization, permission: "#{Cog.embedded_bundle}:manage_commands"
+
+  def index(conn, %{"bundle_id" => id}) do
+    case Repository.Bundles.bundle(id) do
+      nil ->
+        conn
+        |> put_status(:not_found)
+        |> json(%{error: "Bundle #{id} not found"})
+      %Bundle{}=bundle ->
+        versions = Repository.Bundles.versions(bundle)
+        render(conn, "index.json", %{bundle_versions: versions})
+    end
+  end
 
   def show(conn, %{"id" => id}) do
     case Repository.Bundles.version(id) do
