@@ -127,7 +127,7 @@ defmodule Cog.V1.BundlesController do
   defp merge_config(params, config) do
     merged_params = params
     |> Map.drop(["config", "config_file"])
-    |> Map.merge(Map.take(config, ["name", "version"]))
+    |> Map.merge(Map.take(config, ["name", "version", "description"]))
     |> Map.put("config_file", config)
 
     {:ok, merged_params}
