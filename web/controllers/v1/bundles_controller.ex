@@ -23,18 +23,6 @@ defmodule Cog.V1.BundlesController do
     end
   end
 
-  def versions(conn, %{"id" => id}) do
-    case Repository.Bundles.bundle(id) do
-      nil ->
-        conn
-        |> put_status(:not_found)
-        |> json(%{error: "Bundle #{id} not found"})
-      %Bundle{}=bundle ->
-        versions = Repository.Bundles.versions(bundle)
-        render(conn, Cog.V1.BundleVersionView, "index.json", %{bundle_versions: versions})
-    end
-  end
-
   def delete(conn, %{"id" => id}) do
     case Repository.Bundles.bundle(id) do
       nil ->
