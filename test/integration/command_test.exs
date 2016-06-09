@@ -89,7 +89,7 @@ defmodule Integration.CommandTest do
   test "running the st-echo command without permission", %{user: user} do
     response = send_message(user, "@bot: operable:st-echo test")
 
-    assert_error_message_contains(response, "Sorry, you aren't allowed to execute 'operable:st-echo test' :(\n You will need the 'operable:st-echo' permission to run this command.")
+    assert_error_message_contains(response, "You will need at least one of the following permissions to run this command: 'operable:st-echo'.")
   end
 
   test "running the un-enforced t-echo command without permission", %{user: user} do
@@ -113,7 +113,7 @@ defmodule Integration.CommandTest do
 
     response = send_message(user, ~s(@bot: operable:st-echo "this is a test" | operable:st-thorn $body))
 
-    assert_error_message_contains(response, "Sorry, you aren't allowed to execute 'operable:st-thorn $body' :(\n You will need the 'operable:st-thorn' permission to run this command.")
+    assert_error_message_contains(response, "You will need at least one of the following permissions to run this command: 'operable:st-thorn'.")
   end
 
   test "running unknown commands", %{user: user} do

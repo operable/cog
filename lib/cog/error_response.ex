@@ -12,8 +12,10 @@ defmodule Cog.ErrorResponse do
     do: "Whoops! An error occurred. " <> msg
   def render({:no_rule, current_invocation}),
     do: "No rules match the supplied invocation of '#{current_invocation}'. Check your args and options, then confirm that the proper rules are in place."
-  def render({:denied, {%Ast.Rule{}=rule, current_invocation}}),
-    do: "Sorry, you aren't allowed to execute '#{current_invocation}' :(\n You will need the '#{rule.permission_selector.perms.value}' permission to run this command."
+  def render({:denied, {%Ast.Rule{}=rule, current_invocation}}) do
+    perms = Enum.map(Ast.Rule.permissions_used(rule), &("'#{&1}'")) |> Enum.join(", ")
+    "Sorry, you aren't allowed to execute '#{current_invocation}' :(\n You will need at least one of the following permissions to run this command: #{perms}."
+  end
   def render({:no_relays, bundle_name}), # TODO: Add version, too?
     do: "Whoops! An error occurred. No Cog Relays supporting the `#{bundle_name}` bundle are currently online"
   def render({:disabled_bundle, %Bundle{name: name}}),

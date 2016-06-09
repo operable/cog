@@ -181,7 +181,7 @@ defmodule Cog.V1.TriggerExecutionControllerTest do
     conn = api_request(tokened_user, :post, "/v1/triggers/#{trigger.id}", body: %{}, endpoint: Cog.TriggerEndpoint)
     assert ["token " <> _] = Plug.Conn.get_req_header(conn, "authorization")
     message = json_response(conn, 500)["errors"]
-    assert message =~ "You will need the 'operable:manage_permissions' permission to run this command"
+    assert message =~ "You will need at least one of the following permissions to run this command: 'operable:manage_permissions'."
 
     # Give the requestor the required permission
     permission = permission("operable:manage_permissions")
