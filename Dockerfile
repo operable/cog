@@ -17,8 +17,15 @@ RUN apk update -U && \
     apk add erlang erlang-crypto erlang-dev erlang-ssh erlang-ssl erlang-mnesia erlang-syntax-tools erlang-parsetools \
             erlang-xmerl bash git postgresql-client elixir
 
-# Setup operable user
-RUN adduser -h /home/operable -D operable
+# Setup Operable user. UID/GID default to 60000 but can be overriden.
+ARG OPERABLE_UID
+ENV OPERABLE_UID ${OPERABLE_UID:-60000}
+
+ARG OPERABLE_GID
+ENV OPERABLE_GID ${OPERABLE_UID:-60000}
+
+RUN addgroup -g $OPERABLE_GID operable && \
+    adduser -h /home/operable -D -u $OPERABLE_UID -G operable -s /bin/ash operable
 
 # Create directories and upload cog source
 RUN mkdir -p /home/operable/cog /home/operable/cogctl
