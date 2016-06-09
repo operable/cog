@@ -10,7 +10,7 @@ ifdef BUILDKITE_BUILD_NUMBER
 TEST_DATABASE_URL := $(TEST_DATABASE_URL).$(BUILDKITE_BUILD_NUMBER)
 endif
 
-DOCKER_IMAGE      ?= operable/cog:0.5-dev
+DOCKER_IMAGE      ?= operable/cog:0.7.5
 
 ci: export DATABASE_URL = $(TEST_DATABASE_URL)
 ci: export MIX_ENV = test
