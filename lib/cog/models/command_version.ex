@@ -5,6 +5,7 @@ defmodule Cog.Models.CommandVersion do
   require Logger
 
   schema "command_versions_v2" do
+    field :description, :string
     field :documentation, :string
     field :status, :string, virtual: true
 
@@ -17,7 +18,7 @@ defmodule Cog.Models.CommandVersion do
   end
 
   @required_fields ~w(command_id bundle_version_id)
-  @optional_fields ~w(documentation)
+  @optional_fields ~w(description documentation)
 
   summary_fields [:documentation]
   detail_fields [:documentation]

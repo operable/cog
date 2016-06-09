@@ -5,6 +5,7 @@ defmodule Cog.V1.CommandVersionView do
     %{id: command_version.id,
       bundle: command_version.command.bundle.name,
       name: command_version.command.name,
+      description: command_version.description,
       documentation: command_version.documentation}
   end
 
