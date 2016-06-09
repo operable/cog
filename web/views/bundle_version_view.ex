@@ -11,6 +11,7 @@ defmodule Cog.V1.BundleVersionView do
       enabled: Bundles.enabled?(bundle_version),
       permissions: render_many(bundle_version.permissions, Cog.V1.PermissionView, "permission.json", as: :permission),
       commands: render_many(bundle_version.commands, Cog.V1.CommandVersionView, "command_version.json", as: :command_version),
+      config_file: bundle_version.config_file,
       inserted_at: bundle_version.inserted_at,
       updated_at: bundle_version.updated_at}
   end
