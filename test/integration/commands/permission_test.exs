@@ -17,7 +17,7 @@ defmodule Integration.Commands.PermissionTest do
 
   test "granting a permission to a role", %{user: user} do
     response = send_message(user, "@bot: operable:st-echo test")
-    assert_error_message_contains(response, "Sorry, you aren't allowed to execute 'operable:st-echo test' :(\n You will need the 'operable:st-echo' permission to run this command.")
+    assert_error_message_contains(response, "Sorry, you aren't allowed to execute 'operable:st-echo test' :(\n You will need at least one of the following permissions to run this command: 'operable:st-echo'.")
 
     response = send_message(user, "@bot: operable:permissions --grant --role=admin --permission=operable:st-echo")
     assert_payload(response, %{body: ["Granted permission `operable:st-echo` to role `admin`"]})
@@ -37,6 +37,6 @@ defmodule Integration.Commands.PermissionTest do
     assert_payload(response, %{body: ["Revoked permission `operable:st-echo` from role `admin`"]})
 
     response = send_message(user, "@bot: operable:st-echo test")
-    assert_error_message_contains(response, "Sorry, you aren't allowed to execute 'operable:st-echo test' :(\n You will need the 'operable:st-echo' permission to run this command.")
+    assert_error_message_contains(response, "Sorry, you aren't allowed to execute 'operable:st-echo test' :(\n You will need at least one of the following permissions to run this command: 'operable:st-echo'.")
   end
 end
