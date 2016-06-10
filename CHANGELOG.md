@@ -1,5 +1,32 @@
 #  Changelog
 
+## v0.7.5
+
+### Enhancements
+
+- First release of [cog-rb](https://github.com/operable/cog-rb): Ruby Cog command development library
+- First release of [pycog3](https://github.com/operable/pycog3): Python3 Cog command development library
+
+### Command bundles
+
+- `circle` _NEW_
+  - Repo: [cogcmd/circle](https://github.com/cogcmd/circle)
+- `format` _NEW_
+  - Repo: [cogcmd/format](https://github.com/cogcmd/format)
+  - Docker image: [cogcmd/format](https://hub.docker.com/r/cogcmd/format/)
+- `statuspage` _NEW_
+  - Repo: [cogcmd/statuspage](https://github.com/cogcmd/statuspage)
+  - Docker image: [cogcmd/statuspage](https://hub.docker.com/r/cogcmd/statuspage/)
+- `twitter` bundle _NEW_
+  - Repo: [cogcmd/twitter](https://github.com/cogcmd/twitter)
+  - Docker image: [cogcmd/twitter](https://hub.docker.com/r/cogcmd/twitter/)
+
+### Bug Fixes
+
+- Command pipeline executor crashes when failing to authorized against
+  a rule mentioning multiple permissions [#758](https://github.com/operable/cog/issues/758)
+- go-relay doesn't respect documented calling convention [#765](https://github.com/operable/cog/issues/765)
+
 ## v0.7.0
 
 ### Enhancements
