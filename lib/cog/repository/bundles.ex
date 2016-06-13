@@ -549,7 +549,7 @@ defmodule Cog.Repository.Bundles do
   @bundle_version_preloads [:bundle,
                             :enabled_version_registration,
                             permissions: [:bundle],
-                            commands: [command: :bundle]]
+                            commands: [command: [:bundle, :rules]]]
   @enabled_version_preloads [enabled_version: [:bundle,
                                                :enabled_version_registration,
                                                permissions: [:bundle],
