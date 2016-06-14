@@ -85,6 +85,48 @@ defmodule Cog.V1.RuleController.Test do
     refute_rule_is_persisted(rule_text)
   end
 
+  # Update
+  ########################################################################
+
+  test "updating an existing rule", %{authed: requestor} do
+    command = command("s3")
+    bundle = command.bundle |> Repo.preload(:versions)
+    bundle_version = List.first(bundle.versions) |> Repo.preload(:bundle)
+
+    permission("cog:delete")
+    permission("cog:admin")
+    rule_text = "when command is cog:s3 with option[op] == 'delete' must have cog:delete"
+    rule = rule(rule_text, bundle_version)
+
+    assert_rule_is_persisted(rule.id, rule_text)
+
+    conn = api_request(requestor, :patch, "/v1/bundle_versions/#{bundle_version.id}/rules/#{rule.id}",
+                       body: %{"rule" => "when command is cog:s3 with option[op] == 'delete' must have cog:admin"})
+
+    assert conn.status == 200
+
+    assert_rule_is_disabled "when command is cog:s3 with option[op] == 'delete' must have cog:delete"
+    assert_rule_is_enabled  "when command is cog:s3 with option[op] == 'delete' must have cog:admin"
+  end
+
+  test "updating an existing rule in the site bundle", %{authed: requestor} do
+    command("s3")
+    permission("cog:delete")
+    permission("cog:admin")
+    rule_text = "when command is cog:s3 with option[op] == 'delete' must have cog:delete"
+    rule = rule(rule_text)
+
+    assert_rule_is_persisted(rule.id, rule_text)
+
+    conn = api_request(requestor, :patch, "/v1/rules/#{rule.id}",
+                       body: %{"rule" => "when command is cog:s3 with option[op] == 'delete' must have cog:admin"})
+
+    assert conn.status == 200
+
+    refute_rule_is_persisted "when command is cog:s3 with option[op] == 'delete' must have cog:delete"
+    assert_rule_is_enabled   "when command is cog:s3 with option[op] == 'delete' must have cog:admin"
+  end
+
   # Delete
   ########################################################################
 

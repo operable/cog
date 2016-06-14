@@ -42,6 +42,20 @@ defmodule Cog.V1.RuleController do
     |> json(%{"errors" => "Unknown parameters #{inspect params}"})
   end
 
+  def update(conn, %{"bundle_version_id" => bundle_version_id, "id" => id, "rule" => rule_text}) do
+    case Rules.replace(bundle_version_id, id, rule_text) do
+      {:ok, rule} ->
+        conn
+        |> render("rule.json", rule: rule)
+      {:error, error} ->
+        conn
+        |> put_status(:unprocessable_entity)
+        |> json(%{"errors" => keyword_list_to_string_map([error])})
+    end
+  end
+  def update(conn, %{"id" => _id, "rule" => _rule_text} = params),
+    do: update(conn, Map.put_new(params, "bundle_version_id", Cog.Repository.Bundles.site_bundle_version.id))
+
   def delete(conn, %{"id" => id}) do
     case Rules.rule(id) do
       %Rule{}=rule ->

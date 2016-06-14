@@ -34,6 +34,10 @@ defmodule Cog.Router do
 
     get "/v1/rules", V1.RuleController, :show
     resources "/v1/rules", V1.RuleController, only: [:create, :delete]
+    put "/v1/rules/:id", V1.RuleController, :update
+    patch "/v1/rules/:id", V1.RuleController, :update
+    put "/v1/bundle_versions/:bundle_version_id/rules/:id", V1.RuleController, :update
+    patch "/v1/bundle_versions/:bundle_version_id/rules/:id", V1.RuleController, :update
 
     resources "/v1/bootstrap", V1.BootstrapController, only: [:index, :create]
 
