@@ -7,6 +7,7 @@ defmodule Cog.Repository.Triggers do
   alias Cog.Repo
   alias Cog.Models.Trigger
 
+  require Ecto.Query
   import Ecto.Query, only: [from: 2]
 
   @doc """
@@ -44,8 +45,14 @@ defmodule Cog.Repository.Triggers do
   def all,
     do: Repo.all(Trigger)
 
-  def by_name(name),
-    do: Repo.all(with_name(name))
+  def by_name(name) do
+    case Repo.get_by(Trigger, name: name) do
+      %Trigger{} = trigger ->
+        {:ok, trigger}
+      nil ->
+        {:error, :not_found}
+    end
+  end
 
   def delete(%Trigger{}=trigger) do
     try do
@@ -55,18 +62,18 @@ defmodule Cog.Repository.Triggers do
         {:error, :not_found}
     end
   end
+  def delete(names) when is_list(names) do
+    # TODO: use returning: true with ecto 2.0 and Repo.delete_all; the
+    # return value here anticipates this
+    triggers = Repo.all(from t in Trigger, where: t.name in ^names)
+    Enum.each(triggers, &Repo.delete/1)
+    {length(triggers), triggers}
+  end
 
   def update(%Trigger{}=trigger, attrs) do
     trigger
     |> Trigger.changeset(attrs)
     |> Repo.update
-  end
-
-  ########################################################################
-
-  defp with_name(queryable \\ Trigger, name) do
-    from t in queryable,
-    where: t.name == ^name
   end
 
 end
