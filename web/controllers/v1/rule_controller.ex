@@ -42,6 +42,16 @@ defmodule Cog.V1.RuleController do
     end
   end
 
+  def show(conn, %{"id" => id}) do
+    case Rules.rule(id) do
+      nil ->
+        send_resp(conn, 404, "")
+      rule ->
+        conn
+        |> render("rule.json", rule: rule)
+    end
+  end
+
   def update(conn, %{"bundle_version_id" => bundle_version_id, "id" => id, "rule" => rule_text}) do
     case Rules.replace(bundle_version_id, id, rule_text) do
       {:ok, rule} ->
