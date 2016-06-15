@@ -50,7 +50,7 @@ defmodule Cog.Repository.Rules do
 
   def replace(bundle_version_id, id, rule_text) do
     rule_bundle_version = RuleBundleVersion
-    |> Repo.get_by(bundle_version_id: bundle_version_id, rule_id: id)
+    |> Repo.get_by!(bundle_version_id: bundle_version_id, rule_id: id)
     |> Repo.preload([bundle_version: :bundle, rule: :bundle_versions])
 
     Repo.transaction(fn ->
