@@ -4,8 +4,9 @@ defmodule Cog.V1.RuleView do
   def render("rule.json", %{rule: rule}=resource) do
     ast = to_ast(rule)
     %{id: rule.id,
-      command: ast.command,
-      rule: to_string(ast)}
+      command_name: ast.command,
+      rule: to_string(ast),
+      enabled: rule.enabled}
     |> Map.merge(render_includes(resource, rule))
   end
 

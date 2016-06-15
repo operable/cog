@@ -1,7 +1,7 @@
 defmodule Cog.V1.RuleController do
   use Cog.Web, :controller
   alias Cog.Models.Rule
-  alias Cog.Repository.Rules
+  alias Cog.Repository.{Rules, Bundles}
   require Logger
 
   plug Cog.Plug.Authentication
@@ -27,8 +27,15 @@ defmodule Cog.V1.RuleController do
     |> json(%{"errors" => "Unknown parameters #{inspect params}"})
   end
 
-  def create(conn, %{"rule" => rule_text}) do
-    case Rules.ingest(rule_text) do
+  def create(conn, %{"rule" => rule_text} = params) do
+    bundle_version = case params["bundle_version_id"] do
+      nil ->
+        Bundles.site_bundle_version
+      bundle_version_id ->
+        Bundles.version(bundle_version_id)
+    end
+
+    case Rules.ingest(rule_text, bundle_version) do
       {:ok, rule} ->
         conn
         |> put_status(:created)

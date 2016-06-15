@@ -32,11 +32,11 @@ defmodule Cog.Router do
 
     post "/v1/token", V1.TokenController, :create
 
-    resources "/v1/rules", V1.RuleController, only: [:index, :create, :show, :delete]
-    put "/v1/rules/:id", V1.RuleController, :update
-    patch "/v1/rules/:id", V1.RuleController, :update
-    put "/v1/bundle_versions/:bundle_version_id/rules/:id", V1.RuleController, :update
-    patch "/v1/bundle_versions/:bundle_version_id/rules/:id", V1.RuleController, :update
+    resources "/v1/rules", V1.RuleController, only: [:index, :create, :show, :update, :delete]
+
+    scope "/v1/bundle_versions/:bundle_version_id" do
+      resources "/rules", V1.RuleController, only: [:create, :update, :delete]
+    end
 
     resources "/v1/bootstrap", V1.BootstrapController, only: [:index, :create]
 
