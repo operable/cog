@@ -176,16 +176,7 @@ defmodule Cog.Repository.Rules do
     case find_or_create_rule(ast, command) do
       {:ok, rule} ->
         grant_permissions(rule, permissions)
-
-        # If we have disabled a bundle rule, but then add the same
-        # rule ourselves as a site rule, we need to ensure it's
-        # enabled here.
-        rule = if Cog.Repository.Bundles.is_site_version?(bundle_version) do
-          set_rule_status(rule, :enabled)
-        else
-          rule
-        end
-
+        set_rule_status(rule, :enabled)
         add_to_bundle_version(rule, bundle_version)
         {:ok, rule}
       {:error, %Ecto.Changeset{}=changeset} ->
