@@ -7,22 +7,7 @@ defmodule Cog.V1.RuleController do
   plug Cog.Plug.Authentication
   plug Cog.Plug.Authorization, permission: "#{Cog.embedded_bundle}:manage_commands"
 
-  def create(conn, %{"rule" => rule_text}) do
-    case Rules.ingest(rule_text) do
-      {:ok, rule} ->
-        conn
-        |> put_status(:created)
-        |> render("rule.json", rule: rule)
-      {:error, error} ->
-        Logger.error("Error ingesting \"#{rule_text}\": #{inspect error}")
-
-        conn
-        |> put_status(:unprocessable_entity)
-        |> json(%{"errors" => keyword_list_to_string_map([error])})
-    end
-  end
-
-  def show(conn, %{"for-command" => command}) do
+  def index(conn, %{"for-command" => command}) do
     case Rules.rules_for_command(command) do
       {:error, {:command_not_found, command}} ->
         conn
@@ -36,10 +21,25 @@ defmodule Cog.V1.RuleController do
         render(conn, "index.json", rules: rules)
     end
   end
-  def show(conn, params) do
+  def index(conn, params) do
     conn
     |> put_status(:unprocessable_entity)
     |> json(%{"errors" => "Unknown parameters #{inspect params}"})
+  end
+
+  def create(conn, %{"rule" => rule_text}) do
+    case Rules.ingest(rule_text) do
+      {:ok, rule} ->
+        conn
+        |> put_status(:created)
+        |> render("rule.json", rule: rule)
+      {:error, error} ->
+        Logger.error("Error ingesting \"#{rule_text}\": #{inspect error}")
+
+        conn
+        |> put_status(:unprocessable_entity)
+        |> json(%{"errors" => keyword_list_to_string_map([error])})
+    end
   end
 
   def update(conn, %{"bundle_version_id" => bundle_version_id, "id" => id, "rule" => rule_text}) do
