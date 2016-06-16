@@ -107,6 +107,15 @@ defmodule Cog.Repository.Bundles do
     end
   end
 
+  def bundle_by_name(name) do
+    case Repo.get_by(Bundle, name: name) do
+      nil ->
+        nil
+      bundle ->
+        preload(bundle)
+    end
+  end
+
   @doc """
   Delete a bundle version, or an entire bundle (i.e., all versions for
   that bundle). You can only delete versions that are not currently
