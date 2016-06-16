@@ -8,7 +8,7 @@ defmodule Cog.RuleIngestionError do
 end
 
 defmodule Cog.Repository.Rules do
-  alias Cog.Models.{Rule, Command, Permission, Bundle, BundleVersion, JoinTable, RuleBundleVersion}
+  alias Cog.Models.{Rule, Command, Permission, Bundle, BundleVersion, JoinTable}
   alias Cog.Queries
   alias Cog.Repo
   alias Cog.Repository.Bundles
@@ -48,15 +48,11 @@ defmodule Cog.Repository.Rules do
   def ingest_without_transaction!(rule, bundle_version),
     do: do_ingest!(rule, bundle_version)
 
-  def replace(bundle_version_id, id, rule_text) do
-    rule_bundle_version = RuleBundleVersion
-    |> Repo.get_by!(bundle_version_id: bundle_version_id, rule_id: id)
-    |> Repo.preload([bundle_version: :bundle, rule: :bundle_versions])
-
+  def replace(id, rule_text) do
     Repo.transaction(fn ->
       try do
-        delete_or_disable(rule_bundle_version.rule)
-        {:ok, rule} = ingest_without_transaction!(rule_text, rule_bundle_version.bundle_version)
+        delete_or_disable(rule(id))
+        {:ok, rule} = ingest_without_transaction!(rule_text, Bundles.site_bundle_version)
         rule
       rescue
         e in [Cog.RuleIngestionError] ->

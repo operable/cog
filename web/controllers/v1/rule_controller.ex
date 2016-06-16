@@ -1,7 +1,7 @@
 defmodule Cog.V1.RuleController do
   use Cog.Web, :controller
   alias Cog.Models.Rule
-  alias Cog.Repository.{Rules, Bundles}
+  alias Cog.Repository.Rules
   require Logger
 
   plug Cog.Plug.Authentication
@@ -27,15 +27,8 @@ defmodule Cog.V1.RuleController do
     |> json(%{"errors" => "Unknown parameters #{inspect params}"})
   end
 
-  def create(conn, %{"rule" => rule_text} = params) do
-    bundle_version = case params["bundle_version_id"] do
-      nil ->
-        Bundles.site_bundle_version
-      bundle_version_id ->
-        Bundles.version(bundle_version_id)
-    end
-
-    case Rules.ingest(rule_text, bundle_version) do
+  def create(conn, %{"rule" => rule_text}) do
+    case Rules.ingest(rule_text) do
       {:ok, rule} ->
         conn
         |> put_status(:created)
@@ -59,8 +52,8 @@ defmodule Cog.V1.RuleController do
     end
   end
 
-  def update(conn, %{"bundle_version_id" => bundle_version_id, "id" => id, "rule" => rule_text}) do
-    case Rules.replace(bundle_version_id, id, rule_text) do
+  def update(conn, %{"id" => id, "rule" => rule_text}) do
+    case Rules.replace(id, rule_text) do
       {:ok, rule} ->
         conn
         |> render("rule.json", rule: rule)
@@ -70,8 +63,6 @@ defmodule Cog.V1.RuleController do
         |> json(%{"errors" => keyword_list_to_string_map([error])})
     end
   end
-  def update(conn, %{"id" => _id, "rule" => _rule_text} = params),
-    do: update(conn, Map.put_new(params, "bundle_version_id", Cog.Repository.Bundles.site_bundle_version.id))
 
   def delete(conn, %{"id" => id}) do
     case Rules.rule(id) do
