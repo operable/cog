@@ -32,8 +32,7 @@ defmodule Cog.Router do
 
     post "/v1/token", V1.TokenController, :create
 
-    get "/v1/rules", V1.RuleController, :show
-    resources "/v1/rules", V1.RuleController, only: [:create, :delete]
+    resources "/v1/rules", V1.RuleController, only: [:index, :create, :show, :update, :delete]
 
     resources "/v1/bootstrap", V1.BootstrapController, only: [:index, :create]
 
