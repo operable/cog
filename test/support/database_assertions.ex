@@ -73,6 +73,18 @@ defmodule DatabaseAssertions do
     refute Repo.get_by(Cog.Models.Rule, parse_tree: expr)
   end
 
+  def assert_rule_is_enabled(rule_text) do
+    {:ok, expr, _} = Piper.Permissions.Parser.parse(rule_text, json: true)
+    rule = Repo.get_by(Cog.Models.Rule, parse_tree: expr)
+    assert rule.enabled
+  end
+
+  def assert_rule_is_disabled(rule_text) do
+    {:ok, expr, _} = Piper.Permissions.Parser.parse(rule_text, json: true)
+    rule = Repo.get_by(Cog.Models.Rule, parse_tree: expr)
+    refute rule.enabled
+  end
+
   def assert_role_was_granted(grantee, role) do
     loaded = Repo.preload(grantee, :roles)
     assert role in loaded.roles
