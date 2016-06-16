@@ -48,6 +48,19 @@ defmodule Cog.Repository.Rules do
   def ingest_without_transaction!(rule, bundle_version),
     do: do_ingest!(rule, bundle_version)
 
+  def replace(id, rule_text) do
+    Repo.transaction(fn ->
+      try do
+        delete_or_disable(rule(id))
+        {:ok, rule} = ingest_without_transaction!(rule_text, Bundles.site_bundle_version)
+        rule
+      rescue
+        e in [Cog.RuleIngestionError] ->
+          Repo.rollback(e.reason)
+      end
+    end)
+  end
+
   def delete_or_disable(%Rule{}=rule) do
     # If the rule is from the site version (i.e., the user wrote it), delete it
     # Otherwise it came in with a bundle, so disable it

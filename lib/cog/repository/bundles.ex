@@ -6,7 +6,7 @@ defmodule Cog.Repository.Bundles do
   require Logger
 
   alias Cog.Repo
-  alias Cog.Models.{Bundle, BundleVersion, CommandVersion}
+  alias Cog.Models.{Bundle, BundleVersion, CommandVersion, Rule}
   alias Cog.Repository.Rules
   alias Cog.Queries
 
@@ -549,7 +549,7 @@ defmodule Cog.Repository.Bundles do
   @bundle_version_preloads [:bundle,
                             :enabled_version_registration,
                             permissions: [:bundle],
-                            commands: [command: [:bundle, :rules]]]
+                            commands: [:options, [command: [:bundle, rules: (from r in Rule, where: r.enabled)]]]]
   @enabled_version_preloads [enabled_version: [:bundle,
                                                :enabled_version_registration,
                                                permissions: [:bundle],

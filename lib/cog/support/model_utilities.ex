@@ -203,6 +203,9 @@ defmodule Cog.Support.ModelUtilities do
     |> CommandVersion.changeset(%{command_id: command.id, bundle_version_id: bundle_version.id})
     |> Repo.insert!
 
+    bundle = Map.put(bundle, :bundle_versions, [bundle_version])
+    command = Map.put(command, :bundle, bundle)
+
     command
   end
 
