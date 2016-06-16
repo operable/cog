@@ -35,7 +35,7 @@ defmodule Cog.V1.RuleController.Test do
     id = body["id"]
 
     assert %{"id" => id,
-             "command" => "cog:s3",
+             "command_name" => "cog:s3",
              "rule" => rule_text} == body
 
     # TODO: we don't provide a GET for rules just yet
@@ -150,10 +150,10 @@ defmodule Cog.V1.RuleController.Test do
 
     rules = json_response(conn, 200)["rules"] |> Enum.sort_by(&Map.get(&1, "rule"))
     assert [%{"id" => _,
-              "command" => "cog:hola",
+              "command_name" => "cog:hola",
               "rule" => ^rule_text},
             %{"id" => _,
-              "command" => "cog:hola",
+              "command_name" => "cog:hola",
               "rule" => ^site_rule_text}] = rules
   end
 
