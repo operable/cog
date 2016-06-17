@@ -15,6 +15,7 @@ mix compile
 # build cogctl
 cd /home/operable/cogctl
 git clone https://github.com/operable/cogctl .
+git checkout v0.8.0
 mix deps.get
 mix deps.compile
 mix escript

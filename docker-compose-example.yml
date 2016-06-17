@@ -39,7 +39,7 @@ postgres:
     - POSTGRES_PASSWORD=cog
 
 cog:
-  image: operable/cog:0.8-dev
+  image: operable/cog:0.8
   environment:
     - DATABASE_URL=ecto://cog:cog@localhost:5432/cog
     - COG_ADAPTER=slack
@@ -63,7 +63,7 @@ cog:
   entrypoint: /home/operable/cog/scripts/docker-start
 
 relay:
-  image: operable/relay:0.8-dev
+  image: operable/relay:0.8
   privileged: true
   volumes:
     - /var/run/docker.sock:/var/run/docker.sock
