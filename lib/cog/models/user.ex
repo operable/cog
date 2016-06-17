@@ -116,8 +116,19 @@ defimpl Groupable, for: Cog.Models.User do
   def add_to(user, group),
     do: Cog.Models.JoinTable.associate(user, group)
 
-  def remove_from(user, group),
-    do: Cog.Models.JoinTable.dissociate(user, group)
+  def remove_from(user, group) do
+    try do
+      Cog.Models.JoinTable.dissociate(user, group)
+    rescue
+      error in [Postgrex.Error] ->
+        case error do
+          # Handle exception from protected_admin_group_memberships trigger
+          %Postgrex.Error{postgres: %{code: :raise_exception,
+                                      message: "cannot remove admin user from cog-admin group"}} ->
+            {:error, :cannot_remove_admin_user}
+        end
+    end
+  end
 
 end
 

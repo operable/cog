@@ -166,25 +166,27 @@ defmodule Cog.Repository.Groups do
 
   def manage_membership(%Group{}=group, %{"members" => member_spec}) do
     Repo.transaction(fn() ->
-      users_to_add     = lookup_or_fail(member_spec, ["users", "add"])
+      users_to_add    = lookup_or_fail(member_spec, ["users", "add"])
       roles_to_add    = lookup_or_fail(member_spec, ["roles", "add"])
-      users_to_remove  = lookup_or_fail(member_spec, ["users", "remove"])
+      users_to_remove = lookup_or_fail(member_spec, ["users", "remove"])
       roles_to_remove = lookup_or_fail(member_spec, ["roles", "remove"])
 
       # If we already have a model, there is no need to look it up again
       {user_models_to_add, role_models_to_add} = get_models("add", member_spec)
       {user_models_to_remove, role_models_to_remove} = get_models("remove", member_spec)
 
-      group
-      |> add(users_to_add ++ user_models_to_add)
-      |> grant(roles_to_add ++ role_models_to_add)
-      |> remove(users_to_remove ++ user_models_to_remove)
-      |> revoke(roles_to_remove ++ role_models_to_remove)
+      result = with :ok <- add(group, users_to_add ++ user_models_to_add),
+                    :ok <- grant(group, roles_to_add ++ role_models_to_add),
+                    :ok <- remove(group, users_to_remove ++ user_models_to_remove),
+                    :ok <- revoke(group, roles_to_remove ++ role_models_to_remove),
+                    do: by_id(group.id) # refetch group with updates
 
-
-      # We have to refetch the group here, otherwise the updates
-      # aren't loaded
-      by_id!(group.id)
+      case result do
+        {:ok, group} ->
+          group
+        {:error, error} ->
+          Repo.rollback(error)
+      end
     end)
   end
 
@@ -256,31 +258,55 @@ defmodule Cog.Repository.Groups do
   end
 
   # Add multiple `%User{}` or `%Group{}` members to `group`, returning
-  # `group`.
+  # `:ok` or the first error tuple encountered.
   #
   # Note that `members` can be a mix of types.
   defp add(group, members) do
-    Enum.each(members, &Groupable.add_to(&1, group))
-    group
+    Enum.reduce_while(members, :ok, fn member, :ok ->
+      case Groupable.add_to(member, group) do
+        :ok ->
+          {:cont, :ok}
+        error ->
+          {:halt, error}
+      end
+    end)
   end
 
   defp grant(group, members) do
-    Enum.each(members, &Permittable.grant_to(group, &1))
-    group
+    Enum.reduce_while(members, :ok, fn member, :ok ->
+      case Permittable.grant_to(group, member) do
+        :ok ->
+          {:cont, :ok}
+        error ->
+          {:halt, error}
+      end
+    end)
   end
 
   # Remove multiple `%User{}` or `%Group{}` members from `group`, returning
-  # `group`.
+  # `:ok` or the first error tuple encountered.
   #
   # Note that `members` can be a mix of types.
   defp remove(group, members) do
-    Enum.each(members, &Groupable.remove_from(&1, group))
-    group
+    Enum.reduce_while(members, :ok, fn member, :ok ->
+      case Groupable.remove_from(member, group) do
+        :ok ->
+          {:cont, :ok}
+        error ->
+          {:halt, error}
+      end
+    end)
   end
 
   defp revoke(group, members) do
-    Enum.each(members, &Permittable.revoke_from(group, &1))
-    group
+    Enum.reduce_while(members, :ok, fn member, :ok ->
+      case Permittable.revoke_from(group, member) do
+        :ok ->
+          {:cont, :ok}
+        error ->
+          {:halt, error}
+      end
+    end)
   end
 
   # Given a member_spec key, return the underlying type
