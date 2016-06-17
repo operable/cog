@@ -7,6 +7,7 @@ defmodule Cog.Models.RelayGroup do
 
   schema "relay_groups" do
     field :name, :string
+    field :desc, :string
 
     has_many :relay_membership, RelayGroupMembership, foreign_key: :group_id
     has_many :relays, through: [:relay_membership, :relay]
@@ -18,7 +19,7 @@ defmodule Cog.Models.RelayGroup do
   end
 
   @required_fields ~w(name)
-  @optional_fields ~w()
+  @optional_fields ~w(desc)
 
   def changeset(model, params \\ :empty) do
     model
