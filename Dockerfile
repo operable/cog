@@ -15,7 +15,8 @@ ENV MIX_ENV ${MIX_ENV:-dev}
 # build stage layer.
 RUN apk update -U && \
     apk add erlang erlang-crypto erlang-dev erlang-ssh erlang-ssl erlang-mnesia erlang-syntax-tools erlang-parsetools \
-            erlang-xmerl bash git postgresql-client elixir
+            erlang-xmerl elixir \
+            bash ca-certificates curl git openssl postgresql-client
 
 # Setup Operable user. UID/GID default to 60000 but can be overriden.
 ARG OPERABLE_UID
