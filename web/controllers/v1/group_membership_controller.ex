@@ -47,6 +47,10 @@ defmodule Cog.V1.GroupMembershipController do
         conn
         |> put_status(:unprocessable_entity)
         |> json(%{"errors" => %{"not_found" => %{key => names}}})
+      {:error, :cannot_remove_admin_user} ->
+        conn
+        |> put_status(:unprocessable_entity)
+        |> json(%{errors: "The admin user cannot be removed from the cog-admin group"})
     end
   end
 
