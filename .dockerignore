@@ -1,7 +1,14 @@
 _build
 deps
+erl_crash.dump
+*.ez
+*.swp
+*.pem
 data
 .git
 lib/cog/permissions/bp_lexer.erl
 lib/cog/permissions/bp_parser.erl
 Mnesia*
+cover
+docker-compose.yml
+.env
