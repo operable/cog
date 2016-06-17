@@ -1,5 +1,39 @@
 #  Changelog
 
+## 0.8.0
+
+### Enhancements
+
+- Added `operable:trigger` chat command [#771](https://github.com/operable/cog/issues/771)
+- `cogctl` can read `config.yaml` from stdin [#773](https://github.com/operable/cog/issues/773)
+- Incident Response workflow [#698](https://github.com/operable/cog/issues/698)
+- Added support for configurable container memory in Relay [docs](http://docs.operable.io/v0.8/docs/relay-environment-variables)
+
+### Command bundles
+
+- `pagerduty` _NEW_
+  - Repo: [cogcmd/pagerduty](https://github.com/cogcmd/pagerduty)
+- `pingdom` _NEW_
+  - Repo: [cogcmd/pingdom](https://github.com/cogcmd/pingdom)
+
+### Bug Fixes
+
+- Multi commands run slowly [#677](https://github.com/operable/cog/issues/677)
+  - Optimized Relay's Docker integration:
+    - Containers are cached and reused for the duration of a command
+      pipeline. Doing so reduces worst case Docker container creation
+      from O(N * I * R) to O(N * R) where N is the number of pipeline
+      stages, I is the number of command invocations per stage, and R
+      is the number of Relays able to run the command.
+    - Implemented a custom streaming interface on top of Docker's
+      hijacked connection API further reducing the number of Docker
+      API calls required per command invocation.
+  - Internal testing has shown these optimizations reduce execution
+    times for Docker-based commands by 50 - 70%.
+- Fix Relay's JSON handling: Don't coerce large integers into
+  scientific notation [#768](https://github.com/operable/cog/issues/768)
+- HipChat can't execute Relay-mediated commands [#770](https://github.com/operable/cog/issues/770)
+
 ## v0.7.5
 
 ### Enhancements
