@@ -7,6 +7,7 @@ defmodule Cog.V1.RelayGroupView do
   def render("relay_group.json", %{relay_group: relay_group}=params) do
     %{id: relay_group.id,
       name: relay_group.name,
+      desc: relay_group.desc,
       inserted_at: relay_group.inserted_at,
       updated_at: relay_group.updated_at}
     |> Map.merge(render_includes(params, relay_group))

@@ -41,10 +41,11 @@ defmodule Cog.V1.RelayGroupControllerTest do
   end
 
   test "shows chosen resource", %{authed: requestor} do
-    relay_group = relay_group("test-group-1")
+    relay_group = relay_group("test-group-1", "Test group description")
     conn = api_request(requestor, :get, "/v1/relay_groups/#{relay_group.id}")
     assert %{"relay_group" => %{"id" => relay_group.id,
                                 "name" => relay_group.name,
+                                "desc" => relay_group.desc,
                                 "relays" => [],
                                 "bundles" => [],
                                 "inserted_at" => "#{DateTime.to_iso8601(relay_group.inserted_at)}",
