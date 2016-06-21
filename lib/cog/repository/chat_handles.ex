@@ -44,6 +44,13 @@ defmodule Cog.Repository.ChatHandles do
     end
   end
 
+  def for_provider(provider_name) do
+    Cog.Repo.all(from ch in ChatHandle,
+                 join: p in assoc(ch, :chat_provider),
+                 where: p.name == ^provider_name,
+                 preload: [:chat_provider, :user])
+  end
+
   ########################################################################
 
   # As part of our "upsert" logic, we need to determine if the user
