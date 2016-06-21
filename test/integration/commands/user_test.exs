@@ -105,4 +105,19 @@ defmodule Integration.Commands.UserTest do
     assert_error_message_contains(response, "Not enough args. Arguments required: exactly 1")
   end
 
+  test "listing chat handles works", %{user: user} do
+    user("dummy")
+    |> with_chat_handle_for("test")
+
+    payload = user
+    |> send_message("@bot: operable:user list-handles")
+    |> decode_payload
+    |> Enum.sort_by(fn(h) -> h[:username] end)
+
+    assert [%{username: "dummy",
+              handle: "dummy"},
+            %{username: "tester",
+              handle: "tester"}] = payload
+  end
+
 end
