@@ -13,9 +13,36 @@ defmodule Integration.Commands.BundleTest do
     {:ok, %{user: user, bundle_version: bundle_version}}
   end
 
-  test "checking bundle status", %{user: user} do
-    response = send_message(user, "@bot: bundle status test_bundle")
-    assert_payload(response, %{name: "test_bundle", status: "disabled", version: "0.1.0"})
+  test "listing bundles", %{user: user} do
+    payload = user
+    |> send_message("@bot: operable:bundle list")
+    |> decode_payload
+    |> Enum.sort_by(fn(b) -> b[:name] end)
+
+    assert [%{name: "operable"},
+            %{name: "test_bundle"}] = payload
+  end
+
+  test "information about a single bundle", %{user: user} do
+    [payload] = user
+    |> send_message("@bot: operable:bundle info operable")
+    |> decode_payload
+
+    version = Application.spec(:cog, :vsn) |> IO.chardata_to_string
+
+    assert %{name: "operable",
+             enabled_version: %{version: ^version}} = payload
+  end
+
+  test "list versions for a bundle", %{user: user} do
+    payload = user
+    |> send_message("@bot: operable:bundle versions operable")
+    |> decode_payload
+
+    version = Application.spec(:cog, :vsn) |> IO.chardata_to_string
+
+    assert [%{name: "operable",
+              version: ^version}] = payload
   end
 
   test "enable a bundle", %{user: user, bundle_version: bundle_version} do
