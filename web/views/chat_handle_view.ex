@@ -3,6 +3,7 @@ defmodule Cog.V1.ChatHandleView do
 
   def render("show.json", %{chat_handle: chat_handle}) do
     %{id: chat_handle.id,
+      username: chat_handle.user.username,
       handle: chat_handle.handle,
       chat_provider: render_one(
         chat_handle.chat_provider,

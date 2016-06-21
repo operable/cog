@@ -87,8 +87,9 @@ defmodule Cog.V1.UserControllerTest do
                             "id" => chat_handle.id,
                             "handle" => chat_handle.handle,
                             "chat_provider" => %{
-                              "name" => "test"
+                              "name" => "test",
                             },
+                            "username" => "tester"
                          }],
                          "email_address" => "tester@operable.io"}} == json_response(conn, 200)
   end

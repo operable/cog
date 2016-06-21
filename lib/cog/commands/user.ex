@@ -2,7 +2,7 @@ defmodule Cog.Commands.User do
   use Cog.Command.GenCommand.Base,
     bundle: Cog.embedded_bundle
 
-  alias Cog.Commands.User.{Info, List}
+  alias Cog.Commands.User.{AttachHandle, DetachHandle, Info, List, ListHandles}
 
   require Cog.Commands.Helpers, as: Helpers
   require Logger
@@ -18,8 +18,11 @@ defmodule Cog.Commands.User do
     -h, --help  Display this usage info
 
   SUBCOMMANDS
-    info      Show detailed information on a given user
-    list      List all users (default)
+    attach-handle   Associate a chat handle with a user
+    detach-handle   Sever association between a chat handle and a user
+    info            Show detailed information on a given user
+    list            List all users (default)
+    list-handles    List all chat handles associated with users
   """
 
   permission "manage_users"
@@ -30,8 +33,11 @@ defmodule Cog.Commands.User do
     {subcommand, args} = Helpers.get_subcommand(req.args)
 
     result = case subcommand do
-               "list" -> List.list(req, args)
-               "info" -> Info.info(req, args)
+               "attach-handle" -> AttachHandle.attach(req, args)
+               "detach-handle" -> DetachHandle.detach(req, args)
+               "list"          -> List.list(req, args)
+               "list-handles"  -> ListHandles.list(req, args)
+               "info"          -> Info.info(req, args)
                nil ->
                  if Helpers.flag?(req.options, "help") do
                    show_usage
@@ -52,6 +58,8 @@ defmodule Cog.Commands.User do
 
   ########################################################################
 
+  defp error(:invalid_handle),
+    do: "Invalid chat handle"
   defp error(error),
     do: Helpers.error(error)
 
