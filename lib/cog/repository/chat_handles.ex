@@ -34,6 +34,16 @@ defmodule Cog.Repository.ChatHandles do
     end)
   end
 
+  def remove_handle(%User{id: user_id}, provider_name) do
+    case Cog.Repo.one(handle_query(user_id, provider_name)) do
+      nil ->
+        :ok
+      %ChatHandle{}=handle ->
+        Repo.delete!(handle)
+        :ok
+    end
+  end
+
   ########################################################################
 
   # As part of our "upsert" logic, we need to determine if the user
@@ -72,8 +82,8 @@ defmodule Cog.Repository.ChatHandles do
       case Repo.get_by(ChatProvider, name: provider_name) do
         %ChatProvider{id: provider_id} ->
           case adapter.lookup_user(handle) do
-            {:ok, %{id: chat_provider_user_id}} ->
-              {:ok, %{"handle" => handle,
+            {:ok, %{id: chat_provider_user_id, handle: normalized_handle}} ->
+              {:ok, %{"handle" => normalized_handle,
                       "provider_id" => provider_id,
                       "user_id" => user_id,
                       "chat_provider_user_id" => chat_provider_user_id}}
