@@ -671,11 +671,11 @@ defmodule Cog.Command.Pipeline.Executor do
       relay ->
         # Is the bundle still available on the relay? If not, remove the current assignment from the cache
         # and select a new relay
-        if Relays.relay_available?(relay, bundle_name, bundle_version) == false do
+        if Relays.relay_available?(relay, bundle_name, bundle_version) do
+          {relay, relays}
+        else
           relays = Map.delete(relays, bundle_name)
           assign_relay(relays, bundle_name, bundle_version)
-        else
-          {relay, relays}
         end
     end
  end
