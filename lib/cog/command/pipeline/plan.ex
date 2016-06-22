@@ -4,6 +4,7 @@ defmodule Cog.Command.Pipeline.Plan do
                          invocation_id: String.t,
                          invocation_text: String.t,
                          invocation_step: String.t,
+                         relay_id: String.t,
                          options: %{String.t => term},
                          args: [term],
                          cog_env: Map.t | [Map.t]}
@@ -12,6 +13,7 @@ defmodule Cog.Command.Pipeline.Plan do
     invocation_id: nil,
     invocation_text: nil,
     invocation_step: nil,
+    relay_id: nil,
     options: %{},
     args: [],
     cog_env: nil]

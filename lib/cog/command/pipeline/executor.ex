@@ -188,7 +188,6 @@ defmodule Cog.Command.Pipeline.Executor do
   def execute_plan(:timeout, %__MODULE__{plans: [current_plan|remaining_plans], request: request, user: user}=state) do
     bundle_name  = current_plan.parser_meta.bundle_name
     command_name = current_plan.parser_meta.command_name
-    version      = current_plan.parser_meta.version
 
     # TODO: Previously, we'd do a test here for whether the bundle was
     # enabled or not. Now, we'll never make it this far if the bundle's not
@@ -198,7 +197,9 @@ defmodule Cog.Command.Pipeline.Executor do
     #   fail_pipeline_with_error({:disabled_bundle, bundle}, state)
     #
 
-    case Cog.Relay.Relays.pick_one(bundle_name, version) do
+    # If current_plan.relay_id == nil then raise an error and stop
+    # Otherwise, continue.
+    case current_plan.relay_id do
       nil ->
         fail_pipeline_with_error({:no_relays, bundle_name}, state)
       relay ->
