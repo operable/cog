@@ -28,7 +28,8 @@ defmodule Cog.Command.Pipeline.Initializer do
     {:ok, %__MODULE__{mq_conn: conn, history_token: "#{cp}#{cp}"}}
   end
 
-  def handle_info({:publish, "/bot/commands", message}, state) do
+  def handle_info({:publish, "/bot/commands", compressed}, state) do
+    {:ok, message} = :snappy.decompress(compressed)
     payload = Poison.decode!(message)
     case check_history(payload, state) do
       {true, payload, state} ->

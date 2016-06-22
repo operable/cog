@@ -2,7 +2,7 @@ use Mix.Config
 import Cog.Config.Helpers
 
 config :logger, :console,
-  level: :debug
+  level: :warn
 
 config :cog, :enable_spoken_commands, ensure_boolean(System.get_env("ENABLE_SPOKEN_COMMANDS")) || false
 

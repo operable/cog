@@ -188,10 +188,11 @@ defmodule Cog.Command.Pipeline.Executor do
   def plan_next_invocation(:timeout, %__MODULE__{invocations: []}=state),
     do: succeed_with_response(state)
 
-  def execute_plan(:timeout, %__MODULE__{plans: [current_plan|remaining_plans], relays: relays, request: request, user: user}=state) do
+  def execute_plan(:timeout, %__MODULE__{plans: [current_plan|_]=plans, relays: relays, request: request, user: user}=state) do
     bundle_name  = current_plan.parser_meta.bundle_name
     command_name = current_plan.parser_meta.command_name
     version      = current_plan.parser_meta.version
+    Logger.info("Starting stage for #{bundle_name}:#{command_name} at #{inspect :os.timestamp()}")
 
     # TODO: Previously, we'd do a test here for whether the bundle was
     # enabled or not. Now, we'll never make it this far if the bundle's not
@@ -206,12 +207,12 @@ defmodule Cog.Command.Pipeline.Executor do
       {relay, relays} ->
         topic = "/bot/commands/#{relay}/#{bundle_name}/#{command_name}"
         reply_to_topic = "#{state.topic}/reply"
-        req = request_for_plan(current_plan, request, user, reply_to_topic, state.service_token)
-        updated_state =  %{state | current_plan: current_plan, plans: remaining_plans, relays: relays}
+        stage_request = stage_request_for_plan(current_plan, request, user, reply_to_topic, state.service_token)
+        stage_request = Map.put(stage_request, "requests", (for p <- plans, do: Cog.Command.Request.encode!(request_for_plan(p))))
+        updated_state =  %{state | current_plan: current_plan, plans: [], relays: relays}
 
         dispatch_event(updated_state, relay)
-        Connection.publish(updated_state.mq_conn, Cog.Command.Request.encode!(req), routed_by: topic)
-
+        Connection.publish(updated_state.mq_conn, stage_request, routed_by: topic)
         {:next_state, :wait_for_command, updated_state, @command_timeout}
     end
 
@@ -222,30 +223,19 @@ defmodule Cog.Command.Pipeline.Executor do
   def wait_for_command(:timeout, state),
     do: fail_pipeline_with_error({:timeout, state.current_plan.parser_meta.full_command_name}, state)
 
-  def handle_info({:publish, topic, message}, :wait_for_command, state) do
+  def handle_info({:publish, topic, compressed}, :wait_for_command, state) do
     reply_topic = "#{state.topic}/reply" # TODO: bake this into state for easier pattern-matching?
     case topic do
       ^reply_topic ->
+        {:ok, message} = :snappy.decompress(compressed)
         payload = Poison.decode!(message)
-        resp = Cog.Command.Response.decode!(payload)
-        case resp.status do
-          "ok" ->
-            collected_output = case resp.body do
-                                 nil ->
-                                   # If there wasn't any output,
-                                   # there's nothing to collect
-                                   state.output
-                                 body ->
-                                   state.output ++ Enum.map(List.wrap(body),
-                                                            &store_with_template(&1, resp.template))
-                                   # body may be a map or a list
-                                   # of maps; if the latter, we
-                                   # want to accumulate it into
-                                   # one flat list
-                               end
-            {:next_state, :execute_plan, %{state | output: collected_output}, 0}
-          "error" ->
+        responses = Map.get(payload, "responses")
+        case Enum.reduce_while(responses, [], &parse_response/2) do
+          {:command_error, resp} ->
             fail_pipeline_with_error({:command_error, resp}, state)
+          output ->
+            Logger.info("Finished stage at #{inspect :os.timestamp()}")
+            {:next_state, :execute_plan, %{state | output: output}, 0}
         end
       _ ->
         {:next_state, :wait_for_command, state}
@@ -272,6 +262,31 @@ defmodule Cog.Command.Pipeline.Executor do
   # Private functions
 
   ########################################################################
+
+  # Parse batched outputs
+  defp parse_response(resp, output) do
+    resp = Cog.Command.Response.decode!(resp)
+    case resp.status do
+      "ok" ->
+        output = case resp.body do
+                   nil ->
+                     # If there wasn't any output,
+                     # there's nothing to collect
+                     output
+                   body ->
+                     output ++ Enum.map(List.wrap(body),
+                                        &store_with_template(&1, resp.template))
+                     # body may be a map or a list
+                     # of maps; if the latter, we
+                     # want to accumulate it into
+                     # one flat list
+                 end
+        {:cont, output}
+      "error" ->
+        {:halt, {:command_error, resp}}
+    end
+  end
+
   # Redirection Resolution Functions
 
 
@@ -617,28 +632,31 @@ defmodule Cog.Command.Pipeline.Executor do
 
   ########################################################################
   # Miscellaneous Functions
-
-  defp request_for_plan(plan, request, user, reply_to, service_token) do
+  defp stage_request_for_plan(plan, request, user, reply_to, service_token) do
     # TODO: stuffing the provider into requestor here is a bit
     # code-smelly; investigate and fix
     provider  = request["adapter"]
     requestor = request["sender"] |> Map.put_new("provider", provider)
     room      = request["room"]
     user      = Cog.Models.EctoJson.render(user)
+    %{
+      "invocation_id" => plan.invocation_id,
+      "reply_to" => reply_to,
+      "requestor" => requestor,
+      "user" => user,
+      "service_token" => service_token,
+      "services_root" => ServiceEndpoint.public_url,
+      "room" => room["id"],
+      "command" => plan.parser_meta.full_command_name,
+      }
+  end
 
+  defp request_for_plan(plan) do
     %Cog.Command.Request{
-      command:         plan.parser_meta.full_command_name,
       options:         plan.options,
       args:            plan.args,
       cog_env:         plan.cog_env,
-      invocation_id:   plan.invocation_id,
       invocation_step: plan.invocation_step,
-      requestor:       requestor,
-      user:            user,
-      room:            room,
-      reply_to:        reply_to,
-      service_token:   service_token,
-      services_root:   ServiceEndpoint.public_url
     }
   end
 

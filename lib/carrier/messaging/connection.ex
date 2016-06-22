@@ -109,8 +109,9 @@ defmodule Carrier.Messaging.Connection do
       :error ->
         :ok
     end
-
-    :emqttc.publish(conn, topic, encoded)
+    {:ok, compressed} = :snappy.compress(encoded)
+    Logger.debug("Applied compression: #{:erlang.size(encoded)} / #{:erlang.size(compressed)}")
+    :emqttc.publish(conn, topic, compressed)
   end
 
   defp add_system_config(opts) do

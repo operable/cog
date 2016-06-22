@@ -36,8 +36,9 @@ defmodule Cog.Adapter do
         {:reply, :ok, state}
       end
 
-      def handle_info({:publish, topic, message}, state) do
+      def handle_info({:publish, topic, compressed}, state) do
         if topic == reply_topic() do
+          {:ok, message} = :snappy.decompress(compressed)
           payload = Poison.decode!(message)
           send_message(payload["room"], payload["response"])
         end
