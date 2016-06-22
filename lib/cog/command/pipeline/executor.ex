@@ -197,11 +197,6 @@ defmodule Cog.Command.Pipeline.Executor do
     #   fail_pipeline_with_error({:disabled_bundle, bundle}, state)
     #
 
-    # If current_plan hasn't been assigned a relay then assign one
-    if current_plan.relay_id == nil do
-      current_plan = assign_relay(current_plan)
-    end
-
     # If current_plan.relay_id == nil then raise an error and stop
     # Otherwise, continue.
     case current_plan.relay_id do
@@ -657,17 +652,6 @@ defmodule Cog.Command.Pipeline.Executor do
       |> String.replace(~r/—/, "--")
       |> HtmlEntities.decode                # Decode html entities
     end)
-  end
-
-  defp assign_relay(current_plan) do
-    bundle_name  = current_plan.parser_meta.bundle_name
-    version      = current_plan.parser_meta.version
-    case Cog.Relay.Relays.pick_one(bundle_name, version) do
-      nil ->
-        current_plan
-      relay_id ->
-        %{current_plan | relay_id: relay_id}
-    end
   end
 
   def fetch_user_from_request(request) do
