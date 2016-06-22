@@ -30,6 +30,13 @@ defmodule Cog.Relay.Relays do
   def pick_one(bundle, version),
     do: GenServer.call(__MODULE__, {:random_relay, bundle, version}, :infinity)
 
+  @doc """
+  Answers the question "can this relay run this bundle?"
+  """
+  @spec relay_available?(String.t, String.t, String.t) :: boolean()
+  def relay_available?(relay, bundle, version),
+    do: GenServer.call(__MODULE__, {:relay_available, relay, bundle, version}, :infinity)
+
   def drop_bundle(bundle) do
     GenServer.call(__MODULE__, {:drop_bundle, bundle}, :infinity)
   end
@@ -90,6 +97,9 @@ defmodule Cog.Relay.Relays do
   end
   def handle_call({:random_relay, bundle, version}, _from, state),
     do: {:reply, random_relay(state.tracker, bundle, version), state}
+  def handle_call({:relay_available, relay, bundle, version}, _from, state) do
+    {:reply, Tracker.is_bundle_available?(state.tracker, relay, bundle, version), state}
+  end
   def handle_call({:drop_bundle, bundle}, _from, state) do
     tracker = Tracker.drop_bundle(state.tracker, bundle)
     {:reply, :ok, %{state | tracker: tracker}}

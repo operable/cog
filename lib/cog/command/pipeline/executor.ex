@@ -10,6 +10,7 @@ defmodule Cog.Command.Pipeline.Executor do
   alias Cog.ErrorResponse
   alias Cog.Events.PipelineEvent
   alias Cog.Queries
+  alias Cog.Relay.Relays
   alias Cog.Repo
   alias Cog.ServiceEndpoint
   alias Cog.Template
@@ -56,6 +57,7 @@ defmodule Cog.Command.Pipeline.Executor do
     mq_conn: Carrier.Messaging.Connection.connection(),
     request: %Cog.Command.Request{}, # TODO: needs to be a type
     destinations: [Destination.t],
+    relays: Map.t,
     invocations: [%Piper.Command.Ast.Invocation{}], # TODO: needs to be a type
     current_plan: Cog.Command.Pipeline.Plan.t,
     plans: [Cog.Command.Pipeline.Plan.t],
@@ -72,6 +74,7 @@ defmodule Cog.Command.Pipeline.Executor do
     mq_conn: nil,
     request: nil,
     destinations: [],
+    relays: %{},
     invocations: [],
     current_plan: nil,
     plans: [],
@@ -185,7 +188,7 @@ defmodule Cog.Command.Pipeline.Executor do
   def plan_next_invocation(:timeout, %__MODULE__{invocations: []}=state),
     do: succeed_with_response(state)
 
-  def execute_plan(:timeout, %__MODULE__{plans: [current_plan|remaining_plans], request: request, user: user}=state) do
+  def execute_plan(:timeout, %__MODULE__{plans: [current_plan|remaining_plans], relays: relays, request: request, user: user}=state) do
     bundle_name  = current_plan.parser_meta.bundle_name
     command_name = current_plan.parser_meta.command_name
     version      = current_plan.parser_meta.version
@@ -197,15 +200,14 @@ defmodule Cog.Command.Pipeline.Executor do
     #
     #   fail_pipeline_with_error({:disabled_bundle, bundle}, state)
     #
-
-    case Cog.Relay.Relays.pick_one(bundle_name, version) do
-      nil ->
+    case assign_relay(relays, bundle_name, version) do
+      {nil, _} ->
         fail_pipeline_with_error({:no_relays, bundle_name}, state)
-      relay ->
+      {relay, relays} ->
         topic = "/bot/commands/#{relay}/#{bundle_name}/#{command_name}"
         reply_to_topic = "#{state.topic}/reply"
         req = request_for_plan(current_plan, request, user, reply_to_topic, state.service_token)
-        updated_state =  %{state | current_plan: current_plan, plans: remaining_plans}
+        updated_state =  %{state | current_plan: current_plan, plans: remaining_plans, relays: relays}
 
         dispatch_event(updated_state, relay)
         Connection.publish(updated_state.mq_conn, Cog.Command.Request.encode!(req), routed_by: topic)
@@ -652,6 +654,31 @@ defmodule Cog.Command.Pipeline.Executor do
       |> HtmlEntities.decode                # Decode html entities
     end)
   end
+
+  defp assign_relay(relays, bundle_name, bundle_version) do
+    case Map.get(relays, bundle_name) do
+      # No assignment so let's pick one
+      nil ->
+        case Relays.pick_one(bundle_name, bundle_version) do
+          # No relays available
+          nil ->
+            {nil, relays}
+          # Store the selected relay in the relay cache
+          relay ->
+            {relay, Map.put(relays, bundle_name, relay)}
+        end
+      # Relay was previously assigned
+      relay ->
+        # Is the bundle still available on the relay? If not, remove the current assignment from the cache
+        # and select a new relay
+        if Relays.relay_available?(relay, bundle_name, bundle_version) do
+          {relay, relays}
+        else
+          relays = Map.delete(relays, bundle_name)
+          assign_relay(relays, bundle_name, bundle_version)
+        end
+    end
+ end
 
   def fetch_user_from_request(request) do
     adapter_module = request["module"] |> String.to_existing_atom
