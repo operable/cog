@@ -14,6 +14,7 @@ defmodule Cog.Relay.Tracker do
   available.
   """
 
+  @type relay_id :: String.t
   @type bundle_name :: String.t
   @type version :: String.t # e.g. "1.0.0"
   @type version_spec :: {bundle_name, version}
@@ -128,6 +129,16 @@ defmodule Cog.Relay.Tracker do
     |> Map.get({bundle_name, bundle_version}, MapSet.new)
     |> MapSet.difference(tracker.disabled)
     |> MapSet.to_list
+  end
+
+  @doc """
+  Return true/false indicating whether or not the specified bundle version is available
+  on the selected relay.
+  """
+  @spec is_bundle_available?(t, relay_id, bundle_name, version) :: boolean()
+  def is_bundle_available?(tracker, relay, bundle_name, bundle_version) do
+    available_relays = relays(tracker, bundle_name, bundle_version)
+    Enum.member?(available_relays, relay)
   end
 
   defp in_tracker?(tracker, relay_id) do
