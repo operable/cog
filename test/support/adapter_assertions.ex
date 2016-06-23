@@ -23,7 +23,14 @@ defmodule Cog.AdapterAssertions do
     response = response
     |> String.replace(~r/^}/m, "},")
     |> String.rstrip(?,)
-    Poison.decode!("[#{response}]", keys: :atoms)
+
+    case Poison.decode("[#{response}]", keys: :atoms) do
+      {:ok, decoded} ->
+        decoded
+      {:error, _} ->
+        # This makes for easier test debugging
+        raise "Expected JSON, got: #{inspect response}"
+    end
   end
 
   @doc """

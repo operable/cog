@@ -3,6 +3,24 @@ defmodule Cog.Repository.Permissions do
   alias Cog.Models.Permission
   alias Cog.Repo
 
+  def all do
+    Permission
+    |> Repo.all
+    |> Repo.preload(:bundle)
+  end
+
+  def by_name(full_name) do
+    case Cog.Queries.Permission.from_full_name(full_name) |> Repo.one do
+      %Permission{}=permission ->
+        preload(permission)
+      nil ->
+        nil
+    end
+  end
+
+  def delete(%Permission{}=permission),
+    do: Repo.delete(permission)
+
   @doc """
   Creates a new permission in the site bundle. All permissions created
   directly by users are of this type.
@@ -36,5 +54,10 @@ defmodule Cog.Repository.Permissions do
 
   def link_permission_to_bundle_version(bundle_version, permission),
     do: Cog.Models.JoinTable.associate(bundle_version, permission)
+
+  ########################################################################
+
+  defp preload(permission),
+    do: Repo.preload(permission, :bundle)
 
 end

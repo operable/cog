@@ -284,11 +284,14 @@ defmodule Cog.V1.BundlesControllerTest do
   test "show bundles", %{authed: requestor} do
     bundle_version("test-1")
     conn = api_request(requestor, :get, "/v1/bundles/")
+
+    version = Application.spec(:cog, :vsn) |> IO.chardata_to_string
+
     assert %{"bundles" => [%{"id" => _,
                              "name" => "operable",
-                             "enabled_version" => %{"version" => version},
+                             "enabled_version" => %{"version" => ^version},
                              "relay_groups" => [], # embedded bundle isn't in relay groups
-                             "versions" => [%{"id" => _, "version" => version}]}, # only one, and it's the enabled on}e
+                             "versions" => [%{"id" => _, "version" => ^version}]}, # only one, and it's the enabled one
                            %{"id" => _,
                              "name" => "test-1",
                              "enabled_version" => nil,

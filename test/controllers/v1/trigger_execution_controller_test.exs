@@ -172,7 +172,7 @@ defmodule Cog.V1.TriggerExecutionControllerTest do
     tokened_user = user("cog") |> with_token
 
     trigger = trigger(%{name: "list-permissions",
-                  pipeline: "permissions --list",
+                  pipeline: "permission list",
                   as_user: nil})
     assert nil == trigger.as_user
 
@@ -214,7 +214,7 @@ defmodule Cog.V1.TriggerExecutionControllerTest do
 
     # Create a trigger running a pipeline that requires the permission
     trigger = trigger(%{name: "list-permissions",
-                  pipeline: "permissions --list",
+                  pipeline: "permission list",
                   as_user: "captain_hook"})
 
     conn = api_request(requestor, :post, "/v1/triggers/#{trigger.id}", body: %{}, endpoint: Cog.TriggerEndpoint)
