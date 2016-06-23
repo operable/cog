@@ -34,7 +34,8 @@ defmodule Cog.Commands.Permission.Grant do
       %Permission{}=permission ->
         case Roles.by_name(role) do
           %Role{}=role ->
-            role = Roles.grant(role, permission)
+            Roles.grant(role, permission)
+            role = Roles.by_name(role.name) # refetch
             permission = Cog.V1.PermissionView.render("show.json", %{permission: permission})
             role       = Cog.V1.RoleView.render("show.json", %{role: role})
             {:ok, "permission-grant", Map.merge(permission, role)}
