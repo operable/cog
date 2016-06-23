@@ -53,7 +53,7 @@ config :httpotion, :default_timeout, 30000
 # ========================================================================
 # Commands, Bundles, and Services
 
-config :cog, :command_prefix, "!"
+config :cog, :command_prefix, System.get_env("COG_COMMAND_PREFIX") || "!"
 
 config :cog, Cog.Bundle.BundleSup,
   bundle_root: Path.join([File.cwd!, "bundles"])
