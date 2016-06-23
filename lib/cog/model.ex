@@ -9,6 +9,21 @@ defmodule Cog.Model do
         # awesome stuff...
       end
   """
+  # Same as the bottom __using__ macro head except
+  # disables primary keys
+  defmacro __using__(:no_primary_key) do
+    quote do
+      alias Cog.Repo
+      use Ecto.Model
+      use Cog.Models.EctoJson
+      alias Cog.Models.Types.VersionTriple
+
+      import Ecto.Changeset
+
+      @primary_key false
+      @foreign_key_type Ecto.UUID
+    end
+  end
   defmacro __using__(_) do
     quote do
       alias Cog.Repo

@@ -6,7 +6,7 @@ defmodule Cog.Repository.Bundles do
   require Logger
 
   alias Cog.Repo
-  alias Cog.Models.{Bundle, BundleVersion, CommandVersion, Rule}
+  alias Cog.Models.{Bundle, BundleVersion, BundleDynamicConfig, CommandVersion, Rule}
   alias Cog.Repository.Rules
   alias Cog.Queries
 
@@ -520,6 +520,37 @@ defmodule Cog.Repository.Bundles do
              join: r in assoc(rg, :relays),
              where: r.id == ^relay_id,
              select: bv.config_file)
+  end
+
+  @doc """
+  Given a bundle ID, return the dynamic configuration associated with it.
+  """
+  def dynamic_config_for_bundle(bundle_id) do
+    Repo.one(from d in BundleDynamicConfig,
+             where: d.bundle_id == ^bundle_id,
+             preload: [:bundle])
+  end
+
+  @doc """
+  Delete dynamic configuration for a given bundle ID
+  Returns true if config was deleted
+  """
+  def delete_dynamic_config_for_bundle(bundle_id) do
+    {count, _} = Repo.delete_all(from d in BundleDynamicConfig,
+                                 where: d.bundle_id == ^bundle_id)
+    count > 0
+  end
+
+  @doc """
+  Given a relay ID, return all the dynamic configs for the currently assigned
+  bundles.
+  """
+  def dynamic_bundle_configs_for_relay(relay_id) do
+    Repo.all(from d in BundleDynamicConfig,
+             join: rgm in "relay_group_memberships", on: rgm.relay_id == ^relay_id,
+             join: rga in "relay_group_assignments", on: rga.group_id == rgm.group_id,
+             where: rga.bundle_id == d.bundle_id,
+             preload: [:bundle])
   end
 
   ########################################################################

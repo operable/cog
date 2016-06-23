@@ -39,9 +39,11 @@ defmodule Cog.Relay.Info do
 
   def handle_info({:publish, @relay_info_topic, message}, state) do
     case Poison.decode(message) do
-      {:ok, json} ->
-        info(json, state)
+      {:ok, %{"list_bundles" => message}} ->
+        info(message, state)
         {:noreply, state}
+      {:ok, %{"update_dynamic_configs" => message}} ->
+        update_dynamic_configs(message, state)
       error ->
         Logger.error("Error decoding json: #{inspect error}")
         {:noreply, state}
@@ -54,7 +56,7 @@ defmodule Cog.Relay.Info do
   #################################################################
   # Private functions
 
-  defp info(%{"list_bundles" => %{"relay_id" => relay_id, "reply_to" => reply_to}}, state) do
+  defp info(%{"relay_id" => relay_id, "reply_to" => reply_to}, state) do
     # TODO: consider getting rid of this Repo.get call altogether,
     # particularly in light of the note in the `nil` branch of the
     # case statement below
@@ -73,6 +75,9 @@ defmodule Cog.Relay.Info do
         ## but for completeness it's included here.
         respond(%{error: "Relay with id #{relay_id} was not recognized."}, reply_to, state)
     end
+  end
+
+  defp update_dynamic_configs(%{"relay_id" => _relay_id, "config_hash" => _config_hash}, _state) do
   end
 
   defp respond(payload, reply_to, state) do
