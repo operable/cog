@@ -74,6 +74,8 @@ defmodule Cog.Commands.Helpers do
   @doc """
   A collection of messages for various errors.
   """
+  def error(%Ecto.Changeset{}=changeset),
+    do: changeset_errors(changeset)
   def error(errors) when is_list(errors),
     do: Enum.map_join(errors, "\n", &error/1)
   def error({:db_errors, errors}),
@@ -148,6 +150,22 @@ defmodule Cog.Commands.Helpers do
       ({key, message}) ->
         "#{key}: #{message}"
     end)
+  end
+
+  defp changeset_errors(changeset) do
+    msg_map = Ecto.Changeset.traverse_errors(changeset,
+                                             fn
+                                               {msg, opts} ->
+                                                 Enum.reduce(opts, msg, fn {key, value}, acc ->
+                                                   String.replace(acc, "%{#{key}}", to_string(value))
+                                                 end)
+                                               msg ->
+                                                 msg
+                                             end)
+
+    msg_map
+    |> Enum.map(fn({field, msg}) -> "#{field} #{msg}" end)
+    |> Enum.join("\n")
   end
 
 end
