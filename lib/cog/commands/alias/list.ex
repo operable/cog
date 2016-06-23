@@ -1,4 +1,4 @@
-defmodule Cog.Commands.Alias.Ls do
+defmodule Cog.Commands.Alias.List do
   alias Cog.Commands.Helpers
   alias Cog.Models.UserCommandAlias
   alias Cog.Models.SiteCommandAlias
@@ -10,13 +10,13 @@ defmodule Cog.Commands.Alias.Ls do
   Optionally takes a pattern supporting basic wildcards.
 
   USAGE
-    alias ls [ARGS]
+    alias list [ARGS]
 
   ARGS
     pattern  The pattern to filter aliases by.
 
   EXAMPLES
-    alias ls
+    alias list
     > Name: my_alias
       Visibility: user
       Pipeline: echo my new alias
@@ -24,7 +24,7 @@ defmodule Cog.Commands.Alias.Ls do
       Visibility: user
       Pipeline: echo foo
 
-    alias ls "my-*"
+    alias list "my-*"
     > Name: my_alias
       Visibility: user
       Pipeline: echo my new alias
@@ -42,14 +42,14 @@ defmodule Cog.Commands.Alias.Ls do
       {:ok, [pattern]} ->
         case do_list_command_aliases(user_id, pattern) do
           {:ok, response} ->
-            {:ok, "alias-ls", Enum.sort(response)}
+            {:ok, "alias-list", Enum.sort(response)}
           error ->
             error
         end
       {:ok, []} ->
         case do_list_command_aliases(user_id) do
           {:ok, response} ->
-            {:ok, "alias-ls", Enum.sort(response)}
+            {:ok, "alias-list", Enum.sort(response)}
           error ->
             error
         end

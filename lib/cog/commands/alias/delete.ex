@@ -1,4 +1,4 @@
-defmodule Cog.Commands.Alias.Rm do
+defmodule Cog.Commands.Alias.Delete do
   alias Cog.Repo
   alias Cog.Commands.Helpers
 
@@ -8,10 +8,10 @@ defmodule Cog.Commands.Alias.Rm do
   the site visibility.
 
   USAGE
-    alias rm <alias-name>
+    alias delete <alias-name>
 
   EXAMPLE
-    alias rm my-awesome-alias
+    alias delete my-awesome-alias
     > Successfully removed 'user:my-awesome-alias'
 
   """
@@ -22,7 +22,7 @@ defmodule Cog.Commands.Alias.Rm do
   Takes a cog request and an argument list.
   Returns {:ok, <msg>} on success and {:error, <err>} on failure.
   """
-  def rm_command_alias(req, arg_list) do
+  def delete_command_alias(req, arg_list) do
     user_id = req.user["id"]
 
     case Helpers.get_args(arg_list, 1) do
@@ -33,7 +33,7 @@ defmodule Cog.Commands.Alias.Rm do
           command_alias ->
             case Repo.delete(command_alias) do
               {:ok, removed_alias} ->
-                {:ok, "alias-rm", Helpers.jsonify(removed_alias)}
+                {:ok, "alias-delete", Helpers.jsonify(removed_alias)}
               {:error, %{errors: errors}} ->
                 {:error, {:db_errors, errors}}
             end

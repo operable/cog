@@ -9,7 +9,7 @@ defmodule Integration.AliasExecutionTest do
   end
 
   test "alias executes properly", %{user: user} do
-    send_message(user, "@bot: operable:alias new my-alias \"echo my alias\"")
+    send_message(user, "@bot: operable:alias create my-alias \"echo my alias\"")
 
     response = send_message(user, "@bot: my-alias")
 
@@ -17,8 +17,8 @@ defmodule Integration.AliasExecutionTest do
   end
 
   test "alias executes properly in the site namespace", %{user: user} do
-    send_message(user, "@bot: operable:alias new my-alias \"echo my alias\"")
-    send_message(user, "@bot: operable:alias mv my-alias site")
+    send_message(user, "@bot: operable:alias create my-alias \"echo my alias\"")
+    send_message(user, "@bot: operable:alias move my-alias site")
 
     response = send_message(user, "@bot: my-alias")
 
@@ -26,7 +26,7 @@ defmodule Integration.AliasExecutionTest do
   end
 
   test "alias executes properly in pipelines", %{user: user} do
-    send_message(user, "@bot: operable:alias new my-alias \"echo my alias\"")
+    send_message(user, "@bot: operable:alias create my-alias \"echo my alias\"")
 
     response = send_message(user, "@bot: my-alias | echo $body")
 
@@ -34,7 +34,7 @@ defmodule Integration.AliasExecutionTest do
   end
 
   test "alias executes properly in mid pipeline", %{user: user} do
-    send_message(user, "@bot: operable:alias new my-alias \"echo $body\"")
+    send_message(user, "@bot: operable:alias create my-alias \"echo $body\"")
 
     response = send_message(user, "@bot: echo \"foo\" | my-alias")
 
@@ -42,8 +42,8 @@ defmodule Integration.AliasExecutionTest do
   end
 
   test "alias nested expansion works properly", %{user: user} do
-    send_message(user, "@bot: operable:alias new my-alias \"echo my alias\"")
-    send_message(user, "@bot: operable:alias new my-other-alias \"my-alias\"")
+    send_message(user, "@bot: operable:alias create my-alias \"echo my alias\"")
+    send_message(user, "@bot: operable:alias create my-other-alias \"my-alias\"")
 
     response = send_message(user, "@bot: my-other-alias")
 
@@ -51,7 +51,7 @@ defmodule Integration.AliasExecutionTest do
   end
 
   test "alias expansion fails on infinite expansion", %{user: user} do
-    send_message(user, "@bot: operable:alias new my-alias \"my-alias\"")
+    send_message(user, "@bot: operable:alias create my-alias \"my-alias\"")
 
     response = send_message(user, "@bot: my-alias")
 
@@ -59,7 +59,7 @@ defmodule Integration.AliasExecutionTest do
   end
 
   test "alias using slack emoji works", %{user: user} do
-    send_message(user, "@bot: alias new \":boom:\" \"echo BOOM\"")
+    send_message(user, "@bot: alias create \":boom:\" \"echo BOOM\"")
 
     response = send_message(user, "@bot: :boom:")
 

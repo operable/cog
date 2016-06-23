@@ -1,4 +1,4 @@
-defmodule Cog.Commands.Alias.Mv do
+defmodule Cog.Commands.Alias.Move do
   alias Cog.Repo
   alias Cog.Models.UserCommandAlias
   alias Cog.Models.SiteCommandAlias
@@ -10,16 +10,16 @@ defmodule Cog.Commands.Alias.Mv do
   and then the site visibility.
 
   USAGE
-    alias mv <alias-src> <alias-destination>
+    alias move <alias-src> <alias-destination>
 
   EXAMPLES
-    alias mv user:my-awesome-alias site
+    alias move user:my-awesome-alias site
     > Successfully moved user:my-awesome-alias to site
 
-    alias mv user:my-awesome-alias site:my-really-awesome-alias
+    alias move user:my-awesome-alias site:my-really-awesome-alias
     > Successfully moved user:my-awesome-alias to site:my-really-awesome-alias
 
-    alias mv my-awesome-alias my-really-awesome-alias
+    alias move my-awesome-alias my-really-awesome-alias
     > Successfully moved user:my-awesome-alias to user:my-really-awesome-alias
   """
 
@@ -28,7 +28,7 @@ defmodule Cog.Commands.Alias.Mv do
   Takes a cog request and argument list.
   returns {:ok, <msg>} on success {:error, <err>} on failure.
   """
-  def mv_command_alias(req, arg_list) do
+  def move_command_alias(req, arg_list) do
     user_id = req.user["id"]
 
     case Helpers.get_args(arg_list, 2) do
@@ -40,7 +40,7 @@ defmodule Cog.Commands.Alias.Mv do
             results = Repo.transaction(fn ->
               case generate_changeset(user_id, src_alias, dest) do
                 {:ok, changeset} ->
-                  mv_alias(changeset, src_alias)
+                  move_alias(changeset, src_alias)
                 error ->
                   error
               end
@@ -50,7 +50,7 @@ defmodule Cog.Commands.Alias.Mv do
               {:ok, command_alias} ->
                 src_json = Helpers.jsonify(src_alias)
                 dest_json = Helpers.jsonify(command_alias)
-                {:ok, "alias-mv", %{source: src_json, destination: dest_json}}
+                {:ok, "alias-move", %{source: src_json, destination: dest_json}}
               error ->
                 error
             end
@@ -80,7 +80,7 @@ defmodule Cog.Commands.Alias.Mv do
     do: generate_changeset(user_id, site_alias, "site:#{alias}")
 
   # Inserts the changeset
-  defp mv_alias(changeset, src) do
+  defp move_alias(changeset, src) do
     Repo.delete!(src)
 
     case Repo.insert(changeset) do

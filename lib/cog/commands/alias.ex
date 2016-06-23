@@ -11,25 +11,23 @@ defmodule Cog.Commands.Alias do
   USAGE
     alias <subcommand>
 
-
   SUBCOMMANDS
-    new <alias-name> <alias-definition>             creates a new alias visible to the creating user.
-    mv <alias-name> <site | user>:[new-alias-name]  moves aliases between user and site visibility. Optionally renames aliases.
-    rm <alias-name>                                 Removes aliases
-    ls [pattern]                                    Returns the list of aliases optionally filtered by pattern. Pattern support basic wildcards with '*'.
-
+    create <alias-name> <alias-definition>             creates a new alias visible to the creating user.
+    move <alias-name> <site | user>:[new-alias-name]   moves aliases between user and site visibility. Optionally renames aliases.
+    delete <alias-name>                                deletes aliases
+    list [pattern]                                    Returns the list of aliases optionally filtered by pattern. Pattern support basic wildcards with '*'.
 
   EXAMPLES
-    alias new my-awesome-alias "echo \"My Awesome Alias\""
+    alias create my-awesome-alias "echo \"My Awesome Alias\""
     > user:my-awesome-alias has been created
 
-    alias mv my-awesome-alias site:awesome-alias
+    alias move my-awesome-alias site:awesome-alias
     > Moved user:my-awesome-alias to site:awesome-alias
 
-    alias rm awesome-alias
+    alias delete awesome-alias
     > Removed site:awesome-alias
 
-    alias ls
+    alias list
     > Name: 'my-awesome-alias'
       Visibility: 'user'
       Pipeline: 'echo my-awesome-alias'
@@ -45,16 +43,16 @@ defmodule Cog.Commands.Alias do
     {subcommand, args} = get_subcommand(req.args)
 
     result = case subcommand do
-      "new" ->
-        Alias.New.create_new_user_command_alias(req, args)
-      "mv" ->
-        Alias.Mv.mv_command_alias(req, args)
-      "rm" ->
-        Alias.Rm.rm_command_alias(req, args)
-      "ls" ->
-        Alias.Ls.list_command_aliases(req, args)
+      "create" ->
+        Alias.Create.create_new_user_command_alias(req, args)
+      "move" ->
+        Alias.Move.move_command_alias(req, args)
+      "delete" ->
+        Alias.Delete.delete_command_alias(req, args)
+      "list" ->
+        Alias.List.list_command_aliases(req, args)
       nil ->
-        {:error, :no_subcommand}
+        Alias.List.list_command_aliases(req, args)
       invalid ->
         {:error, {:unknown_subcommand, invalid}}
     end
@@ -67,6 +65,7 @@ defmodule Cog.Commands.Alias do
     end
   end
 
+  # TODO: delete this!
   defp get_subcommand([]),
     do: {nil, []}
   defp get_subcommand([subcommand | args]),

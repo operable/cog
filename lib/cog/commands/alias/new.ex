@@ -1,4 +1,4 @@
-defmodule Cog.Commands.Alias.New do
+defmodule Cog.Commands.Alias.Create do
   alias Cog.Repo
   alias Cog.Commands.Helpers
   alias Cog.Models.UserCommandAlias
@@ -7,10 +7,10 @@ defmodule Cog.Commands.Alias.New do
   Create new aliases. Subcommand for alias.
 
   USAGE
-    alias new <alias-name> <alias-definition>
+    alias create <alias-name> <alias-definition>
 
   EXAMPLE
-    alias new my-awesome-alias "echo \"My awesome alias\""
+    alias create my-awesome-alias "echo \"My awesome alias\""
     > Success, 'user:my-awesome-alias' has been created
   """
 
@@ -27,7 +27,7 @@ defmodule Cog.Commands.Alias.New do
 
         case Repo.insert(changeset) do
           {:ok, command_alias} ->
-            {:ok, "alias-new", Helpers.jsonify(command_alias)}
+            {:ok, "alias-create", Helpers.jsonify(command_alias)}
           {:error, %{errors: errors}} ->
             {:error, {:db_errors, errors}}
         end

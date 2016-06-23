@@ -9,7 +9,7 @@ defmodule Integration.Commands.WhichTest do
   end
 
   test "an alias in the 'user' visibility", %{user: user} do
-    send_message(user, "@bot: operable:alias new my-new-alias \"echo My New Alias\"")
+    send_message(user, "@bot: operable:alias create my-new-alias \"echo My New Alias\"")
 
     response = send_message(user, "@bot: operable:which my-new-alias")
 
@@ -22,8 +22,8 @@ defmodule Integration.Commands.WhichTest do
   end
 
   test "an alias in the 'site' visibility", %{user: user} do
-    send_message(user, "@bot: operable:alias new my-new-alias \"echo My New Alias\"")
-    send_message(user, "@bot: operable:alias mv my-new-alias site")
+    send_message(user, "@bot: operable:alias create my-new-alias \"echo My New Alias\"")
+    send_message(user, "@bot: operable:alias move my-new-alias site")
 
     response = send_message(user, "@bot: operable:which my-new-alias")
 
