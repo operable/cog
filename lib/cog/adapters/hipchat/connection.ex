@@ -101,7 +101,7 @@ defmodule Cog.Adapters.HipChat.Connection do
   end
 
   defp compile_command_pattern(mention_name) do
-    ~r/\A(@?#{mention_name}:?\s*)|(#{command_prefix})/i
+    ~r/\A(@?#{mention_name}:?\s*)|(#{Regex.escape(command_prefix)})/i
   end
 
   defp command_prefix() do

@@ -170,7 +170,7 @@ defmodule Cog.Adapters.Slack.RTMConnector do
       false ->
         {:ok, state}
       true ->
-        text = Regex.replace(~r/^#{command_prefix}/, text, "")
+        text = Regex.replace(~r/^#{Regex.escape(command_prefix)}/, text, "")
         forward_command(room, user_id, text, state)
     end
   end
