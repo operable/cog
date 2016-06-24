@@ -45,7 +45,7 @@ defmodule Cog.Commands.Relay.List do
     end)
   end
 
-  defp relay_group_json(relay_group) do
+  def relay_group_json(relay_group) do
     %{"name" => relay_group.name}
   end
 

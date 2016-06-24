@@ -35,6 +35,8 @@ defmodule Cog.Commands.Relay do
     {subcommand, args} = Helpers.get_subcommand(req.args)
 
     result = case subcommand do
+      "info" ->
+        Relay.Info.info(req, args)
       "list" ->
         Relay.List.list_relays(req)
       "update" ->
@@ -51,7 +53,7 @@ defmodule Cog.Commands.Relay do
       {:ok, message} ->
         {:reply, req.reply_to, message, state}
       {:error, err} ->
-        {:error, req.reply_to, Helpers.error(err), state}
+        {:error, req.reply_to, error(err), state}
     end
   end
 
@@ -74,4 +76,9 @@ defmodule Cog.Commands.Relay do
   defp show_usage do
     {:ok, "usage", %{usage: @moduledoc}}
   end
+
+  defp error(:wrong_type),
+   do: "Arguments must be strings"
+  defp error(error),
+    do: Helpers.error(error)
 end
