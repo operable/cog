@@ -46,7 +46,7 @@ defmodule Cog.Plug.Authorization do
     |> List.wrap
 
     unless Enum.all?(self_updates, &is_atom/1) do
-      raise ":allow_self_updates must be a list of atoms, but was '#{inspect self_updates}' instead"
+      raise ":self_updates_on must be an atom or a list of atoms, but was '#{inspect self_updates}' instead"
     end
     Keyword.put(opts, :self_updates_on, self_updates)
   end
@@ -77,7 +77,7 @@ defmodule Cog.Plug.Authorization do
   # in the future. For example, this would allow users to update
   # related data with paths such as `/v1/users/:user_id/profiles/:id`.
   defp self_updating?(opts, conn) do
-    case Keyword.get(opts, :self_updates_on) do
+    case Keyword.fetch!(opts, :self_updates_on) do
       [] -> false
       actions ->
         conn.private.phoenix_action in actions and
