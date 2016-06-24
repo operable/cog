@@ -5,7 +5,7 @@ defmodule Cog.V1.UserController do
 
   plug Cog.Plug.Authentication
   plug Cog.Plug.Authorization, [permission: "#{Cog.embedded_bundle}:manage_users",
-                                allow_self_updates: true]
+                                self_updates_on: [:update, :show]]
 
   plug :scrub_params, "user" when action in [:create, :update]
 
