@@ -545,7 +545,8 @@ defmodule Cog.Repository.Bundles do
   Given a relay ID, return all the dynamic configs for the currently assigned
   bundles.
   """
-  def dynamic_bundle_configs_for_relay(relay_id) do
+  def dynamic_configs_for_relay(relay_id) do
+    relay_id = UUID.string_to_binary!(relay_id)
     Repo.all(from d in BundleDynamicConfig,
              join: rgm in "relay_group_memberships", on: rgm.relay_id == ^relay_id,
              join: rga in "relay_group_assignments", on: rga.group_id == rgm.group_id,

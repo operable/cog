@@ -20,6 +20,7 @@ defmodule Cog.Relay.Info do
   alias Carrier.Messaging
   alias Cog.Repo
   alias Cog.Models.Relay
+  alias Cog.Repository.Bundles
 
   def start_link do
     GenServer.start_link(__MODULE__, [], name: __MODULE__)
@@ -42,8 +43,9 @@ defmodule Cog.Relay.Info do
       {:ok, %{"list_bundles" => message}} ->
         info(message, state)
         {:noreply, state}
-      {:ok, %{"update_dynamic_configs" => message}} ->
-        update_dynamic_configs(message, state)
+      {:ok, %{"get_dynamic_configs" => message}} ->
+        get_dynamic_configs(message, state)
+        {:noreply, state}
       error ->
         Logger.error("Error decoding json: #{inspect error}")
         {:noreply, state}
@@ -77,10 +79,40 @@ defmodule Cog.Relay.Info do
     end
   end
 
-  defp update_dynamic_configs(%{"relay_id" => _relay_id, "config_hash" => _config_hash}, _state) do
+  defp get_dynamic_configs(%{"relay_id" => relay_id, "config_hash" => config_hash, "reply_to" => reply_to}, state) do
+    configs = Bundles.dynamic_configs_for_relay(relay_id) |> Enum.map(&(%{bundle_name: &1.bundle.name,
+                                                                          config: &1.config,
+                                                                          hash: &1.hash}))
+    signature = calculate_signature(configs)
+    Logger.debug("Configs: #{inspect configs}")
+    Logger.debug("Signature: #{inspect signature}")
+    if config_hash != signature do
+      respond(%{configs: configs, changed: true, signature: signature}, reply_to, state)
+    else
+      respond(%{changed: false}, reply_to, state)
+    end
   end
 
   defp respond(payload, reply_to, state) do
     Messaging.Connection.publish(state.mq_conn, payload, routed_by: reply_to)
   end
+
+  # No configs
+  defp calculate_signature([]) do
+    hash_string("\n")
+  end
+  # Single config
+  defp calculate_signature([config]) do
+    config.hash
+  end
+  defp calculate_signature(configs) do
+    configs
+    |> Enum.sort(&(&1.bundle.name <= &2.bundle.name))
+    |> Enum.map(&(&1.hash))
+    |> Enum.join("\n")
+    |> hash_string
+  end
+
+  defp hash_string(text), do: :crypto.hash(:sha256, text) |> Base.encode16 |> String.downcase
+
 end
