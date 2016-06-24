@@ -346,9 +346,12 @@ defmodule Cog.Repository.Bundles do
   and cannot be disabled.
   """
   # TODO: this all needs to be transactional, for maximum safety
-  def maybe_upgrade_embedded_bundle!(%{"name" => bundle_name, "version" => version} = config) do
+  def maybe_upgrade_embedded_bundle!(%{"name" => bundle_name, "description" => description, "version" => version} = config) do
     upgrade_to_current = fn() ->
-        case __install(%{"name" => bundle_name, "version" => version, "config_file" => config}) do
+      case __install(%{"name" => bundle_name,
+                       "version" => version,
+                       "description" => description,
+                       "config_file" => config}) do
           {:ok, latest_version} ->
             :ok = delete_outdated_embedded_version(latest_version)
             postprocess_embedded_bundle_version(latest_version)

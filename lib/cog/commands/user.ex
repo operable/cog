@@ -7,8 +7,13 @@ defmodule Cog.Commands.User do
   require Cog.Commands.Helpers, as: Helpers
   require Logger
 
+  @description "Manage Cog users and chat handles"
+
   Helpers.usage :root, """
-  View information on Cog users
+  #{@description}
+
+  Note: for creation and deletion of users, please continue to use
+  `cogctl`.
 
   USAGE
 

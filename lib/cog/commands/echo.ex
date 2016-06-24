@@ -1,8 +1,10 @@
 defmodule Cog.Commands.Echo do
   use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle
 
+  @description "Repeats whatever it is passed"
+
   @moduledoc """
-  Repeats whatever it is passed.
+  #{@description}
 
   USAGE
     echo [ARGS ...]

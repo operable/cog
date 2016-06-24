@@ -129,6 +129,7 @@ defmodule Cog.Command.GenCommand.Base do
       Module.register_attribute(__MODULE__, :gen_command_base, accumuate: false, persist: true)
       Module.register_attribute(__MODULE__, :bundle_name, accumulate: false, persist: true)
       Module.register_attribute(__MODULE__, :command_name, accumulate: false, persist: true)
+      Module.register_attribute(__MODULE__, :description, accumulate: false, persist: true)
       Module.register_attribute(__MODULE__, :options, accumulate: true, persist: true)
       Module.register_attribute(__MODULE__, :permissions, accumulate: true, persist: true)
       Module.register_attribute(__MODULE__, :raw_rules, accumulate: true, persist: false)
@@ -171,6 +172,9 @@ defmodule Cog.Command.GenCommand.Base do
   def command_name(module) do
     attr_value(module, :command_name)
   end
+
+  def description(module),
+    do: attr_value(module, :description)
 
   @doc """
   Return descriptors for all the options a command declares.
@@ -331,6 +335,14 @@ defmodule Cog.Command.GenCommand.Base do
             raise ValidationError.new "Error parsing rule \"#{rule}\" for command \"#{command_name}\": #{inspect message}"
         end
     end
+
+    # We only use GenCommand for the embedded bundle these days, and
+    # this ensures that we always have a description for those commands.
+    description = Module.get_attribute(callermod, :description)
+    unless description do
+      raise ValidationError.new "Must supply a description string for #{inspect callermod}"
+    end
+
     quote do
       @rules unquote(rules)
     end

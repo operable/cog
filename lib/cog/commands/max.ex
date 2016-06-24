@@ -5,8 +5,10 @@ defmodule Cog.Commands.Max do
   alias Cog.Command.Service.MemoryClient
   require Logger
 
+  @description "Return the maximum value in the input list"
+
   @moduledoc """
-  Finds the maximum value in the input list.
+  #{@description}
 
   USAGE
     max [path]

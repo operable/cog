@@ -4,8 +4,10 @@ defmodule Cog.Commands.Permission do
 
   alias Cog.Commands.Permission.{Create, Delete, Grant, Info, List, Revoke}
 
+  @description "Manage authorization permissions"
+
   Helpers.usage :root, """
-  Manipulate authorization permissions.
+  #{@description}
 
   USAGE
     permission [subcommand]

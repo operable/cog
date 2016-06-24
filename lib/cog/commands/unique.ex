@@ -4,8 +4,10 @@ defmodule Cog.Commands.Unique do
 
   alias Cog.Command.Service.MemoryClient
 
+  @description "Removes all duplicate values from the input"
+
   @moduledoc """
-  Removes all duplicate values from the given input.
+  #{@description}
 
   USAGE
     unique

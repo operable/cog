@@ -3,8 +3,10 @@ defmodule Cog.Commands.Alias do
   alias Cog.Commands.Alias
   alias Cog.Commands.Helpers
 
+  @description "Manage command aliases"
+
   @moduledoc """
-  Manages aliases
+  #{@description}
 
   USAGE
     alias <subcommand>

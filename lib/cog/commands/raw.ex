@@ -3,10 +3,12 @@ defmodule Cog.Command.Raw do
 
   alias Cog.Command.Request
 
+  @description "Show the raw output of a command, exclusive of any templating"
 
   @moduledoc """
-  Show the raw output of a command, exclusive of any templating. Useful as a
-  debugging tool for command authors.
+  #{@description}
+
+  Useful as a debugging tool for command authors.
 
   USAGE
     raw

@@ -1,6 +1,8 @@
 defmodule Cog.Support.TestCommands.RequiredOptTestCommand do
   use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle, name: "req-opt"
 
+  @description "description"
+
   rule "when command is #{Cog.embedded_bundle}:req-opt allow"
 
   option "req", type: "string", required: true

@@ -4,8 +4,10 @@ defmodule Cog.Command.Seed do
   alias Cog.Command.Request
   require Logger
 
+  @description "Seed a pipeline with arbitrary data"
+
   @moduledoc """
-  Seed a pipeline with arbitrary data.
+  #{@description}
 
   Accepts a single string argument, which must be valid JSON for
   either a map or a list of maps.

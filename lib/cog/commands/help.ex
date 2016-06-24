@@ -5,8 +5,10 @@ defmodule Cog.Commands.Help do
   use Cog.Models
   alias Cog.Repository.Commands
 
+  @description "Show documentation for available commands"
+
   @moduledoc """
-  Prints help documentation for all commands.
+  #{@description}
 
   USAGE
     help [FLAGS] <command>

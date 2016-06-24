@@ -1,6 +1,8 @@
 defmodule Cog.Support.TestCommands.TestEcho do
   use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle, name: "t-echo"
 
+  @description "description"
+
   @moduledoc """
   Repeats whatever it is passed.
 

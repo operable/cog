@@ -6,8 +6,10 @@ defmodule Cog.Commands.Rule do
   require Cog.Commands.Helpers, as: Helpers
   require Logger
 
+  @description "Manage authorization rules"
+
   Helpers.usage :root, """
-  Manages rules for commands.
+  #{@description}
 
   USAGE
     rule [subcommand]

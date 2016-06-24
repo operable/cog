@@ -8,8 +8,10 @@ defmodule Cog.Commands.Trigger do
 
   rule "when command is #{Cog.embedded_bundle}:trigger must have #{Cog.embedded_bundle}:manage_triggers"
 
+  @description "Manage triggered pipelines"
+
   Helpers.usage :root, """
-  Manages triggered pipelines.
+  #{@description}
 
   USAGE
     trigger [subcommand]

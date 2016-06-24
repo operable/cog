@@ -7,11 +7,15 @@ defmodule Cog.Commands.Which do
   alias Cog.Queries
   alias Cog.Repo
 
+  @description "Determine whether a given input is a command or an alias"
+
   @moduledoc """
-  Determine whether a given input is a command or an alias. Returns the type of
-  input and it's bundle or visibility. In the case of aliases it also returns
-  the aliased command string. This command is only useful non fully qualified
-  commands or aliases. Fully qualified commands or aliases will return no match.
+  #{@description}
+
+  Returns the type of input and it's bundle or visibility. In the case
+  of aliases it also returns the aliased command string. This command
+  is only useful non fully qualified commands or aliases. Fully
+  qualified commands or aliases will return no match.
 
   Note: If a command is shadowed, it has an alias with the same name, the alias
   will be returned.

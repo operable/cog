@@ -4,9 +4,12 @@ defmodule Cog.Commands.Sleep do
 
   alias Cog.Command.Service.MemoryClient
 
+  @description "Pauses pipeline execution for a given number of seconds"
+
   @moduledoc """
-  Sleeps for the provided number of seconds and emits the exact
-  input passed in.
+  #{@description}
+
+  Mainly useful for debugging and testing.
 
   USAGE
     sleep <duration>

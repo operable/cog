@@ -67,6 +67,7 @@ defmodule Cog.Bundle.Embedded do
     modules = Application.spec(:cog, :modules)
 
     Config.gen_config(Cog.embedded_bundle,
+                      "Core chat commands for Cog",
                       version,
                       modules,
                       @embedded_bundle_root)

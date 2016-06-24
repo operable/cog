@@ -5,8 +5,10 @@ defmodule Cog.Commands.Min do
   alias Cog.Command.Service.MemoryClient
   require Logger
 
+  @description "Return the minimum value in the input list"
+
   @moduledoc """
-  Finds the minimum value in the input list.
+  #{@description}
 
   USAGE
     min [path]
