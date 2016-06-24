@@ -532,6 +532,17 @@ defmodule Cog.Repository.Bundles do
   end
 
   @doc """
+  Creates a new dynamic configuration for a given bundle.
+  Will overwrite previous config.
+  """
+  def create_dynamic_config_for_bundle(bundle_id, changeset) do
+    Repo.transaction(fn ->
+      delete_dynamic_config_for_bundle(bundle_id)
+      dyn_config = Repo.insert!(changeset)
+      Repo.preload(dyn_config, :bundle) end)
+  end
+
+  @doc """
   Delete dynamic configuration for a given bundle ID
   Returns true if config was deleted
   """

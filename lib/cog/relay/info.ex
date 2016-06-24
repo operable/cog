@@ -89,8 +89,6 @@ defmodule Cog.Relay.Info do
                                                                             config: &1.config,
                                                                             hash: &1.hash}))
       signature = calculate_signature(configs)
-      Logger.debug("Configs: #{inspect configs}")
-      Logger.debug("Signature: #{inspect signature}")
       if config_hash != signature do
         respond(%{configs: configs, changed: true, signature: signature}, reply_to, state)
       else

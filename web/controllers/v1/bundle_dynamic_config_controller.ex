@@ -6,7 +6,6 @@ defmodule Cog.V1.BundleDynamicConfigController do
   alias Cog.Router.Helpers
   alias Cog.Models.BundleDynamicConfig
   alias Cog.Repository.Bundles
-  alias Cog.Repo
 
   plug Cog.Plug.Authentication
   plug Cog.Plug.Authorization, permission: "#{Cog.embedded_bundle}:manage_commands"
@@ -22,10 +21,8 @@ defmodule Cog.V1.BundleDynamicConfigController do
 
   def create(conn, params) do
     changeset = BundleDynamicConfig.changeset(%BundleDynamicConfig{}, params)
-
-    case Repo.insert(changeset) do
+    case Bundles.create_dynamic_config_for_bundle(Map.get(params, "bundle_id"), changeset) do
       {:ok, dyn_config} ->
-        dyn_config = Repo.preload(dyn_config, :bundle)
         conn
         |> put_status(:created)
         |> put_resp_header("location", Helpers.bundle_dynamic_config_path(conn, :show, dyn_config.bundle_id))
