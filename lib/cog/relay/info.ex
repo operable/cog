@@ -21,6 +21,7 @@ defmodule Cog.Relay.Info do
   alias Cog.Repo
   alias Cog.Models.Relay
   alias Cog.Repository.Bundles
+  alias Cog.Util.Hash
 
   def start_link do
     GenServer.start_link(__MODULE__, [], name: __MODULE__)
@@ -101,23 +102,12 @@ defmodule Cog.Relay.Info do
     Messaging.Connection.publish(state.mq_conn, payload, routed_by: reply_to)
   end
 
-  # No configs
-  defp calculate_signature([]) do
-    hash_string("\n")
-  end
-  # Single config
-  defp calculate_signature([config]) do
-    config.hash
-  end
   defp calculate_signature(configs) do
     configs
     |> Enum.sort(&(&1.bundle.name <= &2.bundle.name))
     |> Enum.map(&(&1.hash))
-    |> Enum.join("\n")
-    |> hash_string
+    |> Hash.compute_hash
   end
-
-  defp hash_string(text), do: :crypto.hash(:sha256, text) |> Base.encode16 |> String.downcase
 
   defp id_matches_reply_to(relay_id, reply_to) do
     # Assumes reply_to topics are of form "bot/relays/<relay_id>/blah[/...]

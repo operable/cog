@@ -1,6 +1,7 @@
 defmodule Cog.Models.BundleDynamicConfig do
   use Cog.Model, :no_primary_key
 
+  alias Cog.Util.Hash
   alias Cog.Models.Bundle
 
   schema "bundle_dynamic_configs" do
@@ -28,9 +29,7 @@ defmodule Cog.Models.BundleDynamicConfig do
       :error ->
         changeset
       {:ok, config} ->
-        json = Poison.encode!(config)
-        hash = :crypto.hash(:sha256, json) |> Base.encode16 |> String.downcase
-        put_change(changeset, :hash, hash)
+        put_change(changeset, :hash, Hash.compute_hash(config))
     end
   end
 
