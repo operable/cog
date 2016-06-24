@@ -63,33 +63,39 @@ defmodule Cog.Relay.Info do
     # particularly in light of the note in the `nil` branch of the
     # case statement below
 
-    case Repo.get(Relay, relay_id) do
-      %Relay{} ->
-        bundles = relay_id
-        |> Cog.Repository.Bundles.bundle_configs_for_relay
-        |> Enum.map(&(%{config_file: &1}))
+    # Only send data if reply_to topic matches relay_id
+    if id_matches_reply_to(relay_id, reply_to) do
+      case Repo.get(Relay, relay_id) do
+        %Relay{} ->
+          bundles = relay_id
+          |> Cog.Repository.Bundles.bundle_configs_for_relay
+          |> Enum.map(&(%{config_file: &1}))
 
-        respond(%{bundles: bundles}, reply_to, state)
-      nil ->
-        ## If we get a nil back then the relay isn't registered with Cog.
-        ## Technically we should never respond with an error, because relays
-        ## should never make it through the BusEnforcer if they aren't registered
-        ## but for completeness it's included here.
-        respond(%{error: "Relay with id #{relay_id} was not recognized."}, reply_to, state)
+          respond(%{bundles: bundles}, reply_to, state)
+        nil ->
+          ## If we get a nil back then the relay isn't registered with Cog.
+          ## Technically we should never respond with an error, because relays
+          ## should never make it through the BusEnforcer if they aren't registered
+          ## but for completeness it's included here.
+          respond(%{error: "Relay with id #{relay_id} was not recognized."}, reply_to, state)
+      end
     end
   end
 
   defp get_dynamic_configs(%{"relay_id" => relay_id, "config_hash" => config_hash, "reply_to" => reply_to}, state) do
-    configs = Bundles.dynamic_configs_for_relay(relay_id) |> Enum.map(&(%{bundle_name: &1.bundle.name,
-                                                                          config: &1.config,
-                                                                          hash: &1.hash}))
-    signature = calculate_signature(configs)
-    Logger.debug("Configs: #{inspect configs}")
-    Logger.debug("Signature: #{inspect signature}")
-    if config_hash != signature do
-      respond(%{configs: configs, changed: true, signature: signature}, reply_to, state)
-    else
-      respond(%{changed: false}, reply_to, state)
+    # Only send data if the reply_to topic matches relay_id
+    if id_matches_reply_to(relay_id, reply_to) do
+      configs = Bundles.dynamic_configs_for_relay(relay_id) |> Enum.map(&(%{bundle_name: &1.bundle.name,
+                                                                            config: &1.config,
+                                                                            hash: &1.hash}))
+      signature = calculate_signature(configs)
+      Logger.debug("Configs: #{inspect configs}")
+      Logger.debug("Signature: #{inspect signature}")
+      if config_hash != signature do
+        respond(%{configs: configs, changed: true, signature: signature}, reply_to, state)
+      else
+        respond(%{changed: false}, reply_to, state)
+      end
     end
   end
 
@@ -114,5 +120,15 @@ defmodule Cog.Relay.Info do
   end
 
   defp hash_string(text), do: :crypto.hash(:sha256, text) |> Base.encode16 |> String.downcase
+
+  defp id_matches_reply_to(relay_id, reply_to) do
+    # Assumes reply_to topics are of form "bot/relays/<relay_id>/blah[/...]
+    case String.split(reply_to, "/", parts: 4) do
+      [_, _, ^relay_id|_] ->
+        true
+      _ ->
+        false
+    end
+  end
 
 end
