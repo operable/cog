@@ -58,4 +58,10 @@ defmodule Integration.Commands.BundleTest do
     assert_payload(response, %{name: "test_bundle", status: "disabled", version: "0.1.0"})
     refute Bundles.enabled?(bundle_version)
   end
+
+  test "passing an unknown subcommand fails", %{user: user} do
+    response = send_message(user, "@bot: operable:bundle not-a-subcommand")
+    assert_error_message_contains(response, "Whoops! An error occurred. Unknown subcommand 'not-a-subcommand'")
+  end
+
 end

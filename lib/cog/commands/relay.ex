@@ -43,8 +43,8 @@ defmodule Cog.Commands.Relay do
         Relay.Update.update_relay(req, args)
       nil ->
         show_usage
-      invalid ->
-        {:error, {:unknown_subcommand, invalid}}
+      other ->
+        {:error, {:unknown_subcommand, other}}
     end
 
     case result do

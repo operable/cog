@@ -55,8 +55,8 @@ defmodule Cog.Commands.RelayGroup do
         else
           RelayGroup.List.list(req, args)
         end
-      invalid ->
-        show_usage(error({:unknown_subcommand, invalid}))
+      other ->
+        {:error, {:unknown_subcommand, other}}
     end
 
     case result do
@@ -91,11 +91,6 @@ defmodule Cog.Commands.RelayGroup do
   #   do: :enabled
   # defp bundle_status(%{enabled: false}),
   #   do: :disabled
-
-  defp error(:required_subcommand),
-    do: "You are required to specify a subcommand. Please specify one of, 'info', 'create', 'rename', 'delete' or 'member'"
-  defp error({:unknown_subcommand, subcommand}),
-    do: "Unknown subcommand '#{subcommand}'. Please specify one of, 'info', 'create', 'rename', 'delete' or 'member'"
 
   defp show_usage(error \\ nil) do
     {:ok, "usage", %{usage: @moduledoc, error: error}}

@@ -54,6 +54,8 @@ defmodule Cog.Commands.Trigger do
                  else
                    List.list(req, args)
                  end
+               other ->
+                 {:error, {:unknown_subcommand, other}}
              end
 
     case result do
