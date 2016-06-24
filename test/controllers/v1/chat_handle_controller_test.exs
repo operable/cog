@@ -49,6 +49,12 @@ defmodule Cog.V1.ChatHandleControllerTest do
     end
   end
 
+  test "users can update their own chat handles even if they aren't authorized", params do
+    conn = api_request(params.unauthed, :post, "/v1/users/#{params.unauthed.id}/chat_handles", body: %{"chat_handle" => @valid_attrs})
+    id = json_response(conn, 201)["chat_handle"]["id"]
+    assert Repo.get_by(ChatHandle, id: id)
+  end
+
   test "creates and renders resource when data is valid", params do
     conn = api_request(params.authed, :post, "/v1/users/#{params.authed.id}/chat_handles", body: %{"chat_handle" => @valid_attrs})
     id = json_response(conn, 201)["chat_handle"]["id"]
