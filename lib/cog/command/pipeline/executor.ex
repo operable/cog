@@ -647,7 +647,7 @@ defmodule Cog.Command.Pipeline.Executor do
 
     Map.update!(request, "text", fn text ->
       text
-      |> String.replace(~r/^#{prefix}/, "") # Remove command prefix
+      |> String.replace(~r/^#{Regex.escape(prefix)}/, "") # Remove command prefix
       |> String.replace(~r/“|”/, "\"")      # Replace OS X's smart quotes and dashes with ascii equivalent
       |> String.replace(~r/‘|’/, "'")
       |> String.replace(~r/—/, "--")

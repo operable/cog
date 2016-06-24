@@ -152,7 +152,7 @@ defmodule Cog.Adapters.IRC.Connection do
   end
 
   defp spoken?(message) do
-    regex = ~r/^#{command_prefix}\s*/
+    regex = ~r/^#{Regex.escape(command_prefix)}\s*/
 
     case {enable_spoken_commands?, Regex.split(regex, message, parts: 2)} do
       {true, ["", message]} ->
