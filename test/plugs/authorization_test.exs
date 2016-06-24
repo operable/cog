@@ -5,10 +5,12 @@ defmodule Cog.Plug.Authorization.Test do
 
   setup do
     user = user("cog")
+    no_perm_user = user("noperm")
     granted = permission("#{Cog.embedded_bundle}:manage_users")
     ungranted = permission("#{Cog.embedded_bundle}:manage_groups")
     :ok = Permittable.grant_to(user, granted)
     {:ok, [user: user,
+           no_perm_user: no_perm_user,
            granted: granted,
            granted_name: "#{Cog.embedded_bundle}:manage_users",
            ungranted: ungranted,
@@ -63,6 +65,22 @@ defmodule Cog.Plug.Authorization.Test do
   %{user: user, granted_name: permission} do
 
     conn = conn(:get, "/") |> assign(:user, user) |> Authorization.call(Authorization.init(permission: permission))
+
+    refute conn.halted
+    refute conn.status
+  end
+
+  test "plug does not halt if user does not have the required permission but self updates are allowed",
+  %{no_perm_user: user, granted_name: permission} do
+
+    params = %{"chat_handle" => %{"chat_provider" => "test",
+                                  "handle" => "vansterminator"},
+               "id" => user.id}
+
+    conn = conn(:post, "/v1/users/#{user.id}/chat_handles", params)
+    |> assign(:user, user)
+    |> put_private(:phoenix_action, :index)
+    |> Authorization.call(permission: permission, self_updates_on: [:index])
 
     refute conn.halted
     refute conn.status
