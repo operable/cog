@@ -1,7 +1,8 @@
 defmodule Cog.Commands.Relay.List do
   alias Cog.Commands.Helpers
   alias Cog.Repository.Relays
-  alias Cog.Commands.Relay
+
+  alias Cog.Commands.Relay.ViewHelpers
 
   @moduledoc """
   Lists relays.
@@ -28,32 +29,10 @@ defmodule Cog.Commands.Relay.List do
         [] ->
           {:ok, "No relays configured"}
         relays ->
-          {:ok, get_template(req.options), generate_response(req.options, relays)}
+          template = ViewHelpers.template("relay-list", req.options)
+          data     = ViewHelpers.render(relays, req.options)
+          {:ok, template, data}
       end
-    end
-  end
-
-  defp generate_response(options, relays) do
-    Enum.map(relays, fn(relay) ->
-      if Helpers.flag?(options, "group") do
-        Relay.json(relay)
-        |> Map.put("relay_groups", Enum.map(relay.groups, &relay_group_json/1))
-        |> Map.put("_show_groups", true)
-      else
-        Relay.json(relay)
-      end
-    end)
-  end
-
-  def relay_group_json(relay_group) do
-    %{"name" => relay_group.name}
-  end
-
-  defp get_template(options) do
-    if Helpers.flag?(options, "verbose") do
-      "relay-list-verbose"
-    else
-      "relay-list"
     end
   end
 

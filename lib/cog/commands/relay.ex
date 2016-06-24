@@ -57,28 +57,12 @@ defmodule Cog.Commands.Relay do
     end
   end
 
-  @doc """
-  Returns a map representing a relay from a relay model
-  """
-  @spec json(%Cog.Models.Relay{}) :: Map.t
-  def json(%Cog.Models.Relay{}=relay) do
-    %{"name" => relay.name,
-     "status" => relay_status(relay),
-     "id" => relay.id,
-     "created_at" => relay.inserted_at}
-  end
-
-  defp relay_status(%{enabled: true}),
-    do: :enabled
-  defp relay_status(%{enabled: false}),
-    do: :disabled
-
   defp show_usage do
     {:ok, "usage", %{usage: @moduledoc}}
   end
 
   defp error(:wrong_type),
-   do: "Arguments must be strings"
+    do: "Arguments must be strings"
   defp error(error),
     do: Helpers.error(error)
 end

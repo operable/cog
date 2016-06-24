@@ -2,6 +2,7 @@ defmodule Cog.Commands.Relay.Info do
   require Cog.Commands.Helpers, as: Helpers
 
   alias Cog.Repository.Relays
+  alias Cog.Commands.Relay.ViewHelpers
 
   Helpers.usage """
   Get detailed information about a relay.
@@ -25,7 +26,7 @@ defmodule Cog.Commands.Relay.Info do
   def info(_req, [name]) when is_binary(name) do
     case Relays.by_name(name) do
       {:ok, relay} ->
-        {:ok, "relay-info", render(relay)}
+        {:ok, "relay-info", ViewHelpers.render(relay, %{"group" => true})}
       {:error, :not_found} ->
         {:error, {:resource_not_found, "relay", name}}
     end
@@ -36,15 +37,5 @@ defmodule Cog.Commands.Relay.Info do
     do: {:error, {:not_enough_args, 1}}
   def info(_, _),
     do: {:error, {:too_many_args, 1}}
-
-  # Temporary measure to reuse as much rendering logic from the List
-  # subcommand as possible until we use views to do it consistently
-  # everywhere.
-  defp render(relay) do
-    Cog.Commands.Relay.json(relay)
-    |> Map.put("relay_groups", Enum.map(relay.groups, &Cog.Commands.Relay.List.relay_group_json/1))
-    |> Map.put("_show_groups", true)
-
-  end
 
 end
