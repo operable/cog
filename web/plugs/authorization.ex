@@ -42,9 +42,9 @@ defmodule Cog.Plug.Authorization do
       raise ":permission key must be a string, but was '#{inspect permission}' instead"
     end
     {_,_} = Permission.split_name(permission) # error if can't be split
-    self_updates = Keyword.get(opts, :allow_self_updates, false)
-    unless self_updates == true || self_updates == false do
-      raise ":allow_self_updates must be a boolean, but was '#{inspect self_updates}' instead"
+    self_updates = Keyword.get(opts, :allow_self_updates, [])
+    unless is_list(self_updates) do
+      raise ":allow_self_updates must be a list, but was '#{inspect self_updates}' instead"
     end
     opts
   end
@@ -75,12 +75,12 @@ defmodule Cog.Plug.Authorization do
   # in the future. For example, this would allow users to update
   # related data with paths such as `/v1/users/:user_id/profiles/:id`.
   defp self_updating?(opts, conn) do
-    if Keyword.get(opts, :allow_self_updates, false) == true do
-      conn.private.phoenix_action in [:update, :show] and
-      (conn.assigns.user.id == conn.params["id"] or
-       conn.params["id"] == "me")
-    else
-      false
+    case Keyword.get(opts, :allow_self_updates, []) do
+      [] -> false
+      actions ->
+        conn.private.phoenix_action in actions and
+        (conn.assigns.user.id == conn.params["id"] or
+         conn.params["id"] == "me")
     end
   end
 

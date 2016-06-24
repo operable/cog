@@ -7,7 +7,7 @@ defmodule Cog.V1.ChatHandleController do
 
   plug Cog.Plug.Authentication
   plug Cog.Plug.Authorization, [permission: "#{Cog.embedded_bundle}:manage_users",
-                                allow_self_updates: true]
+                                allow_self_updates: [:upsert]]
 
   plug :scrub_params, "chat_handle" when action in [:create, :update]
 
