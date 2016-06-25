@@ -33,6 +33,12 @@ defmodule Cog do
         # Consider doing this in a process that runs after the Repo
         # comes up, but before anything else is done
         :ok = verify_schema_migration!
+
+        # Bootstrap the administrative user and an optional relay if the
+        # necessary environment variables are set and Cog is not already
+        # bootstrapped.
+        Cog.Bootstrap.maybe_bootstrap
+
         {:ok, top_sup}
       error ->
         error

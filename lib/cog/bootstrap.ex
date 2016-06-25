@@ -3,16 +3,31 @@ defmodule Cog.Bootstrap do
   Support functions for bootstrapping a Cog system.
   """
 
+  require Logger
+
   alias Cog.Models.Group
   alias Cog.Models.Role
   alias Cog.Models.User
   alias Cog.Repo
+  alias Cog.Repository.Relays, as: RelaysRepo
+  alias Cog.Repository.RelayGroups, as: RelayGroupsRepo
 
   @default_admin_params %{
     "username"      => "admin",
     "first_name"    => "Cog",
     "last_name"     => "Administrator",
     "email_address" => "cog@localhost"
+  }
+
+  @default_relay_params %{
+    "name"        => "Default",
+    "description" => "Default relay",
+    "enabled"     => true
+  }
+
+  @default_relay_group_params %{
+    "name"        => "Default",
+    "description" => "Default relay group"
   }
 
   @doc """
@@ -54,7 +69,77 @@ defmodule Cog.Bootstrap do
     end)
   end
 
+  # Bootstraps using environment variables if they are present.
+  @doc """
+  Create an administrative user using values from the environment, if present.
+  If any of the following variables are not set, the bootstrap will not be
+  performed. Required variables:
+
+  COG_BOOTSTRAP_USERNAME
+  COG_BOOTSTRAP_PASSWORD
+  COG_BOOTSTRAP_EMAIL_ADDRESS
+  COG_BOOTSTRAP_FIRST_NAME
+  COG_BOOTSTRAP_LAST_NAME
+
+  Additionally, if the user bootstrap completes successfully and the RELAY_ID
+  and RELAY_COG_TOKEN variables are set, a relay will be created using the
+  variables and assigned to a default relay group, which will also be created.
+  If the relevant variables are not present, this step will be skipped.
+
+  If any creation attempt fails, the entire bootstrap process will be rolled
+  back.
+  """
+  def maybe_bootstrap do
+    unless is_bootstrapped? do
+      Repo.transaction fn ->
+        if bootstrap_from_env, do: relay_from_env(System.get_env)
+      end
+    end
+  end
+
   ########################################################################
+
+  defp bootstrap_from_env do
+    fields = ~w(username password email_address first_name last_name)
+    vars =
+      Enum.map(fields, fn(field) -> { field, System.get_env(bootstrap_var_for(field)) } end)
+      |> Enum.group_by(fn({_k,v}) -> if (v != nil), do: :found, else: :not_found end)
+
+    if vars[:found] do
+      case vars[:not_found] do
+        # All variables accounted for, proceed with bootstrap
+        nil ->
+          Logger.info("Bootstrapping Cog from environment variables.")
+          bootstrap(Enum.into(vars[:found], %{}))
+
+        # We found some, but not all, of the required variables. Since it seems
+        # like the user was attempting to bootstrap via environment we will
+        # warn about the missing variables.
+        missing ->
+          Enum.each(missing, fn({k,_v}) -> Logger.info("Skipping bootstrap: Missing value for #{bootstrap_var_for(k)}.") end)
+          false
+      end
+    end
+  end
+
+  defp bootstrap_var_for(key) do
+    "COG_BOOTSTRAP_" <> String.upcase(key)
+  end
+
+  defp relay_from_env(%{"RELAY_ID" => relay_id,
+                        "RELAY_COG_TOKEN" => relay_token}) do
+    Logger.info("Configuring default relay from environment variables.")
+    relay_params = %{ "id" => relay_id, "token" => relay_token }
+    |> Map.merge(@default_relay_params)
+
+    :ok =
+      with {:ok, relay} <- RelaysRepo.new(relay_params),
+           {:ok, relay_group} <- RelayGroupsRepo.new(@default_relay_group_params),
+      do: Groupable.add_to(relay, relay_group)
+  end
+  defp relay_from_env(_) do
+    :not_configured
+  end
 
   # Create a bootstrap admin user from the given parameter map. If
   # the password is empty, generate a random one. Returns the username
