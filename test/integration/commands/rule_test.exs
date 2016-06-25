@@ -34,15 +34,15 @@ defmodule Integration.Commands.RuleTest do
   test "listing rules for a disabled command fails", %{user: user} do
     # Create a bundle that we won't enable
     {:ok, _version} = Cog.Repository.Bundles.install(
-      %{"name" => "cog",
+      %{"name" => "test-bundle",
         "version" => "1.0.0",
         "config_file" => %{
-          "name" => "cog",
+          "name" => "test-bundle",
           "version" => "1.0.0",
-          "commands" => %{"hola" => %{"rules" => ["when command is cog:hola allow"]}}}})
+          "commands" => %{"hola" => %{"rules" => ["when command is test-bundle:hola allow"]}}}})
 
-    assert_error(user, "@bot: rule -c cog:hola",
-              ~s(Whoops! An error occurred. cog:hola is not enabled. Enable a bundle version and try again))
+    assert_error(user, "@bot: rule -c test-bundle:hola",
+              ~s(Whoops! An error occurred. test-bundle:hola is not enabled. Enable a bundle version and try again))
   end
 
   ########################################################################
