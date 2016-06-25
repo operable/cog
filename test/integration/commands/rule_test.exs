@@ -1,7 +1,12 @@
 defmodule Integration.Commands.RuleTest do
   use Cog.AdapterCase, adapter: "test"
 
+  alias Cog.Models.Rule
+  alias Cog.Repository.Rules
+
   require Ecto.Query
+
+  @bad_uuid "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
 
   setup do
     user = user("belf", first_name: "Buddy", last_name: "Elf")
@@ -101,12 +106,49 @@ defmodule Integration.Commands.RuleTest do
 
   test "error when dropping rule with non-UUID string id", %{user: user} do
     assert_error(user, "@bot: rule delete not-a-uuid",
-                 ~s(Whoops! An error occurred. Could not drop rule with invalid id "not-a-uuid"))
+                 ~s(Whoops! An error occurred. Invalid UUID "not-a-uuid"))
   end
 
   test "error when dropping rule with unknown id", %{user: user} do
-    assert_error(user, "@bot: rule delete aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
-                 ~s(Whoops! An error occurred. Rule "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee" could not be found))
+    assert_error(user, "@bot: rule delete #{@bad_uuid}",
+                 ~s(Whoops! An error occurred. Rule "#{@bad_uuid}" could not be found))
+  end
+
+  ########################################################################
+
+  test "retrieving a rule by ID works", %{user: user} do
+    {:ok, %Rule{id: id}} = Rules.ingest("when command is operable:rule allow")
+    [payload] = send_message(user, "@bot: operable:rule info #{id}") |> decode_payload
+
+    assert %{id: id,
+             command_name: "operable:rule",
+             rule: "when command is operable:rule allow"} == payload
+  end
+
+  test "retrieving a non-existent rule fails", %{user: user} do
+    response = send_message(user, "@bot: operable:rule info #{@bad_uuid}")
+    assert_error_message_contains(response, "Could not find 'rule' with the id '#{@bad_uuid}")
+  end
+
+  test "retrieving a rule requires an ID", %{user: user} do
+    response = send_message(user, "@bot: operable:rule info")
+    assert_error_message_contains(response, "Not enough args. Arguments required: exactly 1")
+  end
+
+  test "the ID given for retrieving a rule must be a string and a UUID", %{user: user} do
+    response = send_message(user, "@bot: operable:rule info not_a_uuid")
+    assert_error_message_contains(response, "Invalid UUID \"not_a_uuid\"")
+
+    response = send_message(user, "@bot: operable:rule info 123")
+    assert_error_message_contains(response, "Argument must be a string")
+  end
+
+  test "only one rule can be retrieved at a time", %{user: user} do
+    {:ok, %Rule{id: rule_1_id}} = Rules.ingest("when command is operable:rule allow")
+    {:ok, %Rule{id: rule_2_id}} = Rules.ingest("when command is operable:bundle allow")
+
+    response = send_message(user, "@bot: operable:rule info #{rule_1_id} #{rule_2_id}")
+    assert_error_message_contains(response, "Too many args. Arguments required: exactly 1")
   end
 
   ########################################################################

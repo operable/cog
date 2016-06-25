@@ -2,7 +2,7 @@ defmodule Cog.Commands.Rule do
   use Cog.Command.GenCommand.Base,
     bundle: Cog.embedded_bundle
 
-  alias Cog.Commands.Rule.{List, Create, Delete}
+  alias Cog.Commands.Rule.{Info, List, Create, Delete}
   require Cog.Commands.Helpers, as: Helpers
   require Logger
 
@@ -18,9 +18,10 @@ defmodule Cog.Commands.Rule do
     -h, --help  Display this usage info
 
   SUBCOMMANDS
-    list    List all rules (default)
     create  Add a rule
     delete  Delete a rule
+    info    Retrieve a rule by ID
+    list    List all rules (default)
   """
 
   option "command", type: "string", short: "c"
@@ -33,6 +34,8 @@ defmodule Cog.Commands.Rule do
     {subcommand, args} = Helpers.get_subcommand(req.args)
 
     result = case subcommand do
+      "info" ->
+        Info.info(req, args)
       "list" ->
         List.list(req, args)
       "create" ->
@@ -80,7 +83,9 @@ defmodule Cog.Commands.Rule do
   defp error({:rule_not_found, uuids}),
     do: "Rules #{Enum.map_join(uuids, ", ", &inspect/1)} could not be found"
   defp error({:rule_uuid_invalid, uuid}),
-    do: "Could not drop rule with invalid id #{inspect uuid}"
+    do: "Invalid UUID #{inspect uuid}"
+  defp error(:wrong_type),
+    do: "Argument must be a string"
   defp error(error),
     do: Helpers.error(error)
 end
