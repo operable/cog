@@ -2,6 +2,7 @@ defmodule Cog.V1.RelayGroupController do
   use Cog.Web, :controller
 
   alias Cog.Models.RelayGroup
+  alias Cog.Repository.RelayGroups
   alias Cog.Queries
   alias Cog.Repo
 
@@ -42,11 +43,17 @@ defmodule Cog.V1.RelayGroupController do
   end
 
   def update(conn, %{"id" => id, "relay_group" => group_params}) do
-    relay_group = Repo.get!(RelayGroup, id)
-    changeset = RelayGroup.changeset(relay_group, group_params)
-    case Repo.update(changeset) do
+    results = with {:ok, relay_group} <- RelayGroups.by_id(id) do
+      RelayGroups.update(relay_group, group_params)
+    end
+
+    case results do
       {:ok, relay_group} ->
         render(conn, "show.json", relay_group: relay_group)
+      {:error, :not_found} ->
+        conn
+        |> put_status(:not_found)
+        |> json(%{error: "Relay Group #{id} not found"})
       {:error, changeset} ->
         conn
         |> put_status(:unprocessable_entity)
