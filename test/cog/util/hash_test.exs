@@ -38,7 +38,7 @@ defmodule Util.HashTest do
     assert Hash.compute_hash(a) == Hash.compute_hash(b)
   end
 
-  test "different hashes has to different values" do
+  test "different maps hashes to different values" do
     a = %{"how" => "now", "brown" => "cow"}
     b = Map.put(a, :foo, [123])
     assert Hash.compute_hash(a) != Hash.compute_hash(b)
