@@ -42,7 +42,7 @@ defmodule Cog.V1.RelayGroupController do
   end
 
   def update(conn, %{"id" => id, "relay_group" => group_params}) do
-    relay_group = Repo.get!(RelayGroup, id)
+    relay_group = Repo.one(Queries.RelayGroup.for_id(id))
     changeset = RelayGroup.changeset(relay_group, group_params)
     case Repo.update(changeset) do
       {:ok, relay_group} ->
