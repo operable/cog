@@ -274,7 +274,9 @@ defmodule Cog.Repository.Groups do
     end)
   end
 
-  defp grant(group, members) do
+  # TODO: note: members is always roles
+  def grant(%Group{}=group, members) do
+    members = List.wrap(members)
     Enum.reduce_while(members, :ok, fn member, :ok ->
       case Permittable.grant_to(group, member) do
         :ok ->
@@ -300,7 +302,9 @@ defmodule Cog.Repository.Groups do
     end)
   end
 
-  defp revoke(group, members) do
+  # TODO: note: members is always roles
+  def revoke(%Group{}=group, members) do
+    members = List.wrap(members)
     Enum.reduce_while(members, :ok, fn member, :ok ->
       case Permittable.revoke_from(group, member) do
         :ok ->

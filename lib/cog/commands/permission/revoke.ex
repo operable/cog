@@ -34,7 +34,8 @@ defmodule Cog.Commands.Permission.Revoke do
       %Permission{}=permission ->
         case Roles.by_name(role) do
           %Role{}=role ->
-            role = Roles.revoke(role, permission)
+            Roles.revoke(role, permission)
+            role = Roles.by_name(role.name) # refetch
             permission = Cog.V1.PermissionView.render("show.json", %{permission: permission})
             role       = Cog.V1.RoleView.render("show.json", %{role: role})
             {:ok, "permission-revoke", Map.merge(permission, role)}

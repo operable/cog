@@ -50,16 +50,20 @@ defmodule DatabaseAssertions do
     do: assert_role_is_granted(grantee, [role])
   def assert_role_is_granted(grantee, roles) when is_list(roles) do
     loaded = Repo.preload(grantee, :roles)
-    Enum.each(roles,
-      fn(p) -> assert p in loaded.roles end)
+    for role <- roles do
+      all_ids = Enum.map(loaded.roles, &(&1.id))
+      assert role.id in all_ids
+    end
   end
 
   def refute_role_is_granted(grantee, %Role{}=role),
     do: refute_role_is_granted(grantee, [role])
   def refute_role_is_granted(grantee, roles) when is_list(roles) do
     loaded = Repo.preload(grantee, :roles)
-    Enum.each(roles,
-      fn(p) -> refute p in loaded.roles end)
+    for role <- roles do
+      all_ids = Enum.map(loaded.roles, &(&1.id))
+      refute role.id in all_ids
+    end
   end
 
   def assert_rule_is_persisted(id, rule_text) do
