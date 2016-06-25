@@ -50,4 +50,37 @@ defmodule Integration.Commands.RelayTest do
     relay = Repo.get(Relay, relay.id)
     assert relay.name == "bar"
   end
+
+  test "getting information on a single relay works", %{user: user} do
+    %Relay{} = ModelUtilities.relay("foo", "footoken")
+    [response] = send_message(user, "@bot: operable:relay info foo") |> decode_payload
+    assert %{id: _,
+             created_at: _,
+             name: "foo",
+             status: "disabled",
+             relay_groups: []} = response
+  end
+
+  test "getting information on a non-existent relay fails", %{user: user} do
+    response = send_message(user, "@bot: operable:relay info not-here")
+    assert_error_message_contains(response, "Could not find 'relay' with the name 'not-here'")
+  end
+
+  test "getting information on a relay requires a relay name", %{user: user} do
+    response = send_message(user, "@bot: operable:relay info")
+    assert_error_message_contains(response, " Not enough args. Arguments required: exactly 1.")
+  end
+
+  test "getting information on more than one relay fails", %{user: user} do
+    %Relay{} = ModelUtilities.relay("foo", "footoken")
+    %Relay{} = ModelUtilities.relay("bar", "bartoken")
+    response = send_message(user, "@bot: operable:relay info foo bar")
+    assert_error_message_contains(response, "Too many args. Arguments required: exactly 1.")
+  end
+
+  test "getting information on a relay requires a string argument", %{user: user} do
+    response = send_message(user, "@bot: operable:relay info 123")
+    assert_error_message_contains(response, "Arguments must be strings")
+  end
+
 end

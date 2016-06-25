@@ -1,7 +1,8 @@
 defmodule Cog.Commands.Relay.Update do
   alias Cog.Repository.Relays
   alias Cog.Commands.Helpers
-  alias Cog.Commands.Relay
+
+  alias Cog.Commands.Relay.ViewHelpers
 
   @moduledoc """
   Updates relay name and/or description.
@@ -46,7 +47,7 @@ defmodule Cog.Commands.Relay.Update do
     params = Map.take(req.options, ["name", "description"])
     case Relays.update(relay.id, params) do
       {:ok, updated_relay} ->
-        {:ok, "relay-update", Relay.json(updated_relay)}
+        {:ok, "relay-update", ViewHelpers.render(updated_relay)}
       {:error, changeset} ->
         {:error, {:db_errors, changeset.errors}}
     end

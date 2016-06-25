@@ -24,7 +24,7 @@ defmodule Cog.Repository.Relays do
   """
   @spec all :: [%Relay{}]
   def all,
-    do: Repo.all(Relay) |> Repo.preload([groups: :bundles])
+    do: Repo.all(Relay) |> preload
 
   @doc """
   Retrieves a relay based on the id. The given id must be a
@@ -33,14 +33,17 @@ defmodule Cog.Repository.Relays do
   @spec by_id(String.t) :: {:ok, %Relay{}} | {:error, Ecto.Changeset.t} | {:error, Atom.t}
   def by_id(id) do
     with :ok <- valid_uuid(id) do
-      case Repo.get(Relay, id) |> Repo.preload([groups: :bundles]) do
+      case Repo.get(Relay, id) do
         %Relay{} = relay ->
-          {:ok, relay}
+          {:ok, preload(relay)}
         nil ->
           {:error, :not_found}
       end
     end
   end
+
+  defp preload(relay_or_relays),
+    do: Repo.preload(relay_or_relays, [groups: :bundles])
 
   @doc """
   Retrieves a single relay based on it's name or a list of relays based on
@@ -52,13 +55,13 @@ defmodule Cog.Repository.Relays do
       [] ->
         {:error, :not_found}
       relays ->
-        {:ok, relays}
+        {:ok, preload(relays)}
     end
   end
   def by_name(name) do
     case Repo.get_by(Relay, name: name) do
       %Relay{} = relay ->
-        {:ok, relay}
+        {:ok, preload(relay)}
       nil ->
         {:error, :not_found}
     end
