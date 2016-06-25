@@ -46,6 +46,10 @@ defmodule Cog.Router do
     get  "/v1/bundles/:id/status", V1.BundleStatusController, :show
     post "/v1/bundles/:id/versions/:bundle_version_id/status", V1.BundleStatusController, :set_status
 
+    get "/v1/bundles/:bundle_id/dynamic_config", V1.BundleDynamicConfigController, :show
+    post "/v1/bundles/:bundle_id/dynamic_config", V1.BundleDynamicConfigController, :create
+    delete "/v1/bundles/:bundle_id/dynamic_config", V1.BundleDynamicConfigController, :delete
+
     ########################################################################
 
     resources "/v1/chat_handles", V1.ChatHandleController, only: [:index, :delete]
