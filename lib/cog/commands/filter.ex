@@ -1,7 +1,11 @@
 defmodule Cog.Commands.Filter do
   use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle
 
+  @description "Filter elements of a collection"
+
   @moduledoc """
+  #{@description}
+
   Filters a collection where the `path` equals the `matches`.
   The `path` option is the key that you would like to focus on;
   The `matches` option is the value that you are searching for.

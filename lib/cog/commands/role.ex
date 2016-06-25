@@ -1,6 +1,9 @@
 defmodule Cog.Commands.Role do
+
+  @description "Manage authorization roles"
+
   @moduledoc """
-  This command allows the user to manage roles.
+  #{@description}
 
   USAGE
     role --create <rolename>

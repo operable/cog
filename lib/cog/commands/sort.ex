@@ -4,8 +4,10 @@ defmodule Cog.Commands.Sort do
 
   alias Cog.Command.Service.MemoryClient
 
+  @description "Sort inputs by field"
+
   @moduledoc """
-  Sorts the given list of input in ascending order by default.
+  #{@description}
 
   USAGE
     sort [flags] [fields...]
@@ -15,7 +17,7 @@ defmodule Cog.Commands.Sort do
     provided, items are intellegently sorted based on their contents.
 
   FLAGS
-    -a, --asc   sort in ascending order
+    -a, --asc   sort in ascending order (default)
     -d, --desc  sort in descending order
 
   EXAMPLES
@@ -48,7 +50,7 @@ defmodule Cog.Commands.Sort do
     case step do
       step when step in ["first", nil] ->
         {:reply, req.reply_to, nil, state}
-      "last" -> 
+      "last" ->
         accumulated_value = MemoryClient.fetch(root, token, key)
         sorted_value = sort_by(accumulated_value, opts, args)
         MemoryClient.delete(root, token, key)

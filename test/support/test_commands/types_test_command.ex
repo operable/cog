@@ -1,6 +1,8 @@
 defmodule Cog.Support.TestCommands.TypesTestCommand do
   use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle, name: "type-test"
 
+  @description "description"
+
   option "string", type: "string", required: false
   option "bool", type: "bool", required: false
   option "int", type: "int", required: false

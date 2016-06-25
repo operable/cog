@@ -97,7 +97,7 @@ defmodule Cog.Repository.BundlesTest do
 
     # "upgrade" it to a later version
     assert %BundleVersion{version: ^desired_version} =
-      Bundles.maybe_upgrade_embedded_bundle!(%{"name" => "operable", "version" => to_string(desired_version), "config_file" => %{}})
+      Bundles.maybe_upgrade_embedded_bundle!(%{"name" => "operable", "description" => "description", "version" => to_string(desired_version), "config_file" => %{}})
 
     # Show the new version is enabled
     assert %BundleVersion{version: ^desired_version} = Bundles.enabled_version(bundle_named("operable"))
@@ -114,7 +114,7 @@ defmodule Cog.Repository.BundlesTest do
 
     # "upgrade" it to the same version
     assert %BundleVersion{version: ^current_version} =
-      Bundles.maybe_upgrade_embedded_bundle!(%{"name" => "operable", "version" => app_version_string, "config_file" => %{}})
+      Bundles.maybe_upgrade_embedded_bundle!(%{"name" => "operable", "description" => "description", "version" => app_version_string, "config_file" => %{}})
 
     # Show the same version is still enabled
     assert %BundleVersion{version: ^current_version} = Bundles.enabled_version(bundle_named("operable"))
@@ -132,7 +132,7 @@ defmodule Cog.Repository.BundlesTest do
     assert_raise(RuntimeError,
                  "Unable to downgrade from #{to_string(current_version)} to #{to_string(desired_version)}",
       fn() ->
-        Bundles.maybe_upgrade_embedded_bundle!(%{"name" => "operable", "version" => to_string(desired_version), "config_file" => %{}})
+        Bundles.maybe_upgrade_embedded_bundle!(%{"name" => "operable", "description" => "description", "version" => to_string(desired_version), "config_file" => %{}})
       end)
 
     # Ensure original version is still there

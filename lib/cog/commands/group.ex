@@ -3,8 +3,10 @@ defmodule Cog.Commands.Group do
   require Cog.Commands.Helpers, as: Helpers
   alias Cog.Commands.Group
 
+  @description "Manage user groups"
+
   Helpers.usage :root, """
-  Manage user groups
+  #{@description}
 
   USAGE
     group [FLAGS] <SUBCOMMAND>

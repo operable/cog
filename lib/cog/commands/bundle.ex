@@ -8,8 +8,10 @@ defmodule Cog.Commands.Bundle do
   require Cog.Commands.Helpers, as: Helpers
   require Logger
 
+  @description "Manage command bundles"
+
   Helpers.usage :root, """
-  Manage bundles.
+  #{@description}
 
   Note that installation and uninstallation of bundles cannot
   currently be done via chat; please use `cogctl` for this

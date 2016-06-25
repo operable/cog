@@ -4,6 +4,8 @@ defmodule Cog.Commands.SecureTestThorn do
   @upcase_thorn "Þ"
   @downcase_thorn "þ"
 
+  @description "description"
+
   permission "st-thorn"
   rule "when command is #{Cog.embedded_bundle}:st-thorn must have #{Cog.embedded_bundle}:st-thorn"
 

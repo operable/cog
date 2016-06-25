@@ -6,6 +6,7 @@ defmodule Cog.Command.GenCommand.Base.Test do
 
   defmodule TestCommand do
     use GenCommand.Base, bundle: "foo"
+    @description "description"
     def handle_message(_,_), do: {:reply, "blah", "blah", :blah}
   end
 
@@ -15,18 +16,21 @@ defmodule Cog.Command.GenCommand.Base.Test do
 
   defmodule CommandWithOption do
     use GenCommand.Base, bundle: "foo"
+    @description "description"
     option "my_option", type: "string", required: true
     def handle_message(_,_), do: {:reply, "blah", "blah", :blah}
   end
 
   defmodule CommandWithDefaultOption do
     use GenCommand.Base, bundle: "foo"
+    @description "description"
     option "default_option"
     def handle_message(_,_), do: {:reply, "blah", "blah", :blah}
   end
 
   defmodule CommandWithMultipleOptions do
     use GenCommand.Base, bundle: "foo"
+    @description "description"
 
     option "my_option", type: "string", required: true
     option "another_option", type: "boolean"
@@ -37,12 +41,14 @@ defmodule Cog.Command.GenCommand.Base.Test do
 
   defmodule CommandWithPermission do
     use GenCommand.Base, bundle: "foo"
+    @description "description"
     permission "foo"
     def handle_message(_,_), do: {:reply, "blah", "blah", :blah}
   end
 
   defmodule CommandWithMultiplePermissions do
     use GenCommand.Base, bundle: "foo"
+    @description "description"
     permission "foo"
     permission "bar"
     permission "baz"
@@ -51,12 +57,14 @@ defmodule Cog.Command.GenCommand.Base.Test do
 
   defmodule CommandWithMultiplePermissionsDeclaredAtOnce do
     use GenCommand.Base, bundle: "foo"
+    @description "description"
     permission ["one", "two", "three"]
     def handle_message(_,_), do: {:reply, "blah", "blah", :blah}
   end
 
   defmodule CommandWithMixOfPermissions do
     use GenCommand.Base, bundle: "foo"
+    @description "description"
     permission "a"
     permission ["b", "c"]
     def handle_message(_,_), do: {:reply, "blah", "blah", :blah}
@@ -64,6 +72,7 @@ defmodule Cog.Command.GenCommand.Base.Test do
 
   defmodule CommandWithRules do
     use GenCommand.Base, bundle: "foo", name: "command-with-rules"
+    @description "description"
     permission "blah"
     rule "when command is foo:command-with-rules must have foo:blah"
     def handle_message(_,_), do: {:reply, "blah", "blah", :blah}
@@ -71,6 +80,7 @@ defmodule Cog.Command.GenCommand.Base.Test do
 
   defmodule CommandWithMultipleRules do
     use GenCommand.Base, bundle: "foo", name: "command-with-multiple-rules"
+    @description "description"
     permission "blah"
 
     rule "when command is foo:command-with-multiple-rules must have foo:blah"
@@ -127,6 +137,7 @@ defmodule Cog.Command.GenCommand.Base.Test do
   test "permissions must be specified *without* a namespace" do
     contents = quote do
       use GenCommand.Base, bundle: "foo"
+      @description "description"
       permission "bundle:command" # not allowed!
       def handle_message(_,_), do: {:reply, "blah", "blah", :blah}
     end
@@ -152,6 +163,7 @@ defmodule Cog.Command.GenCommand.Base.Test do
   test "can't compile without syntactically valid rules" do
     contents = quote do
       use GenCommand.Base, bundle: "foo"
+      @description "description"
       rule "not a rule, no way, no how"
       def handle_message(_,_), do: {:reply, "blah", "blah", :blah}
     end
@@ -163,6 +175,7 @@ defmodule Cog.Command.GenCommand.Base.Test do
   test "can't compile if rule refers to a different command" do
     contents = quote do
       use GenCommand.Base, bundle: "foo", name: "my-name"
+      @description "description"
       rule "when command is foo:my-command must have foo:foo"
       def handle_message(_,_), do: {:reply, "blah", "blah", :blah}
     end

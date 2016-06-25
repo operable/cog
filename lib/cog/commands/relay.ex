@@ -3,8 +3,10 @@ defmodule Cog.Commands.Relay do
   alias Cog.Commands.Relay
   alias Cog.Commands.Helpers
 
+  @description "Manage relays"
+
   @moduledoc """
-  Manages relays
+  #{@description}
 
   USAGE
     relay <subcommand>
