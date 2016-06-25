@@ -22,20 +22,11 @@ defmodule Cog.Commands.RelayGroup.Info do
     if Helpers.flag?(req.options, "help") do
       show_usage
     else
-      if length(args) == 0 do
-        case RelayGroups.all do
-          [] ->
-            {:ok, "No relay groups configured"}
-          relay_groups ->
-            {:ok, get_template(req.options), generate_response(relay_groups)}
-        end
-      else
-        case RelayGroups.all_by_name(args) do
-          [] ->
-            {:ok, "No relay groups configured with name in '#{Enum.join(args, ", ")}'"}
-          relay_groups ->
-            {:ok, get_template(req.options), generate_response(relay_groups)}
-        end
+      case RelayGroups.all_by_name(args) do
+        [] ->
+          {:ok, "No relay groups configured with name in '#{Enum.join(args, ", ")}'"}
+        relay_groups ->
+          {:ok, get_template(req.options), generate_response(relay_groups)}
       end
     end
   end

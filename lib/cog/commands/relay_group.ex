@@ -15,11 +15,12 @@ defmodule Cog.Commands.RelayGroup do
     -h, --help      Display this usage info
 
   SUBCOMMANDS
-    info      Get info about one or more relay groups
     create    Creates a relay group
-    rename    Renames a relay group
     delete    Deletes a relay group
+    info      Get info about one or more relay groups
+    list      List relay groups
     member    Managers relay and bundle assignments
+    rename    Renames a relay group
   """
 
   permission "manage_relays"
@@ -38,6 +39,8 @@ defmodule Cog.Commands.RelayGroup do
     result = case subcommand do
       "info" ->
         RelayGroup.Info.relay_group_info(req, args)
+      "list" ->
+        RelayGroup.List.list(req, args)
       "create" ->
         RelayGroup.Create.create_relay_group(req, args)
       "rename" ->
@@ -50,7 +53,7 @@ defmodule Cog.Commands.RelayGroup do
         if Helpers.flag?(req.options, "help") do
           show_usage
         else
-          show_usage(error(:required_subcommand))
+          RelayGroup.List.list(req, args)
         end
       invalid ->
         show_usage(error({:unknown_subcommand, invalid}))

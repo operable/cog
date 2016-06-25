@@ -12,19 +12,37 @@ defmodule Integration.Commands.RelayGroupTest do
     {:ok, %{user: user}}
   end
 
-  test "getting info for relay groups", %{user: user} do
+  test "listing relay groups work", %{user: user} do
     # Create a few relays
     relay_group1 = ModelUtilities.relay_group("relay_group1")
     relay_group2 = ModelUtilities.relay_group("relay_group2")
 
     # Check to see that they show up in the list
-    response = send_message(user, "@bot: operable:relay-group info")
+    response = send_message(user, "@bot: operable:relay-group list")
 
     [foo1, foo2] = decode_payload(response)
     assert foo1.name == "relay_group1"
     assert foo1.id == relay_group1.id
     assert foo2.name == "relay_group2"
     assert foo2.id == relay_group2.id
+  end
+
+  test "listing with no relay groups returns an empty list", %{user: user} do
+    payload = send_message(user, "@bot: operable:relay-group list") |> decode_payload
+
+    # TODO: When we can properly test a command apart from the
+    # execution pipeline, this payload should really be `[]`... this
+    # message is generated in the executor
+    assert ["Pipeline executed successfully, but no output was returned"] = payload
+  end
+
+  test "listing is the default operation", %{user: user} do
+    payload = send_message(user, "@bot: operable:relay-group") |> decode_payload
+
+    # TODO: When we can properly test a command apart from the
+    # execution pipeline, this payload should really be `[]`... this
+    # message is generated in the executor
+    assert ["Pipeline executed successfully, but no output was returned"] = payload
   end
 
   test "renaming a relay group", %{user: user} do
