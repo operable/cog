@@ -2,7 +2,7 @@ defmodule Cog.Commands.Rule do
   use Cog.Command.GenCommand.Base,
     bundle: Cog.embedded_bundle
 
-  alias Cog.Commands.Rule.{List, Create, Drop}
+  alias Cog.Commands.Rule.{List, Create, Delete}
   require Cog.Commands.Helpers, as: Helpers
   require Logger
 
@@ -20,7 +20,7 @@ defmodule Cog.Commands.Rule do
   SUBCOMMANDS
     list    List all rules (default)
     create  Add a rule
-    drop    Drop a rule
+    delete  Delete a rule
   """
 
   option "command", type: "string", short: "c"
@@ -37,8 +37,8 @@ defmodule Cog.Commands.Rule do
         List.list(req, args)
       "create" ->
         Create.create(req, args)
-      "drop" ->
-        Drop.drop(req, args)
+      "delete" ->
+        Delete.delete(req, args)
       nil ->
         if Helpers.flag?(req.options, "help") do
           show_usage

@@ -1,34 +1,34 @@
-defmodule Cog.Commands.Rule.Drop do
+defmodule Cog.Commands.Rule.Delete do
   alias Cog.Repository.Rules
   require Cog.Commands.Helpers, as: Helpers
 
   Helpers.usage """
-  Drops rules by id.
+  Deletes rules by id.
 
   USAGE
-    rule drop [FLAGS] <id...>
+    rule delete [FLAGS] <id...>
 
   ARGS
-    id  Specifies the rule to drop
+    id  Specifies the rule to delete
 
   FLAGS
     -h, --help  Display this usage info
 
   """
 
-  def drop(%{options: %{"help" => true}}, _args) do
+  def delete(%{options: %{"help" => true}}, _args) do
     show_usage
   end
 
-  def drop(_req, []) do
+  def delete(_req, []) do
     {:error, {:under_min_args, 1}}
   end
 
-  def drop(_req, args) do
+  def delete(_req, args) do
     with {:ok, uuids} <- validate_uuids(args),
          {:ok, rules} <- find_rules(uuids),
          delete_rules(rules),
-         do: {:ok, "rule-drop", rules}
+         do: {:ok, "rule-delete", rules}
   end
 
   defp validate_uuids(uuids) do

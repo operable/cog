@@ -88,7 +88,7 @@ defmodule Integration.Commands.RuleTest do
     response = interact(user, "@bot: rule list -c operable:st-echo")
     id = response["id"]
 
-    response = interact(user, "@bot: rule drop #{id}")
+    response = interact(user, "@bot: rule delete #{id}")
 
     # TODO: why is this response not a list?
     assert response["id"] == id
@@ -100,12 +100,12 @@ defmodule Integration.Commands.RuleTest do
   end
 
   test "error when dropping rule with non-UUID string id", %{user: user} do
-    assert_error(user, "@bot: rule drop not-a-uuid",
+    assert_error(user, "@bot: rule delete not-a-uuid",
                  ~s(Whoops! An error occurred. Could not drop rule with invalid id "not-a-uuid"))
   end
 
   test "error when dropping rule with unknown id", %{user: user} do
-    assert_error(user, "@bot: rule drop aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+    assert_error(user, "@bot: rule delete aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
                  ~s(Whoops! An error occurred. Rule "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee" could not be found))
   end
 
