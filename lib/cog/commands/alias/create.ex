@@ -1,13 +1,17 @@
 defmodule Cog.Commands.Alias.Create do
   alias Cog.Repo
-  alias Cog.Commands.Helpers
   alias Cog.Models.UserCommandAlias
 
-  @moduledoc """
+  require Cog.Commands.Helpers, as: Helpers
+
+  Helpers.usage """
   Create new aliases. Subcommand for alias.
 
   USAGE
-    alias create <alias-name> <alias-definition>
+    alias create [FLAGS] <alias-name> <alias-definition>
+
+  FLAGS
+    -h, --help  Display this usage info
 
   EXAMPLE
     alias create my-awesome-alias "echo \"My awesome alias\""
@@ -19,6 +23,8 @@ defmodule Cog.Commands.Alias.Create do
   Takes a cog request and argument list.
   returns {:ok, <msg>} on success and {:error, <err>} on error.
   """
+  def create_new_user_command_alias(%{options: %{"help" => true}}, _args),
+    do: show_usage
   def create_new_user_command_alias(req, arg_list) do
     case Helpers.get_args(arg_list, 2) do
       {:ok, [alias_name, pipeline]} ->
