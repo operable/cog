@@ -11,7 +11,7 @@ defmodule Cog.Models.Group.Test do
   test "names are unique" do
     {:ok, _group} = Repo.insert Group.changeset(%Group{}, %{"name" => "admin"})
     {:error, changeset} = Repo.insert Group.changeset(%Group{}, %{"name" => "admin"})
-    assert {:name, "The group name is already in use."} in changeset.errors
+    assert {:name, "has already been taken"} in changeset.errors
   end
 
   test "admin group cannot be renamed" do

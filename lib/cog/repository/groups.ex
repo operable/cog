@@ -116,6 +116,8 @@ defmodule Cog.Repository.Groups do
   Updates a user group
   """
   @spec update(%Group{}, Map.t) :: {:ok, %Group{}} | {:error, Ecto.Changeset.t}
+  def update(%Group{name: unquote(Cog.admin_group)=name}, _),
+    do: {:error, {:protected_group, name}}
   def update(%Group{}=group, attrs) do
     changeset = Group.changeset(group, attrs)
     Repo.update(changeset)

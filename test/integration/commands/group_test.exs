@@ -1,6 +1,9 @@
 defmodule Integration.Commands.GroupTest do
   use Cog.AdapterCase, adapter: "test"
 
+  alias Cog.Models.Group
+  alias Cog.Repository.Groups
+
   setup do
     user = user("belf", first_name: "Buddy", last_name: "Elf")
     |> with_chat_handle_for("test")
@@ -69,7 +72,7 @@ defmodule Integration.Commands.GroupTest do
     assert response.name == "test"
 
     response = send_message(user, "@bot: operable:group create test")
-    assert_error_message_contains(response, "Whoops! An error occurred. name: The group name is already in use.")
+    assert_error_message_contains(response, "name: has already been taken")
   end
 
   test "errors using the group command", %{user: user} do
@@ -132,4 +135,51 @@ defmodule Integration.Commands.GroupTest do
     group_names = Enum.map(response, &(&1.name)) |> Enum.sort
     assert group_names == ["cog-admin", "elves"]
   end
+
+  test "renaming a group works", %{user: user} do
+    %Group{id: id} = group("foo")
+
+    [payload] = send_message(user, "@bot: operable:group rename foo bar") |> decode_payload
+    assert %{id: ^id,
+             name: "bar",
+             old_name: "foo"} = payload
+
+    assert {:error, :not_found} = Groups.by_name("foo")
+    assert {:ok, %Group{id: ^id}} = Groups.by_name("bar")
+  end
+
+  test "the cog-admin group cannot be renamed", %{user: user} do
+    response = send_message(user, "@bot: operable:group rename cog-admin monkeys")
+    assert_error_message_contains(response , "Cannot alter protected group cog-admin")
+  end
+
+  test "renaming a non-existent group fails", %{user: user} do
+    response = send_message(user, "@bot: operable:group rename not-here monkeys")
+    assert_error_message_contains(response , "Could not find 'group' with the name 'not-here'")
+  end
+
+  test "renaming to an already-existing group fails", %{user: user} do
+    group("foo")
+    group("bar")
+
+    response = send_message(user, "@bot: operable:group rename foo bar")
+    assert_error_message_contains(response , "name has already been taken")
+  end
+
+  test "renaming requires a new name", %{user: user} do
+    group("foo")
+    response = send_message(user, "@bot: operable:group rename foo")
+    assert_error_message_contains(response , "Not enough args. Arguments required: exactly 2.")
+  end
+
+  test "rename requires a group and a name", %{user: user} do
+    response = send_message(user, "@bot: operable:group rename")
+    assert_error_message_contains(response , "Not enough args. Arguments required: exactly 2.")
+  end
+
+  test "renaming requires string arguments", %{user: user} do
+    response = send_message(user, "@bot: operable:group rename 123 456")
+    assert_error_message_contains(response , "Arguments must be strings")
+  end
+
 end

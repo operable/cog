@@ -50,7 +50,7 @@ defmodule Cog.Models.Group do
     model
     |> cast(params, @required_fields, @optional_fields)
     |> protect_admin_group
-    |> unique_constraint(:name, name: :groups_name_index, message: "The group name is already in use.")
+    |> unique_constraint(:name, name: :groups_name_index)
   end
 
   defp protect_admin_group(%Changeset{model: model}=changeset) do

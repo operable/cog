@@ -17,6 +17,7 @@ defmodule Cog.Commands.Group do
     create    Creates a new user group
     delete    Deletes a user group
     member    Manage members of user groups
+    rename    Rename a group
     role      Manage roles associated with user groups
 
   FLAGS
@@ -44,6 +45,8 @@ defmodule Cog.Commands.Group do
         Group.Delete.delete_group(req, args)
       "member" ->
         Group.Member.manage_members(req, args)
+      "rename" ->
+        Group.Rename.rename(req, args)
       "role" ->
         Group.Role.manage_roles(req, args)
       "info" ->
@@ -66,10 +69,15 @@ defmodule Cog.Commands.Group do
       {:ok, message} ->
         {:reply, req.reply_to, message, state}
       {:error, err} ->
-        {:error, req.reply_to, Helpers.error(err), state}
+        {:error, req.reply_to, error(err), state}
     end
   end
 
-  defp error({:unknown_subcommand, invalid, suggestion}),
-    do: "Unknown subcommand '#{invalid}'. Did you mean '#{suggestion}'?"
+  defp error(:wrong_type),
+    do: "Arguments must be strings"
+  defp error({:protected_group, name}),
+    do: "Cannot alter protected group #{name}"
+  defp error(error),
+    do: Helpers.error(error)
+
 end
