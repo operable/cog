@@ -73,6 +73,8 @@ defmodule Cog.Commands.Role do
 
   ########################################################################
 
+  defp error({:permanent_role_grant, role_name, group_name}),
+    do: "Cannot revoke role #{inspect role_name} from group #{inspect group_name}: grant is permanent"
   defp error({:protected_role, name}),
     do: "Cannot alter protected role #{name}"
   defp error(:wrong_type), # TODO: put this into helpers, take it out of permission.ex

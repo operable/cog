@@ -5,7 +5,7 @@ defmodule Cog.V1.RoleGrantController.Test do
 
   # TODO: Clean this up when the underlying data model is simplified
   #       to match what's exposed in the API.
- 
+
   # When these tests were written, permissions were allowed to be
   # associated with users, groups, or roles. This model has been
   # simplified to only allow permissions to be associated with roles,
@@ -315,5 +315,23 @@ defmodule Cog.V1.RoleGrantController.Test do
 
     end #fn
   ) # Enum.each
+
+  @tag base: :group # ugh...
+  test "cannot revoke the #{Cog.admin_role} role from the #{Cog.admin_group} group", %{authed: requestor} do
+    # This is how the role and group get there in the first place
+    Cog.Bootstrap.bootstrap
+
+    admin_role = %Cog.Models.Role{} = Cog.Repository.Roles.by_name(Cog.admin_role)
+    {:ok, admin_group}              = Cog.Repository.Groups.by_name(Cog.admin_group)
+
+    conn = api_request(requestor, :post, "/v1/groups/#{admin_group.id}/roles",
+                       body: %{"roles" => %{"revoke" => [admin_role.name]}})
+
+    # TODO: Ideally, I'd like an error here instead... this'll change
+    # when we get to https://github.com/operable/cog/issues/825
+    assert %{"roles" => [%{"name" => unquote(Cog.admin_role)}]} = json_response(conn, 200)
+
+    assert_role_is_granted(admin_group, admin_role)
+  end
 
 end
