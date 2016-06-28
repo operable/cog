@@ -1,7 +1,5 @@
 defmodule Integration.Commands.UserTest do
   use Cog.AdapterCase, adapter: "test"
-  alias Cog.Repository.Users
-  alias Cog.Support.ModelUtilities
 
   setup do
     user = user("tester")
