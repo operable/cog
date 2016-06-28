@@ -17,7 +17,8 @@ defmodule Cog.Repository.Bundles do
   @reserved_bundle_names [
     Cog.embedded_bundle,
     Cog.site_namespace,
-    "user" # a bundle named "user" would break alias resolution
+    "user", # a bundle named "user" would break alias resolution
+    "cog"   # we're going to squat on this for now to prevent potential confusion
   ]
 
   @permanent_site_bundle_version "0.0.0"

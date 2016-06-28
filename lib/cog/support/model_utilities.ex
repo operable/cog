@@ -192,7 +192,7 @@ defmodule Cog.Support.ModelUtilities do
   Create a command with the given name
   """
   def command(name) do
-    bundle_version = bundle_version("cog")
+    bundle_version = bundle_version("test-bundle")
     bundle = bundle_version.bundle
 
     command = %Command{}

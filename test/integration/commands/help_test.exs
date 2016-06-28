@@ -25,7 +25,7 @@ defmodule Integration.Commands.HelpTest do
     response = send_message(user, "@bot: operable:help --disabled")
     [command] = decode_payload(response)
 
-    assert command.bundle.name == "cog"
+    assert command.bundle.name == "test-bundle"
     assert command.name == "test_command"
   end
 
