@@ -307,8 +307,8 @@ defmodule Cog.Repository.Bundles do
   """
   def enabled_bundles do
     query = (from e in "enabled_bundle_versions",
-             join: bv in "bundle_versions_v2", on: bv.bundle_id == e.bundle_id and bv.version == e.version,
-             join: b in "bundles_v2", on: bv.bundle_id == b.id,
+             join: bv in "bundle_versions", on: bv.bundle_id == e.bundle_id and bv.version == e.version,
+             join: b in "bundles", on: bv.bundle_id == b.id,
              where: b.name != "site",
              select: {b.name, bv.version})
 
