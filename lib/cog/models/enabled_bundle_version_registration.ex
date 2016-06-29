@@ -6,6 +6,7 @@ defmodule Cog.Models.EnabledBundleVersionRegistration do
   use Cog.Model
 
   @primary_key false
+
   schema "enabled_bundle_version_view" do
     belongs_to :bundle, Cog.Models.Bundle
     belongs_to :bundle_version, Cog.Models.BundleVersion

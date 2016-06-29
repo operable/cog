@@ -1,10 +1,12 @@
 defmodule Cog.Models.RelayGroupMembership do
   use Cog.Model
+  alias Cog.Models.{Relay, RelayGroup}
+
   @primary_key false
 
   schema "relay_group_memberships" do
-    belongs_to :relay, Cog.Models.Relay, references: :id
-    belongs_to :group, Cog.Models.RelayGroup, references: :id
+    belongs_to :relay, Relay, primary_key: true
+    belongs_to :group, RelayGroup, primary_key: true
   end
 
   @required_fields ~w(relay_id group_id)

@@ -6,8 +6,8 @@ defmodule Cog.Models.BundleTest do
 
   test "bundle names must be made up of word characters and dashes" do
     invalid_attrs = Map.merge(@valid_attrs, %{name: "weird:name"})
-    bundle = Bundle.changeset(%Bundle{}, invalid_attrs)
+    changeset = Bundle.changeset(%Bundle{}, invalid_attrs)
 
-    assert %{errors: [name: "has invalid format"]} = bundle
+    assert {:name, {"has invalid format", []}} in changeset.errors
   end
 end

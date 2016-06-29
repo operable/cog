@@ -1,10 +1,12 @@
 defmodule Cog.Models.RulePermission do
   use Cog.Model
+  alias Cog.Models.{Rule, Permission}
 
   @primary_key false
+
   schema "rule_permissions" do
-    belongs_to :rule, Cog.Models.Rule, references: :id
-    belongs_to :permission, Cog.Models.Permission, references: :id
+    belongs_to :rule, Rule, primary_key: true
+    belongs_to :permission, Permission, primary_key: true
   end
 
   @required_fields ~w(rule_id permission_id)

@@ -21,7 +21,6 @@ defmodule Cog.AdapterCase do
         adapter = replace_adapter(unquote(adapter))
 
         on_exit(fn ->
-          Ecto.Adapters.SQL.rollback_test_transaction(Repo)
           reset_adapter(adapter)
         end)
 
@@ -31,7 +30,8 @@ defmodule Cog.AdapterCase do
       setup context do
         recorder = start_recorder(unquote(adapter), context)
 
-        Ecto.Adapters.SQL.restart_test_transaction(Repo, [])
+        Ecto.Adapters.SQL.Sandbox.checkout(Repo)
+        Ecto.Adapters.SQL.Sandbox.mode(Repo, {:shared, self()})
         bootstrap
         Cog.Command.PermissionsCache.reset_cache
 

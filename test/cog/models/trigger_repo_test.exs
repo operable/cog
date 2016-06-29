@@ -13,7 +13,7 @@ defmodule Cog.Models.TriggerRepoTest do
   test "trigger names are unique" do
     assert %Trigger{} = Trigger.changeset(%Trigger{}, @valid_attrs) |> Repo.insert!
     {:error, changeset} = Trigger.changeset(%Trigger{}, @valid_attrs) |> Repo.insert
-    assert {:name, "has already been taken"} in changeset.errors
+    assert {:name, {"has already been taken", []}} in changeset.errors
   end
 
 end

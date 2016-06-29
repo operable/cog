@@ -46,8 +46,8 @@ defmodule Cog.Models.Role do
     |> unique_constraint(:name)
   end
 
-  defp protect_admin_role(%Changeset{model: model}=changeset) do
-    if model.name == Cog.admin_role do
+  defp protect_admin_role(%Changeset{data: data}=changeset) do
+    if data.name == Cog.admin_role do
       changeset
       |> add_error(:name, "admin role may not be modified")
     else

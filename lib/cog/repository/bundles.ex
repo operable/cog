@@ -464,7 +464,7 @@ defmodule Cog.Repository.Bundles do
     from bv in BundleVersion,
     join: b in assoc(bv, :bundle),
     where: b.name == ^site,
-    where: bv.version == @permanent_site_bundle_version,
+    where: bv.version == ^@permanent_site_bundle_version,
     preload: :bundle
   end
 

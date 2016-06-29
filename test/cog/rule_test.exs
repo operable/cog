@@ -20,7 +20,7 @@ defmodule RuleTest do
     {:ok, _rule} = Rule.insert_new(command, expr)
 
     result = Rule.insert_new(command, expr)
-    assert {:error, %Ecto.Changeset{errors: [no_dupes: "has already been taken"]}} = result
+    assert {:error, %Ecto.Changeset{errors: [no_dupes: {"has already been taken", []}]}} = result
   end
 
   defmodule Permissions do
