@@ -21,10 +21,7 @@ defmodule Cog.VCR do
       use ExVCR.Mock, options: [clear_mock: true]
 
       defmacro use_cassette(do: context) do
-        test_name = Module.get_attribute(__MODULE__, :ex_unit_test_names)
-        |> Map.to_list
-        |> List.last
-        |> elem(0)
+        [%ExUnit.Test{name: test_name}|_] = Module.get_attribute(__MODULE__, :ex_unit_tests)
 
         module = __CALLER__.module
 
