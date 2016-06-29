@@ -41,7 +41,7 @@ defmodule Cog.Commands.Alias.Move do
       {:ok, [src, dest]} ->
         case Helpers.get_command_alias(user_id, src) do
           nil ->
-            Helpers.error(:alias_not_found, src)
+            Helpers.error({:alias_not_found, src})
           src_alias ->
             results = Repo.transaction(fn ->
               case generate_changeset(user_id, src_alias, dest) do

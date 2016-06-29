@@ -17,7 +17,7 @@ defmodule Cog.Repository.RelayGroups do
   alias Cog.Models.RelayGroup
   alias Cog.Models.Relay
   alias Cog.Models.Bundle
-  import Ecto.Query, only: [from: 1, from: 2]
+  import Ecto.Query, only: [from: 2]
 
   @doc """
   Creates a new relay group given a map of attributes
@@ -241,7 +241,7 @@ defmodule Cog.Repository.RelayGroups do
   defp valid_uuid!(id) do
     case valid_uuid(id) do
       :ok -> :ok
-      {:error, :bad_id} -> raise(RelayGroups.BadIdError, id)
+      {:error, :bad_id} -> raise(__MODULE__.BadIdError, id)
     end
   end
 end

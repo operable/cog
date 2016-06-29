@@ -7,7 +7,7 @@ defmodule Cog.Repository.Relays do
   alias Cog.Repo
   alias Cog.Models.Relay
   alias Cog.Relay.Relays
-  import Ecto.Query, only: [from: 1, from: 2]
+  import Ecto.Query, only: [from: 2]
 
   @doc """
   Creates a new relay given a map of attributes

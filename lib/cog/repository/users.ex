@@ -6,7 +6,7 @@ defmodule Cog.Repository.Users do
 
   alias Cog.Repo
   alias Cog.Models.User
-  import Ecto.Query, only: [from: 1, from: 2]
+  import Ecto.Query, only: [from: 2]
 
   @doc """
   Creates a new user given a map of attributes
