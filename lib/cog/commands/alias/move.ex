@@ -2,15 +2,19 @@ defmodule Cog.Commands.Alias.Move do
   alias Cog.Repo
   alias Cog.Models.UserCommandAlias
   alias Cog.Models.SiteCommandAlias
-  alias Cog.Commands.Helpers
 
-  @moduledoc """
+  require Cog.Commands.Helpers, as: Helpers
+
+  Helpers.usage """
   Moves aliases between visibilities. Optionally renames the alias. Subcommand
   for alias. If a visibility is not specified the user visibility is first searched
   and then the site visibility.
 
   USAGE
-    alias move <alias-src> <alias-destination>
+    alias move [FLAGS] <alias-src> <alias-destination>
+
+  FLAGS
+    -h, --help  Display this usage info
 
   EXAMPLES
     alias move user:my-awesome-alias site
@@ -28,6 +32,8 @@ defmodule Cog.Commands.Alias.Move do
   Takes a cog request and argument list.
   returns {:ok, <msg>} on success {:error, <err>} on failure.
   """
+  def move_command_alias(%{options: %{"help" => true}}, _args),
+    do: show_usage
   def move_command_alias(req, arg_list) do
     user_id = req.user["id"]
 

@@ -1,16 +1,20 @@
 defmodule Cog.Commands.Alias.List do
-  alias Cog.Commands.Helpers
   alias Cog.Models.UserCommandAlias
   alias Cog.Models.SiteCommandAlias
   alias Cog.Queries
   alias Cog.Repo
 
-  @moduledoc """
+  require Cog.Commands.Helpers, as: Helpers
+
+  Helpers.usage """
   Lists aliases. Subcommand for alias.
   Optionally takes a pattern supporting basic wildcards.
 
   USAGE
-    alias list [ARGS]
+    alias list [FLAGS] [ARGS]
+
+  FLAGS
+    -h, --help  Display this usage info
 
   ARGS
     pattern  The pattern to filter aliases by.
@@ -35,6 +39,8 @@ defmodule Cog.Commands.Alias.List do
   Accepts a cog request and argument list.
   Returns {:ok, <alias list>} on success and {:error, <err>} on failure.
   """
+  def list_command_aliases(%{options: %{"help" => true}}, _args),
+    do: show_usage
   def list_command_aliases(req, arg_list) do
     user_id = req.user["id"]
 

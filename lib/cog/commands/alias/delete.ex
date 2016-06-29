@@ -1,14 +1,17 @@
 defmodule Cog.Commands.Alias.Delete do
   alias Cog.Repo
-  alias Cog.Commands.Helpers
+  require Cog.Commands.Helpers, as: Helpers
 
-  @moduledoc """
+  Helpers.usage """
   Removes an alias. Subcommand for alias.
   If a visibility is not passed the user visibility is first searched and then
   the site visibility.
 
   USAGE
-    alias delete <alias-name>
+    alias delete [FLAGS] <alias-name>
+
+  FLAGS
+    -h, --help  Display this usage info
 
   EXAMPLE
     alias delete my-awesome-alias
@@ -22,6 +25,8 @@ defmodule Cog.Commands.Alias.Delete do
   Takes a cog request and an argument list.
   Returns {:ok, <msg>} on success and {:error, <err>} on failure.
   """
+  def delete_command_alias(%{options: %{"help" => true}}, _args),
+    do: show_usage
   def delete_command_alias(req, arg_list) do
     user_id = req.user["id"]
 

@@ -1,21 +1,24 @@
 defmodule Cog.Commands.Alias do
   use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle
   alias Cog.Commands.Alias
-  alias Cog.Commands.Helpers
+  require Cog.Commands.Helpers, as: Helpers
 
   @description "Manage command aliases"
 
-  @moduledoc """
+  Helpers.usage :root, """
   #{@description}
 
   USAGE
     alias <subcommand>
 
+  FLAGS
+    -h, --help  Display this usage info
+
   SUBCOMMANDS
     create <alias-name> <alias-definition>             creates a new alias visible to the creating user.
     move <alias-name> <site | user>:[new-alias-name]   moves aliases between user and site visibility. Optionally renames aliases.
     delete <alias-name>                                deletes aliases
-    list [pattern]                                    Returns the list of aliases optionally filtered by pattern. Pattern support basic wildcards with '*'.
+    list [pattern]                                     Returns the list of aliases optionally filtered by pattern. Pattern support basic wildcards with '*'.
 
   EXAMPLES
     alias create my-awesome-alias "echo \"My Awesome Alias\""
@@ -40,22 +43,26 @@ defmodule Cog.Commands.Alias do
   rule "when command is #{Cog.embedded_bundle}:alias allow"
 
   def handle_message(req, state) do
-    {subcommand, args} = get_subcommand(req.args)
+    {subcommand, args} = Helpers.get_subcommand(req.args)
 
     result = case subcommand do
-      "create" ->
-        Alias.Create.create_new_user_command_alias(req, args)
-      "move" ->
-        Alias.Move.move_command_alias(req, args)
-      "delete" ->
-        Alias.Delete.delete_command_alias(req, args)
-      "list" ->
-        Alias.List.list_command_aliases(req, args)
-      nil ->
-        Alias.List.list_command_aliases(req, args)
-      other ->
-        {:error, {:unknown_subcommand, other}}
-    end
+               "create" ->
+                 Alias.Create.create_new_user_command_alias(req, args)
+               "move" ->
+                 Alias.Move.move_command_alias(req, args)
+               "delete" ->
+                 Alias.Delete.delete_command_alias(req, args)
+               "list" ->
+                 Alias.List.list_command_aliases(req, args)
+               nil ->
+                 if Helpers.flag?(req.options, "help") do
+                   show_usage
+                 else
+                   Alias.List.list_command_aliases(req, args)
+                 end
+               other ->
+                 {:error, {:unknown_subcommand, other}}
+             end
 
     case result do
       {:ok, template, data} ->
@@ -64,11 +71,5 @@ defmodule Cog.Commands.Alias do
         {:error, req.reply_to, Helpers.error(err), state}
     end
   end
-
-  # TODO: delete this!
-  defp get_subcommand([]),
-    do: {nil, []}
-  defp get_subcommand([subcommand | args]),
-    do: {subcommand, args}
 
 end
