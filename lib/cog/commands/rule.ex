@@ -48,8 +48,8 @@ defmodule Cog.Commands.Rule do
         else
           List.list(req, args)
         end
-      invalid ->
-        show_usage(error({:unknown_subcommand, invalid}))
+      other ->
+        {:error, {:unknown_subcommand, other}}
     end
 
     case result do

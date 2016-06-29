@@ -83,4 +83,9 @@ defmodule Integration.Commands.RelayTest do
     assert_error_message_contains(response, "Arguments must be strings")
   end
 
+  test "passing an unknown subcommand fails", %{user: user} do
+    response = send_message(user, "@bot: operable:relay not-a-subcommand")
+    assert_error_message_contains(response, "Whoops! An error occurred. Unknown subcommand 'not-a-subcommand'")
+  end
+
 end

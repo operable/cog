@@ -57,10 +57,8 @@ defmodule Cog.Commands.Group do
         else
           Group.List.list_groups(req, args)
         end
-      invalid ->
-        suggestion = Enum.max_by(["list", "create", "delete", "member", "role", "info"],
-                                 &String.jaro_distance(&1, invalid))
-        show_usage(error({:unknown_subcommand, invalid, suggestion}))
+      other ->
+        {:error, {:unknown_subcommand, other}}
     end
 
     case result do

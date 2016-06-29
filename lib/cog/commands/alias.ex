@@ -53,8 +53,8 @@ defmodule Cog.Commands.Alias do
         Alias.List.list_command_aliases(req, args)
       nil ->
         Alias.List.list_command_aliases(req, args)
-      invalid ->
-        {:error, {:unknown_subcommand, invalid}}
+      other ->
+        {:error, {:unknown_subcommand, other}}
     end
 
     case result do
