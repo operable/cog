@@ -2,7 +2,7 @@ defmodule Cog.Models.Bundle do
   use Cog.Model
   use Cog.Models
 
-  schema "bundles_v2" do
+  schema "bundles" do
     field :name, :string
 
     has_many :versions, BundleVersion

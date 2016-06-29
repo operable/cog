@@ -4,7 +4,7 @@ defmodule Cog.Models.CommandVersion do
 
   require Logger
 
-  schema "command_versions_v2" do
+  schema "command_versions" do
     field :description, :string
     field :documentation, :string
     field :status, :string, virtual: true

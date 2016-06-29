@@ -3,7 +3,7 @@ defmodule Cog.Models.Permission do
   use Cog.Models
   alias Ecto.Changeset
 
-  schema "permissions_v2" do
+  schema "permissions" do
     belongs_to :bundle, Bundle
     field :name, :string
 
@@ -47,7 +47,7 @@ defmodule Cog.Models.Permission do
   def changeset(model, params) do
     model
     |> Changeset.cast(params, @required_fields, @optional_fields)
-    |> Changeset.unique_constraint(:name, name: "permissions_v2_bundle_id_name_index")
+    |> Changeset.unique_constraint(:name, name: "permissions_bundle_id_name_index")
   end
 
   @doc """

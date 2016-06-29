@@ -148,8 +148,8 @@ defmodule Cog.Models.JoinTable do
   defp table_name(%Bundle{}, %RelayGroup{}), do: "relay_group_assignments"
   defp table_name(%Relay{}, %RelayGroup{}),  do: "relay_group_memberships"
 
-  defp table_name(%BundleVersion{}, %Permission{}), do: "permission_bundle_version_v2"
-  defp table_name(%Rule{}, %BundleVersion{}), do: "rule_bundle_version_v2"
+  defp table_name(%BundleVersion{}, %Permission{}), do: "permission_bundle_version"
+  defp table_name(%Rule{}, %BundleVersion{}), do: "rule_bundle_version"
 
   # Example:
   #

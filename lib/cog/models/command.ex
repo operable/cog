@@ -4,7 +4,7 @@ defmodule Cog.Models.Command do
   alias Cog.Queries
   require Logger
 
-  schema "commands_v2" do
+  schema "commands" do
     field :name, :string
     belongs_to :bundle, Bundle
 

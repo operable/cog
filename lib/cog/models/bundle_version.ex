@@ -2,7 +2,7 @@ defmodule Cog.Models.BundleVersion do
   use Cog.Model
   use Cog.Models
 
-  schema "bundle_versions_v2" do
+  schema "bundle_versions" do
     field :version, VersionTriple
     field :config_file, :map
     field :description, :string
@@ -34,7 +34,7 @@ defmodule Cog.Models.BundleVersion do
     model
     |> cast(params, @required_fields, @optional_fields)
     |> unique_constraint(:version,
-                         name: :bundle_versions_v2_bundle_id_version_index)
+                         name: :bundle_versions_bundle_id_version_index)
   end
 
 end
