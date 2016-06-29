@@ -1,10 +1,12 @@
 defmodule Cog.Models.UserRole do
   use Cog.Model
+  alias Cog.Models.{User, Role}
 
   @primary_key false
+
   schema "user_roles" do
-    belongs_to :user, Cog.Models.User, references: :id
-    belongs_to :role, Cog.Models.Role, references: :id
+    belongs_to :user, User, primary_key: true
+    belongs_to :role, Role, primary_key: true
   end
 
   @required_fields ~w(user_id role_id)

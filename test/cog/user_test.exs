@@ -50,7 +50,7 @@ defmodule UserTest do
                                             "last_name" => "McOperator",
                                             "email_address" => "operator@operable.io"})
     refute changeset.valid?
-    assert {:password, "can't be blank"} in changeset.errors
+    assert {:password, {"can't be blank", []}} in changeset.errors
   end
 
   test "password is stored as a digest" do

@@ -1,9 +1,12 @@
 defmodule Cog.Models.GroupPermission do
   use Cog.Model
+  alias Cog.Models.{Group, Permission}
+
   @primary_key false
+
   schema "group_permissions" do
-    belongs_to :group, Cog.Models.Group, references: :id
-    belongs_to :permission, Cog.Models.Permission, references: :id
+    belongs_to :group, Group, primary_key: true
+    belongs_to :permission, Permission, primary_key: true
   end
 
   @required_fields ~w(group_id permission_id)

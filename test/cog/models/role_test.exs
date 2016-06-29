@@ -22,19 +22,19 @@ defmodule Cog.Models.Role.Test do
 
   test "names are required" do
     changeset = Role.changeset(%Role{}, %{})
-    assert {:name, "can't be blank"} in changeset.errors
+    assert {:name, {"can't be blank", []}} in changeset.errors
   end
 
   test "names are unique" do
     {:ok, _role} = Repo.insert Role.changeset(%Role{}, %{"name" => "admin"})
     {:error, changeset} = Repo.insert Role.changeset(%Role{}, %{"name" => "admin"})
-    assert {:name, "has already been taken"} in changeset.errors
+    assert {:name, {"has already been taken", []}} in changeset.errors
   end
 
   @tag :bootstrap
   test "admin role cannot be renamed", %{admin_role: admin_role} do
     {:error, changeset} = Repo.update(Role.changeset(admin_role, %{"name" => "not-cog-admin"}))
-    assert {:name, "admin role may not be modified"} in changeset.errors
+    assert {:name, {"admin role may not be modified", []}} in changeset.errors
   end
 
   @tag :bootstrap

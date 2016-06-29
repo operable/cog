@@ -1,9 +1,12 @@
 defmodule Cog.Models.UserGroupMembership do
   use Cog.Model
+  alias Cog.Models.{User, Group}
+
   @primary_key false
+
   schema "user_group_membership" do
-    belongs_to :member, Cog.Models.User, references: :id
-    belongs_to :group, Cog.Models.Group, references: :id
+    belongs_to :member, User, primary_key: true
+    belongs_to :group, Group, primary_key: true
   end
 
   @required_fields ~w(member_id group_id)

@@ -14,7 +14,7 @@ defmodule Cog.Model do
   defmacro __using__(:no_primary_key) do
     quote do
       alias Cog.Repo
-      use Ecto.Model
+      use Ecto.Schema
       use Cog.Models.EctoJson
       alias Cog.Models.Types.VersionTriple
 
@@ -27,7 +27,7 @@ defmodule Cog.Model do
   defmacro __using__(_) do
     quote do
       alias Cog.Repo
-      use Ecto.Model
+      use Ecto.Schema
       use Cog.Models.EctoJson
       alias Cog.Models.Types.VersionTriple
 

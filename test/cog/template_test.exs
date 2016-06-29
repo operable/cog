@@ -2,6 +2,13 @@ defmodule Cog.TemplateTest do
   use ExUnit.Case, async: false
   alias Cog.Template
 
+  setup do
+    Ecto.Adapters.SQL.Sandbox.checkout(Cog.Repo)
+    Ecto.Adapters.SQL.Sandbox.mode(Cog.Repo, {:shared, self()})
+
+    :ok
+  end
+
   test "rendering json for the slack adapter" do
     context = %{
       a: %{

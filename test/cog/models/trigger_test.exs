@@ -11,19 +11,19 @@ defmodule Cog.Models.TriggerTest do
 
   test "trigger timeout must be an integer" do
     changeset = Trigger.changeset(%Trigger{}, %{timeout_sec: 100.123})
-    assert {:timeout_sec, "is invalid"} in changeset.errors
+    assert {:timeout_sec, {"is invalid", [type: :integer]}} in changeset.errors
   end
 
   test "trigger timeout must be greater than 0" do
     changeset = Trigger.changeset(%Trigger{}, %{timeout_sec: -1})
     assert {:timeout_sec,
-            {"must be greater than %{count}", [count: 0]}} in changeset.errors
+            {"must be greater than %{number}", [number: 0]}} in changeset.errors
   end
 
   [:name, :pipeline] |> Enum.each(fn(field) ->
     test "#{inspect field} is required" do
       changeset = Trigger.changeset(%Trigger{}, %{})
-      assert {unquote(field), "can't be blank"} in changeset.errors
+      assert {unquote(field), {"can't be blank", []}} in changeset.errors
     end
   end)
 

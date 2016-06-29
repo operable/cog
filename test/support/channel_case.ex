@@ -30,10 +30,9 @@ defmodule Cog.ChannelCase do
     end
   end
 
-  setup tags do
-    unless tags[:async] do
-      Ecto.Adapters.SQL.restart_test_transaction(Cog.Repo, [])
-    end
+  setup do
+    Ecto.Adapters.SQL.Sandbox.checkout(Cog.Repo)
+    Ecto.Adapters.SQL.Sandbox.mode(Cog.Repo, {:shared, self()})
 
     :ok
   end

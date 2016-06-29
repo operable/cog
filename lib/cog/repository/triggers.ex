@@ -58,7 +58,7 @@ defmodule Cog.Repository.Triggers do
     try do
       Repo.delete(trigger)
     rescue
-      Ecto.StaleModelError ->
+      Ecto.StaleEntryError ->
         {:error, :not_found}
     end
   end

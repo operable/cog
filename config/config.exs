@@ -90,6 +90,8 @@ config :probe, log_directory: data_dir("audit_logs")
 # ========================================================================
 # Database Setup
 
+config :cog, ecto_repos: [Cog.Repo]
+
 config :cog, Cog.Repo,
   adapter: Ecto.Adapters.Postgres,
   url: (case System.get_env("DATABASE_URL") do

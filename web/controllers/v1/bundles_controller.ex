@@ -149,17 +149,17 @@ defmodule Cog.V1.BundlesController do
     warnings = Enum.map(warnings, fn({msg, meta}) -> ~s(Warning near #{meta}: #{msg}) end)
     {:unprocessable_entity, %{errors: msg ++ errors, warnings: warnings}}
   end
-  defp error({:db_errors, [{_, "has already been taken"}]=errors}) do
+  defp error({:db_errors, [{_, {"has already been taken", []}}]=errors}) do
     # A bit fragile, relying as it does on the specific message that
     # Ecto uses by default for unique constraint violations, but
     # allows us to fail with a more appropriate HTTP 409
     msg = ["Could not save bundle."]
-    errors = Enum.map(errors, fn({field, message}) -> "#{Atom.to_string(field)} #{message}" end)
+    errors = Enum.map(errors, fn({field, {message, []}}) -> "#{Atom.to_string(field)} #{message}" end)
     {:conflict, %{errors: msg ++ errors}}
   end
   defp error({:db_errors, errors}) do
     msg = ["Could not save bundle."]
-    errors = Enum.map(errors, fn({_, message}) -> message end)
+    errors = Enum.map(errors, fn({_, {message, []}}) -> message end)
     {:unprocessable_entity, %{errors: msg ++ errors}}
   end
   defp error(err) do

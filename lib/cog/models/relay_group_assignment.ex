@@ -1,10 +1,12 @@
 defmodule Cog.Models.RelayGroupAssignment do
   use Cog.Model
+  alias Cog.Models.{Bundle, RelayGroup}
+
   @primary_key false
 
   schema "relay_group_assignments" do
-    belongs_to :bundle, Cog.Models.Bundle, references: :id
-    belongs_to :group, Cog.Models.RelayGroup, references: :id
+    belongs_to :bundle, Bundle, primary_key: true
+    belongs_to :group, RelayGroup, primary_key: true
   end
 
   @required_fields ~w(bundle_id group_id)

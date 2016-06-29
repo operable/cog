@@ -53,8 +53,8 @@ defmodule Cog.Models.Group do
     |> unique_constraint(:name, name: :groups_name_index)
   end
 
-  defp protect_admin_group(%Changeset{model: model}=changeset) do
-    if model.name == Cog.admin_group do
+  defp protect_admin_group(%Changeset{data: data}=changeset) do
+    if data.name == Cog.admin_group do
       changeset
       |> add_error(:name, "admin group may not be modified")
     else

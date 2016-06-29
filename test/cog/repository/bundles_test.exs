@@ -142,7 +142,7 @@ defmodule Cog.Repository.BundlesTest do
 
   test "installing the same version multiple times is an error" do
     {:ok, _version} = Bundles.install(%{"name" => "testing", "version" => "1.0.0", "config_file" => %{}})
-    assert {:error, {:db_errors, [version: "has already been taken"]}} = Bundles.install(%{"name" => "testing", "version" => "1.0.0", "config_file" => %{}})
+    assert {:error, {:db_errors, [version: {"has already been taken", []}]}} = Bundles.install(%{"name" => "testing", "version" => "1.0.0", "config_file" => %{}})
   end
 
   test "deleting the last version of a bundle deletes the bundle itself" do
@@ -320,7 +320,7 @@ defmodule Cog.Repository.BundlesTest do
                            "version" => "the_ultimate",
                            "permissions" => [],
                            "commands" => %{"hello" => %{"rules" => ["This ain't valid syntax"]}}}})
-    assert {:error, {:db_errors, [version: "is invalid"]}} = result
+    assert {:error, {:db_errors, [version: {"is invalid", [type: Cog.Models.Types.VersionTriple]}]}} = result
     refute bundle_named("testing")
 
   end
@@ -358,10 +358,13 @@ defmodule Cog.Repository.BundlesTest do
   end
 
   test "prerelease metadata on versions are not allowed" do
-    assert {:error, {:db_errors, [version: "is invalid"]}} = Bundles.install(%{"name" => "bundle-testing",
-                                                                               "version" => "1.0.0-pre1",
-                                                                               "config_file" => %{"name" => "bundle-testing",
-                                                                                                  "version" => "1.0.0-pre1"}})
+    result = Bundles.install(%{"name" => "bundle-testing",
+                               "version" => "1.0.0-pre1",
+                               "config_file" => %{"name" => "bundle-testing",
+                                                  "version" => "1.0.0-pre1"}})
+
+
+    assert {:error, {:db_errors, [version: {"is invalid", [type: Cog.Models.Types.VersionTriple]}]}} = result
   end
 
   for bad_name <- ["operable", "cog", "site", "user"] do

@@ -21,7 +21,7 @@ defmodule TokenTest do
   test "error received when trying to insert duplicate tokens", %{user: user} do
     {:ok, _} = Token.insert_new(user, %{value: "something"})
     {:error, changeset} = Token.insert_new(user, %{value: "something"})
-    assert({:users_tokens_must_be_unique, "has already been taken"} in changeset.errors)
+    assert({:users_tokens_must_be_unique, {"has already been taken", []}} in changeset.errors)
   end
 
   test "generate a random 64-bit unicode encoded string" do

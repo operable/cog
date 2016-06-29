@@ -94,7 +94,7 @@ defmodule Cog.V1.RoleController.Test do
 
   test "show fails when supplying a non-uuid path parameter", %{authed: user} do
     error = catch_error(api_request(user, :get, "/v1/roles/not-a-uuid"))
-    assert %Ecto.CastError{} = error
+    assert %Ecto.Query.CastError{} = error
   end
 
   test "update can change a role's name", %{authed: user} do

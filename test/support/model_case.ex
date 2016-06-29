@@ -29,10 +29,9 @@ defmodule Cog.ModelCase do
     end
   end
 
-  setup tags do
-    unless tags[:async] do
-      Ecto.Adapters.SQL.restart_test_transaction(Cog.Repo, [])
-    end
+  setup do
+    Ecto.Adapters.SQL.Sandbox.checkout(Cog.Repo)
+    Ecto.Adapters.SQL.Sandbox.mode(Cog.Repo, {:shared, self()})
 
     :ok
   end
@@ -56,7 +55,7 @@ defmodule Cog.ModelCase do
   field directly:
 
       iex> changeset = User.changeset(%User{}, password: "password")
-      iex> {:password, "is unsafe"} in changeset.errors
+      iex> {:password, {"is unsafe", []}} in changeset.errors
       true
   """
   def errors_on(model, data) do
