@@ -20,13 +20,13 @@ defmodule Cog.Bootstrap do
   }
 
   @default_relay_params %{
-    "name"        => "Default",
+    "name"        => "default",
     "description" => "Default relay",
     "enabled"     => true
   }
 
   @default_relay_group_params %{
-    "name"        => "Default",
+    "name"        => "default",
     "description" => "Default relay group"
   }
 
