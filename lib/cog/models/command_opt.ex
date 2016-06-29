@@ -59,7 +59,7 @@ defmodule Cog.Models.CommandOption do
   """
   def build_new(%CommandVersion{}=command, params) do
     command
-    |> Ecto.Model.build(:options)
+    |> Ecto.build_assoc(:options)
     |> changeset(params)
   end
 

@@ -28,7 +28,7 @@ defmodule Cog.Models.Command do
   """
   def build_new(%Bundle{id: _}=bundle, params) do
     bundle
-    |> Ecto.Model.build(:commands)
+    |> Ecto.build_assoc(:commands)
     |> changeset(params)
   end
 

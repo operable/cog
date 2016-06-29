@@ -1,7 +1,5 @@
 defmodule Cog.Repo.Migrations.AddVersionToBundles do
   use Ecto.Migration
-  alias Cog.Repo
-  alias Cog.Models.Bundle
 
   def change do
     alter table(:bundles) do

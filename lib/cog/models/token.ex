@@ -21,7 +21,7 @@ defmodule Cog.Models.Token do
   """
   def insert_new(%User{}=user, params) do
     user
-    |> Ecto.Model.build(:tokens, params)
+    |> Ecto.build_assoc(:tokens, params)
     |> changeset(params)
     |> Repo.insert
   end

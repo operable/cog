@@ -31,7 +31,7 @@ defmodule Cog.Models.CommandVersion do
   """
   def build_new(%BundleVersion{id: _}=bundle_version, params) do
     bundle_version
-    |> Ecto.Model.build(:command_versions)
+    |> Ecto.build_assoc(:command_versions)
     |> changeset(params)
   end
 

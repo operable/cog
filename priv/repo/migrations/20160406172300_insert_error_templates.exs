@@ -1,7 +1,5 @@
 defmodule Cog.Repo.Migrations.InsertErrorTemplates do
   use Ecto.Migration
-  alias Cog.Models.Template
-  alias Cog.Repo
 
   def change do
 

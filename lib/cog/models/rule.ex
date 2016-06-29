@@ -33,7 +33,7 @@ defmodule Cog.Models.Rule do
   end
   def insert_new(%Command{}=command, params) do
     command
-    |> Ecto.Model.build(:rules, params)
+    |> Ecto.build_assoc(:rules, params)
     |> changeset(params)
     |> Repo.insert
   end

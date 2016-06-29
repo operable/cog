@@ -593,7 +593,7 @@ defmodule Cog.Repository.Bundles do
 
   defp new_version!(bundle, params) do
     bundle
-    |> Ecto.Model.build(:versions)
+    |> Ecto.build_assoc(:versions)
     |> BundleVersion.changeset(params)
     |> Repo.insert!
     |> preload
@@ -683,7 +683,7 @@ defmodule Cog.Repository.Bundles do
     canonical_command = Enum.find(all_commands, &(&1.name == command_name))
 
     command_version = bundle_version
-    |> Ecto.Model.build(:commands)
+    |> Ecto.build_assoc(:commands)
     |> Map.put(:command_id, canonical_command.id)
     |> CommandVersion.changeset(command_spec)
     |> Repo.insert!
@@ -715,7 +715,7 @@ defmodule Cog.Repository.Bundles do
       }
 
       bundle_version
-      |> Ecto.Model.build(:templates)
+      |> Ecto.build_assoc(:templates)
       |> Template.changeset(params)
       |> Repo.insert!
     end)
@@ -780,7 +780,7 @@ defmodule Cog.Repository.Bundles do
 
   defp add_bundle_command(bundle, command_name) do
     bundle
-    |> Ecto.Model.build(:commands)
+    |> Ecto.build_assoc(:commands)
     |> Command.changeset(%{name: command_name})
     |> Repo.insert!
   end

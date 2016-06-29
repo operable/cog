@@ -25,7 +25,7 @@ defmodule Cog.Models.Permission do
   """
   def build_new(%Bundle{}=bundle, params) do
     bundle
-    |> Ecto.Model.build(:permissions)
+    |> Ecto.build_assoc(:permissions)
     |> changeset(params)
   end
 

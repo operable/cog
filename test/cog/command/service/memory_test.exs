@@ -7,6 +7,9 @@ defmodule Cog.Command.Service.MemoryTest do
   @token "d386da42-0c99-11e6-aa1c-db55971236aa"
 
   setup_all do
+    Ecto.Adapters.SQL.Sandbox.checkout(Cog.Repo)
+    Ecto.Adapters.SQL.Sandbox.mode(Cog.Repo, {:shared, self()})
+
     pid = Process.whereis(Memory)
     Process.unregister(Memory)
 

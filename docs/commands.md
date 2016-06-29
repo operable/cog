@@ -147,8 +147,8 @@ get the command working.
 
    ```elixir
    command = Repo.insert!(%Command{name: "add", version: "0.0.1"})
-   Repo.insert!(Ecto.Model.build(command, :args, name: "left", rank: 0))
-   Repo.insert!(Ecto.Model.build(command, :args, name: "right", rank: 1))
+   Repo.insert!(Ecto.build_assoc(command, :args, name: "left", rank: 0))
+   Repo.insert!(Ecto.build_assoc(command, :args, name: "right", rank: 1))
    ```
 
 3. Create permissions and rules
@@ -160,12 +160,12 @@ get the command working.
    ```elixir
    # Create permission
    namespace = Repo.insert!(%Namespace{name: "add"})
-   permission = Repo.insert!(Ecto.Model.build(namespace, :permissions, name: "read"))
+   permission = Repo.insert!(Ecto.build_assoc(namespace, :permissions, name: "read"))
 
    # Create rule for permission
    rule = "when command is add must have add:read"
    {:ok, parse_tree} = Permissions.Parser.parse(rule)
-   Repo.insert!(Ecto.Model.build(command, :rules, parse_tree: parse_tree))
+   Repo.insert!(Ecto.build_assoc(command, :rules, parse_tree: parse_tree))
 
    # Grant permission to user
    Repo.insert!(%UserPermission{user_id: user.id, permission: permission.id})
