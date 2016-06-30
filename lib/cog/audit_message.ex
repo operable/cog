@@ -29,6 +29,9 @@ defmodule Cog.AuditMessage do
     name = CommandVersion.full_name(command)
     "Timed out waiting on #{name} to reply"
   end
+  def render({:timeout, command_name}, _request) do
+    "Timed out waiting on #{command_name} to reply"
+  end
   def render({:no_rule, current_invocation}, _request),
     do: "No rule matching '#{current_invocation}'"
 end
