@@ -708,6 +708,7 @@ defmodule Cog.Repository.Bundles do
 
   defp create_template!(bundle_version, {name, template}) do
     Enum.each(template, fn({provider, contents}) ->
+      contents = String.replace(contents, ~r{\n\z}, "")
       params = %{
         adapter: provider,
         name: name,
