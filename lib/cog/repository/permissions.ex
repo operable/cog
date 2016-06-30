@@ -41,7 +41,7 @@ defmodule Cog.Repository.Permissions do
   """
   def create_permission(bundle_version, permission_name) do
     case bundle_version.bundle
-    |> Ecto.Model.build(:permissions)
+    |> Ecto.build_assoc(:permissions)
     |> Permission.changeset(%{name: permission_name})
     |> Repo.insert do
       {:ok, permission} ->

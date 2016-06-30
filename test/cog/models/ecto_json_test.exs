@@ -3,7 +3,7 @@ defmodule Cog.Models.EctoJson.Test do
   alias Cog.Models.EctoJson
 
   defmodule NoJsonTest do
-    use Ecto.Model
+    use Ecto.Schema
 
     schema "nope" do
       field :reason, :string
@@ -11,7 +11,7 @@ defmodule Cog.Models.EctoJson.Test do
   end
 
   defmodule ScalarTest do
-    use Ecto.Model
+    use Ecto.Schema
     use Cog.Models.EctoJson
 
     schema "testing" do
@@ -26,7 +26,7 @@ defmodule Cog.Models.EctoJson.Test do
   end
 
   defmodule MultiTest do
-    use Ecto.Model
+    use Ecto.Schema
     use Cog.Models.EctoJson
 
     schema "multi" do
