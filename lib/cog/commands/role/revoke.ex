@@ -32,10 +32,11 @@ defmodule Cog.Commands.Role.Revoke do
       %Role{}=role ->
         case Groups.by_name(group) do
           {:ok, group} ->
-            :ok = Groups.revoke(group, role)
-            role  = Cog.V1.RoleView.render("show.json", %{role: role})
-            group = Cog.V1.GroupView.render("show.json", %{group: group})
-            {:ok, "role-revoke", Map.merge(role, group)}
+            with(:ok <- Groups.revoke(group, role)) do
+              role  = Cog.V1.RoleView.render("show.json", %{role: role})
+              group = Cog.V1.GroupView.render("show.json", %{group: group})
+              {:ok, "role-revoke", Map.merge(role, group)}
+            end
           {:error, :not_found} ->
             {:error, {:resource_not_found, "group", group}}
         end

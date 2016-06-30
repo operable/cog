@@ -268,14 +268,12 @@ defmodule Integration.Commands.RoleTest do
     refute_role_is_granted(group, role)
   end
 
-  @tag :skip # This isn't implemented yet, but when it is, the role
-  # command should be able to handle it
   test "the cog-admin role cannot be revoked from the cog-admin group", %{user: user} do
     role = Roles.by_name("cog-admin")
     {:ok, group} = Groups.by_name("cog-admin")
 
     response = send_message(user, "@bot: operable:role revoke cog-admin cog-admin")
-    assert_error_message_contains(response , "We should really figure out what a real error message would be in this case")
+    assert_error_message_contains(response , "Cannot revoke role \"cog-admin\" from group \"cog-admin\": grant is permanent")
 
     assert_role_is_granted(group, role)
   end

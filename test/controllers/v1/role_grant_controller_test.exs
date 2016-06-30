@@ -2,41 +2,8 @@ defmodule Cog.V1.RoleGrantController.Test do
   use Cog.ModelCase
   use Cog.ConnCase
 
-
-  # TODO: Clean this up when the underlying data model is simplified
-  #       to match what's exposed in the API.
- 
-  # When these tests were written, permissions were allowed to be
-  # associated with users, groups, or roles. This model has been
-  # simplified to only allow permissions to be associated with roles,
-  # but the parameterized test scaffolding has been retained for
-  # the time being. More information about this structure is below.
-  #
-  # All the permission granting/revoking API endpoints share similar
-  # structure, and are all implemented by the same code. As such, the
-  # tests for granting permissions to users and granting them to roles
-  # or groups are all the same, so we'll just parameterize all the
-  # tests as appropriate.
-  #
-  # As currently structured, each test should have a `:base` tag,
-  # which feeds into this setup function in order to establish the
-  # correct test structures.
-  #
-  # Example:
-  #
-  #     @tag base: :user
-  #     test "does something with users", context do
-  #       assert something_very_interesting_indeed()
-  #     end
-  #
-  setup context do
-    # Depending on which endpoint we're testing, we'll need to change
-    # the permission that the user making the API requests needs to
-    # have in order to be authorized to make the request.
-    required_permission = case context[:base] do
-                            :user -> permission("#{Cog.embedded_bundle}:manage_users")
-                            :group -> permission("#{Cog.embedded_bundle}:manage_groups")
-                          end
+  setup do
+    required_permission = permission("#{Cog.embedded_bundle}:manage_groups")
 
     # This user will be used to test the normal operation of the controller
     authed_user = user("cog")
@@ -47,273 +14,240 @@ defmodule Cog.V1.RoleGrantController.Test do
     # indeed required for requests
     unauthed_user = user("sadpanda") |> with_token
 
-    # The API requests are all focused around granting / revoking
-    # permissions from a specific user, role, or group. In these
-    # tests, we refer to this entity as the "target"
-    target = case context[:base] do
-               :user -> user("hal")
-               :group -> group("robots")
-             end
-
-    # Once we have a target, we can create an API request path that is
-    # appropriate for the kind of entity we're targeting. Every
-    # request will use this path.
-    path = case context[:base] do
-             :user  -> "/v1/users/#{target.id}/roles"
-             :group -> "/v1/groups/#{target.id}/roles"
-           end
+    group = group("robots")
 
     {:ok, [authed: authed_user,
            unauthed: unauthed_user,
-           target: target,
-           path: path]}
+           group: group]}
   end
 
-  # Scripting to the rescue!
-  #
-  # For each kind of entity we want to test, we'll generate a whole
-  # series of tests focused around testing the manipulation of
-  # permissions on that kind of entity.
-  [:group] |> Enum.each(
-    fn(base) ->
+  # Grant
+  ########################################################################
 
-      # Grant
-      ########################################################################
+  test "grant a single role to a group", %{authed: requestor,
+                                           group: group} do
+    role_permission = permission("site:deploy_test")
+    role = role("admin")
+    Permittable.grant_to(role, role_permission)
+    assert_permission_is_granted(role, role_permission)
+    refute_role_is_granted(group, role)
 
-      @tag base: base
-      test "grant a single role to a #{base}", %{authed: requestor,
-                                                 target: target,
-                                                 path: path} do
-        role_permission = permission("site:deploy_test")
-        role = role("admin")
-        Permittable.grant_to(role, role_permission)
-        assert_permission_is_granted(role, role_permission)
-        refute_role_is_granted(target, role)
+    conn = api_request(requestor, :post, "/v1/groups/#{group.id}/roles",
+                       body: %{"roles" => %{"grant" => ["admin"]}})
 
-        conn = api_request(requestor, :post, path,
-                           body: %{"roles" => %{"grant" => ["admin"]}})
+    assert %{"roles" => [%{"id" => role.id,
+                           "name" => role.name,
+                           "permissions" => [%{"id" => role_permission.id,
+                                               "name" => role_permission.name,
+                                               "bundle" => "site"}]}]} == json_response(conn, 200)
 
-        assert %{"roles" => [%{"id" => role.id,
-                               "name" => role.name,
-                               "permissions" => [%{"id" => role_permission.id,
-                                                 "name" => role_permission.name,
-                                                 "bundle" => "site"}]}]} == json_response(conn, 200)
+    assert_role_is_granted(group, role)
+  end
 
-        assert_role_is_granted(target, role)
-      end
+  test "grant multiple roles to a group at once", %{authed: requestor,
+                                                    group: group} do
+    # Set up roles
+    role_names = ["admin", "dev", "ops"]
+    roles = Enum.map(role_names, &role(&1))
+    refute_role_is_granted(group, roles)
 
-      @tag base: base
-      test "grant multiple roles to a #{base} at once", %{authed: requestor,
-                                                          target: target,
-                                                          path: path} do
-        # Set up roles
-        role_names = ["admin", "dev", "ops"]
-        roles = Enum.map(role_names, &role(&1))
-        refute_role_is_granted(target, roles)
+    # Grant the roles
+    conn = api_request(requestor, :post, "/v1/groups/#{group.id}/roles",
+                       body: %{"roles" => %{"grant" => role_names}})
+    granted_roles = json_response(conn, 200)["roles"]
 
-        # Grant the roles
-        conn = api_request(requestor, :post, path,
-                           body: %{"roles" => %{"grant" => role_names}})
-        granted_roles = json_response(conn, 200)["roles"]
+    # Verify the response body
+    [admin, dev, ops] = roles
+    assert [%{"id" => admin.id,
+              "name" => admin.name,
+              "permissions" => []},
+            %{"id" => dev.id,
+              "name" => dev.name,
+              "permissions" => []},
+            %{"id" => ops.id,
+              "name" => ops.name,
+              "permissions" => []}] == granted_roles |> sort_by("name")
 
-        # Verify the response body
-        [admin, dev, ops] = roles
-        assert [%{"id" => admin.id,
-                  "name" => admin.name,
-                  "permissions" => []},
-                %{"id" => dev.id,
-                  "name" => dev.name,
-                  "permissions" => []},
-                %{"id" => ops.id,
-                  "name" => ops.name,
-                  "permissions" => []}] == granted_roles |> sort_by("name")
+    # Ensure grants are persisted in the database
+    assert_role_is_granted(group, roles)
+  end
 
-        # Ensure grants are persisted in the database
-        assert_role_is_granted(target, roles)
-      end
+  test "response from a grant includes all roles directly granted to a group", %{authed: requestor,
+                                                                                 group: group} do
+    # Give the thing a role from the start
+    pre_existing = role("admin")
+    :ok = Permittable.grant_to(group, pre_existing)
 
-      @tag base: base
-      test "response from a grant includes all roles directly granted to a #{base}", %{authed: requestor,
-                                                                                       target: target,
-                                                                                       path: path} do
-        # Give the thing a role from the start
-        pre_existing = role("admin")
-        :ok = Permittable.grant_to(target, pre_existing)
+    # Grant a new role
+    new_role = role("dev")
+    conn = api_request(requestor, :post, "/v1/groups/#{group.id}/roles",
+                       body: %{"roles" => %{"grant" => [new_role.name]}})
+    granted_roles = json_response(conn, 200)["roles"]
 
-        # Grant a new role
-        new_role = role("dev")
-        conn = api_request(requestor, :post, path,
-                           body: %{"roles" => %{"grant" => [new_role.name]}})
-        granted_roles = json_response(conn, 200)["roles"]
+    # You should see both roles in the response body
+    assert [%{"id" => pre_existing.id,
+              "name" => pre_existing.name,
+              "permissions" => []},
+            %{"id" => new_role.id,
+              "name" => new_role.name,
+              "permissions" => []}] == granted_roles |> sort_by("name")
 
-        # You should see both roles in the response body
-        assert [%{"id" => pre_existing.id,
-                  "name" => pre_existing.name,
-                  "permissions" => []},
-                %{"id" => new_role.id,
-                  "name" => new_role.name,
-                  "permissions" => []}] == granted_roles |> sort_by("name")
+    # Verify they're both in the database
+    assert_role_is_granted(group, [pre_existing, new_role])
+  end
 
-        # Verify they're both in the database
-        assert_role_is_granted(target, [pre_existing, new_role])
-      end
+  test "fails all grants to a group if any role does not exist", %{authed: requestor,
+                                                                   group: group} do
+    existing = role("admin")
+    refute_role_is_granted(group, existing)
 
-      @tag base: base
-      test "fails all grants to a #{base} if any role does not exist", %{authed: requestor,
-                                                                         target: target,
-                                                                         path: path} do
-        existing = role("admin")
-        refute_role_is_granted(target, existing)
+    conn = api_request(requestor, :post, "/v1/groups/#{group.id}/roles",
+                       body: %{"roles" => %{"grant" => [existing.name,
+                                                        "does_not_exist"]}})
+    assert json_response(conn, 422) == %{"errors" => %{"not_found" => %{"roles" => ["does_not_exist"]}}}
 
-        conn = api_request(requestor, :post, path,
-                           body: %{"roles" => %{"grant" => [existing.name,
-                                                            "does_not_exist"]}})
-        assert json_response(conn, 422) == %{"errors" => %{"not_found" => %{"roles" => ["does_not_exist"]}}}
+    refute_role_is_granted(group, existing)
+  end
 
-        refute_role_is_granted(target, existing)
-      end
+  test "grant works even when the group already has that role in the first place", %{authed: requestor,
+                                                                                     group: group} do
+    role = role("admin")
+    :ok = Permittable.grant_to(group, role)
 
-      @tag base: base
-      test "grant works even when the #{base} already has that role in the first place", %{authed: requestor,
-                                                                                           target: target,
-                                                                                           path: path} do
-        role = role("admin")
-        :ok = Permittable.grant_to(target, role)
+    conn = api_request(requestor, :post, "/v1/groups/#{group.id}/roles",
+                       body: %{"roles" => %{"grant" => [role.name]}})
 
-        conn = api_request(requestor, :post, path,
-                           body: %{"roles" => %{"grant" => [role.name]}})
+    assert %{"roles" => [%{"id" => role.id,
+                           "name" => role.name,
+                           "permissions" => []}]} == json_response(conn, 200)
 
-        assert %{"roles" => [%{"id" => role.id,
-                               "name" => role.name,
-                               "permissions" => []}]} == json_response(conn, 200)
+    # Still got it!
+    assert_role_is_granted(group, role)
+  end
 
-        # Still got it!
-        assert_role_is_granted(target, role)
-      end
+  test "unauthed users cannot grant roles to groups", %{unauthed: requestor,
+                                                        group: group} do
+    role = role("admin")
 
-      @tag base: base
-      test "unauthed users cannot grant roles to #{base}s", %{unauthed: requestor,
-                                                              target: target,
-                                                              path: path} do
-        role = role("admin")
+    conn = api_request(requestor, :post, "/v1/groups/#{group.id}/roles",
+                       body: %{"roles" => %{"grant" => [role.name]}})
 
-        conn = api_request(requestor, :post, path,
-                           body: %{"roles" => %{"grant" => [role.name]}})
+    assert conn.halted
+    assert conn.status == 403
 
-        assert conn.halted
-        assert conn.status == 403
+    refute_role_is_granted(group, role)
+  end
 
-        refute_role_is_granted(target, role)
-      end
+  # Revoke
+  ########################################################################
 
-      # Revoke
-      ########################################################################
+  test "revoke a single role from a group", %{authed: requestor,
+                                              group: group} do
+    role = role("admin")
+    :ok = Permittable.grant_to(group, role)
 
-      @tag base: base
-      test "revoke a single role from a #{base}", %{authed: requestor,
-                                                    target: target,
-                                                    path: path} do
-        role = role("admin")
-        :ok = Permittable.grant_to(target, role)
+    conn = api_request(requestor, :post, "/v1/groups/#{group.id}/roles",
+                       body: %{"roles" => %{"revoke" => [role.name]}})
 
-        conn = api_request(requestor, :post, path,
-                           body: %{"roles" => %{"revoke" => [role.name]}})
+    assert %{"roles" => []} == json_response(conn, 200)
 
-        assert %{"roles" => []} == json_response(conn, 200)
+    refute_role_is_granted(group, role)
+  end
 
-        refute_role_is_granted(target, role)
-      end
+  test "revoke multiple roles from a group at once", %{authed: requestor,
+                                                       group: group} do
+    # Grant multiple roles to the group
+    role_names = ["admin", "dev", "ops"]
+    roles = Enum.map(role_names, &role(&1))
+    Enum.each(roles, &Permittable.grant_to(group, &1))
 
-      @tag base: base
-      test "revoke multiple roles from a #{base} at once", %{authed: requestor,
-                                                             target: target,
-                                                             path: path} do
-        # Grant multiple roles to the target
-        role_names = ["admin", "dev", "ops"]
-        roles = Enum.map(role_names, &role(&1))
-        Enum.each(roles, &Permittable.grant_to(target, &1))
+    # Revoke the roles
+    conn = api_request(requestor, :post, "/v1/groups/#{group.id}/roles",
+                       body: %{"roles" => %{"revoke" => role_names}})
 
-        # Revoke the roles
-        conn = api_request(requestor, :post, path,
-                           body: %{"roles" => %{"revoke" => role_names}})
+    # Verify the response body
+    assert %{"roles" => []} == json_response(conn, 200)
 
-        # Verify the response body
-        assert %{"roles" => []} == json_response(conn, 200)
+    # Ensure revokes are persisted in the database
+    refute_role_is_granted(group, roles)
+  end
 
-        # Ensure revokes are persisted in the database
-        refute_role_is_granted(target, roles)
-      end
+  test "response from a revoke includes all roles directly granted to a group", %{authed: requestor,
+                                                                                  group: group} do
+    # Give the user two roles from the start
+    role_names = ["admin", "dev"]
+    roles = [remaining_role, to_be_revoked_role] = Enum.map(role_names, &role(&1))
+    Enum.each(roles, &Permittable.grant_to(group, &1))
 
-      @tag base: base
-      test "response from a revoke includes all roles directly granted to a #{base}", %{authed: requestor,
-                                                                                        target: target,
-                                                                                        path: path} do
-        # Give the user two roles from the start
-        role_names = ["admin", "dev"]
-        roles = [remaining_role, to_be_revoked_role] = Enum.map(role_names, &role(&1))
-        Enum.each(roles, &Permittable.grant_to(target, &1))
+    # Revoke one of them
+    conn = api_request(requestor, :post, "/v1/groups/#{group.id}/roles",
+                       body: %{"roles" => %{"revoke" => [to_be_revoked_role.name]}})
 
-        # Revoke one of them
-        conn = api_request(requestor, :post, path,
-                           body: %{"roles" => %{"revoke" => [to_be_revoked_role.name]}})
+    # only the revoked role is, um, revoked
+    assert %{"roles" => [%{"id" => remaining_role.id,
+                           "name" => remaining_role.name,
+                           "permissions" => []}]} == json_response(conn, 200)
 
-        # only the revoked role is, um, revoked
-        assert %{"roles" => [%{"id" => remaining_role.id,
-                               "name" => remaining_role.name,
-                               "permissions" => []}]} == json_response(conn, 200)
+    assert_role_is_granted(group, remaining_role)
+    refute_role_is_granted(group, to_be_revoked_role)
+  end
 
-        assert_role_is_granted(target, remaining_role)
-        refute_role_is_granted(target, to_be_revoked_role)
-      end
+  test "fails all revokes against a group if any role does not exist", %{authed: requestor,
+                                                                         group: group} do
+    existing = role("admin")
+    :ok = Permittable.grant_to(group, existing)
 
-      @tag base: base
-      test "fails all revokes against a #{base} if any role does not exist", %{authed: requestor,
-                                                                               target: target,
-                                                                               path: path} do
-        existing = role("admin")
-        :ok = Permittable.grant_to(target, existing)
+    conn = api_request(requestor, :post, "/v1/groups/#{group.id}/roles",
+                       body: %{"roles" => %{"revoke" => [existing.name,
+                                                         "does_not_exist"]}})
+    assert json_response(conn, 422) == %{"errors" => %{"not_found" => %{"roles" => ["does_not_exist"]}}}
 
-        conn = api_request(requestor, :post, path,
-                           body: %{"roles" => %{"revoke" => [existing.name,
-                                                             "does_not_exist"]}})
-        assert json_response(conn, 422) == %{"errors" => %{"not_found" => %{"roles" => ["does_not_exist"]}}}
+    # Still got it
+    assert_role_is_granted(group, existing)
+  end
 
-        # Still got it
-        assert_role_is_granted(target, existing)
-      end
+  test "revoke works even when the group didn't have that role in the first place", %{authed: requestor,
+                                                                                      group: group} do
+    role = role("admin")
+    refute_role_is_granted(group, role)
 
-      @tag base: base
-      test "revoke works even when the #{base} didn't have that role in the first place", %{authed: requestor,
-                                                                                            target: target,
-                                                                                            path: path} do
-        role = role("admin")
-        refute_role_is_granted(target, role)
+    conn = api_request(requestor, :post, "/v1/groups/#{group.id}/roles",
+                       body: %{"roles" => %{"revoke" => [role.name]}})
 
-        conn = api_request(requestor, :post, path,
-                           body: %{"roles" => %{"revoke" => [role.name]}})
+    assert %{"roles" => []} == json_response(conn, 200)
+    refute_role_is_granted(group, role)
+  end
 
-        assert %{"roles" => []} == json_response(conn, 200)
-        refute_role_is_granted(target, role)
-      end
+  test "unauthed users cannot revoke roles from groups", %{unauthed: requestor,
+                                                           group: group} do
+    role = role("admin")
+    :ok = Permittable.grant_to(group, role)
 
-      @tag base: base
-      test "unauthed users cannot revoke roles from #{base}s", %{unauthed: requestor,
-                                                                 target: target,
-                                                                 path: path} do
-        role = role("admin")
-        :ok = Permittable.grant_to(target, role)
+    conn = api_request(requestor, :post, "/v1/groups/#{group.id}/roles",
+                       body: %{"roles" => %{"revoke" => [role.name]}})
 
-        conn = api_request(requestor, :post, path,
-                           body: %{"roles" => %{"revoke" => [role.name]}})
+    assert conn.halted
+    assert conn.status == 403
 
-        assert conn.halted
-        assert conn.status == 403
+    # Yup, still got it
+    assert_role_is_granted(group, role)
+  end
 
-        # Yup, still got it
-        assert_role_is_granted(target, role)
-      end
+  test "cannot revoke the #{Cog.admin_role} role from the #{Cog.admin_group} group", %{authed: requestor} do
+    # This is how the role and group get there in the first place
+    Cog.Bootstrap.bootstrap
 
-    end #fn
-  ) # Enum.each
+    admin_role = %Cog.Models.Role{} = Cog.Repository.Roles.by_name(Cog.admin_role)
+    {:ok, admin_group}              = Cog.Repository.Groups.by_name(Cog.admin_group)
+
+    conn = api_request(requestor, :post, "/v1/groups/#{admin_group.id}/roles",
+                       body: %{"roles" => %{"revoke" => [admin_role.name]}})
+
+    # TODO: Ideally, I'd like an error here instead... this'll change
+    # when we get to https://github.com/operable/cog/issues/825
+    assert %{"roles" => [%{"name" => unquote(Cog.admin_role)}]} = json_response(conn, 200)
+
+    assert_role_is_granted(admin_group, admin_role)
+  end
 
 end
