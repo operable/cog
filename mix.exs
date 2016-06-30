@@ -47,7 +47,7 @@ defmodule Cog.Mixfile do
   end
 
   defp deps do
-    [{:slack, github: "operable/Elixir-Slack", branch: "fix-unsafe-var-warning"},
+    [{:slack, github: "BlakeWilliams/Elixir-Slack"},
      {:websocket_client, github: "jeremyong/websocket_client"},
      {:poison, "~> 1.5.2"},
      {:ibrowse, "~> 4.2.2", override: true},
