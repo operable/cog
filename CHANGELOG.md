@@ -1,5 +1,26 @@
 #  Changelog
 
+## 0.9.0
+
+### Enhancements
+
+- Automatically bootstrap Cog install via environment variables [#811](https://github.com/operable/cog/pull/811)
+- Add `operable:user` command [#147](https://github.com/operable/cog/issues/147)
+- Add `operable:chat-handles` command [#787](https://github.com/operable/cog/issues/787)
+- Add `list`, `info`, and `versions` subcommands to `operable:bundle` chat command [#776](https://github.com/operable/cog/issues/776)
+- Redesign `operable:permissions` and `operable:role` command [#675](https://github.com/operable/cog/issues/675), [#678](https://github.com/operable/cog/issues/678)
+- Cache Relay for a given bundle during pipeline execution [#777](https://github.com/operable/cog/issues/777)
+- Improve Relay's command encoding scheme [#837](https://github.com/operable/cog/issues/837)
+- Unify chat naming conventions [#681](https://github.com/operable/cog/issues/681)
+- Reserve "cog" bundle name for future use [#817](https://github.com/operable/cog/issues/817)
+
+### Bug Fixes
+
+- Remove single trailing newline from template source [#835](https://github.com/operable/cog/issues/835)
+- Prevent revoking `cog-admin` role from the `cog-admin` group [#795](https://github.com/operable/cog/issues/795)
+- Relay bundle catalog diff misses removed bundles [#791](https://github.com/operable/cog/issues/791)
+- Clean up pre-bundle versions database tables [#783](https://github.com/operable/cog/issues/783)
+
 ## 0.8.0
 
 ### Enhancements
