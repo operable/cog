@@ -17,7 +17,7 @@ defmodule Cog.Repository.Groups do
   alias Cog.Models.Group
   alias Cog.Models.User
   alias Cog.Models.Role
-  import Ecto.Query, only: [from: 1, from: 2]
+  import Ecto.Query, only: [from: 2]
 
   @preloads [[user_membership: [:member]], :direct_user_members, :direct_group_members, :roles, :permissions]
 
