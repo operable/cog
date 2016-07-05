@@ -64,6 +64,9 @@ config :cog, :command_rule_ttl, {10, :sec}
 config :cog, :template_cache_ttl, {60, :sec}
 config :cog, :user_perms_ttl, {10, :sec}
 
+# Enable/disable user self-registration
+config :cog, :self_registration, true
+
 config :cog, :emqttc,
   log_level: :info
 

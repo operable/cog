@@ -276,8 +276,9 @@ defmodule Cog.Adapters.Slack.API do
   defp cache_item(%{"is_group" => true, "id" => id, "name" => name}),
     do: %{id: id, name: name}
   # users have names, but not "is_user" fields :( they do have profiles, though
-  defp cache_item(%{"id" => id, "name" => name, "profile" => %{}}),
-    do: %{id: id, handle: name}
+  defp cache_item(%{"id" => id, "name" => name, "profile" => profile}),
+  do: %{id: id, handle: name, email: profile["email"], first_name: profile["first_name"],
+        last_name: profile["last_name"]}
   # result of 'im.open' calls; they have no name
   defp cache_item(%{"id" => id}=im) when map_size(im) == 1,
     do: %{id: id}
