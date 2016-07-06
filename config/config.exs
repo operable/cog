@@ -65,7 +65,7 @@ config :cog, :template_cache_ttl, {60, :sec}
 config :cog, :user_perms_ttl, {10, :sec}
 
 # Enable/disable user self-registration
-config :cog, :self_registration, true
+config :cog, :self_registration, System.get_env("COG_ALLOW_SELF_REGISTRATION") != nil || false
 
 config :cog, :emqttc,
   log_level: :info
