@@ -11,11 +11,11 @@ defmodule Cog.Command.Pipeline.Initializer do
   require Logger
 
   alias Carrier.Messaging.Connection
+  alias Cog.Command.ReplyHelper
   alias Cog.Command.Pipeline.ExecutorSup
   alias Cog.Repository.Users
   alias Cog.Repository.ChatHandles
   alias Cog.Passwords
-  alias Cog.Template
 
   defstruct mq_conn: nil, history: %{}, history_token: ""
 
@@ -35,11 +35,10 @@ defmodule Cog.Command.Pipeline.Initializer do
   def handle_info({:publish, "/bot/commands", message}, state) do
     payload = Poison.decode!(message)
     # Only self register when the feature is enabled via config
-    # and the incoming request is from a real user. We use
-    # the HTTP adapter as a proxy for the second condition as
-    # the only requests currently coming from that adapter are
-    # triggers.
-    self_register_flag = Application.get_env(:cog, :self_registration, false) and payload["adapter"] != "http"
+    # and the incoming request is from Slack.
+    # TODO: Teach HipChat adapter to add first name, last name, and email
+    # fields to the user object it returns.
+    self_register_flag = Application.get_env(:cog, :self_registration, false) and payload["adapter"] == "slack"
     case self_register_user(payload, self_register_flag, state) do
       :ok ->
         case check_history(payload, state) do
@@ -99,21 +98,21 @@ defmodule Cog.Command.Pipeline.Initializer do
               {:ok, user} ->
                 case ChatHandles.set_handle(user, request["adapter"], sender["handle"]) do
                   {:ok, _} ->
-                    alert_self_registration_success(user, request, state)
+                    self_registration_success(user, request, state)
                     :ok
                   error ->
                     Logger.error("Failed to auto-register user '#{sender["handle"]}': #{inspect error}")
-                    alert_self_registration_failed(request, state)
+                    self_registration_failed(request, state)
                     error
                 end
               error ->
                 Logger.error("Failed to auto-register user '#{sender["handle"]}': #{inspect error}")
-                alert_self_registration_failed(request, state)
+                self_registration_failed(request, state)
                 :error
             end
           _ ->
             Logger.error("Failed to auto-register user '#{sender["handle"]}'. No suitable username was found.")
-            alert_self_registration_failed(request, state)
+            self_registration_failed(request, state)
             :error
         end
     end
@@ -122,38 +121,9 @@ defmodule Cog.Command.Pipeline.Initializer do
     :ok
   end
 
-  defp alert_self_registration_success(user, request, state) do
-    {:ok, message} = self_registration_success_message(user, request)
-    publish_response(message, request["room"], request["adapter"], state)
-  end
-  defp alert_self_registration_failed(request, state) do
-    {:ok, message} = self_registration_failed_message(request)
-    publish_response(message, request["room"], request["adapter"], state)
-  end
-
-  defp publish_response(message, room, adapter, state) do
-    response = %{response: message,
-                 room: room}
-    # Remember, it might not be a *chat* adapter we're responding to
-    {:ok, adapter_mod} = Cog.adapter_module(adapter)
-
-    reply_topic = adapter_mod.reply_topic
-
-    # Slack has a limit of 16kb (https://api.slack.com/rtm#limits),
-    # while HipChat has 10,000 characters
-    # (https://developer.atlassian.com/hipchat/guide/sending-messages). Eventually,
-    # over-long messages will need adapter-specific customization
-    # (breaking into multiple messages, using alternative formats
-    # (e.g. Slack attachments), etc.). For now, though, we can at the
-    # very least tell Carrier to emit a warning when we get a message
-    # that looks like it is potentially too big.
-    Connection.publish(state.mq_conn, response, routed_by: reply_topic, threshold: 10000)
-  end
-
-  defp self_registration_success_message(user, request) do
-    adapter = String.to_existing_atom(request["module"])
+  defp self_registration_success(user, request, state) do
+    {:ok, adapter} = Cog.adapter_module(request["adapter"])
     handle = request["sender"]["handle"]
-
     context = %{
       handle: handle,
       first_name: request["sender"]["first_name"],
@@ -161,23 +131,18 @@ defmodule Cog.Command.Pipeline.Initializer do
       mention_name: adapter.mention_name(handle),
       display_name: adapter.display_name(),
     }
-
-    Template.render("any", "self_registration_success", context)
+    ReplyHelper.send_template(request, "self_registration_success", context, state.mq_conn)
   end
-
-  defp self_registration_failed_message(request) do
-    adapter = String.to_existing_atom(request["module"])
+  defp self_registration_failed(request, state) do
+    {:ok, adapter} = Cog.adapter_module(request["adapter"])
     handle = request["sender"]["handle"]
-
     context = %{
       handle: handle,
       mention_name: adapter.mention_name(handle),
       display_name: adapter.display_name(),
     }
-
-    Template.render("any", "self_registration_failed", context)
+    ReplyHelper.send_template(request, "self_registration_failed", context, state.mq_conn)
   end
-
 
   defp find_available_username(username) do
     case Users.is_username_available?(username) do
