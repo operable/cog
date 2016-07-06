@@ -34,7 +34,13 @@ defmodule Cog.Command.Pipeline.Initializer do
 
   def handle_info({:publish, "/bot/commands", message}, state) do
     payload = Poison.decode!(message)
-    case self_register_user(payload, Application.get_env(:cog, :self_registration, false), state) do
+    # Only self register when the feature is enabled via config
+    # and the incoming request is from a real user. We use
+    # the HTTP adapter as a proxy for the second condition as
+    # the only requests currently coming from that adapter are
+    # triggers.
+    self_register_flag = Application.get_env(:cog, :self_registration, false) and payload["adapter"] != "http"
+    case self_register_user(payload, self_register_flag, state) do
       :ok ->
         case check_history(payload, state) do
           {true, payload, state} ->
