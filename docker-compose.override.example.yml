@@ -1,0 +1,30 @@
+postgres:
+  environment:
+    - POSTGRES_USER=cog
+    - POSTGRES_PASSWORD=cog
+
+cog:
+  environment:
+    - DATABASE_URL=ecto://cog:cog@localhost:5432/cog
+    - COG_ADAPTER=slack
+    - SLACK_API_TOKEN=xxxx-000000-0000000
+    - COG_BOOTSTRAP_EMAIL_ADDRESS=foo@bar.com
+    - COG_BOOTSTRAP_FIRST_NAME=foo
+    - COG_BOOTSTRAP_LAST_NAME=bar
+    - COG_BOOTSTRAP_PASSWORD=foobar
+    - COG_BOOTSTRAP_USERNAME=foo
+    - COG_API_URL_HOST=192.168.99.100
+    - COG_API_URL_PORT=80
+    - COG_TRIGGER_URL_HOST=192.168.99.100
+    - COG_TRIGGER_URL_PORT=4001
+    - COG_SERVICE_URL_HOST=192.168.99.100
+    - COG_SERVICE_URL_PORT=4002
+    - RELAY_ID=00000000-0000-0000-0000-000000000000
+    - RELAY_COG_TOKEN=supersecret
+
+relay:
+  environment:
+    - RELAY_ID=00000000-0000-0000-0000-000000000000
+    - RELAY_COG_TOKEN=supersecret
+    - RELAY_COG_HOST=localhost
+    - RELAY_DYNAMIC_CONFIG_ROOT=/tmp/bundle_configs

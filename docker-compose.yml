@@ -41,18 +41,7 @@ postgres:
 cog:
   image: operable/cog:0.9.1
   environment:
-    - DATABASE_URL=ecto://cog:cog@localhost:5432/cog
-    - COG_ADAPTER=slack
-    - SLACK_API_TOKEN=${SLACK_API_TOKEN}
     - COG_MQTT_HOST=0.0.0.0
-    - COG_API_URL_HOST=${COG_HOST}
-    - COG_API_URL_PORT=80
-    - COG_TRIGGER_URL_HOST=${COG_HOST}
-    - COG_TRIGGER_URL_PORT=4001
-    - COG_SERVICE_URL_HOST=${COG_HOST}
-    - COG_SERVICE_URL_PORT=4002
-    - RELAY_ID=00000000-0000-0000-0000-000000000000
-    - RELAY_COG_TOKEN=supersecret
   links:
     - postgres:localhost
   ports:
@@ -68,8 +57,6 @@ relay:
   volumes:
     - /var/run/docker.sock:/var/run/docker.sock
   environment:
-    - RELAY_ID=00000000-0000-0000-0000-000000000000
-    - RELAY_COG_TOKEN=supersecret
     - RELAY_COG_REFRESH_INTERVAL=30s
     - RELAY_DOCKER_CLEAN_INTERVAL=1m
     - RELAY_COG_HOST=localhost
