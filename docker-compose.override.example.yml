@@ -26,5 +26,3 @@ relay:
   environment:
     - RELAY_ID=00000000-0000-0000-0000-000000000000
     - RELAY_COG_TOKEN=supersecret
-    - RELAY_COG_HOST=localhost
-    - RELAY_DYNAMIC_CONFIG_ROOT=/tmp/bundle_configs
