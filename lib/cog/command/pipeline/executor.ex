@@ -7,6 +7,7 @@ defmodule Cog.Command.Pipeline.Executor do
   alias Cog.Command.Pipeline.Destination
   alias Cog.Command.Pipeline.ParserMeta
   alias Cog.Command.Pipeline.Plan
+  alias Cog.Command.ReplyHelper
   alias Cog.ErrorResponse
   alias Cog.Events.PipelineEvent
   alias Cog.Queries
@@ -461,17 +462,8 @@ defmodule Cog.Command.Pipeline.Executor do
   # Unregistered User Functions
 
   defp alert_unregistered_user(state) do
-    {:ok, message} = unregistered_user_message(state.request)
-
-    publish_response(message,
-                     state.request["room"],
-                     state.request["adapter"],
-                     state)
-  end
-
-  # TODO: needs to be different for non-chat adapters
-  defp unregistered_user_message(request) do
-    adapter = String.to_existing_atom(request["module"])
+    {:ok, adapter} = Cog.adapter_module(state.request["adapter"])
+    request = state.request
     handle = request["sender"]["handle"]
     creators = user_creator_handles(request)
 
@@ -483,9 +475,8 @@ defmodule Cog.Command.Pipeline.Executor do
       user_creators?: Enum.any?(creators)
     }
 
-    Template.render("any", "unregistered_user", context)
+    ReplyHelper.send_template(state.request, "unregistered_user", context, state.mq_conn)
   end
-
   # Returns a list of adapter-appropriate "mention names" of all Cog
   # users with registered handles for the adapter that currently have
   # the permissions required to create and manipulate new Cog user

@@ -6,12 +6,13 @@ defmodule Cog.Repository.Users do
 
   alias Cog.Repo
   alias Cog.Models.User
-  import Ecto.Query, only: [from: 2]
+  alias Cog.Models.ChatHandle
+  import Ecto.Query, only: [from: 1, from: 2]
 
   @doc """
   Creates a new user given a map of attributes
   """
-  @spec new(Map.t) :: {:ok, %User{}} | {:error, Ecot.Changeset.t}
+  @spec new(Map.t) :: {:ok, %User{}} | {:error, Ecto.Changeset.t}
   def new(attrs) do
     %User{}
     |> User.changeset(attrs)
@@ -55,6 +56,32 @@ defmodule Cog.Repository.Users do
       nil ->
         {:error, :not_found}
     end
+  end
+
+  @doc """
+  Retrieves one user by chat handle
+  """
+  @spec by_chat_handle(String.t, String.t) :: {:ok, %User{}} | {:error, :not_found}
+  def by_chat_handle(handle, provider_name) do
+    case Repo.one(from u in User,
+                  join: ch in ChatHandle, on: ch.user_id == u.id,
+                  join: cp in assoc(ch, :chat_provider),
+                  where: ch.handle == ^handle,
+                  where: cp.name == ^provider_name) do
+      nil ->
+        {:error, :not_found}
+      user ->
+        {:ok, user}
+    end
+  end
+
+  @doc """
+  Determines if a given username has been registered
+  """
+  def is_username_available?(username) do
+    Repo.one!(from u in User,
+              where: u.username == ^username,
+              select: count(u.id)) == 0
   end
 
   @doc """
