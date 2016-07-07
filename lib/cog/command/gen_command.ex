@@ -153,8 +153,9 @@ defmodule Cog.Command.GenCommand do
     end
   end
 
-  def handle_info({:publish, topic, message},
+  def handle_info({:publish, topic, compressed},
                   %__MODULE__{topic: topic, cb_module: cb_module, bundle_name: bundle}=state) do
+    {:ok, message} = Carrier.Messaging.Connection.decompress(compressed)
     payload = Poison.decode!(message)
     case Command.Request.decode(payload) do
       {:ok, req} ->

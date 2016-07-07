@@ -27,6 +27,11 @@ defmodule Carrier.Messaging.Connection do
     connect([])
   end
 
+  @spec decompress(binary()) :: {:ok, binary()} | {:error, term()}
+  def decompress(payload) do
+    :snappy.decompress(payload)
+  end
+
   @doc """
   Starts up a message bus client process.
 
@@ -96,7 +101,6 @@ defmodule Carrier.Messaging.Connection do
   """
   def publish(conn, message, kw_args) when is_map(message) do
     topic = Keyword.fetch!(kw_args, :routed_by)
-
     encoded = Poison.encode!(message)
     case Keyword.fetch(kw_args, :threshold) do
       {:ok, threshold} ->
@@ -109,8 +113,8 @@ defmodule Carrier.Messaging.Connection do
       :error ->
         :ok
     end
-
-    :emqttc.publish(conn, topic, encoded)
+    {:ok, compressed} = :snappy.compress(encoded)
+    :emqttc.publish(conn, topic, compressed)
   end
 
   defp add_system_config(opts) do

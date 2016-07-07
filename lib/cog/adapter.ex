@@ -4,6 +4,8 @@ defmodule Cog.Adapter do
       use GenServer
       require Logger
 
+      alias Carrier.Messaging
+
       @behaviour Cog.Adapter
       @default_initial_context %{}
 
@@ -32,14 +34,19 @@ defmodule Cog.Adapter do
 
       def handle_call({:receive_message, sender, room, message, id, initial_context}, _from, state) do
         message = payload(sender, room, message, id, initial_context)
-        Carrier.Messaging.Connection.publish(state.conn, message, routed_by: "/bot/commands")
+        Messaging.Connection.publish(state.conn, message, routed_by: "/bot/commands")
         {:reply, :ok, state}
       end
 
-      def handle_info({:publish, topic, message}, state) do
+      def handle_info({:publish, topic, compressed}, state) do
         if topic == reply_topic() do
-          payload = Poison.decode!(message)
-          send_message(payload["room"], payload["response"])
+          case Messaging.Connection.decompress(compressed) do
+            {:ok, message} ->
+              payload = Poison.decode!(message)
+              send_message(payload["room"], payload["response"])
+            _error ->
+              Logger.error("Corrupted compressed data published to topic #{topic}")
+          end
         end
 
         {:noreply, state}

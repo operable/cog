@@ -32,7 +32,8 @@ defmodule Cog.Command.Pipeline.Initializer do
     {:ok, %__MODULE__{mq_conn: conn, history_token: "#{cp}#{cp}"}}
   end
 
-  def handle_info({:publish, "/bot/commands", message}, state) do
+  def handle_info({:publish, "/bot/commands", compressed}, state) do
+    {:ok, message} = Connection.decompress(compressed)
     payload = Poison.decode!(message)
     # Only self register when the feature is enabled via config
     # and the incoming request is from Slack.

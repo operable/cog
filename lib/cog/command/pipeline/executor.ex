@@ -223,10 +223,11 @@ defmodule Cog.Command.Pipeline.Executor do
   def wait_for_command(:timeout, state),
     do: fail_pipeline_with_error({:timeout, state.current_plan.parser_meta.full_command_name}, state)
 
-  def handle_info({:publish, topic, message}, :wait_for_command, state) do
+  def handle_info({:publish, topic, compressed}, :wait_for_command, state) do
     reply_topic = "#{state.topic}/reply" # TODO: bake this into state for easier pattern-matching?
     case topic do
       ^reply_topic ->
+        {:ok, message} = Carrier.Messaging.Connection.decompress(compressed)
         payload = Poison.decode!(message)
         resp = Cog.Command.Response.decode!(payload)
         case resp.status do

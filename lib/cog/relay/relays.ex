@@ -111,7 +111,8 @@ defmodule Cog.Relay.Relays do
   def handle_call({:relays_running, bundle_name, version} , _from, state),
     do: {:reply, Tracker.relays(state.tracker, bundle_name, version), state}
 
-  def handle_info({:publish, @relays_discovery_topic, message}, state) do
+  def handle_info({:publish, @relays_discovery_topic, compressed}, state) do
+    {:ok, message} = Messaging.Connection.decompress(compressed)
     case Poison.decode(message) do
       {:ok, %{"announce" => announcement}} ->
         state = process_announcement(announcement, state)

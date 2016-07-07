@@ -78,7 +78,7 @@ defmodule Cog.Mixfile do
      {:fumanchu, github: "operable/fumanchu"},
      {:exirc, "~> 0.9.2"},
      {:exjsx, "~> 3.2", override: true},
-
+     {:snappy, github: "fdmanana/snappy-erlang-nif", ref: "c4cd1bb35f3a3a399737d64bd03b479817b90e75"},
      {:credo, "~> 0.3", only: [:dev, :test]},
      {:phoenix_live_reload, "~> 1.0.3", only: :dev},
      {:earmark, "~> 0.2.1", only: :dev},

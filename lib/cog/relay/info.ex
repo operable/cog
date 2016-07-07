@@ -39,7 +39,8 @@ defmodule Cog.Relay.Info do
     end
   end
 
-  def handle_info({:publish, @relay_info_topic, message}, state) do
+  def handle_info({:publish, @relay_info_topic, compressed}, state) do
+    {:ok, message} = Messaging.Connection.decompress(compressed)
     case Poison.decode(message) do
       {:ok, %{"list_bundles" => message}} ->
         info(message, state)
