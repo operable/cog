@@ -1,5 +1,11 @@
 #  Changelog
 
+## 0.9.1
+
+### Bug Fixes
+
+- Properly handle command execution errors [#836](https://github.com/operable/cog/issues/836)
+
 ## 0.9.0
 
 ### Enhancements
