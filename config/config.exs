@@ -104,7 +104,8 @@ config :cog, Cog.Repo,
   pool_size: ensure_integer(System.get_env("COG_DB_POOL_SIZE")) || 10,
   pool_timeout: ensure_integer(System.get_env("COG_DB_POOL_TIMEOUT")) || 15000,
   timeout: ensure_integer(System.get_env("COG_DB_TIMEOUT")) || 15000,
-  parameters: [timezone: 'UTC']
+  parameters: [timezone: 'UTC'],
+  log: false
 
 # ========================================================================
 
