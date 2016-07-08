@@ -233,9 +233,9 @@ defmodule Cog.Command.Pipeline.Executor do
           "ok" ->
             collected_output = collect_output(resp, state.output)
             {:next_state, :execute_plan, %{state | output: collected_output}, 0}
-          "stop" ->
+          "abort" ->
             collected_output = collect_output(resp, state.output)
-            terminate_pipeline(%{state | output: collected_output})
+            abort_pipeline(%{state | output: collected_output})
           "error" ->
             fail_pipeline_with_error({:command_error, resp}, state)
         end
@@ -591,10 +591,11 @@ defmodule Cog.Command.Pipeline.Executor do
     Template.render("any", "error", context)
   end
 
-  defp terminate_pipeline(%__MODULE__{current_plan: plan}=state) do
-    AuditMessage.render({:terminate_pipeline, plan.parser_meta.full_command_name, state.id}, state.request)
+  defp abort_pipeline(%__MODULE__{current_plan: plan}=state) do
     respond(state)
-    {:stop, :shutdown, state}
+    audit_message = AuditMessage.render({:abort_pipeline, plan.parser_meta.full_command_name, state.id},
+                                        state.request)
+    fail_pipeline(state, :aborted, audit_message)
   end
 
   # Catch-all function that sends an error message back to the user,
