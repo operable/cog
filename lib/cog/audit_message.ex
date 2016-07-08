@@ -29,6 +29,9 @@ defmodule Cog.AuditMessage do
     name = CommandVersion.full_name(command)
     "Timed out waiting on #{name} to reply"
   end
+  def render({:terminate_pipeline, full_command_name, pipeline_id}, _request) do
+    "Terminated pipeline #{pipeline_id} early while executing command #{full_command_name}"
+  end
   def render({:timeout, command_name}, _request) do
     "Timed out waiting on #{command_name} to reply"
   end

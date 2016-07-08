@@ -231,20 +231,11 @@ defmodule Cog.Command.Pipeline.Executor do
         resp = Cog.Command.Response.decode!(payload)
         case resp.status do
           "ok" ->
-            collected_output = case resp.body do
-                                 nil ->
-                                   # If there wasn't any output,
-                                   # there's nothing to collect
-                                   state.output
-                                 body ->
-                                   state.output ++ Enum.map(List.wrap(body),
-                                                            &store_with_template(&1, resp.template))
-                                   # body may be a map or a list
-                                   # of maps; if the latter, we
-                                   # want to accumulate it into
-                                   # one flat list
-                               end
+            collected_output = collect_output(resp, state.output)
             {:next_state, :execute_plan, %{state | output: collected_output}, 0}
+          "stop" ->
+            collected_output = collect_output(resp, state.output)
+            terminate_pipeline(%{state | output: collected_output})
           "error" ->
             fail_pipeline_with_error({:command_error, resp}, state)
         end
@@ -273,6 +264,22 @@ defmodule Cog.Command.Pipeline.Executor do
   # Private functions
 
   ########################################################################
+  defp collect_output(resp, output) do
+    case resp.body do
+      nil ->
+        # If there wasn't any output,
+        # there's nothing to collect
+        output
+      body ->
+        output ++ Enum.map(List.wrap(body),
+                           &store_with_template(&1, resp.template))
+        # body may be a map or a list
+        # of maps; if the latter, we
+        # want to accumulate it into
+        # one flat list
+    end
+  end
+
   # Redirection Resolution Functions
 
 
@@ -582,6 +589,12 @@ defmodule Cog.Command.Pipeline.Executor do
     }
 
     Template.render("any", "error", context)
+  end
+
+  defp terminate_pipeline(%__MODULE__{current_plan: plan}=state) do
+    AuditMessage.render({:terminate_pipeline, plan.parser_meta.full_command_name, state.id}, state.request)
+    respond(state)
+    {:stop, :shutdown, state}
   end
 
   # Catch-all function that sends an error message back to the user,
