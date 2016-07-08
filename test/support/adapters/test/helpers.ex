@@ -25,7 +25,8 @@ defmodule Cog.Adapters.Test.Helpers do
 
   defp loop_until_received(mq_conn, reply_topic, id) do
     receive do
-      {:publish, ^reply_topic, msg} ->
+      {:publish, ^reply_topic, compressed} ->
+        {:ok, msg} = Connection.decompress(compressed)
         message = Poison.decode!(msg)
         case Map.get(message, "id") do
           ^id ->

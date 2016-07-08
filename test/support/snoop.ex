@@ -57,8 +57,10 @@ defmodule Cog.Snoop do
     {:ok, %__MODULE__{mq_conn: mq_conn, topic: topic, messages: []}}
   end
 
-  def handle_info({:publish, topic, msg}, %__MODULE__{topic: topic}=state),
-    do: {:noreply, %{state | messages: [Poison.decode!(msg)|state.messages]}}
+  def handle_info({:publish, topic, compressed}, %__MODULE__{topic: topic}=state) do
+    {:ok, msg} = Connection.decompress(compressed)
+    {:noreply, %{state | messages: [Poison.decode!(msg)|state.messages]}}
+  end
 
   def handle_call(:messages, _from, state),
     do: {:reply, Enum.reverse(state.messages), state}
