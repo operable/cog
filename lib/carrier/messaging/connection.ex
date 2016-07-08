@@ -28,8 +28,8 @@ defmodule Carrier.Messaging.Connection do
   end
 
   @spec decompress(binary()) :: {:ok, binary()} | {:error, term()}
-  def decompress(payload) do
-    :snappy.decompress(payload)
+  def decompress(compressed) do
+    :snappy.decompress(compressed)
   end
 
   @doc """
