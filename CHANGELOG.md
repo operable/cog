@@ -1,5 +1,16 @@
 #  Changelog
 
+## 0.10.0
+
+### Enhancements
+
+- Automatically create Cog accounts for new users [#277](https://github.com/operable/cog/issues/277) (Slack only)
+- Commands can abort pipelines and return simple errors [#691](https://github.com/operable/cog/issues/691)
+  - Released [pycog3 v0.1.27](https://pypi.python.org/pypi/pycog3/0.1.27)
+  - Released [cog-rb v.0.1.8](https://rubygems.org/gems/cog-rb/versions/0.1.8)
+- Eliminate spammy log messages in Cog's console [#841](https://github.com/operable/cog/issues/841)
+- `format:table` now supports field names and paths to fields [#784](https://github.com/operable/cog/issues/784)
+
 ## 0.9.1
 
 ### Bug Fixes
