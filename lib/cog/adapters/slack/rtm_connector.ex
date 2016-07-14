@@ -217,7 +217,7 @@ defmodule Cog.Adapters.Slack.RTMConnector do
       false ->
         # Determine how to respond based on what kind of message it is
         {:ok, room} = SlackAdapter.API.lookup_room(id: channel)
-        [first_word|_] = String.split(text, " ", parts: 2)
+        first_word = String.split(text, " ", parts: 2) |> :erlang.hd |> String.replace_suffix(":", "")
         cond do
           room.name == "direct" ->
             {:direct, room}
