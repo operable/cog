@@ -42,8 +42,9 @@ cog:
   image: operable/cog:0.9.1
   environment:
     - COG_MQTT_HOST=0.0.0.0
+    - DATABASE_URL=ecto://cog:cog@postgres:5432/cog
   links:
-    - postgres:localhost
+    - postgres
   ports:
     - 1883
     - 80:4000
@@ -59,8 +60,8 @@ relay:
   environment:
     - RELAY_COG_REFRESH_INTERVAL=30s
     - RELAY_DOCKER_CLEAN_INTERVAL=1m
-    - RELAY_COG_HOST=localhost
+    - RELAY_COG_HOST=cog
     - RELAY_DYNAMIC_CONFIG_ROOT=/tmp/bundle_configs
   links:
-    - cog:localhost
+    - cog
   entrypoint: /usr/local/bin/relay
