@@ -67,7 +67,8 @@ defmodule Cog.Command.Pipeline.Executor do
     user_permissions: [String.t],
     service_token: String.t,
     error_type: atom(),
-    error_message: String.t
+    error_message: String.t,
+    format_pipeline: String.t
   }
   defstruct [
     id: nil,
@@ -85,7 +86,8 @@ defmodule Cog.Command.Pipeline.Executor do
     user_permissions: [],
     service_token: nil,
     error_type: nil,
-    error_message: nil
+    error_message: nil,
+    format_pipeline: nil
   ]
 
   @behaviour :gen_fsm
@@ -186,8 +188,17 @@ defmodule Cog.Command.Pipeline.Executor do
         fail_pipeline_with_error({:binding_error, msg}, state)
     end
   end
-  def plan_next_invocation(:timeout, %__MODULE__{invocations: []}=state),
+  def plan_next_invocation(:timeout, %__MODULE__{invocations: [], format_pipeline: nil}=state),
     do: succeed_with_response(state)
+  def plan_next_invocation(:timeout, %__MODULE__{invocations: [], format_pipeline: format_pipeline}=state) do
+    options = %ParserOptions{resolver: CommandResolver.command_resolver_fn(state.user)}
+    case Parser.scan_and_parse(format_pipeline, options) do
+      {:ok, %Ast.Pipeline{}=pipeline} ->
+        {:next_state, :plan_next_invocation, %{state | invocations: Enum.to_list(pipeline), format_pipeline: nil}, 0}
+      {:error, msg} ->
+        fail_pipeline_with_error({:parse_error, msg}, state)
+    end
+  end
 
   def execute_plan(:timeout, %__MODULE__{plans: [current_plan|remaining_plans], relays: relays, request: request, user: user}=state) do
     bundle_name  = current_plan.parser_meta.bundle_name
@@ -232,7 +243,7 @@ defmodule Cog.Command.Pipeline.Executor do
         case resp.status do
           "ok" ->
             collected_output = collect_output(resp, state.output)
-            {:next_state, :execute_plan, %{state | output: collected_output}, 0}
+            {:next_state, :execute_plan, %{state | output: collected_output, format_pipeline: resp.format_pipeline}, 0}
           "abort" ->
             collected_output = collect_output(resp, state.output)
             abort_pipeline(%{state | output: collected_output})
@@ -272,7 +283,7 @@ defmodule Cog.Command.Pipeline.Executor do
         output
       body ->
         output ++ Enum.map(List.wrap(body),
-                           &store_with_template(&1, resp.template))
+                           &store_with_template(&1, resp.format_pipeline))
         # body may be a map or a list
         # of maps; if the latter, we
         # want to accumulate it into
