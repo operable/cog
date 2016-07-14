@@ -61,7 +61,7 @@ defmodule Cog.Bundle.Embedded do
   end
 
   defp embedded_bundle do
-    version = Application.spec(:cog, :vsn) |> IO.chardata_to_string
+    version = Application.fetch_env!(:cog, :embedded_bundle_version)
     modules = Application.spec(:cog, :modules)
 
     Config.gen_config(Cog.embedded_bundle,
