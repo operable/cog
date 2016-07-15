@@ -1,8 +1,8 @@
 # Example docker-compose file for Cog
 #
 # This is meant to be a minimal example of how to run Cog, connecting
-# to Slack, using docker-compose. To use it, copy it to
-# `docker-compose.yml` and export the variables defined in the
+# to Slack, using docker-compose. To use it, copy `docker-compose.override.example.yml` to
+# `docker-compose.override.yml` and export the variables defined in the
 # `environment` stanzas below, and run
 #
 #     docker-compose up
@@ -30,7 +30,7 @@
 #   * http://docs.operable.io/docs/relay-environment-variables
 #
 # Add the environment variables you wish to modify to the stanzas
-# below (in your own `docker-compose.yml` file).
+# below (in the `docker-compose.override.yml` file).
 
 postgres:
   image: postgres:9.5
