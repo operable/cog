@@ -1,8 +1,8 @@
 # Example docker-compose file for Cog
 #
 # This is meant to be a minimal example of how to run Cog, connecting
-# to Slack, using docker-compose. To use it, copy it to
-# `docker-compose.yml` and export the variables defined in the
+# to Slack, using docker-compose. To use it, copy `docker-compose.override.example.yml` to
+# `docker-compose.override.yml` and export the variables defined in the
 # `environment` stanzas below, and run
 #
 #     docker-compose up
@@ -30,7 +30,7 @@
 #   * http://docs.operable.io/docs/relay-environment-variables
 #
 # Add the environment variables you wish to modify to the stanzas
-# below (in your own `docker-compose.yml` file).
+# below (in the `docker-compose.override.yml` file).
 
 postgres:
   image: postgres:9.5
@@ -41,20 +41,10 @@ postgres:
 cog:
   image: operable/cog:0.9.1
   environment:
-    - DATABASE_URL=ecto://cog:cog@localhost:5432/cog
-    - COG_ADAPTER=slack
-    - SLACK_API_TOKEN=${SLACK_API_TOKEN}
     - COG_MQTT_HOST=0.0.0.0
-    - COG_API_URL_HOST=${COG_HOST}
-    - COG_API_URL_PORT=80
-    - COG_TRIGGER_URL_HOST=${COG_HOST}
-    - COG_TRIGGER_URL_PORT=4001
-    - COG_SERVICE_URL_HOST=${COG_HOST}
-    - COG_SERVICE_URL_PORT=4002
-    - RELAY_ID=00000000-0000-0000-0000-000000000000
-    - RELAY_COG_TOKEN=supersecret
+    - DATABASE_URL=ecto://cog:cog@postgres:5432/cog
   links:
-    - postgres:localhost
+    - postgres
   ports:
     - 1883
     - 80:4000
@@ -68,12 +58,10 @@ relay:
   volumes:
     - /var/run/docker.sock:/var/run/docker.sock
   environment:
-    - RELAY_ID=00000000-0000-0000-0000-000000000000
-    - RELAY_COG_TOKEN=supersecret
     - RELAY_COG_REFRESH_INTERVAL=30s
     - RELAY_DOCKER_CLEAN_INTERVAL=1m
-    - RELAY_COG_HOST=localhost
+    - RELAY_COG_HOST=cog
     - RELAY_DYNAMIC_CONFIG_ROOT=/tmp/bundle_configs
   links:
-    - cog:localhost
+    - cog
   entrypoint: /usr/local/bin/relay
