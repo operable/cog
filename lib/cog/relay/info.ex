@@ -104,7 +104,7 @@ defmodule Cog.Relay.Info do
 
   defp calculate_signature(configs) do
     configs
-    |> Enum.sort(&(&1.bundle.name <= &2.bundle.name))
+    |> Enum.sort(&(&1.bundle_name <= &2.bundle_name))
     |> Enum.map(&(&1.hash))
     |> Hash.compute_hash
   end
