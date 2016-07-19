@@ -6,7 +6,7 @@
 
 Cog depends on a few things to run locally:
 
-    * Postgres
+    * Postgres (9.4+)
     * A `SLACK_API_TOKEN` environment variable (with a valid token)
 
 With those installed, setup your computer with:
