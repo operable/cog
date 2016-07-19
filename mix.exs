@@ -6,7 +6,7 @@ defmodule Cog.Mixfile do
   def project do
     [app: :cog,
      version: "0.12.0",
-     elixir: "~> 1.2",
+     elixir: "~> 1.3.1",
      erlc_paths: ["emqttd_plugins"],
      erlc_options: [:debug_info, :warnings_as_errors],
      elixirc_options: [warnings_as_errors: System.get_env("ALLOW_WARNINGS") == nil],
