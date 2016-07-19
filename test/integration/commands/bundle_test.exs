@@ -28,7 +28,7 @@ defmodule Integration.Commands.BundleTest do
     |> send_message("@bot: operable:bundle info operable")
     |> decode_payload
 
-    version = Application.spec(:cog, :vsn) |> IO.chardata_to_string
+    version = Application.fetch_env!(:cog, :embedded_bundle_version)
 
     assert %{name: "operable",
              enabled_version: %{version: ^version}} = payload
@@ -39,7 +39,7 @@ defmodule Integration.Commands.BundleTest do
     |> send_message("@bot: operable:bundle versions operable")
     |> decode_payload
 
-    version = Application.spec(:cog, :vsn) |> IO.chardata_to_string
+    version = Application.fetch_env!(:cog, :embedded_bundle_version)
 
     assert [%{name: "operable",
               version: ^version}] = payload

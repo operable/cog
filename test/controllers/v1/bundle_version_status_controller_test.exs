@@ -31,7 +31,7 @@ defmodule Cog.V1.BundleVersionStatusControllerTest do
     {:ok, %Carrier.Credentials{id: relay_id}} = Carrier.CredentialManager.get()
 
     conn = api_request(requestor, :get, "/v1/bundles/#{version.bundle.id}/status")
-    version = Application.spec(:cog, :vsn) |> IO.chardata_to_string
+    version = Application.fetch_env!(:cog, :embedded_bundle_version)
 
     assert %{"relays" => [relay_id],
              "name" => "operable",

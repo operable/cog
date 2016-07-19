@@ -1,6 +1,8 @@
 use Mix.Config
 import Cog.Config.Helpers
 
+import_config "embedded_bundle_version.exs"
+
 # ========================================================================
 # Chat Adapters
 

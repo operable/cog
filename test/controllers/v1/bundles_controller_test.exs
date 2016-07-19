@@ -285,7 +285,7 @@ defmodule Cog.V1.BundlesControllerTest do
     bundle_version("test-1")
     conn = api_request(requestor, :get, "/v1/bundles/")
 
-    version = Application.spec(:cog, :vsn) |> IO.chardata_to_string
+    version = Application.fetch_env!(:cog, :embedded_bundle_version)
 
     assert %{"bundles" => [%{"id" => _,
                              "name" => "operable",

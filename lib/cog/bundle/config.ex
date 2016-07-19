@@ -94,14 +94,14 @@ defmodule Cog.Bundle.Config do
   - `modules`: a list of modules to be included in the bundle
 
   """
-  def gen_config(name, description, version, modules, work_dir) do
+  def gen_config(name, description, version, modules, template_dir) do
     # We create single key/value pair maps for each
     # top-level key in the overall configuration, and then merge all
     # those maps together.
     Enum.reduce([gen_bundle(name, description, version),
                  gen_commands(modules),
                  gen_permissions(name, modules),
-                 gen_templates(work_dir)],
+                 gen_templates(template_dir)],
                 &Map.merge/2)
   end
 
@@ -130,12 +130,12 @@ defmodule Cog.Bundle.Config do
   defp namespace_permission(bundle_name, permission_name),
     do: "#{bundle_name}:#{permission_name}"
 
-  defp gen_templates(work_dir) do
-    paths = Path.wildcard("#{work_dir}/templates/*/*.mustache")
+  defp gen_templates(template_dir) do
+    paths = Path.wildcard("#{template_dir}/*/*.mustache")
 
     templates = Enum.reduce(paths, %{}, fn(path, acc) ->
-      relative_path = Path.relative_to(path, work_dir)
-      ["templates", provider, file] = Path.split(relative_path)
+      relative_path = Path.relative_to(path, template_dir)
+      [provider, file] = Path.split(relative_path)
       name = Path.basename(file, ".mustache")
       contents = File.read!(path)
 

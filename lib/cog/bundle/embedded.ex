@@ -12,8 +12,6 @@ defmodule Cog.Bundle.Embedded do
 
   alias Cog.Repository
 
-  @embedded_bundle_root "lib/cog"
-
   @doc """
   Start up a supervisor for the embedded `#{Cog.embedded_bundle}` bundle.
 
@@ -63,14 +61,14 @@ defmodule Cog.Bundle.Embedded do
   end
 
   defp embedded_bundle do
-    version = Application.spec(:cog, :vsn) |> IO.chardata_to_string
+    version = Application.fetch_env!(:cog, :embedded_bundle_version)
     modules = Application.spec(:cog, :modules)
 
     Config.gen_config(Cog.embedded_bundle,
                       "Core chat commands for Cog",
                       version,
                       modules,
-                      @embedded_bundle_root)
+                      Path.join([:code.priv_dir(:cog), "templates"]))
   end
 
 end
