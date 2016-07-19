@@ -85,7 +85,7 @@ defmodule Cog.Bundle.Config.Test do
   end
 
   test "includes templates in the config" do
-    config = Config.gen_config("testing", "test all the things", "2.0.0", [], "test/support/test-bundle")
+    config = Config.gen_config("testing", "test all the things", "2.0.0", [], "test/support/test-bundle/templates")
 
     assert %{"templates" => %{"help" => %{
                                 "hipchat" => "{{#command}}\n  Documentation for <pre>{{command}}</pre>\n  {{{documentation}}}\n{{/command}}\n",

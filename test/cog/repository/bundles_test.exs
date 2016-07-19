@@ -10,7 +10,7 @@ defmodule Cog.Repository.BundlesTest do
   alias Cog.Repository.Bundles
 
   test "on a fresh system, the current operable bundle is the only thing enabled" do
-    assert %{"operable" => app_version} == Bundles.enabled_bundles
+    assert %{"operable" => embedded_bundle_version} == Bundles.enabled_bundles
   end
 
   test "enabling and disabling bundles is reflected in enabled_bundles/0" do
@@ -20,18 +20,18 @@ defmodule Cog.Repository.BundlesTest do
     :ok = Bundles.set_bundle_version_status(foo_version, :enabled)
     :ok = Bundles.set_bundle_version_status(bar_version, :enabled)
 
-    assert %{"operable" => app_version,
+    assert %{"operable" => embedded_bundle_version,
              "foo" => version("1.0.0"),
              "bar" => version("2.0.0")} == Bundles.enabled_bundles
 
     :ok = Bundles.set_bundle_version_status(bar_version, :disabled)
 
-    assert %{"operable" => app_version,
+    assert %{"operable" => embedded_bundle_version,
              "foo" => version("1.0.0")} == Bundles.enabled_bundles
   end
 
   test "the enabled version of the operable bundle is always the current application version" do
-    {:ok, current_version} = Version.parse(app_version_string)
+    {:ok, current_version} = Version.parse(embedded_bundle_version_string)
 
     %BundleVersion{version: embedded_version} = Bundles.enabled_version(bundle_named("operable"))
 
@@ -82,13 +82,13 @@ defmodule Cog.Repository.BundlesTest do
   test "status of operable bundle" do
     expected = %{name: "operable",
                  enabled: true,
-                 enabled_version: app_version_string,
+                 enabled_version: embedded_bundle_version_string,
                  relays: [bot_relay_id]}
     assert expected == Bundles.status(bundle_named("operable"))
   end
 
   test "upgrading the embedded bundle activates the new version and deletes the old" do
-    current_version = app_version
+    current_version = embedded_bundle_version
 
     {:ok, desired_version} = Version.parse("1000000.0.0") # This should last us a while ;)
 
@@ -107,21 +107,21 @@ defmodule Cog.Repository.BundlesTest do
   end
 
   test "'upgrading' the embedded bundle to itself is a no-op" do
-    current_version = app_version
+    current_version = embedded_bundle_version
 
     # Verify the current enabled version
     %BundleVersion{version: ^current_version} = Bundles.enabled_version(bundle_named("operable"))
 
     # "upgrade" it to the same version
     assert %BundleVersion{version: ^current_version} =
-      Bundles.maybe_upgrade_embedded_bundle!(%{"name" => "operable", "description" => "description", "version" => app_version_string, "config_file" => %{}})
+      Bundles.maybe_upgrade_embedded_bundle!(%{"name" => "operable", "description" => "description", "version" => embedded_bundle_version_string, "config_file" => %{}})
 
     # Show the same version is still enabled
     assert %BundleVersion{version: ^current_version} = Bundles.enabled_version(bundle_named("operable"))
   end
 
   test "'upgrading' to a previous version of the embedded bundle is forbidden" do
-    current_version = app_version
+    current_version = embedded_bundle_version
 
     {:ok, desired_version} = Version.parse("0.0.1") # This is from before we had versioned bundles
 
@@ -244,7 +244,7 @@ defmodule Cog.Repository.BundlesTest do
   end
 
   test "verify existence of a bundle version" do
-    assert {:ok, _} = Bundles.verify_version_exists(%{"name" => "operable", "version" => app_version_string})
+    assert {:ok, _} = Bundles.verify_version_exists(%{"name" => "operable", "version" => embedded_bundle_version_string})
     assert {:ok, _} = Bundles.verify_version_exists(%{"name" => "site", "version" => "0.0.0"})
 
     assert {:error, _} = Bundles.verify_version_exists(%{"name" => "testing", "version" => "1.0.0"})
@@ -282,7 +282,7 @@ defmodule Cog.Repository.BundlesTest do
   end
 
   test "appropriate command version can be retrieved" do
-    version = app_version
+    version = embedded_bundle_version
     command_version = Bundles.command_for_bundle_version("echo", "operable", version)
 
     assert %CommandVersion{command: %Command{name: "echo",
@@ -393,11 +393,11 @@ defmodule Cog.Repository.BundlesTest do
   defp bundle_named(name),
     do: Enum.find(Bundles.bundles, &(&1.name == name))
 
-  defp app_version_string,
-    do: Application.spec(:cog, :vsn) |> IO.chardata_to_string
+  defp embedded_bundle_version_string,
+    do: Application.fetch_env!(:cog, :embedded_bundle_version)
 
-  defp app_version,
-    do: version(app_version_string)
+  defp embedded_bundle_version,
+    do: version(embedded_bundle_version_string)
 
   defp version(version_string) do
     {:ok, v} = Version.parse(version_string)
