@@ -1,5 +1,19 @@
 #  Changelog
 
+## 0.11.0
+
+### Enhancements
+
+- Sign ups for the Hosted Cog beta test have [opened] (http://bit.ly/29OTR39).
+- Mount user-defined directories into commands' Docker containers [#838](https://github.com/operable/cog/issues/838) (requested by George Adams)
+- Use override file to customize Cog's docker-compose configuration [#843](https://github.com/operable/cog/pull/843) (contributed by Brian Stolz)
+
+### Bug Fixes
+
+- Restore `cogctl`'s SSL support [#853](https://github.com/operable/issues/853)
+- Substring match to detect bot mentions can yield false positives [#855](https://github.com/operable/issues/855)
+- Hangs encountered when managed dynamic configuration is enabled [#861](https://github.com/operable/issues/861)
+
 ## 0.10.0
 
 ### Enhancements
