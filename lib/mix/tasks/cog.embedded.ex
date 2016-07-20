@@ -6,10 +6,26 @@ defmodule Mix.Tasks.Cog.Embedded do
   @shortdoc "Bump embedded bundle version if required"
 
   def run(_args) do
-    bundle_files
-    |> Enum.map(&md5/1)
-    |> hash_all
-    |> maybe_update_checksum
+    # Compiled BEAM files can be different depending on which
+    # MIX_ENV they are compiled under. Since we don't do anything
+    # meaningfully different to the embedded bundle's commands
+    # across compilation environments, we don't really care which
+    # environment our checksums are computed in. A checksum computed
+    # on a developer's laptop in MIX_ENV=dev is fine for our
+    # purposes, even if the exact checksums might be different for
+    # MIX_ENV=prod-compiled code that customers will use.
+    #
+    # Restricting the computation to MIX_ENV=dev also prevents
+    # repeated incrementing of the version in the everyday
+    # development scenario of alternating between running Cog
+    # locally (under MIX_ENV=dev) and running tests (with
+    # MIX_ENV=test).
+    if Mix.env == :dev do
+      bundle_files
+      |> Enum.map(&md5/1)
+      |> hash_all
+      |> maybe_update_checksum
+    end
   end
 
   defp bundle_files do
