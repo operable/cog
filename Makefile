@@ -64,6 +64,6 @@ coverage:
 	mix coveralls.html
 
 docker:
-	docker build -t $(DOCKER_IMAGE) .
+	docker build --build-arg MIX_ENV=prod -t $(DOCKER_IMAGE) .
 
 .PHONY: ci ci-setup ci-cleanup test docker
