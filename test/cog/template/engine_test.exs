@@ -3,8 +3,7 @@ defmodule Cog.Template.EngineTest do
 
   require Logger
 
-  alias Cog.Template.Engine.ForbiddenElixirError
-  alias Cog.Template.Engine.ForbiddenErlangError
+  alias Cog.Template.Engine.ForbiddenCallError
 
   # Helper for now; eventually, this would actually be part of Cog itself
   defp render(template, assigns \\ %{}),
@@ -16,13 +15,13 @@ defmodule Cog.Template.EngineTest do
   end
 
   test "Can't '.' invoke a function from another module (top level)" do
-    assert_raise(ForbiddenElixirError, fn ->
+    assert_raise(ForbiddenCallError, fn ->
       render("<%= String.upcase(@foo) %>", %{foo: "Hello World"})
     end)
   end
 
   test "Can't '.' invoke a function from another module (nested)" do
-    assert_raise(ForbiddenElixirError, fn ->
+    assert_raise(ForbiddenCallError, fn ->
       render("<%= inspect(String.upcase(@foo)) %>", %{foo: "Hello World"})
     end)
   end
@@ -40,7 +39,7 @@ defmodule Cog.Template.EngineTest do
   end
 
   test "can't call an Erlang function" do
-    assert_raise(ForbiddenErlangError, fn ->
+    assert_raise(ForbiddenCallError, fn ->
       render("<%= :code.priv_dir(:cog) %>")
     end)
   end
@@ -75,7 +74,7 @@ defmodule Cog.Template.EngineTest do
   end
 
   test "can't exit!" do
-    assert_raise(ForbiddenElixirError, fn ->
+    assert_raise(ForbiddenCallError, fn ->
       render("<%= exit(:normal) %>")
     end)
   end
@@ -100,7 +99,7 @@ defmodule Cog.Template.EngineTest do
   end
 
   test "can't import arbitrary code" do
-    assert_raise(ForbiddenElixirError,
+    assert_raise(ForbiddenCallError,
       fn() -> render("""
       <% import Cog.UUID %>
       <%= is_uuid?("nope") %>
@@ -109,14 +108,14 @@ defmodule Cog.Template.EngineTest do
   end
 
   test "can't require arbitrary code" do
-    assert_raise(ForbiddenElixirError,
+    assert_raise(ForbiddenCallError,
       fn() ->
         render("<%= require Logger %>")
       end)
   end
 
   test "can't use arbitrary code" do
-    assert_raise(ForbiddenElixirError,
+    assert_raise(ForbiddenCallError,
       fn() ->
         render("<%= use GenServer %>")
       end)
@@ -146,6 +145,15 @@ defmodule Cog.Template.EngineTest do
     * true
     * false
     """ == rendered
+  end
+
+  test "can't call functions on variables" do
+    assert_raise(ForbiddenCallError, fn() ->
+      render("""
+      <% a = :"Elixir.IO" %>
+      <%= a.puts("test") %>
+      """)
+    end)
   end
 
 end

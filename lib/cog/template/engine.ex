@@ -2,8 +2,7 @@ defmodule Cog.Template.Engine do
   use EEx.Engine
 
   alias Cog.Template.Engine.Helpers
-  alias Cog.Template.Engine.ForbiddenElixirError
-  alias Cog.Template.Engine.ForbiddenErlangError
+  alias Cog.Template.Engine.ForbiddenCallError
 
   @helper_functions Keyword.keys(Helpers.__info__(:functions))
 
@@ -124,18 +123,23 @@ defmodule Cog.Template.Engine do
   end
   def pass_whitelist(expr), do: expr
 
-  def do_pass_whitelist({{:., _, [{:__aliases__, _, aliases}, fun]} , meta, fun_args}) do
+  def do_pass_whitelist({{:., _, [{:__aliases__, _, target}, fun]} , meta, fun_args}) do
     # Right now this blocks all Elixir code calls like
     # `Foo.Bar.baz(:blah)`. If we want to whitelist specific modules
     # or functions, we can do so with patterns like this:
     #
     #     {:., _, [{:__aliases__, _, [:Foo, :Bar]}, :baz]}
     #
-    raise(ForbiddenElixirError, aliases: aliases, fun: fun, arg_exprs: fun_args, line: meta[:line])
+    raise(ForbiddenCallError, target: target, fun: fun, arg_exprs: fun_args, line: meta[:line])
   end
   def do_pass_whitelist({{:., _, [erl_mod, erl_fun]}, meta, args})
     when is_atom(erl_mod) and is_atom(erl_fun),
-      do: raise(ForbiddenErlangError, mod: erl_mod, fun: erl_fun, arg_exprs: args , line: meta[:line])
+      do: raise(ForbiddenCallError, target: erl_mod, fun: erl_fun, arg_exprs: args , line: meta[:line])
+
+  # Can't call functions on a variable
+  def do_pass_whitelist({{:., _, [{var, _, ctx}=t, fun]}, meta, args}) when is_atom(var) and is_atom(ctx) do
+    raise(ForbiddenCallError, target: t, fun: fun, arg_exprs: args, line: meta[:line])
+  end
 
   def do_pass_whitelist({fun, meta, args})
     when is_atom(fun)
@@ -143,7 +147,7 @@ defmodule Cog.Template.Engine do
     and is_list(args) # prevents this catching variable AST nodes,
                       # where args is nil or an atom
   do
-    raise(ForbiddenElixirError, aliases: [:Kernel], fun: fun, arg_exprs: args, line: meta[:line])
+    raise(ForbiddenCallError, target: [:Kernel], fun: fun, arg_exprs: args, line: meta[:line])
   end
   def do_pass_whitelist(expr),
     do: expr
