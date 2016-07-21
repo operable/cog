@@ -1,5 +1,11 @@
 #  Changelog
 
+## 0.11.1
+
+### Bugfixes
+
+- Include fix for bug [#853](https://github.com/operable/cog/issues/853) in Docker images
+
 ## 0.11.0
 
 ### Enhancements
@@ -10,9 +16,9 @@
 
 ### Bug Fixes
 
-- Restore `cogctl`'s SSL support [#853](https://github.com/operable/issues/853)
-- Substring match to detect bot mentions can yield false positives [#855](https://github.com/operable/issues/855)
-- Hangs encountered when managed dynamic configuration is enabled [#861](https://github.com/operable/issues/861)
+- Restore `cogctl`'s SSL support [#853](https://github.com/operable/cog/issues/853)
+- Substring match to detect bot mentions can yield false positives [#855](https://github.com/operable/cog/issues/855)
+- Hangs encountered when managed dynamic configuration is enabled [#861](https://github.com/operable/cog/issues/861)
 
 ## 0.10.0
 
