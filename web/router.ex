@@ -46,9 +46,15 @@ defmodule Cog.Router do
     get  "/v1/bundles/:id/status", V1.BundleStatusController, :show
     post "/v1/bundles/:id/versions/:bundle_version_id/status", V1.BundleStatusController, :set_status
 
-    get "/v1/bundles/:bundle_id/dynamic_config", V1.BundleDynamicConfigController, :show
-    post "/v1/bundles/:bundle_id/dynamic_config", V1.BundleDynamicConfigController, :create
-    delete "/v1/bundles/:bundle_id/dynamic_config", V1.BundleDynamicConfigController, :delete
+    get "/v1/bundles/:bundle_id/dynamic_config",                 V1.BundleDynamicConfigController, :show_all
+    get "/v1/bundles/:bundle_id/dynamic_config/:layer",          V1.BundleDynamicConfigController, :show_layer # base
+    get "/v1/bundles/:bundle_id/dynamic_config/:layer/:name",    V1.BundleDynamicConfigController, :show_layer
+
+    post "/v1/bundles/:bundle_id/dynamic_config/:layer",         V1.BundleDynamicConfigController, :set_layer # base
+    post "/v1/bundles/:bundle_id/dynamic_config/:layer/:name",   V1.BundleDynamicConfigController, :set_layer
+
+    delete "/v1/bundles/:bundle_id/dynamic_config/:layer",       V1.BundleDynamicConfigController, :delete_layer # base
+    delete "/v1/bundles/:bundle_id/dynamic_config/:layer/:name", V1.BundleDynamicConfigController, :delete_layer
 
     ########################################################################
 
