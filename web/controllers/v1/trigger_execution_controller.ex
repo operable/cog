@@ -135,7 +135,7 @@ defmodule Cog.V1.TriggerExecutionController do
                     "" ->
                       {:ok, %{}}
                     _ ->
-                      case :proplists.get_value("content-type", conn.req_headers) do
+                      case get_content_type(conn) do
                         :undefined ->
                           {:error, "missing content-type"}
                         type ->
@@ -179,6 +179,22 @@ defmodule Cog.V1.TriggerExecutionController do
 
   defp get_parsed_body(conn),
     do: conn.assigns[:parsed_body]
+
+  defp get_content_type(conn) do
+    agent = :proplists.get_value("user-agent", conn.req_headers)
+    maybe_override_type(agent, conn)
+  end
+
+  # This is a dirty hack to special case inbound requests from Amazon SNS
+  # to trigger endpoints. SNS appears to send `text/plain` as the Content-Type
+  # for its requests, despite sending a JSON payload. If this becomes a more
+  # common problem we may look at other more generalized options for this,
+  # but for now we'll start with a simple override for SNS specifically.
+  defp maybe_override_type("Amazon Simple Notification Service Agent", _),
+   do: "application/json"
+
+  defp maybe_override_type(_, conn),
+   do: :proplists.get_value("content-type", conn.req_headers)
 
   ########################################################################
 
