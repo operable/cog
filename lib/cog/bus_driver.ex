@@ -20,6 +20,7 @@ defmodule Cog.BusDriver do
   """
 
   require Logger
+
   use GenServer
 
   def start_link() do
@@ -27,6 +28,7 @@ defmodule Cog.BusDriver do
   end
 
   def init(_) do
+    reset_mnesia_data()
     case configure_message_bus() do
       {:ok, [app_name]} ->
         case Application.ensure_all_started(app_name) do
@@ -47,34 +49,38 @@ defmodule Cog.BusDriver do
 
   defp configure_message_bus() do
     bus_opts = Application.get_env(:cog, :message_bus)
-    mqtt_host = Keyword.get(bus_opts, :host, "127.0.0.1")
-    mqtt_port = Keyword.get(bus_opts, :port, 1883)
-    cert_file = Keyword.get(bus_opts, :ssl_cert)
-    key_file = Keyword.get(bus_opts, :ssl_key)
-    bindings = [mqtt_addr: mqtt_host, mqtt_port: mqtt_port]
-    case load_private_config("common_mqtt") do
-      {:ok, _} ->
-        cond do
-          # SSL enabled
-          cert_file != nil and key_file != nil ->
-            Logger.info("Message bus configured for SSL")
-            load_private_config("ssl_mqtt", [cert: String.to_char_list(cert_file),
-                                             key: String.to_char_list(key_file),
-                                             mqtt_type: :mqtts] ++ bindings)
-          # SSL disabled
-          cert_file == nil and key_file == nil ->
-            Logger.info("Message bus configured for plain TCP")
-            load_private_config("plain_mqtt", [{:mqtt_type, :mqtt}|bindings])
-          # SSL misconfigured (either cert_file is nil or key_file is nil)
-          true ->
-            if cert_file == nil do
-              Logger.error("Message bus SSL configuration error. Path to certificate file is empty.")
-              {:error, {:missing_config, :cert_file}}
-            else
-              Logger.error("Message bus SSL configuration error. Path to key file is empty.")
-              {:error, {:missing_config, :key_file}}
-            end
-      end
+    case prepare_host(Keyword.get(bus_opts, :host, "127.0.0.1")) do
+      {:ok, mqtt_host} ->
+        mqtt_port = Keyword.get(bus_opts, :port, 1883)
+        cert_file = Keyword.get(bus_opts, :ssl_cert)
+        key_file = Keyword.get(bus_opts, :ssl_key)
+        bindings = [mqtt_addr: mqtt_host, mqtt_port: mqtt_port]
+        case load_private_config("common_mqtt") do
+          {:ok, _} ->
+            cond do
+              # SSL enabled
+              cert_file != nil and key_file != nil ->
+                Logger.info("Message bus configured for SSL")
+                load_private_config("ssl_mqtt", [cert: String.to_char_list(cert_file),
+                                                 key: String.to_char_list(key_file),
+                                                 mqtt_type: :mqtts] ++ bindings)
+                # SSL disabled
+                cert_file == nil and key_file == nil ->
+                Logger.info("Message bus configured for plain TCP")
+                load_private_config("plain_mqtt", [{:mqtt_type, :mqtt}|bindings])
+                # SSL misconfigured (either cert_file is nil or key_file is nil)
+                true ->
+                if cert_file == nil do
+                  Logger.error("Message bus SSL configuration error. Path to certificate file is empty.")
+                  {:error, {:missing_config, :cert_file}}
+                else
+                  Logger.error("Message bus SSL configuration error. Path to key file is empty.")
+                  {:error, {:missing_config, :key_file}}
+                end
+          end
+          error ->
+            error
+        end
       error ->
         error
     end
@@ -92,6 +98,22 @@ defmodule Cog.BusDriver do
       error ->
         error
     end
+  end
+
+  defp prepare_host(host) when is_binary(host),
+    do: prepare_host(String.to_charlist(host))
+  defp prepare_host(host) do
+    case :inet.getaddr(host, :inet) do
+      {:ok, addr} ->
+        {:ok, addr}
+      {:error, v4_error} ->
+        {:error, "#{host}: #{:inet.format_error(v4_error)}"}
+    end
+  end
+
+  defp reset_mnesia_data() do
+    mnesia_dir = :mnesia.system_info(:directory) |> String.Chars.to_string
+    File.rm_rf!(mnesia_dir)
   end
 
 end
