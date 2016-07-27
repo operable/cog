@@ -48,36 +48,19 @@ defmodule Cog.BusDriver do
   end
 
   defp configure_message_bus() do
-    bus_opts = Application.get_env(:cog, :message_bus)
-    case prepare_host(Keyword.get(bus_opts, :host, "127.0.0.1")) do
-      {:ok, mqtt_host} ->
-        mqtt_port = Keyword.get(bus_opts, :port, 1883)
-        cert_file = Keyword.get(bus_opts, :ssl_cert)
-        key_file = Keyword.get(bus_opts, :ssl_key)
-        bindings = [mqtt_addr: mqtt_host, mqtt_port: mqtt_port]
+    case prepare_bindings() do
+      {:ok, common_bindings, cert_bindings} ->
         case load_private_config("common_mqtt") do
           {:ok, _} ->
-            cond do
+            if length(cert_bindings) == 2 do
               # SSL enabled
-              cert_file != nil and key_file != nil ->
-                Logger.info("Message bus configured for SSL")
-                load_private_config("ssl_mqtt", [cert: String.to_char_list(cert_file),
-                                                 key: String.to_char_list(key_file),
-                                                 mqtt_type: :mqtts] ++ bindings)
-                # SSL disabled
-                cert_file == nil and key_file == nil ->
-                Logger.info("Message bus configured for plain TCP")
-                load_private_config("plain_mqtt", [{:mqtt_type, :mqtt}|bindings])
-                # SSL misconfigured (either cert_file is nil or key_file is nil)
-                true ->
-                if cert_file == nil do
-                  Logger.error("Message bus SSL configuration error. Path to certificate file is empty.")
-                  {:error, {:missing_config, :cert_file}}
-                else
-                  Logger.error("Message bus SSL configuration error. Path to key file is empty.")
-                  {:error, {:missing_config, :key_file}}
-                end
-          end
+              Logger.info("Message bus configured for SSL")
+              load_private_config("ssl_mqtt", [{:mqtt_type, :mqtts}|common_bindings] ++ cert_bindings)
+            else
+              # SSL disabled
+              Logger.info("Message bus configured for plain TCP")
+              load_private_config("plain_mqtt", [{:mqtt_type, :mqtt}|common_bindings])
+            end
           error ->
             error
         end
@@ -85,6 +68,35 @@ defmodule Cog.BusDriver do
         error
     end
   end
+
+  defp prepare_bindings() do
+    bus_opts = Application.get_env(:cog, :message_bus)
+    case prepare_host(Keyword.get(bus_opts, :host, "127.0.0.1")) do
+      {:ok, mqtt_host} ->
+        mqtt_port = Keyword.get(bus_opts, :port, 1883)
+        cert_file = Keyword.get(bus_opts, :ssl_cert) |> convert_string
+        key_file = Keyword.get(bus_opts, :ssl_key) |> convert_string
+        common = [mqtt_addr: mqtt_host,
+                  mqtt_port: mqtt_port]
+        cond do
+          cert_file != nil and key_file != nil ->
+            {:ok, common, [cert: cert_file, key: key_file]}
+          cert_file == nil and key_file == nil ->
+            {:ok, common, []}
+          cert_file == nil ->
+            Logger.error("Message bus SSL configuration error. Path to certificate file is empty.")
+            {:error, {:missing_config, :cert_file}}
+          key_file == nil ->
+            Logger.error("Message bus SSL configuration error. Path to key file is empty.")
+            {:error, {:missing_config, :key_file}}
+        end
+      error ->
+        error
+    end
+  end
+
+  defp convert_string(nil), do: nil
+  defp convert_string(value), do: String.to_charlist(value)
 
   defp load_private_config(name, bindings \\ []) do
     config = File.read!(Path.join([:code.priv_dir(:cog), "config", name <> ".exs"]))
