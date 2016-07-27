@@ -110,7 +110,7 @@ defmodule Carrier.Messaging.Connection do
         :ok
     end
 
-    :emqttc.publish(conn, topic, encoded)
+    :emqttc.sync_publish(conn, topic, encoded, :qos1)
   end
 
   defp add_system_config(opts) do
