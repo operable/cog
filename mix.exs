@@ -24,7 +24,8 @@ defmodule Cog.Mixfile do
   end
 
   def application do
-    [applications: [:logger,
+    [applications: [:lager,
+                    :logger,
                     :probe,
                     :logger_file_backend,
                     :ibrowse,
@@ -60,8 +61,8 @@ defmodule Cog.Mixfile do
      {:logger_file_backend, github: "onkel-dirtus/logger_file_backend"},
      {:gen_logger, github: "emqtt/gen_logger", branch: "master", override: true},
      {:esockd, github: "emqtt/esockd", ref: "e6c27801bb5331d064081ef6d6af291a2878038c", override: true},
-     {:emqttc, github: "operable/emqttc", tag: "cog-0.2"},
-     {:emqttd, github: "operable/emqttd", branch: "tweaks-for-upstream"},
+     {:emqttc, github: "emqtt/emqttc", branch: "master"},
+     {:emqttd, github: "emqtt/emqttd", tag: "1.1.2"},
      {:lager, "~> 3.0.2", override: true},
      {:cowboy, "~> 1.0.4"},
      {:phoenix, "~> 1.1.4"},
