@@ -3,6 +3,9 @@ use Mix.Config
 config :logger, :console,
   level: :info
 
+config :lager, :handlers,
+  [{LagerLogger, [level: :error]}]
+
 config :cog,
   adapter: "test"
 
