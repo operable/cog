@@ -1,8 +1,10 @@
 use Mix.Config
 
+use Mix.Config
+
 config :emqttd, :listeners,
   [{mqtt_type, mqtt_port,
-    [acceptors: 16,
+    [acceptors: 8,
      max_clients: 64,
      access: [allow: :all],
      ssl: [certfile: cert,
@@ -11,4 +13,4 @@ config :emqttd, :listeners,
                 ip: mqtt_addr,
                 recbuf: 4096,
                 sndbuf: 4096,
-                buffer: 4096]]}]
+                delay_send: false]]}]

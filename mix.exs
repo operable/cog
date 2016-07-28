@@ -24,26 +24,36 @@ defmodule Cog.Mixfile do
   end
 
   def application do
-    [applications: [:logger,
-                    :probe,
-                    :logger_file_backend,
-                    :ibrowse,
-                    :httpotion,
-                    :gproc,
-                    :esockd,
-                    :exml,
-                    :hedwig,
-                    :slack,
-                    :cowboy,
-                    :phoenix,
-                    :phoenix_ecto,
-                    :postgrex,
-                    :phoenix_html,
-                    :comeonin,
-                    :spanner,
-                    :exirc],
+    [applications: started_applications,
      included_applications: [:emqttd],
      mod: {Cog, []}]
+  end
+
+  defp started_applications do
+    apps = [:lager,
+            :logger,
+            :probe,
+            :logger_file_backend,
+            :ibrowse,
+            :httpotion,
+            :gproc,
+            :esockd,
+            :exml,
+            :hedwig,
+            :slack,
+            :cowboy,
+            :phoenix,
+            :phoenix_ecto,
+            :postgrex,
+            :phoenix_html,
+            :comeonin,
+            :spanner,
+            :exirc]
+    if System.get_env("COG_SASL_LOG") != nil do
+      [:sasl|apps]
+    else
+      apps
+    end
   end
 
   defp deps do
@@ -60,8 +70,8 @@ defmodule Cog.Mixfile do
      {:logger_file_backend, github: "onkel-dirtus/logger_file_backend"},
      {:gen_logger, github: "emqtt/gen_logger", branch: "master", override: true},
      {:esockd, github: "emqtt/esockd", ref: "e6c27801bb5331d064081ef6d6af291a2878038c", override: true},
-     {:emqttc, github: "operable/emqttc", tag: "cog-0.2"},
-     {:emqttd, github: "operable/emqttd", branch: "tweaks-for-upstream"},
+     {:emqttc, github: "emqtt/emqttc", branch: "master"},
+     {:emqttd, github: "emqtt/emqttd", tag: "1.1.2"},
      {:lager, "~> 3.0.2", override: true},
      {:cowboy, "~> 1.0.4"},
      {:phoenix, "~> 1.1.4"},

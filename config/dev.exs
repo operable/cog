@@ -4,6 +4,9 @@ import Cog.Config.Helpers
 config :logger, :console,
   level: :debug
 
+config :lager, :handlers,
+  [{LagerLogger, [level: :error]}]
+
 config :cog, :enable_spoken_commands, ensure_boolean(System.get_env("ENABLE_SPOKEN_COMMANDS")) || false
 
 config :cog,

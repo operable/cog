@@ -110,7 +110,7 @@ defmodule Carrier.Messaging.Connection do
         :ok
     end
 
-    :emqttc.publish(conn, topic, encoded)
+    :emqttc.sync_publish(conn, topic, encoded, :qos1)
   end
 
   defp add_system_config(opts) do
@@ -136,17 +136,33 @@ defmodule Carrier.Messaging.Connection do
 
   # Enable SSL connections when SSL config is provided
   defp configure_ssl(opts, connect_opts) do
-    if Keyword.get(connect_opts, :ssl, false) do
-      cacertfile = Keyword.get(connect_opts, :cacerts, nil)
-      if is_binary(cacertfile) do
-        # Convert to char list since emqttc is expecting Erlang strings
-        cacertfile = String.to_char_list(cacertfile)
-        [ssl: [verify: :verify_peer, crl_check: true, cacertfile: cacertfile]] ++ opts
-      else
-        [:ssl | opts]
-      end
-    else
+    case Keyword.get(connect_opts, :ssl, false) do
+      false ->
+        opts
+      true ->
+        build_ssl_config(:verify, opts, connect_opts)
+      :verify ->
+        build_ssl_config(:verify, opts, connect_opts)
+      :unverified ->
+        build_ssl_config(:unverified, opts, connect_opts)
+      :no_verify ->
+        build_ssl_config(:unverified, opts, connect_opts)
+    end
+  end
+
+  defp build_ssl_config(kind, opts, connect_opts) do
+    cacertfile = Keyword.get(connect_opts, :ssl_cert, "")
+    if cacertfile == "" do
+      Logger.error(":cog/Carrier.Messaging.Connection/:ssl_cert config entry is missing. SSL client connections are disabled.")
       opts
+    else
+      ssl_opts = [crl_check: true, cacertfile: String.to_charlist(cacertfile)]
+      ssl_opts = if kind == :verify do
+        [{:verify, :verify_peer}|ssl_opts]
+      else
+        [{:verify, :verify_none}|ssl_opts]
+      end
+      [{:ssl, ssl_opts}|opts]
     end
   end
 

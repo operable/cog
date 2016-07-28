@@ -18,8 +18,8 @@ config :cog, :message_bus,
 # Uncomment the next three lines and edit ssl_cert and ssl_key
 # to point to your SSL certificate and key files.
 # config :cog, :message_bus,
-#  ssl_cert: "priv/ssl/cert.pem",
-#  ssl_key: "priv/ssl/key.pem"
+#  ssl_cert: "public.crt",
+#  ssl_key: "secret.key"
 
 config :cog, Cog.Adapters.Slack,
   api_token: System.get_env("SLACK_API_TOKEN"),
@@ -85,10 +85,14 @@ config :logger,
   console: log_opts,
   cog_log: log_opts ++ [path: data_dir("cog.log")]
 
+if System.get_env("COG_SASL_LOG") != nil do
+config :logger,
+  handle_sasl_reports: true
+end
+
 config :lager, :error_logger_redirect, false
 config :lager, :error_logger_whitelist, [Logger.ErrorHandler]
 config :lager, :crash_log, false
-config :lager, :handlers, [{LagerLogger, [level: :debug]}]
 
 config :probe, log_directory: data_dir("audit_logs")
 
@@ -115,8 +119,16 @@ config :cog, :credentials_dir, data_dir("carrier_creds")
 
 config :cog, Carrier.Messaging.Connection,
   host: System.get_env("COG_MQTT_HOST") || "127.0.0.1",
-  port: ensure_integer(System.get_env("COG_MQTT_PORT")) || 1883,
-  log_level: :info
+  port: ensure_integer(System.get_env("COG_MQTT_PORT")) || 1883
+
+# Uncomment the next three lines and edit ssl_cert to point to your
+# SSL certificate.
+# Note: SSL certification verification can be disabled by setting
+# "ssl: :no_verify". We strongly recommend disabling verification for
+# development or debugging ONLY.
+#config :cog, Carrier.Messaging.Connection,
+#  ssl: true,
+#  ssl_cert: "server.crt"
 
 # ========================================================================
 # Web Endpoints
