@@ -1,11 +1,15 @@
 use Mix.Config
 import Cog.Config.Helpers
 
-import_config "embedded_bundle_version.exs"
+# ========================================================================
+# Embedded Command Bundle Version (for built-in commands)
+# NOTE: Do not change this value unless you know what you're doing.
+# ========================================================================
+config :cog, :embedded_bundle_version, "0.11.2"
 
 # ========================================================================
 # Chat Adapters
-
+# ========================================================================
 config :cog,
   adapter: System.get_env("COG_ADAPTER") || "slack"
 
