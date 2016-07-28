@@ -86,12 +86,16 @@ defmodule Cog.Relay.Info do
   defp get_dynamic_configs(%{"relay_id" => relay_id, "config_hash" => config_hash, "reply_to" => reply_to}, state) do
     # Only send data if the reply_to topic matches relay_id
     if id_matches_reply_to(relay_id, reply_to) do
-      configs = Bundles.dynamic_configs_for_relay(relay_id) |> Enum.map(&(%{bundle_name: &1.bundle.name,
-                                                                            config: &1.config,
-                                                                            hash: &1.hash}))
+      configs = Bundles.dynamic_configs_for_relay(relay_id)
       signature = calculate_signature(configs)
+      grouped_configs = Enum.group_by(configs,
+                                      &(&1.bundle.name),
+                                      &(%{layer: &1.layer,
+                                          name: &1.name,
+                                          config: &1.config}))
+
       if config_hash != signature do
-        respond(%{configs: configs, changed: true, signature: signature}, reply_to, state)
+        respond(%{configs: grouped_configs, changed: true, signature: signature}, reply_to, state)
       else
         respond(%{changed: false}, reply_to, state)
       end
@@ -104,7 +108,7 @@ defmodule Cog.Relay.Info do
 
   defp calculate_signature(configs) do
     configs
-    |> Enum.sort(&(&1.bundle_name <= &2.bundle_name))
+    |> Enum.sort(&(&1.bundle.name <= &2.bundle.name))
     |> Enum.map(&(&1.hash))
     |> Hash.compute_hash
   end

@@ -5,6 +5,8 @@ defmodule Cog.Models.BundleDynamicConfig do
   alias Cog.Models.Bundle
 
   schema "bundle_dynamic_configs" do
+    field :layer, :string
+    field :name, :string
     field :config, :map
     field :hash, :string
 
@@ -14,12 +16,13 @@ defmodule Cog.Models.BundleDynamicConfig do
 
   end
 
-  @required_fields ~w(bundle_id config)
+  @required_fields ~w(bundle_id layer name config)
   @optional_fields ~w()
 
   def changeset(model, params \\ :empty) do
     model
     |> cast(params, @required_fields, @optional_fields)
+    |> validate_inclusion(:layer, ["base", "room", "user"])
     |> unique_constraint(:bundle_id, name: :bundle_dynamic_configs_bundle_id_index)
     |> calculate_hash
   end

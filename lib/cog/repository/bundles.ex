@@ -14,6 +14,17 @@ defmodule Cog.Repository.Bundles do
   alias Ecto.Adapters.SQL
   import Cog.UUID, only: [uuid_to_bin: 1]
 
+  @bundle_preloads [:versions, :relay_groups]
+  @bundle_version_preloads [:bundle,
+                            :enabled_version_registration,
+                            permissions: [:bundle],
+                            commands: [:options, [command: [:bundle, rules: (from r in Rule, where: r.enabled)]]]]
+  @enabled_version_preloads [enabled_version: [:bundle,
+                                               :enabled_version_registration,
+                                               permissions: [:bundle],
+                                               commands: [command: :bundle]]]
+  @bundle_dynamic_config_preloads [:bundle]
+
   @reserved_bundle_names [
     Cog.embedded_bundle,
     Cog.site_namespace,
@@ -527,32 +538,50 @@ defmodule Cog.Repository.Bundles do
   end
 
   @doc """
-  Given a bundle ID, return the dynamic configuration associated with it.
+  Return the specified dynamic configuration layer for a bundle, if it exists.
   """
-  def dynamic_config_for_bundle(bundle_id) do
+  def dynamic_config_for_bundle(%Bundle{id: bundle_id}, layer, name) do
     Repo.one(from d in BundleDynamicConfig,
              where: d.bundle_id == ^bundle_id,
-             preload: [:bundle])
+             where: d.layer == ^layer,
+             where: d.name == ^name,
+             preload: ^@bundle_dynamic_config_preloads)
+  end
+
+  def dynamic_config_for_bundle(%Bundle{id: bundle_id}) do
+    Repo.all(from d in BundleDynamicConfig,
+             where: d.bundle_id == ^bundle_id,
+             order_by: [d.layer, d.name],
+             preload: ^@bundle_dynamic_config_preloads)
   end
 
   @doc """
   Creates a new dynamic configuration for a given bundle.
   Will overwrite previous config.
   """
-  def create_dynamic_config_for_bundle(bundle_id, changeset) do
+  def create_dynamic_config_for_bundle(%Bundle{id: bundle_id}=bundle, %{"layer" => layer, "name" => name, "config" => config}) do
     Repo.transaction(fn ->
-      delete_dynamic_config_for_bundle(bundle_id)
-      dyn_config = Repo.insert!(changeset)
-      Repo.preload(dyn_config, :bundle) end)
+      delete_dynamic_config_for_bundle(bundle, layer, name)
+
+      %BundleDynamicConfig{}
+      |> BundleDynamicConfig.changeset(%{"bundle_id" => bundle_id,
+                                         "layer" => layer,
+                                         "name" => name,
+                                         "config" => config})
+      |> Repo.insert!
+      |> preload
+    end)
   end
 
   @doc """
   Delete dynamic configuration for a given bundle ID
   Returns true if config was deleted
   """
-  def delete_dynamic_config_for_bundle(bundle_id) do
+  def delete_dynamic_config_for_bundle(%Bundle{id: bundle_id}, layer, name) do
     {count, _} = Repo.delete_all(from d in BundleDynamicConfig,
-                                 where: d.bundle_id == ^bundle_id)
+                                 where: d.bundle_id == ^bundle_id,
+                                 where: d.layer == ^layer,
+                                 where: d.name == ^name)
     count > 0
   end
 
@@ -566,7 +595,7 @@ defmodule Cog.Repository.Bundles do
              join: rgm in "relay_group_memberships", on: rgm.relay_id == ^relay_id,
              join: rga in "relay_group_assignments", on: rga.group_id == rgm.group_id,
              where: rga.bundle_id == d.bundle_id,
-             preload: [:bundle])
+             preload: ^@bundle_dynamic_config_preloads)
   end
 
   ########################################################################
@@ -601,16 +630,6 @@ defmodule Cog.Repository.Bundles do
 
   # Consolidate what we need to preload for various things so we stay
   # consistent
-  @bundle_preloads [:versions, :relay_groups]
-  @bundle_version_preloads [:bundle,
-                            :enabled_version_registration,
-                            permissions: [:bundle],
-                            commands: [:options, [command: [:bundle, rules: (from r in Rule, where: r.enabled)]]]]
-  @enabled_version_preloads [enabled_version: [:bundle,
-                                               :enabled_version_registration,
-                                               permissions: [:bundle],
-                                               commands: [command: :bundle]]]
-
   defp preload(%Bundle{}=bundle),
     do: Repo.preload(bundle, @bundle_preloads ++ @enabled_version_preloads)
   defp preload([%Bundle{} | _]=bs),
@@ -619,7 +638,8 @@ defmodule Cog.Repository.Bundles do
     do: Repo.preload(bv, @bundle_version_preloads)
   defp preload([%BundleVersion{} | _]=bvs),
     do: Repo.preload(bvs, @bundle_version_preloads)
-
+  defp preload(%BundleDynamicConfig{}=c),
+    do: Repo.preload(c, @bundle_dynamic_config_preloads)
 
   ########################################################################
   #
