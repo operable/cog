@@ -24,27 +24,36 @@ defmodule Cog.Mixfile do
   end
 
   def application do
-    [applications: [:lager,
-                    :logger,
-                    :probe,
-                    :logger_file_backend,
-                    :ibrowse,
-                    :httpotion,
-                    :gproc,
-                    :esockd,
-                    :exml,
-                    :hedwig,
-                    :slack,
-                    :cowboy,
-                    :phoenix,
-                    :phoenix_ecto,
-                    :postgrex,
-                    :phoenix_html,
-                    :comeonin,
-                    :spanner,
-                    :exirc],
+    [applications: started_applications,
      included_applications: [:emqttd],
      mod: {Cog, []}]
+  end
+
+  defp started_applications do
+    apps = [:lager,
+            :logger,
+            :probe,
+            :logger_file_backend,
+            :ibrowse,
+            :httpotion,
+            :gproc,
+            :esockd,
+            :exml,
+            :hedwig,
+            :slack,
+            :cowboy,
+            :phoenix,
+            :phoenix_ecto,
+            :postgrex,
+            :phoenix_html,
+            :comeonin,
+            :spanner,
+            :exirc]
+    if System.get_env("COG_SASL_LOG") != nil do
+      [:sasl|apps]
+    else
+      apps
+    end
   end
 
   defp deps do
