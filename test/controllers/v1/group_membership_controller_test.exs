@@ -29,7 +29,7 @@ defmodule Cog.V1.GroupMembershipController.Test do
     group = group("robots")
 
     conn = api_request(requestor, :post, "/v1/groups/#{group.id}/users",
-                       body: %{"users" => %{"add" => [user.email_address]}})
+                       body: %{"users" => %{"add" => [user.username]}})
 
     assert conn.halted
     assert conn.status == 403
@@ -41,7 +41,7 @@ defmodule Cog.V1.GroupMembershipController.Test do
     user = user("hal")
 
     conn = api_request(requestor, :post, "/v1/groups/#{@bad_uuid}/users",
-                                    body: %{"users" => %{"add" => [user.email_address]}})
+                                    body: %{"users" => %{"add" => [user.username]}})
     assert "Group not found" == json_response(conn, 404)["errors"]
   end
 
@@ -57,7 +57,7 @@ defmodule Cog.V1.GroupMembershipController.Test do
     assert [] == Repo.preload(group, :direct_user_members).direct_user_members
 
     conn = api_request(requestor, :post, "/v1/groups/#{group.id}/users",
-                       body: %{"users" => %{"add" => [user.email_address]}})
+                       body: %{"users" => %{"add" => [user.username]}})
 
     assert %{"group" => %{"id" => group.id,
                           "name" => group.name,
@@ -78,14 +78,13 @@ defmodule Cog.V1.GroupMembershipController.Test do
 
     usernames = ["hal", "data", "robbie"]
     [hal, data, robbie] = users = Enum.map(usernames, &user(&1))
-    email_addresses = Enum.map(users, &(&1.email_address))
 
     # group's got nothing yet!
     assert [] == Repo.preload(group, :direct_user_members).direct_user_members
 
     # Grant the permissions
     conn = api_request(requestor, :post, "/v1/groups/#{group.id}/users",
-                       body: %{"users" => %{"add" => email_addresses }})
+                       body: %{"users" => %{"add" => usernames}})
 
     # # Verify the response body
     response = json_response(conn, 200)
@@ -125,7 +124,7 @@ defmodule Cog.V1.GroupMembershipController.Test do
 
     new_user = user("data")
     conn = api_request(requestor, :post, "/v1/groups/#{group.id}/users",
-                       body: %{"users" => %{"add" => [new_user.email_address]}})
+                       body: %{"users" => %{"add" => [new_user.username]}})
 
     response = json_response(conn, 200)
     %{"users" => users_from_api,
@@ -150,7 +149,7 @@ defmodule Cog.V1.GroupMembershipController.Test do
     group = group("robots")
 
     conn = api_request(requestor, :post, "/v1/groups/#{group.id}/users",
-                       body: %{"users" => %{"add" => [existing_user.email_address,
+                       body: %{"users" => %{"add" => [existing_user.username,
                                                       "i_dont_exist"]}})
     assert json_response(conn, 422) == %{"errors" => %{"not_found" => %{"users" => ["i_dont_exist"]}}}
 
@@ -163,7 +162,7 @@ defmodule Cog.V1.GroupMembershipController.Test do
     :ok = Groupable.add_to(already_a_member, group)
 
     conn = api_request(requestor, :post, "/v1/groups/#{group.id}/users",
-                       body: %{"users" => %{"add" => [already_a_member.email_address]}})
+                       body: %{"users" => %{"add" => [already_a_member.username]}})
 
     assert %{"group" => %{"id" => group.id,
                           "name" => group.name,
@@ -185,7 +184,7 @@ defmodule Cog.V1.GroupMembershipController.Test do
     Groupable.add_to(user, group)
 
     conn = api_request(requestor, :post, "/v1/groups/#{group.id}/users",
-                       body: %{"users" => %{"remove" => [user.email_address]}})
+                       body: %{"users" => %{"remove" => [user.username]}})
     assert %{"group" => %{"id" => group.id,
                           "name" => group.name,
                           "members" => %{"users" => [],
@@ -200,12 +199,11 @@ defmodule Cog.V1.GroupMembershipController.Test do
 
     usernames = ["hal", "data", "robbie"]
     users = Enum.map(usernames, &user(&1))
-    email_addresses = Enum.map(users, &(&1.email_address))
     Enum.each(users, &Groupable.add_to(&1, group))
 
     # Remove
     conn = api_request(requestor, :post, "/v1/groups/#{group.id}/users",
-                       body: %{"users" => %{"remove" => email_addresses}})
+                       body: %{"users" => %{"remove" => usernames}})
 
     # # Verify the response body
     response = json_response(conn, 200)
@@ -229,7 +227,7 @@ defmodule Cog.V1.GroupMembershipController.Test do
 
     # Remove one of them
     conn = api_request(requestor, :post, "/v1/groups/#{group.id}/users",
-                       body: %{"users" => %{"remove" => [user_to_be_deleted.email_address]}})
+                       body: %{"users" => %{"remove" => [user_to_be_deleted.username]}})
 
     # only the removed user is, um, removed
     assert %{"group" => %{"id" => group.id,
@@ -249,7 +247,7 @@ defmodule Cog.V1.GroupMembershipController.Test do
     Groupable.add_to(user, group)
 
     conn = api_request(requestor, :post, "/v1/groups/#{group.id}/users",
-                       body: %{"users" => %{"remove" => [user.email_address,
+                       body: %{"users" => %{"remove" => [user.username,
                                                          "i_dont_exist"]}})
 
     assert json_response(conn, 422) == %{"errors" => %{"not_found" => %{"users" => ["i_dont_exist"]}}}
@@ -262,7 +260,7 @@ defmodule Cog.V1.GroupMembershipController.Test do
     not_a_member = user("hal")
 
     conn = api_request(requestor, :post, "/v1/groups/#{group.id}/users",
-                       body: %{"users" => %{"remove" => [not_a_member.email_address]}})
+                       body: %{"users" => %{"remove" => [not_a_member.username]}})
 
     assert %{"group" => %{"id" => group.id,
                           "name" => group.name,
