@@ -6,10 +6,7 @@ defmodule Cog.Bundle.Embedded do
   use Supervisor
   use Adz
 
-  alias Carrier.CredentialManager
-  alias Carrier.Credentials
   alias Cog.Bundle.Config
-
   alias Cog.Repository
 
   @doc """
@@ -51,8 +48,7 @@ defmodule Cog.Bundle.Embedded do
   # command processes of the bundle
   defp announce_embedded_bundle(bundle_version) do
     Logger.info("Announcing embedded bundle")
-    {:ok, %Credentials{id: relay_id}} = CredentialManager.get()
-    message = %{"announce" => %{"relay" => relay_id,
+    message = %{"announce" => %{"relay" => Cog.Config.embedded_relay(),
                                 "online" => true,
                                 "snapshot" => true,
                                 "bundles" => [%{"name" => bundle_version .bundle.name,

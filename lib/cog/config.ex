@@ -52,6 +52,9 @@ defmodule Cog.Config do
     |> convert_from_seconds(into)
   end
 
+  @doc "Returns the mythical Relay id used to execute embedded commands"
+  def embedded_relay(), do: "28a35f98-7ae1-4b8d-929a-3c716f6717c7"
+
   defp convert_to_seconds({seconds, :sec}),
     do: {seconds, :sec}
   defp convert_to_seconds({minutes, :min}),
