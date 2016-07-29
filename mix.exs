@@ -11,6 +11,7 @@ defmodule Cog.Mixfile do
      erlc_options: [:debug_info, :warnings_as_errors],
      elixirc_options: [warnings_as_errors: System.get_env("ALLOW_WARNINGS") == nil,
                        long_compilation_threshold: 50],
+     consolidate_protocols: Mix.env == :prod,
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
      deps: deps,
