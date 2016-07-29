@@ -119,8 +119,6 @@ config :cog, Cog.Repo,
 
 # ========================================================================
 
-config :cog, :credentials_dir, data_dir("carrier_creds")
-
 config :cog, Carrier.Messaging.Connection,
   host: System.get_env("COG_MQTT_HOST") || "127.0.0.1",
   port: ensure_integer(System.get_env("COG_MQTT_PORT")) || 1883

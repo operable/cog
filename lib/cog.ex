@@ -9,7 +9,6 @@ defmodule Cog do
     children = [worker(Cog.Repo, []),
                 worker(Cog.BusDriver, [], shutdown: 10000),
                 worker(Cog.TokenReaper, []),
-                worker(Carrier.CredentialManager, []),
                 supervisor(Cog.Relay.RelaySup, []),
                 supervisor(Cog.Command.CommandSup, []),
                 supervisor(adapter_supervisor, []),

@@ -83,7 +83,7 @@ defmodule Cog.Repository.BundlesTest do
     expected = %{name: "operable",
                  enabled: true,
                  enabled_version: embedded_bundle_version_string,
-                 relays: [bot_relay_id]}
+                 relays: [Cog.Config.embedded_relay]}
     assert expected == Bundles.status(bundle_named("operable"))
   end
 
@@ -402,11 +402,6 @@ defmodule Cog.Repository.BundlesTest do
   defp version(version_string) do
     {:ok, v} = Version.parse(version_string)
     v
-  end
-
-  defp bot_relay_id do
-    {:ok, %Carrier.Credentials{id: relay_id}} = Carrier.CredentialManager.get()
-    relay_id
   end
 
 end

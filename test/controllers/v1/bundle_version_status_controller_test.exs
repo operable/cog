@@ -28,11 +28,10 @@ defmodule Cog.V1.BundleVersionStatusControllerTest do
 
   test "show status of embedded bundle version", %{authed: requestor} do
     version = Bundles.active_embedded_bundle_version
-    {:ok, %Carrier.Credentials{id: relay_id}} = Carrier.CredentialManager.get()
 
     conn = api_request(requestor, :get, "/v1/bundles/#{version.bundle.id}/status")
     version = Application.fetch_env!(:cog, :embedded_bundle_version)
-
+    relay_id = Cog.Config.embedded_relay
     assert %{"relays" => [relay_id],
              "name" => "operable",
              "enabled_version" => version,

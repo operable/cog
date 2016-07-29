@@ -127,7 +127,7 @@ defmodule Cog.Command.GenCommand do
     # the appropriate topics
     case Carrier.Messaging.Connection.connect do
       {:ok, conn} ->
-        {:ok, %Carrier.Credentials{id: relay_id}} = Carrier.CredentialManager.get()
+        relay_id = Cog.Config.embedded_relay()
         [topic, reply_topic] = topics = [command_topic(bundle, command, relay_id),
                                          command_reply_topic(bundle, command, relay_id)]
         for topic <- topics do
