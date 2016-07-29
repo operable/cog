@@ -9,7 +9,7 @@ defmodule Cog do
                 worker(Cog.Repo, []),
                 supervisor(Cog.CoreSup, [])]
 
-    opts = [strategy: :one_for_all, name: Cog.Supervisor]
+    opts = [strategy: :one_for_one, name: Cog.Supervisor]
     case Supervisor.start_link(children, opts) do
       {:ok, top_sup} ->
         # Verify the latest schema migration after starting the database worker

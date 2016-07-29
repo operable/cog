@@ -13,6 +13,16 @@ config :cog, :embedded_bundle_version, "0.12.0"
 config :cog,
   adapter: System.get_env("COG_ADAPTER") || "slack"
 
+config :cog, Cog.Chat.Adapter,
+  cache_ttl: System.get_env("SLACK_API_CACHE_TTL") || 60,
+  providers: [:slack, :http]
+
+config :cog, Cog.Chat.SlackProvider,
+  api_token: System.get_env("SLACK_API_TOKEN")
+
+config :cog, Cog.Chat.HttpProvider,
+  foo: "blah"
+
 config :cog, :enable_spoken_commands, ensure_boolean(System.get_env("ENABLE_SPOKEN_COMMANDS")) || true
 
 config :cog, :message_bus,

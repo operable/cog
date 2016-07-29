@@ -12,12 +12,14 @@ defmodule Carrier.Messaging.Connection do
   @default_connect_timeout 5000 # 5 seconds
   @default_log_level :error
 
+  defstruct [:id, :conn, :call_reply]
+
   # Note: This type is what we get from emqttc; if we change
   # underlying message buses, we can just change this
   # definition. Client code can just depend on this opaque type and
   # not need to know that we're using emqttc at all.
   @typedoc "The connection to the message bus."
-  @opaque connection :: pid()
+  @opaque connection :: %__MODULE__{}
 
   @doc """
   Starts up a message bus client process using only preconfigured parameters.
@@ -60,15 +62,22 @@ defmodule Carrier.Messaging.Connection do
     # If we don't connect after a specified timeout, we just fail.
     receive do
       {:mqttc, ^conn, :connected} ->
-        Logger.info("Connection #{inspect conn} connected to message bus")
-        {:ok, conn}
+        id = UUID.uuid4(:hex)
+        call_reply = "carrier/call/reply/#{id}"
+        :emqttc.sync_subscribe(conn, call_reply)
+        {:ok, %__MODULE__{conn: conn, id: id, call_reply: call_reply}}
     after connect_timeout ->
         Logger.info("Connection not established")
         {:error, :econnrefused}
     end
   end
 
-  def subscribe(conn, topic) do
+  @spec disconnect(%__MODULE__{}) :: :ok | atom
+  def disconnect(%__MODULE__{conn: conn}) do
+    :emqttc.disconnect(conn)
+  end
+
+  def subscribe(%__MODULE__{conn: conn}, topic) do
     # `:qos1` is an MQTT quality-of-service level indicating "at least
     # once delivery" of messages. Additionally, the sender blocks
     # until receiving a message acknowledging receipt of the
@@ -83,6 +92,40 @@ defmodule Carrier.Messaging.Connection do
 
   def unsubscribe(conn, topic) do
     :emqttc.unsubscribe(conn, topic)
+  end
+
+  @spec call(conn :: connection, call_topic :: String.t, message :: map, timeout :: integer) ::
+    map |
+    {:error, :call_timeout} |
+    {:error, reason :: any}
+  def call(%__MODULE__{call_reply: reply}=conn, call_topic, message, timeout) when is_map(message) do
+    flush_pending(reply)
+
+    message = %{call_sender: reply,
+                call: message}
+
+    # Publish message (make blocking call)
+    case publish(conn, message, routed_by: call_topic) do
+      {:ok, _} ->
+        # Wait for response
+        receive do
+          {:publish, ^reply, message} ->
+            Poison.decode!(message)
+        after timeout ->
+            {:error, :call_timeout}
+        end
+    end
+  end
+
+  @spec cast(conn :: connection, caast_topic :: String.t, message :: map) :: :ok | {:error, reason :: any}
+  def cast(%__MODULE__{}=conn, cast_topic, message) do
+    message = %{cast: message}
+    case publish(conn, message, routed_by: cast_topic) do
+      {:ok, _} ->
+        :ok
+      error ->
+        error
+    end
   end
 
   @doc """
@@ -167,6 +210,17 @@ defmodule Carrier.Messaging.Connection do
         [{:verify, :verify_none}|ssl_opts]
       end
       [{:ssl, ssl_opts}|opts]
+    end
+  end
+
+  # Receive and drop and pending sent messages
+  # on a topic
+  defp flush_pending(topic) do
+    receive do
+      {:publish, ^topic, _} ->
+        flush_pending(topic)
+    after 0 ->
+        :ok
     end
   end
 
