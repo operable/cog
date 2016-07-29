@@ -16,7 +16,7 @@ defmodule Cog.Commands.Group.Role.Add do
     -h, --help    Display this usage info
   """
 
-  @spec add_role(%Cog.Command.Request{}, List.t) :: {:ok, String.t, Map.t} | {:error, any()}
+  @spec add_role(%Cog.Messages.Command{}, List.t) :: {:ok, String.t, Map.t} | {:error, any()}
   def add_role(req, arg_list) do
     if Helpers.flag?(req.options, "help") do
       show_usage

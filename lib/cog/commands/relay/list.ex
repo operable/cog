@@ -20,7 +20,7 @@ defmodule Cog.Commands.Relay.List do
   Lists relays. Accepts a cog request and returns either a success tuple
   containing a template and data, or an error.
   """
-  @spec list_relays(%Cog.Command.Request{}) :: {:ok, String.t, Map.t} | {:error, any()}
+  @spec list_relays(%Cog.Messages.Command{}) :: {:ok, String.t, Map.t} | {:error, any()}
   def list_relays(req) do
     if Helpers.flag?(req.options, "help") do
       show_usage

@@ -57,6 +57,7 @@ defmodule Cog.Snoop do
     {:ok, %__MODULE__{mq_conn: mq_conn, topic: topic, messages: []}}
   end
 
+  # TODO: how best to integrate this with Conduit?
   def handle_info({:publish, topic, msg}, %__MODULE__{topic: topic}=state),
     do: {:noreply, %{state | messages: [Poison.decode!(msg)|state.messages]}}
 

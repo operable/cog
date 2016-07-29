@@ -17,7 +17,7 @@ defmodule Cog.Commands.RelayGroup.Rename do
     -h, --help      Display this usage info
   """
 
-  @spec rename_relay_group(%Cog.Command.Request{}, List.t) :: {:ok, String.t, Map.t} | {:error, any()}
+  @spec rename_relay_group(%Cog.Messages.Command{}, List.t) :: {:ok, String.t, Map.t} | {:error, any()}
   def rename_relay_group(req, arg_list) do
     if Helpers.flag?(req.options, "help") do
       show_usage

@@ -17,7 +17,7 @@ defmodule Cog.Commands.RelayGroup.Member.Unassign do
     -h, --help      Display this usage info
   """
 
-  @spec unassign_bundles(%Cog.Command.Request{}, List.t) :: {:ok, String.t, Map.t} | {:error, any()}
+  @spec unassign_bundles(%Cog.Messages.Command{}, List.t) :: {:ok, String.t, Map.t} | {:error, any()}
   def unassign_bundles(req, arg_list) do
     if Helpers.flag?(req.options, "help") do
       show_usage

@@ -94,10 +94,14 @@ defmodule Carrier.Messaging.Connection do
     * `:routed_by` - the topic on which to publish `message`. Required.
 
   """
-  def publish(conn, message, kw_args) when is_map(message) do
+
+  # Here, we assume we're being passed a Conduit-enabled struct
+  # (aside: any way to verify that statically?) We'll do the encoding
+  # to JSON internally
+  def publish(conn, %{__struct__: _}=message, kw_args) do
     topic = Keyword.fetch!(kw_args, :routed_by)
 
-    encoded = Poison.encode!(message)
+    encoded = message.__struct__.encode!(message)
     case Keyword.fetch(kw_args, :threshold) do
       {:ok, threshold} ->
         size = byte_size(encoded)

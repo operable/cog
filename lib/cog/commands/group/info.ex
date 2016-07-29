@@ -15,7 +15,7 @@ defmodule Cog.Commands.Group.Info do
     -h, --help    Display this usage info
   """
 
-  @spec get_info(%Cog.Command.Request{}, List.t) :: {:ok, String.t, Map.t} | {:error, any()}
+  @spec get_info(%Cog.Messages.Command{}, List.t) :: {:ok, String.t, Map.t} | {:error, any()}
   def get_info(req, arg_list) do
     if Helpers.flag?(req.options, "help") do
       show_usage

@@ -16,7 +16,7 @@ defmodule Cog.Commands.Group.Role do
     -h, --help    Display this usage info
   """
 
-  @spec manage_roles(%Cog.Command.Request{}, List.t) :: {:ok, String.t, Map.t} | {:error, any()}
+  @spec manage_roles(%Cog.Messages.Command{}, List.t) :: {:ok, String.t, Map.t} | {:error, any()}
   def manage_roles(req, []) do
     if Helpers.flag?(req.options, "help") do
       show_usage
@@ -44,4 +44,3 @@ defmodule Cog.Commands.Group.Role do
   defp error({:unknown_subcommand, invalid, suggestion}),
     do: "Unknown subcommand '#{invalid}'. Did you mean '#{suggestion}'?"
 end
-

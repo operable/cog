@@ -78,7 +78,7 @@ defmodule Cog.Relay.Relays do
     end
   end
 
-  def handle_call({:announce_embedded_relay, %{"announce" => announcement}}, _from, state) do
+  def handle_call({:announce_embedded_relay, announcement}, _from, state) do
     # This function head acts as a private internal API used for
     # registering the bot as a host for the embedded command
     # bundle. (We don't provide a public API function for this message
@@ -112,11 +112,14 @@ defmodule Cog.Relay.Relays do
     do: {:reply, Tracker.relays(state.tracker, bundle_name, version), state}
 
   def handle_info({:publish, @relays_discovery_topic, message}, state) do
-    case Poison.decode(message) do
-      {:ok, %{"announce" => announcement}} ->
-        state = process_announcement(announcement, state)
-        {:noreply, state}
-      _ ->
+    try do
+      payload = Cog.Messages.Relay.Announce.decode!(message)
+      # TODO: When this is unwrapped, we can just pass payload directly
+      state = process_announcement(payload.announce, state)
+      {:noreply, state}
+    rescue
+      e in Conduit.ValidationError ->
+        Logger.error("Failed validation: #{inspect e}")
         {:noreply, state}
     end
   end
@@ -127,14 +130,16 @@ defmodule Cog.Relay.Relays do
   ########################################################################
 
   defp process_embedded_announcement(announcement, %__MODULE__{tracker: tracker}=state) do
-    [%{"name" => name, "version" => version}] = announcement["bundles"]
+    [%Cog.Messages.Relay.Bundle{name: name, version: version}] = announcement.bundles
     tracker = update_tracker(announcement, tracker, [{name, version}], true)
     %{state | tracker: tracker}
   end
 
   defp process_announcement(announcement, %__MODULE__{tracker: tracker}=state) do
-    {success_bundle_versions, failed_bundles} = announcement
-    |> Map.get("bundles", [])
+    bundles = (announcement.bundles || []) # TODO: Conduit structs need default values
+    |> Enum.map(&Map.from_struct/1)
+
+    {success_bundle_versions, failed_bundles} = bundles
     |> Enum.map(&Cog.Repository.Bundles.verify_version_exists/1) # TODO: this is really just a lookup, now; we might be able to simplify this logic
     |> Enum.partition(&Util.is_ok?/1)
     |> Util.unwrap_partition_results
@@ -142,8 +147,8 @@ defmodule Cog.Relay.Relays do
     specs = Enum.map(success_bundle_versions, &version_spec/1)
     tracker = update_tracker(announcement, tracker, specs, false)
 
-    reply_to        = Map.fetch!(announcement, "reply_to")
-    announcement_id = Map.fetch!(announcement, "announcement_id")
+    reply_to        = announcement.reply_to
+    announcement_id = announcement.announcement_id
     receipt = receipt(announcement_id, failed_bundles)
     Logger.debug("Sending receipt to #{reply_to}: #{inspect receipt}")
     Messaging.Connection.publish(state.mq_conn, receipt, routed_by: reply_to)
@@ -152,14 +157,18 @@ defmodule Cog.Relay.Relays do
   end
 
   defp receipt(announcement_id, []),
-    do: %{"announcement_id" => announcement_id, "status" => "success", "bundles" => []}
+    do: %Cog.Messages.Relay.Receipt{announcement_id: announcement_id,
+                                    status: "success",
+                                    bundles: []}
   defp receipt(announcement_id, failed_bundles),
-    do: %{"announcement_id" => announcement_id, "status" => "failed", "bundles" => failed_bundles}
+    do: %Cog.Messages.Relay.Receipt{announcement_id: announcement_id,
+                                    status: "failed",
+                                    bundles: failed_bundles}
 
   defp update_tracker(announcement, tracker, specs, internal) do
-    relay_id = Map.fetch!(announcement, "relay")
+    relay_id = announcement.relay
 
-    online_status = case Map.fetch!(announcement, "online") do
+    online_status = case announcement.online do
                       true -> :online
                       false -> :offline
                     end
@@ -174,7 +183,7 @@ defmodule Cog.Relay.Relays do
                        :disabled
                      end
 
-    snapshot_status = case Map.fetch!(announcement, "snapshot") do
+    snapshot_status = case announcement.snapshot do
                         true -> :snapshot
                         false -> :incremental
                       end

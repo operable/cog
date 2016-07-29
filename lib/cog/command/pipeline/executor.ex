@@ -56,7 +56,7 @@ defmodule Cog.Command.Pipeline.Executor do
     topic: String.t,
     started: :erlang.timestamp(),
     mq_conn: Carrier.Messaging.Connection.connection(),
-    request: %Cog.Command.Request{}, # TODO: needs to be a type
+    request: %Cog.Messages.AdapterRequest{}, # TODO: needs to be a type
     destinations: [Destination.t],
     relays: Map.t,
     invocations: [%Piper.Command.Ast.Invocation{}], # TODO: needs to be a type
@@ -98,15 +98,17 @@ defmodule Cog.Command.Pipeline.Executor do
   def start_link(request),
     do: :gen_fsm.start_link(__MODULE__, [request], [])
 
-  def init([request]) when is_map(request) do
+  def init([%Cog.Messages.AdapterRequest{}=request]) do
     request = sanitize_request(request)
     {:ok, conn} = Connection.connect()
-    id = Map.fetch!(request, "id")
+    id = request.id
     topic = "/bot/pipelines/#{id}"
     Connection.subscribe(conn, topic <> "/+")
 
     service_token = Cog.Command.Service.Tokens.new
 
+    # TODO: Fold initial context creation into decoding; we shouldn't
+    # ever get anything invalid here
     case create_initial_context(request) do
       {:ok, initial_context} ->
         case fetch_user_from_request(request) do
@@ -136,11 +138,11 @@ defmodule Cog.Command.Pipeline.Executor do
 
   def parse(:timeout, state) do
     options = %ParserOptions{resolver: CommandResolver.command_resolver_fn(state.user)}
-    case Parser.scan_and_parse(state.request["text"], options) do
+    case Parser.scan_and_parse(state.request.text, options) do
       {:ok, %Ast.Pipeline{}=pipeline} ->
         case Destination.process(Ast.Pipeline.redirect_targets(pipeline),
-                                 state.request["sender"],
-                                 state.request["room"],
+                                 state.request.sender,
+                                 state.request.room,
                                  originating_adapter(state)) do
           {:ok, destinations} ->
             {:next_state,
@@ -211,7 +213,7 @@ defmodule Cog.Command.Pipeline.Executor do
         updated_state =  %{state | current_plan: current_plan, plans: remaining_plans, relays: relays}
 
         dispatch_event(updated_state, relay)
-        Connection.publish(updated_state.mq_conn, Cog.Command.Request.encode!(req), routed_by: topic)
+        Connection.publish(updated_state.mq_conn, req, routed_by: topic)
 
         {:next_state, :wait_for_command, updated_state, @command_timeout}
     end
@@ -227,8 +229,7 @@ defmodule Cog.Command.Pipeline.Executor do
     reply_topic = "#{state.topic}/reply" # TODO: bake this into state for easier pattern-matching?
     case topic do
       ^reply_topic ->
-        payload = Poison.decode!(message)
-        resp = Cog.Command.Response.decode!(payload)
+        resp = Cog.Messages.CommandResponse.decode!(message)
         case resp.status do
           "ok" ->
             collected_output = collect_output(resp, state.output)
@@ -286,7 +287,7 @@ defmodule Cog.Command.Pipeline.Executor do
   # Return the adapter module that initially handled the
   # request. Won't always be the chat adapter!
   defp originating_adapter(state),
-    do: String.to_existing_atom(state.request["module"])
+    do: String.to_existing_atom(state.request.module)
 
   ########################################################################
   # Response Rendering Functions
@@ -321,7 +322,10 @@ defmodule Cog.Command.Pipeline.Executor do
     by_output_level
     |> Map.get(:status_only, [])
     |> Enum.each(fn(dest) ->
-      publish_response(%{status: "ok"}, dest.room, dest.adapter, state)
+
+      # TODO: For the mesasge typing to work out, this has to be a
+      # bare string... let's find a less hacky way to address things
+      publish_response("ok", dest.room, dest.adapter, state)
     end)
 
   end
@@ -408,9 +412,8 @@ defmodule Cog.Command.Pipeline.Executor do
   end
 
   defp publish_response(message, room, adapter, state) do
-    response = %{response: message,
-                 id: state.id,
-                 room: room}
+    response = %Cog.Messages.SendMessage{response: message,
+                                         room: room}
     # Remember, it might not be a *chat* adapter we're responding to
     {:ok, adapter_mod} = Cog.adapter_module(adapter)
 
@@ -439,8 +442,9 @@ defmodule Cog.Command.Pipeline.Executor do
 
   defp initialization_event(%__MODULE__{id: id, request: request,
                                         user: user}) do
-    PipelineEvent.initialized(id, request["text"], request["adapter"],
-                              user.username, request["sender"]["handle"])
+
+    PipelineEvent.initialized(id, request.text, request.adapter,
+                              user.username, request.sender["handle"])
     |> Probe.notify
   end
 
@@ -469,9 +473,9 @@ defmodule Cog.Command.Pipeline.Executor do
   # Unregistered User Functions
 
   defp alert_unregistered_user(state) do
-    {:ok, adapter} = Cog.adapter_module(state.request["adapter"])
+    {:ok, adapter} = Cog.adapter_module(state.request.adapter)
     request = state.request
-    handle = request["sender"]["handle"]
+    handle = request.sender["handle"]
     creators = user_creator_handles(request)
 
     context = %{
@@ -496,8 +500,8 @@ defmodule Cog.Command.Pipeline.Executor do
   # being used (most notably, the bootstrap admin user).
   defp user_creator_handles(request) do
 
-    adapter = request["adapter"]
-    adapter_module = String.to_existing_atom(request["module"])
+    adapter = request.adapter
+    adapter_module = String.to_existing_atom(request.module)
 
     "operable:manage_users"
     |> Cog.Queries.Permission.from_full_name
@@ -532,10 +536,8 @@ defmodule Cog.Command.Pipeline.Executor do
   #
   # In general, chat-adapter initiated pipelines will not be supplied
   # with an initial context.
-  defp create_initial_context(request) do
-    context = request
-    |> Map.fetch!("initial_context")
-    |> List.wrap
+  defp create_initial_context(%Cog.Messages.AdapterRequest{}=request) do
+    context = List.wrap(request.initial_context)
 
     if Enum.all?(context, &is_map/1) do
       {:ok, Enum.map(context, &store_with_template(&1, nil))}
@@ -566,7 +568,7 @@ defmodule Cog.Command.Pipeline.Executor do
     id = state.id
     started = Cog.Events.Util.ts_iso8601_utc(state.started)
     initiator = sender_name(state)
-    pipeline_text = state.request["text"]
+    pipeline_text = state.request.text
     error_message = ErrorResponse.render(error)
 
     {planning_failure, execution_failure} = case state do
@@ -603,8 +605,8 @@ defmodule Cog.Command.Pipeline.Executor do
   defp fail_pipeline_with_error({reason, _detail}=error, state) do
     {:ok, user_message} = user_error(error, state)
     publish_response(user_message,
-                     state.request["room"],
-                     state.request["adapter"],
+                     state.request.room,
+                     state.request.adapter,
                      state)
 
     audit_message = AuditMessage.render(error, state.request)
@@ -614,9 +616,9 @@ defmodule Cog.Command.Pipeline.Executor do
   defp sender_name(state) do
     adapter = originating_adapter(state)
     if adapter.chat_adapter? do
-      adapter.mention_name(state.request["sender"]["handle"])
+      adapter.mention_name(state.request.sender["handle"])
     else
-      state.request["sender"]["id"]
+      state.request.sender["id"]
     end
   end
 
@@ -626,12 +628,12 @@ defmodule Cog.Command.Pipeline.Executor do
   defp request_for_plan(plan, request, user, reply_to, service_token) do
     # TODO: stuffing the provider into requestor here is a bit
     # code-smelly; investigate and fix
-    provider  = request["adapter"]
-    requestor = request["sender"] |> Map.put_new("provider", provider)
-    room      = request["room"]
+    provider  = request.adapter
+    requestor = request.sender |> Map.put_new("provider", provider)
+    room      = request.room
     user      = Cog.Models.EctoJson.render(user)
 
-    %Cog.Command.Request{
+    %Cog.Messages.Command{
       command:         plan.parser_meta.full_command_name,
       options:         plan.options,
       args:            plan.args,
@@ -647,17 +649,18 @@ defmodule Cog.Command.Pipeline.Executor do
     }
   end
 
-  defp sanitize_request(request) do
+  defp sanitize_request(%Cog.Messages.AdapterRequest{text: text}=request) do
     prefix = Application.get_env(:cog, :command_prefix, "!")
 
-    Map.update!(request, "text", fn text ->
-      text
-      |> String.replace(~r/^#{Regex.escape(prefix)}/, "") # Remove command prefix
-      |> String.replace(~r/“|”/, "\"")      # Replace OS X's smart quotes and dashes with ascii equivalent
-      |> String.replace(~r/‘|’/, "'")
-      |> String.replace(~r/—/, "--")
-      |> HtmlEntities.decode                # Decode html entities
-    end)
+    text = text
+    |> String.replace(~r/^#{Regex.escape(prefix)}/, "") # Remove command prefix
+    |> String.replace(~r/“|”/, "\"")      # Replace OS X's smart quotes and dashes with ascii equivalent
+    |> String.replace(~r/‘|’/, "'")
+    |> String.replace(~r/—/, "--")
+    |> HtmlEntities.decode                # Decode html entities
+
+    # TODO: Fold this into decoding of the request initially?
+    %{request | text: text}
   end
 
   defp assign_relay(relays, bundle_name, bundle_version) do
@@ -683,14 +686,14 @@ defmodule Cog.Command.Pipeline.Executor do
           assign_relay(relays, bundle_name, bundle_version)
         end
     end
- end
+  end
 
-  def fetch_user_from_request(request) do
-    adapter_module = request["module"] |> String.to_existing_atom
+  defp fetch_user_from_request(%Cog.Messages.AdapterRequest{}=request) do
+    adapter_module = request.module |> String.to_existing_atom
 
     if adapter_module.chat_adapter? do
-      adapter   = request["adapter"]
-      sender_id = request["sender"]["id"]
+      adapter   = request.adapter
+      sender_id = request.sender["id"]
 
       user = Queries.User.for_chat_provider_user_id(sender_id, adapter)
       |> Repo.one
@@ -702,7 +705,7 @@ defmodule Cog.Command.Pipeline.Executor do
           {:ok, user}
       end
     else
-      cog_name = request["sender"]["id"]
+      cog_name = request.sender["id"]
       case Repo.get_by(Cog.Models.User, username: cog_name) do
         %Cog.Models.User{}=user ->
           {:ok, user}

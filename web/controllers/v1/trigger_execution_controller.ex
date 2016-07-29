@@ -36,7 +36,7 @@ defmodule Cog.V1.TriggerExecutionController do
             requestor = requestor_map(trigger_id, as_user, trigger.name)
 
             case AdapterBridge.submit_request(requestor, request_id, context, trigger.pipeline, timeout) do
-              %{"status" => "ok"} ->
+              "ok" ->
                 conn |> send_resp(:no_content, "")
               {:error, :timeout} ->
                 conn

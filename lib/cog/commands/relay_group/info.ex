@@ -17,7 +17,7 @@ defmodule Cog.Commands.RelayGroup.Info do
     -v, --verbose   Include addition relay group details
   """
 
-  @spec relay_group_info(%Cog.Command.Request{}, List.t) :: {:ok, String.t, Map.t} | {:error, any()}
+  @spec relay_group_info(%Cog.Messages.Command{}, List.t) :: {:ok, String.t, Map.t} | {:error, any()}
   def relay_group_info(req, args) do
     if Helpers.flag?(req.options, "help") do
       show_usage

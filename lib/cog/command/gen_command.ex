@@ -73,7 +73,6 @@ defmodule Cog.Command.GenCommand do
   use GenServer
 
   require Logger
-  alias Cog.Command
 
   ## Fields
   #
@@ -154,15 +153,16 @@ defmodule Cog.Command.GenCommand do
   end
 
   def handle_info({:publish, topic, message},
-                  %__MODULE__{topic: topic, cb_module: cb_module, bundle_name: bundle}=state) do
-    payload = Poison.decode!(message)
-    case Command.Request.decode(payload) do
-      {:ok, req} ->
-        process_message(req, cb_module, bundle, state)
-      {:error, error} ->
-        # error is a map; turn it into a string for now to
-        # simplify the error reply contract.
-        send_error_reply(inspect(error), payload["reply_to"], state)
+                  %__MODULE__{topic: topic, cb_module: cb_module}=state) do
+    try do
+      payload = Cog.Messages.Command.decode!(message)
+      process_message(payload, cb_module, state)
+    rescue
+      e in Conduit.ValidationError ->
+        # Obviously couldn't parse this as a proper Message... try to do
+        # it as just JSON
+        payload = Poison.decode!(message)
+        send_error_reply(e.message, payload["reply_to"], state)
         {:noreply, state}
     end
   end
@@ -179,12 +179,12 @@ defmodule Cog.Command.GenCommand do
 
   ########################################################################
 
-  defp process_message(req, cb_module, bundle, state) do
+  defp process_message(req, cb_module, state) do
     try do
       case cb_module.handle_message(req, state.cb_state) do
         {:reply, reply_to, template, reply, cb_state} ->
           new_state = %{state | cb_state: cb_state}
-          send_ok_reply(reply, {bundle, template}, reply_to, new_state)
+          send_ok_reply(reply, template, reply_to, new_state)
           {:noreply, new_state}
         {:reply, reply_to, reply, cb_state} ->
           new_state = %{state | cb_state: cb_state}
@@ -209,19 +209,23 @@ defmodule Cog.Command.GenCommand do
   ########################################################################
 
   defp send_error_reply(error_message, reply_to, state) when is_binary(error_message) do
-    resp = Command.Response.encode!(%Command.Response{status: :error, status_message: error_message})
+    resp = %Cog.Messages.CommandResponse{status: "error",
+                                         status_message: error_message}
     Carrier.Messaging.Connection.publish(state.mq_conn, resp, routed_by: reply_to)
   end
 
   ########################################################################
 
-  defp send_ok_reply(reply, {bundle, template}, reply_to, state) when is_map(reply) or is_list(reply) or is_nil(reply) do
-    resp = Command.Response.encode!(%Command.Response{status: :ok, body: reply, bundle: bundle, template: template})
+  defp send_ok_reply(reply, template, reply_to, state) when is_map(reply) or is_list(reply) or is_nil(reply) do
+    resp = %Cog.Messages.CommandResponse{status: "ok",
+                                         body: reply,
+                                         template: template}
     Carrier.Messaging.Connection.publish(state.mq_conn, resp, routed_by: reply_to)
   end
 
   defp send_ok_reply(reply, reply_to, state) when is_map(reply) or is_list(reply) or is_nil(reply) do
-    resp = Command.Response.encode!(%Command.Response{status: :ok, body: reply})
+    resp = %Cog.Messages.CommandResponse{status: "ok",
+                                         body: reply}
     Carrier.Messaging.Connection.publish(state.mq_conn, resp, routed_by: reply_to)
   end
   defp send_ok_reply(reply, reply_to, state),

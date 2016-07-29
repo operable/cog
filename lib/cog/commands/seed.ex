@@ -1,7 +1,7 @@
 defmodule Cog.Command.Seed do
   use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle
 
-  alias Cog.Command.Request
+  alias Cog.Messages.Command
   require Logger
 
   @description "Seed a pipeline with arbitrary data"
@@ -32,9 +32,9 @@ defmodule Cog.Command.Seed do
 
   rule "when command is #{Cog.embedded_bundle}:seed allow"
 
-  def handle_message(%Request{args: [input]}=req, state) when not(is_binary(input)),
+  def handle_message(%Command{args: [input]}=req, state) when not(is_binary(input)),
     do: {:error, req.reply_to, "Argument must be a string", state}
-  def handle_message(%Request{args: [input]}=req, state) do
+  def handle_message(%Command{args: [input]}=req, state) do
     case Poison.decode(input) do
       {:ok, value} when is_map(value) ->
         {:reply, req.reply_to, value, state}
