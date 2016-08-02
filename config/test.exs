@@ -39,3 +39,8 @@ config :ex_unit,
 
 config :cog, Cog.Adapters.Slack,
   api_cache_ttl: -1
+
+# ========================================================================
+# Emails
+
+config :cog, Cog.Mailer, adapter: Bamboo.TestAdapter
