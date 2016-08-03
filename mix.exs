@@ -90,6 +90,10 @@ defmodule Cog.Mixfile do
      {:fumanchu, github: "operable/fumanchu"},
      {:exirc, "~> 0.9.2"},
      {:exjsx, "~> 3.2", override: true},
+     {:bamboo_smtp, "~> 1.2.0"},
+     # Overriding httpoison here because bamboo depends on 0.9 but slack has
+     # the dep locked at 0.8.3
+     {:httpoison, "~> 0.9", override: true},
 
      {:credo, "~> 0.3", only: [:dev, :test]},
      {:phoenix_live_reload, "~> 1.0.3", only: :dev},

@@ -184,4 +184,19 @@ config :cog, :token_reap_period, {1, :day}
 # as seconds
 config :cog, :trigger_timeout_buffer, (System.get_env("COG_TRIGGER_TIMEOUT_BUFFER") || 2)
 
+# ========================================================================
+# Emails
+
+config :cog, Cog.Mailer,
+  adapter: Bamboo.SMTPAdapter,
+  server: System.get_env("COG_SMTP_SERVER"),
+  port: System.get_env("COG_SMTP_PORT"),
+  username: System.get_env("COG_SMTP_USERNAME"),
+  password: System.get_env("COG_SMTP_PASSWORD"),
+  tls: :if_available, # can be `:always` or `:never`
+  ssl: (ensure_boolean(System.get_env("COG_SMTP_SSL")) || false),
+  retries: (System.get_env("COG_SMTP_RETRIES") || 1)
+
+config :cog, :email_from, System.get_env("COG_EMAIL_FROM")
+
 import_config "#{Mix.env}.exs"
