@@ -147,4 +147,26 @@ defmodule Cog.Repository.Users do
       password_reset
     end)
   end
+
+  @doc """
+  Resets a user's password if a password reset exists with the given token
+  """
+  @spec reset_password(String.t, String.t) :: {:ok, %User{}} | {:error, :not_found} | {:error, Ecto.Changeset.t}
+  def reset_password(token, password) do
+    case Repo.get(PasswordReset, token) |> Repo.preload([:user]) do
+      nil ->
+        {:error, :not_found}
+      %{user: user}=password_reset ->
+        Repo.transaction(fn ->
+          with {:ok, updated_user} <- update(user, %{password: password}),
+               {:ok, _}            <- Repo.delete(password_reset) do
+             updated_user
+          else
+            {:error, error} ->
+              Repo.rollback(error)
+          end
+        end)
+    end
+  end
+
 end

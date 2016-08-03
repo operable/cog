@@ -6,14 +6,28 @@ defmodule Cog.V1.PasswordResetController do
   def create(conn, %{"email_address" => email_address}) do
     case Users.by_email(email_address) do
       {:ok, user} ->
-        Users.request_password_reset(user)
-        put_status(conn, :ok)
+        case Users.request_password_reset(user) do
+          {:ok, _} -> put_status(conn, :ok)
+          _ -> put_status(conn, :internal_server_error)
+        end
       _ ->
         put_status(conn, :ok)
     end
   end
 
-  def update(_conn, _params) do
+  def update(conn, %{"id" => id, "password" => password}) do
+    case Users.reset_password(id, password) do
+      {:ok, user} ->
+        render(conn, Cog.V1.UserView, "show.json", user: user)
+      {:error, :not_found} ->
+        conn
+        |> put_status(:not_found)
+        |> json(%{errors: "Password reset token not found"})
+      {:error, changeset} ->
+        conn
+        |> put_status(:unprocessable_entity)
+        |> render(Cog.ChangesetView, "error.json", changeset: changeset)
+    end
   end
 
 end

@@ -1,6 +1,6 @@
 defmodule Cog.Models.PasswordReset do
   use Cog.Model
-  alias Cog.Model.User
+  alias Cog.Models.User
 
   schema "password_resets" do
     belongs_to :user, User

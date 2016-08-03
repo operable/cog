@@ -4,8 +4,6 @@ defmodule Cog.Email.PasswordReset.Test do
   """
 
   use Cog.EmailCase
-  #alias Cog.Repo
-  #alias Cog.Models.PasswordReset
   alias Cog.Repository.Users
 
   test "password reset emails are sent" do
