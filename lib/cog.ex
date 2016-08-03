@@ -5,19 +5,11 @@ defmodule Cog do
   import Supervisor.Spec, warn: false
 
   def start(_type, _args) do
-    adapter_supervisor = get_adapter_supervisor!()
-    children = [worker(Cog.Repo, []),
-                worker(Cog.BusDriver, [], shutdown: 10000),
-                worker(Cog.TokenReaper, []),
-                supervisor(Cog.Relay.RelaySup, []),
-                supervisor(Cog.Command.CommandSup, []),
-                supervisor(adapter_supervisor, []),
-                supervisor(Cog.Endpoint, []),
-                supervisor(Cog.TriggerEndpoint, []),
-                supervisor(Cog.ServiceEndpoint, []),
-                supervisor(Cog.Adapters.Http.Supervisor,[])]
+    children = [worker(Cog.BusDriver, [], shutdown: 1000),
+                worker(Cog.Repo, []),
+                supervisor(Cog.CoreSup, [])]
 
-    opts = [strategy: :one_for_one, name: Cog.Supervisor]
+    opts = [strategy: :one_for_all, name: Cog.Supervisor]
     case Supervisor.start_link(children, opts) do
       {:ok, top_sup} ->
         # Verify the latest schema migration after starting the database worker
@@ -110,23 +102,6 @@ defmodule Cog do
         {:ok, module}
       :error ->
         {:error, {:bad_adapter, name}}
-    end
-  end
-
-  defp get_adapter_supervisor!() do
-    case chat_adapter_module do
-      {:ok, adapter} ->
-        Logger.info "Using #{inspect adapter} chat adapter"
-        supervisor = Module.concat(adapter, "Supervisor")
-
-        case Code.ensure_loaded(supervisor) do
-          {:module, ^supervisor} ->
-            supervisor
-          {:error, _} ->
-            raise RuntimeError, "#{inspect(supervisor)} was not found. Please define a supervisor for the #{inspect(adapter)} adapter"
-        end
-      {:error, {:bad_adapter, bad_adapter}} ->
-        raise RuntimeError, "The adapter is set to #{inspect(bad_adapter)}, but I don't know what that is. Try one of the following values instead: #{Enum.map_join(Map.keys(chat_adapters), ", ", &inspect/1)}"
     end
   end
 

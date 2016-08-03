@@ -24,18 +24,18 @@ defmodule Cog.BusDriver do
   use GenServer
 
   def start_link() do
-    GenServer.start_link(__MODULE__, [])
+    GenServer.start_link(__MODULE__, [], name: __MODULE__)
   end
 
   def init(_) do
-    reset_mnesia_data()
     case configure_message_bus() do
       {:ok, [app_name]} ->
         case Application.ensure_all_started(app_name) do
-          :ok ->
+          {:ok, _} ->
+            :erlang.process_flag(:trap_exit, true)
             {:ok, app_name}
           error ->
-            error
+            {:stop, error}
         end
       error ->
         Logger.error("Message bus configuration error: #{inspect error}")
@@ -43,8 +43,9 @@ defmodule Cog.BusDriver do
     end
   end
 
-  def terminate(_, app_name) do
-    Application.stop(app_name)
+  def terminate(_, _) do
+    Application.stop(:emqttd)
+    Application.stop(:esockd)
   end
 
   defp configure_message_bus() do
@@ -121,11 +122,6 @@ defmodule Cog.BusDriver do
       {:error, v4_error} ->
         {:error, "#{host}: #{:inet.format_error(v4_error)}"}
     end
-  end
-
-  defp reset_mnesia_data() do
-    mnesia_dir = :mnesia.system_info(:directory) |> String.Chars.to_string
-    File.rm_rf!(mnesia_dir)
   end
 
 end
