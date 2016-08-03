@@ -7,6 +7,7 @@ defmodule Cog.Repository.Users do
   alias Cog.Repo
   alias Cog.Models.User
   alias Cog.Models.ChatHandle
+  alias Cog.Models.PasswordReset
   import Ecto.Query, only: [from: 2]
 
   @doc """
@@ -51,6 +52,19 @@ defmodule Cog.Repository.Users do
   @spec by_username(String.t) :: {:ok, %User{}} | {:error, :not_found}
   def by_username(username) do
     case Repo.get_by(User, username: username) do
+      %User{}=user ->
+        {:ok, user}
+      nil ->
+        {:error, :not_found}
+    end
+  end
+
+  @doc """
+  Retrieves one user by email
+  """
+  @spec by_email(String.t) :: {:ok, %User{}} | {:error, :not_found}
+  def by_email(email) do
+    case Repo.get_by(User, email_address: email) do
       %User{}=user ->
         {:ok, user}
       nil ->
@@ -116,5 +130,21 @@ defmodule Cog.Repository.Users do
   def update(%User{}=user, attrs) do
     changeset = User.changeset(user, attrs)
     Repo.update(changeset)
+  end
+
+  @doc """
+  Creates a password reset request
+  """
+  @spec request_password_reset(%User{}) :: :ok | {:error, any()}
+  def request_password_reset(%User{id: user_id, email_address: email_address}) do
+    Repo.transaction(fn ->
+      password_reset = PasswordReset.changeset(%PasswordReset{}, %{user_id: user_id})
+      |> Repo.insert!
+
+      Cog.Email.reset_password(email_address, password_reset.id)
+      |> Cog.Mailer.deliver_later
+
+      password_reset
+    end)
   end
 end

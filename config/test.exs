@@ -44,3 +44,5 @@ config :cog, Cog.Adapters.Slack,
 # Emails
 
 config :cog, Cog.Mailer, adapter: Bamboo.TestAdapter
+config :cog, :email_from, "test@example.com"
+config :cog, :password_reset_base_url, "http://cog.localhost/reset-password"
