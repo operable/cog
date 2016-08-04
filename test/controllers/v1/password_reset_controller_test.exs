@@ -19,7 +19,7 @@ defmodule Cog.V1.PasswordResetController.Test do
   test "password resets are generated", %{conn: conn, user: user} do
     resp = post(conn, password_reset_path(conn, :create), email_address: user.email_address)
 
-    assert resp.status == 200
+    assert resp.status == 204
     Repo.get_by!(PasswordReset, user_id: user.id)
   end
 
