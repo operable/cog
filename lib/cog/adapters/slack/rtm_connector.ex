@@ -42,12 +42,6 @@ defmodule Cog.Adapters.Slack.RTMConnector do
   # is available in `handle_connect/2`
   @initial_state nil
 
-  def start_link(config) do
-    # `start_link/2` is generated for us by `use Slack`
-    token = config[:api][:token]
-    __MODULE__.start_link(token, @initial_state)
-  end
-
   ########################################################################
   # Slack callbacks
   #

@@ -5,6 +5,9 @@ defmodule Carrier.Messaging.GenMqtt do
   use Adz
   use GenServer
   alias Carrier.Messaging.Connection
+  alias Carrier.Messaging.Messages.MqttCall
+  alias Carrier.Messaging.Messages.MqttCast
+  alias Carrier.Messaging.Messages.MqttReply
 
   @type call_timeout :: integer | :infinity
 
@@ -17,12 +20,12 @@ defmodule Carrier.Messaging.GenMqtt do
     {:noreply, state} |
     {:stop, reason :: any} when state: any
 
-  @callback handle_call(conn :: Connection.connection, topic :: String.t, sender :: String.t, body :: map, state :: any) ::
+  @callback handle_call(conn :: Connection.connection, topic :: String.t, sender :: String.t, endpoint :: String.t, body :: map, state :: any) ::
     {:reply, {:ok, map} | {:error, map}, state} |
     {:noreply, state} |
     {:stop, reason :: any} when state: any
 
-  @callback handle_cast(conn :: Connection.connection, topic :: String.t, body :: map, state :: any) ::
+  @callback handle_cast(conn :: Connection.connection, topic :: String.t, endpoint :: String.t, body :: map, state :: any) ::
     {:noreply, state} |
     {:stop, reason :: any} when state: any
 
@@ -48,11 +51,11 @@ defmodule Carrier.Messaging.GenMqtt do
         {:noreply, state}
       end
 
-      def handle_call(_conn, _topic, _sender, _body, state) do
+      def handle_call(_conn, _topic, _sender, _endpoint, _body, state) do
         {:reply, {:error, "not implemented"}, state}
       end
 
-      def handle_cast(_conn, _topic, _body, state) do
+      def handle_cast(_conn, _topic, _endpoint, _body, state) do
         {:noreply, state}
       end
 
@@ -60,7 +63,7 @@ defmodule Carrier.Messaging.GenMqtt do
         {:noreply, state}
       end
 
-      defoverridable [init: 2, handle_message: 4, handle_call: 5, handle_cast: 4, handle_admin: 2]
+      defoverridable [init: 2, handle_message: 4, handle_call: 6, handle_cast: 5, handle_admin: 2]
     end
   end
 
@@ -87,15 +90,13 @@ defmodule Carrier.Messaging.GenMqtt do
                 n ->
                   n
               end
-    message = Map.put(%{}, endpoint, call_args)
-    result = Connection.call(conn, topic, message, timeout)
-    case result do
-      %{"ok" => result} ->
-        {:ok, result}
+    case Connection.call(conn, topic, endpoint, call_args, timeout) do
       {:error, :call_timeout} ->
         {:error, :timeout}
-      %{"error" => result} ->
+      %MqttReply{flag: "error", result: [result]} ->
         {:error, result}
+      %MqttReply{flag: "ok", result: [result]} ->
+        {:ok, result}
     end
   end
 
@@ -111,8 +112,7 @@ defmodule Carrier.Messaging.GenMqtt do
     result
   end
   def cast(conn, topic, endpoint, cast_args) do
-    message = Map.put(%{}, endpoint, cast_args)
-    Connection.cast(conn, topic, message)
+    Connection.cast(conn, topic, endpoint, cast_args)
   end
 
   @spec admin(server :: pid | atom, message :: any) :: :ok
@@ -136,16 +136,24 @@ defmodule Carrier.Messaging.GenMqtt do
   def handle_cast(_, state), do: {:noreply, state}
 
   def handle_info({:publish, topic, message}, state) do
-    case Poison.decode(message) do
-      {:ok, %{"call_sender" => sender,
-               "call" => call}} ->
-        run_callback(:handle_call, topic, sender, call, state)
-      {:ok, %{"cast" => cast}} ->
-        run_callback(:handle_cast, topic, cast, state)
+    case MqttCall.decode(message) do
+      {:ok, call} ->
+        run_callback(:handle_call, topic, call.sender, call.endpoint, call.payload, state)
       _ ->
-        run_callback(:handle_message, topic, message, state)
+        case MqttCast.decode(message) do
+          {:ok, cast} ->
+            run_callback(:handle_cast, topic, cast.endpoint, cast.payload, state)
+          _ ->
+            case Poison.decode(message) do
+              {:ok, message} ->
+                run_callback(:handle_message, topic, message, state)
+              {:error, error} ->
+                Logger.error("Ignoring malformed message '#{inspect message}': #{inspect error}")
+            end
+        end
     end
   end
+
   def handle_info(_, state), do: {:noreply, state}
 
   defp run_callback(:init, args, state) do
@@ -182,8 +190,8 @@ defmodule Carrier.Messaging.GenMqtt do
         {:stop, error}
     end
   end
-  defp run_callback(:handle_cast, topic, message, state) do
-    case state.cb.handle_cast(state.conn, topic, message, state.cb_state) do
+  defp run_callback(:handle_cast, topic, endpoint, message, state) do
+    case state.cb.handle_cast(state.conn, topic, endpoint, message, state.cb_state) do
       {:noreply, cb_state} ->
         {:noreply, %{state | cb_state: cb_state}}
       {:stop, reason} ->
@@ -193,16 +201,19 @@ defmodule Carrier.Messaging.GenMqtt do
     end
   end
 
-  defp run_callback(:handle_call, topic, sender, call, state) do
-    case state.cb.handle_call(state.conn, topic, sender, call, state.cb_state) do
+  defp run_callback(:handle_call, topic, sender, endpoint, call, state) do
+    case state.cb.handle_call(state.conn, topic, sender, endpoint, call, state.cb_state) do
       {:reply, {:ok, result}, cb_state} ->
-        Connection.publish(state.conn, %{"ok" => result}, routed_by: sender)
+        reply = %MqttReply{flag: "ok", result: [result]}
+        Connection.publish(state.conn, reply, routed_by: sender)
         {:noreply, %{state | cb_state: cb_state}}
       {:reply, {:error, result}, cb_state} ->
-        Connection.publish(state.conn, %{"error" => result}, routed_by: sender)
+        reply = %MqttReply{flag: "error", result: [result]}
+        Connection.publish(state.conn, reply, routed_by: sender)
         {:noreply, %{state | cb_state: cb_state}}
       {:reply, result, cb_state} ->
-        Connection.publish(state.conn, %{"ok" => result}, routed_by: sender)
+        reply = %MqttReply{flag: "ok", result: [result]}
+        Connection.publish(state.conn, reply, routed_by: sender)
         {:noreply, %{state | cb_state: cb_state}}
       {:stop, reason} ->
         {:stop, reason}

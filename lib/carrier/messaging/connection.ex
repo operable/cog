@@ -2,6 +2,10 @@ defmodule Carrier.Messaging.Connection do
 
   use Adz
 
+  alias Carrier.Messaging.Messages.MqttCall
+  alias Carrier.Messaging.Messages.MqttCast
+  alias Carrier.Messaging.Messages.MqttReply
+
   require Record
   Record.defrecord :hostent, Record.extract(:hostent, from_lib: "kernel/include/inet.hrl")
 
@@ -94,15 +98,14 @@ defmodule Carrier.Messaging.Connection do
     :emqttc.unsubscribe(conn, topic)
   end
 
-  @spec call(conn :: connection, call_topic :: String.t, message :: map, timeout :: integer) ::
+  @spec call(conn :: connection, call_topic :: String.t, endpoint :: String.t, payload :: map, timeout :: integer) ::
     map |
     {:error, :call_timeout} |
     {:error, reason :: any}
-  def call(%__MODULE__{call_reply: reply}=conn, call_topic, message, timeout) when is_map(message) do
+  def call(%__MODULE__{call_reply: reply}=conn, call_topic, endpoint, payload, timeout) when is_map(payload) do
     flush_pending(reply)
 
-    message = %{call_sender: reply,
-                call: message}
+    message = %MqttCall{sender: reply, endpoint: endpoint, payload: payload}
 
     # Publish message (make blocking call)
     case publish(conn, message, routed_by: call_topic) do
@@ -110,16 +113,16 @@ defmodule Carrier.Messaging.Connection do
         # Wait for response
         receive do
           {:publish, ^reply, message} ->
-            Poison.decode!(message)
+            MqttReply.decode!(message)
         after timeout ->
             {:error, :call_timeout}
         end
     end
   end
 
-  @spec cast(conn :: connection, caast_topic :: String.t, message :: map) :: :ok | {:error, reason :: any}
-  def cast(%__MODULE__{}=conn, cast_topic, message) do
-    message = %{cast: message}
+  @spec cast(conn :: connection, cast_topic :: String.t, endpoint :: String.t, payload :: map) :: :ok | {:error, reason :: any}
+  def cast(%__MODULE__{}=conn, cast_topic, endpoint, payload) when is_map(payload) do
+    message = %MqttCast{endpoint: endpoint, payload: payload}
     case publish(conn, message, routed_by: cast_topic) do
       {:ok, _} ->
         :ok
@@ -141,7 +144,7 @@ defmodule Carrier.Messaging.Connection do
   # Here, we assume we're being passed a Conduit-enabled struct
   # (aside: any way to verify that statically?) We'll do the encoding
   # to JSON internally
-  def publish(conn, %{__struct__: _}=message, kw_args) do
+  def publish(%__MODULE__{conn: conn}, %{__struct__: _}=message, kw_args) do
     topic = Keyword.fetch!(kw_args, :routed_by)
 
     encoded = message.__struct__.encode!(message)
