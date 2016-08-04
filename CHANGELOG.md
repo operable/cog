@@ -1,5 +1,17 @@
 #  Changelog
 
+## 0.12.0
+
+### Enhancements
+
+- Support for per-room and per-user dynamic configuration [#850](https://github.com/operable/cog/issues/850)
+- Updated message bus to emqttd 1.1.2 [#865](https://github.com/operable/cog/issues/865)
+
+### Bug Fixes
+
+- Fixed several bugs around Cog's management of emqttd [#897](https://github.com/operable/cog/issues/897)
+- Fixed nil pointer error in Relay [#885](https://github.com/operable/cog/issues/885)
+
 ## 0.11.0
 
 ### Enhancements
