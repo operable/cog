@@ -198,5 +198,6 @@ config :cog, Cog.Mailer,
   retries: (System.get_env("COG_SMTP_RETRIES") || 1)
 
 config :cog, :email_from, System.get_env("COG_EMAIL_FROM")
+config :cog, :password_reset_base_url, System.get_env("COG_PASSWORD_RESET_BASE_URL")
 
 import_config "#{Mix.env}.exs"

@@ -50,6 +50,7 @@ defmodule Cog.Mixfile do
             :phoenix_html,
             :comeonin,
             :spanner,
+            :bamboo,
             :exirc]
     if System.get_env("COG_SASL_LOG") != nil do
       [:sasl|apps]

@@ -45,6 +45,7 @@ defmodule Cog.Models do
       alias Cog.Models.Template
       alias Cog.Models.UserCommandAlias
       alias Cog.Models.SiteCommandAlias
+      alias Cog.Models.PasswordReset
     end
   end
 end

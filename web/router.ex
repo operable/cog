@@ -7,6 +7,10 @@ defmodule Cog.Router do
     plug :fetch_flash
     plug :protect_from_forgery
     plug :put_secure_browser_headers
+
+    if Mix.env == :dev do
+      forward "/v1/sent_emails", Bamboo.EmailPreviewPlug
+    end
   end
 
   pipeline :api do
@@ -18,6 +22,7 @@ defmodule Cog.Router do
     pipe_through :api
 
     resources "/v1/users", V1.UserController
+    resources "/v1/users/reset-password", V1.PasswordResetController, only: [:create, :update]
 
     resources "/v1/groups", V1.GroupController
     get "/v1/groups/:id/users", V1.GroupMembershipController, :index
