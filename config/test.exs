@@ -6,6 +6,12 @@ config :logger, :console,
 config :lager, :handlers,
   [{LagerLogger, [level: :error]}]
 
+config :cog, Cog.Chat.Adapter,
+  providers: [:test, :http]
+
+config :cog, Cog.Chat.TestProvider,
+  verbose: true
+
 config :cog,
   adapter: "test"
 

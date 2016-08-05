@@ -4,6 +4,7 @@ defmodule Cog.Chat.Adapter do
 
   use Carrier.Messaging.GenMqtt
   alias Cog.Messages.AdapterRequest
+  alias Cog.Chat.Room
 
   @adapter_topic "bot/chat/adapter"
   @incoming_topic "bot/chat/adapter/incoming"
@@ -21,12 +22,36 @@ defmodule Cog.Chat.Adapter do
     GenMqtt.call(conn, @adapter_topic, "lookup_user", %{provider: provider, handle: handle}, :infinity)
   end
 
+  def lookup_room(provider, room_name) do
+    case list_joined_rooms(provider) do
+      {:ok, rooms} ->
+        Enum.reduce_while(rooms, nil,
+          fn(room, acc) ->
+            if room["name"] == room_name do
+              {:halt, Room.from_map(room)}
+            else
+              {:cont, acc}
+            end end)
+      error ->
+        error
+    end
+  end
 
   def list_joined_rooms(provider) do
-    GenMqtt.call(@adapter_topic, "list_joined_rooms", %{provider: provider}, :infinity)
+    case GenMqtt.call(@adapter_topic, "list_joined_rooms", %{provider: provider}, :infinity) do
+      nil ->
+        nil
+      rooms ->
+        Enum.map(rooms, &Room.from_map/1)
+    end
   end
   def list_joined_rooms(conn, provider) do
-    GenMqtt.call(conn, @adapter_topic, "list_joined_rooms", %{provider: provider}, :infinity)
+    case GenMqtt.call(conn, @adapter_topic, "list_joined_rooms", %{provider: provider}, :infinity) do
+      nil ->
+        nil
+      rooms ->
+        Enum.map(rooms, &Room.from_map/1)
+    end
   end
 
 
@@ -209,6 +234,9 @@ defmodule Cog.Chat.Adapter do
 
   defp resolve_provider_name(:slack), do: {:ok, Cog.Chat.SlackProvider}
   defp resolve_provider_name(:http), do: {:ok, Cog.Chat.HttpProvider}
+  if Mix.env == :test do
+  defp resolve_provider_name(:test), do: {:ok, Cog.Chat.TestProvider}
+  end
   defp resolve_provider_name(name), do: {:error, {:unknown_chat_provider, name}}
 
   defp with_provider(provider, state, fun, args) when is_atom(fun) and is_list(args) do

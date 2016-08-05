@@ -53,8 +53,7 @@ defmodule Cog.Chat.SlackConnector do
   def handle_info({{ref, sender}, {:list_joined_rooms, _}}, state) do
     rooms = Enum.filter(state.channels,
       fn({_, info}) -> info.is_member == true and info.is_archived == false end)
-    rooms = Enum.map(rooms, fn({_, info}) -> %{"id" => info.id,
-                                               "name" => info.name} end)
+    rooms = Enum.map(rooms, fn({_, room}) -> make_room(room) end)
     send(sender, {ref, rooms})
     :ok
   end
@@ -102,10 +101,7 @@ defmodule Cog.Chat.SlackConnector do
   end
 
   defp room_by_id(id, {id, room}, _acc) do
-    {:halt, %Room{id: id,
-                  name: room.name,
-                  provider: "slack",
-                  is_dm: false}}
+    {:halt, make_room(room)}
   end
   defp room_by_id(_, _, acc), do: {:cont, acc}
 
@@ -134,6 +130,13 @@ defmodule Cog.Chat.SlackConnector do
   end
   defp dm_by_id(_, _, acc) do
     {:cont, acc}
+  end
+
+  defp make_room(room) do
+    %Room{id: room.id,
+          name: room.name,
+          provider: "slack",
+          is_dm: false}
   end
 
   defp make_user(user) do

@@ -83,42 +83,18 @@ defmodule Cog.Command.Pipeline.Destination do
   defp resolve_destination(%__MODULE__{raw: "here"}=dest, _sender, origin_room, adapter),
     do: {:ok, %{dest | adapter: adapter, room: origin_room}}
   defp resolve_destination(%__MODULE__{raw: "me"}=dest, sender, _origin_room, adapter) do
-    user_id = sender["id"]
-    case adapter.lookup_direct_room(user_id: user_id) do # TODO: user should be opaque to all but adapter?
-      {:ok, direct_chat} ->
-        {:ok, %{dest | adapter: adapter.name, room: direct_chat}}
-      error ->
-        Logger.error("Error resolving redirect 'me' with adapter #{adapter}: #{inspect error}")
-        {:error, "me"}
-    end
+    {:ok, %{dest | adapter: adapter, room: sender["id"]}}
   end
   defp resolve_destination(%__MODULE__{raw: redir}=dest, _sender, _origin_room, origin_adapter) do
-    {adapter, destination} = adapter_destination(redir, origin_adapter)
-    case adapter.lookup_room(destination) do
-      {:ok, room} ->
-        if adapter.room_writeable?(id: room.id) == true do # TODO: just pass the room entirely
-          {:ok, %{dest | adapter: adapter.name, room: room}}
-        else
-          {:error, {:not_a_member, redir}}
-        end
+    case Cog.Chat.Adapter.lookup_room(origin_adapter, redir) do
+      nil ->
+        Logger.error("Unknown redirect destination '#{redir}'.")
+        {:error, {:unknown_destination, redir}}
       {:error, reason} ->
-        Logger.error("Error resolving redirect '#{redir}' with adapter #{adapter}: #{inspect reason}")
         {:error, {reason, redir}}
+      {:ok, room} ->
+        {:ok, %{dest | adapter: origin_adapter, room: room}}
     end
   end
-
-  # Redirect destinations may be targeted to an adapter different from
-  # where they originated from.
-  #
-  # Destinations prefixed with "chat://" will be routed through the
-  # active chat adapter module. Anything else will be routed through
-  # the adapter that initially serviced the request.
-  @spec adapter_destination(String.t, atom) :: {atom, String.t}
-  defp adapter_destination("chat://" <> destination, _origin_adapter) do
-    {:ok, adapter} = Cog.chat_adapter_module
-    {adapter, destination}
-  end
-  defp adapter_destination(destination, origin_adapter),
-    do: {origin_adapter, destination}
 
 end
