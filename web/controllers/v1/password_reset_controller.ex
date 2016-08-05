@@ -7,9 +7,9 @@ defmodule Cog.V1.PasswordResetController do
     case Users.by_email(email_address) do
       {:ok, user} ->
         case Users.request_password_reset(user) do
-          {:ok, foo} ->
+          {:ok, _} ->
             send_resp(conn, :no_content, "")
-          error ->
+          _ ->
             send_resp(conn, :internal_server_error, "")
         end
       _ ->
