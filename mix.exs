@@ -94,7 +94,7 @@ defmodule Cog.Mixfile do
      # Overriding httpoison here because bamboo depends on 0.9 but slack has
      # the dep locked at 0.8.3
      {:httpoison, "~> 0.9", override: true},
-     {:conduit, github: "operable/conduit", branch: "cm/tweaks"},
+     {:conduit, github: "operable/conduit"},
 
      {:credo, "~> 0.3", only: [:dev, :test]},
      {:phoenix_live_reload, "~> 1.0.3", only: :dev},

@@ -4,7 +4,7 @@
   "bunt": {:hex, :bunt, "0.1.5", "c378ea1698232597d3778e4b83234dcea4a60e7c28114b0fe53657a2c0d8885e", [:mix], []},
   "certifi": {:hex, :certifi, "0.4.0", "a7966efb868b179023618d29a407548f70c52466bf1849b9e8ebd0e34b7ea11f", [:rebar3], []},
   "comeonin": {:hex, :comeonin, "2.1.1", "6187c3764e98c3a963650f64cef067e01daed2f2de4177f666f60b50c14e9981", [:mix, :make, :make], []},
-  "conduit": {:git, "https://github.com/operable/conduit.git", "70e580db210cc1648a658646e80ea29de8f7a3d4", [branch: "cm/tweaks"]},
+  "conduit": {:git, "https://github.com/operable/conduit.git", "8fee081c1b125e60f530280e04f44c2ded34803c", []},
   "connection": {:hex, :connection, "1.0.3", "3145f7416be3df248a4935f24e3221dc467c1e3a158d62015b35bd54da365786", [:mix], []},
   "cowboy": {:hex, :cowboy, "1.0.4", "a324a8df9f2316c833a470d918aaf73ae894278b8aa6226ce7a9bf699388f878", [:rebar, :make], [{:cowlib, "~> 1.0.0", [hex: :cowlib, optional: false]}, {:ranch, "~> 1.0", [hex: :ranch, optional: false]}]},
   "cowlib": {:hex, :cowlib, "1.0.2", "9d769a1d062c9c3ac753096f868ca121e2730b9a377de23dec0f7e08b1df84ee", [:make], []},
