@@ -9,14 +9,46 @@ mix hex.info
 
 # build cog
 cd /home/operable/cog
+
+# We do this so we know what branch to build for cogctl later on
+COG_BRANCH=`git symbolic-ref HEAD | sed 's!refs/heads/!!'`
+if [ -z "$COG_BRANCH" ]
+then
+    echo "Looks like cog isn't a git repository! Do you have '.git' in the '.dockerignore' file? If so, remove it and try again."
+    exit 1
+fi
+
+# Get rid of .git now that we know the branch
+rm -Rf .git
+
 mix clean
 mix deps.get
 mix deps.compile
 mix compile
 
 # build cogctl
+#
+# First take a look at what branch / tag we're on in Cog
+# If the same branch / tag exists in cogctl, we should use it.
+# Otherwise, we use master
+echo "cog is currently checked out at ${COG_BRANCH}"
+COGCTL_REPO="https://github.com/operable/cogctl"
+if git ls-remote --exit-code --heads $COGCTL_REPO $COG_BRANCH
+then
+    COGCTL_BRANCH=$COG_BRANCH
+    echo "A '$COGCTL_BRANCH' branch exists for cogctl as well; building from that"
+else
+    COGCTL_BRANCH="master"
+    echo "No '$COG_BRANCH' branch exists for cogctl; building from the '$COGCTL_BRANCH' instead"
+fi
+
 cd /home/operable/cogctl
-git clone https://github.com/operable/cogctl .
+git clone $COGCTL_REPO .
+git checkout $COGCTL_BRANCH
+
+# No need to keep this in the image
+rm -Rf .git
+
 mix deps.get
 mix deps.compile
 mix escript

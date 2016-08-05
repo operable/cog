@@ -5,7 +5,6 @@ erl_crash.dump
 *.swp
 *.pem
 data
-.git
 lib/cog/permissions/bp_lexer.erl
 lib/cog/permissions/bp_parser.erl
 Mnesia*
