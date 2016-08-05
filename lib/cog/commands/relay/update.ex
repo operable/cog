@@ -20,7 +20,7 @@ defmodule Cog.Commands.Relay.Update do
   Updates relays. Accepts a cog request and args. Returns either
   a success tuple or an error.
   """
-  @spec update_relay(%Cog.Command.Request{}, List.t) :: {:ok, String.t, Map.t} | {:error, any()}
+  @spec update_relay(%Cog.Messages.Command{}, List.t) :: {:ok, String.t, Map.t} | {:error, any()}
   def update_relay(req, arg_list) do
     if Helpers.flag?(req.options, "help") do
       show_usage

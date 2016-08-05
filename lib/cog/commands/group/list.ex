@@ -13,7 +13,7 @@ defmodule Cog.Commands.Group.List do
     -v, --verbose Display additional info for groups
   """
 
-  @spec list_groups(%Cog.Command.Request{}, List.t) :: {:ok, String.t, Map.t} | {:error, any()}
+  @spec list_groups(%Cog.Messages.Command{}, List.t) :: {:ok, String.t, Map.t} | {:error, any()}
   def list_groups(req, _arg_list) do
     if Helpers.flag?(req.options, "help") do
       show_usage

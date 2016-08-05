@@ -24,8 +24,8 @@ defmodule Cog.Command.ReplyHelper do
   end
 
   defp publish_response(message, room, adapter, conn) do
-    response = %{response: message,
-                 room: room}
+    response = %Cog.Messages.SendMessage{response: message,
+                                         room: room}
     {:ok, adapter_mod} = Cog.adapter_module(adapter)
 
     reply_topic = adapter_mod.reply_topic

@@ -26,18 +26,23 @@ defmodule Cog.FakeRelay do
   Gets the bundle list from Relay.Info
   """
   def get_bundles(%__MODULE__{conn: conn, relay: relay}=fake_relay) do
+    alias Cog.Messages.RelayInfo
+    alias Cog.Messages.Relay.ListBundles
+
     all = fn(:get, data, next) ->
       Enum.map(data, next)
     end
 
     reply_to = "bot/test_relays_info/#{relay.id}"
-    payload = %{"list_bundles" => %{"relay_id" => relay.id,
-                                    "reply_to" => reply_to}}
+    payload = %RelayInfo{list_bundles: %ListBundles{relay_id: relay.id,
+                                                    reply_to: reply_to}}
 
     response = publish_and_wait(conn, payload, reply_to, @relay_info_topic)
-    |> Poison.decode!
+    |> Cog.Messages.Relay.BundleResponse.decode!
 
-    bundles = get_in(response, ["bundles", all, "config_file"])
+
+    # TODO: With more structure, we can simplify this
+    bundles = get_in(response.bundles, [all, "config_file"])
     %{fake_relay | bundles: bundles}
   end
   def get_bundles(%Relay{}=relay) do
@@ -48,13 +53,23 @@ defmodule Cog.FakeRelay do
   Announces the relay to Cog. Puts an announcement message on the bus.
   """
   def announce(%__MODULE__{conn: conn, relay: relay, bundles: bundles}=fake_relay) do
+    alias Cog.Messages.Relay.Announce
+    alias Cog.Messages.Relay.Announcement
+
     reply_to = "bot/test_relays/#{relay.id}"
-    announcement = %{"announce" => %{"relay" => relay.id,
-                                     "bundles" => bundles,
-                                     "snapshot" => true,
-                                     "online" => true,
-                                     "reply_to" => reply_to,
-                                     "announcement_id" => relay.id}}
+
+
+    bundles = bundles
+    |> Enum.map(fn(b) ->
+      %Cog.Messages.Relay.Bundle{name: b["name"], version: b["version"]}
+    end)
+
+    announcement = %Announce{announce: %Announcement{relay: relay.id,
+                                                     bundles: bundles,
+                                                     snapshot: true,
+                                                     online: true,
+                                                     reply_to: reply_to,
+                                                     announcement_id: relay.id}}
 
     publish_and_wait(conn, announcement, reply_to, @relays_discovery_topic)
     fake_relay

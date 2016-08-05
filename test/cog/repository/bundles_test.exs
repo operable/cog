@@ -244,12 +244,12 @@ defmodule Cog.Repository.BundlesTest do
   end
 
   test "verify existence of a bundle version" do
-    assert {:ok, _} = Bundles.verify_version_exists(%{"name" => "operable", "version" => embedded_bundle_version_string})
-    assert {:ok, _} = Bundles.verify_version_exists(%{"name" => "site", "version" => "0.0.0"})
+    assert {:ok, _} = Bundles.verify_version_exists(%{name: "operable", version: embedded_bundle_version_string})
+    assert {:ok, _} = Bundles.verify_version_exists(%{name: "site", version: "0.0.0"})
 
-    assert {:error, _} = Bundles.verify_version_exists(%{"name" => "testing", "version" => "1.0.0"})
+    assert {:error, _} = Bundles.verify_version_exists(%{name: "testing", version: "1.0.0"})
     {:ok, _} = Bundles.install(%{"name" => "testing", "version" => "1.0.0", "config_file" => %{}})
-    assert {:ok, _} = Bundles.verify_version_exists(%{"name" => "testing", "version" => "1.0.0"})
+    assert {:ok, _} = Bundles.verify_version_exists(%{name: "testing", version: "1.0.0"})
   end
 
   test "find all bundles a command is in" do

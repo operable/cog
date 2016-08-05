@@ -48,11 +48,11 @@ defmodule Cog.Bundle.Embedded do
   # command processes of the bundle
   defp announce_embedded_bundle(bundle_version) do
     Logger.info("Announcing embedded bundle")
-    message = %{"announce" => %{"relay" => Cog.Config.embedded_relay(),
-                                "online" => true,
-                                "snapshot" => true,
-                                "bundles" => [%{"name" => bundle_version .bundle.name,
-                                                "version" => bundle_version.version}]}}
+    message = %Cog.Messages.Relay.Announcement{relay: Cog.Config.embedded_relay(),
+                                               online: true,
+                                               snapshot: true,
+                                               bundles: [%Cog.Messages.Relay.Bundle{name: bundle_version.bundle.name,
+                                                                                    version: bundle_version.version}]}
     :ok = GenServer.call(Cog.Relay.Relays, {:announce_embedded_relay, message}, :infinity)
   end
 

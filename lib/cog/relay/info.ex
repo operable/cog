@@ -40,17 +40,20 @@ defmodule Cog.Relay.Info do
   end
 
   def handle_info({:publish, @relay_info_topic, message}, state) do
-    case Poison.decode(message) do
-      {:ok, %{"list_bundles" => message}} ->
-        info(message, state)
-        {:noreply, state}
-      {:ok, %{"get_dynamic_configs" => message}} ->
-        get_dynamic_configs(message, state)
-        {:noreply, state}
-      error ->
-        Logger.error("Error decoding json: #{inspect error}")
-        {:noreply, state}
+    try do
+      payload = Cog.Messages.RelayInfo.decode!(message)
+
+      # TODO: THIS IS HORRIBLE - Listen on different topics instead!
+      if payload.list_bundles do
+        info(payload.list_bundles, state)
+      else
+        get_dynamic_configs(payload.get_dynamic_configs, state)
+      end
+    rescue
+      e in Conduit.ValidationError ->
+        Logger.error("Error decoding json: #{inspect e}")
     end
+    {:noreply, state}
   end
   def handle_info(_msg, state) do
     {:noreply, state}
@@ -59,7 +62,7 @@ defmodule Cog.Relay.Info do
   #################################################################
   # Private functions
 
-  defp info(%{"relay_id" => relay_id, "reply_to" => reply_to}, state) do
+  defp info(%Cog.Messages.Relay.ListBundles{relay_id: relay_id, reply_to: reply_to}, state) do
     # TODO: consider getting rid of this Repo.get call altogether,
     # particularly in light of the note in the `nil` branch of the
     # case statement below
@@ -72,18 +75,23 @@ defmodule Cog.Relay.Info do
           |> Cog.Repository.Bundles.bundle_configs_for_relay
           |> Enum.map(&(%{config_file: &1}))
 
-          respond(%{bundles: bundles}, reply_to, state)
+          respond(%Cog.Messages.Relay.BundleResponse{bundles: bundles}, reply_to, state)
         nil ->
           ## If we get a nil back then the relay isn't registered with Cog.
           ## Technically we should never respond with an error, because relays
           ## should never make it through the BusEnforcer if they aren't registered
           ## but for completeness it's included here.
+
+
+          # TODO: Get rid of this
           respond(%{error: "Relay with id #{relay_id} was not recognized."}, reply_to, state)
       end
     end
   end
 
-  defp get_dynamic_configs(%{"relay_id" => relay_id, "config_hash" => config_hash, "reply_to" => reply_to}, state) do
+  defp get_dynamic_configs(%Cog.Messages.Relay.GetDynamicConfigs{relay_id: relay_id,
+                                                                 config_hash: config_hash,
+                                                                 reply_to: reply_to}, state) do
     # Only send data if the reply_to topic matches relay_id
     if id_matches_reply_to(relay_id, reply_to) do
       configs = Bundles.dynamic_configs_for_relay(relay_id)
@@ -95,9 +103,11 @@ defmodule Cog.Relay.Info do
                                           config: &1.config}))
 
       if config_hash != signature do
-        respond(%{configs: grouped_configs, changed: true, signature: signature}, reply_to, state)
+        respond(%Cog.Messages.Relay.DynamicConfigResponse{configs: grouped_configs,
+                                                          changed: true,
+                                                          signature: signature}, reply_to, state)
       else
-        respond(%{changed: false}, reply_to, state)
+        respond(%Cog.Messages.Relay.DynamicConfigResponse{changed: false}, reply_to, state)
       end
     end
   end

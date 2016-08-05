@@ -1,7 +1,7 @@
 defmodule Cog.Command.Raw do
   use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle
 
-  alias Cog.Command.Request
+  alias Cog.Messages.Command
 
   @description "Show the raw output of a command, exclusive of any templating"
 
@@ -25,7 +25,7 @@ defmodule Cog.Command.Raw do
 
   rule "when command is #{Cog.embedded_bundle}:raw allow"
 
-  def handle_message(%Request{cog_env: nil}=req, state),
+  def handle_message(%Command{cog_env: nil}=req, state),
     do: {:reply, req.reply_to, "nil", state}
   def handle_message(req, state),
     do: {:reply, req.reply_to, "json", req.cog_env, state}

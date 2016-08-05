@@ -17,7 +17,7 @@ defmodule Cog.Commands.RelayGroup.Member.Remove do
     -h, --help      Display this usage info
   """
 
-  @spec remove_relays(%Cog.Command.Request{}, List.t) :: {:ok, String.t, Map.t} | {:error, any()}
+  @spec remove_relays(%Cog.Messages.Command{}, List.t) :: {:ok, String.t, Map.t} | {:error, any()}
   def remove_relays(req, arg_list) do
     if Helpers.flag?(req.options, "help") do
       show_usage
@@ -52,7 +52,3 @@ defmodule Cog.Commands.RelayGroup.Member.Remove do
     {:ok, "usage", %{usage: @moduledoc, error: error}}
   end
 end
-
-
-
-

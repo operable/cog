@@ -61,7 +61,7 @@ defmodule Cog.Mixfile do
   defp deps do
     [{:slack, github: "BlakeWilliams/Elixir-Slack"},
      {:websocket_client, github: "jeremyong/websocket_client"},
-     {:poison, "~> 1.5.2"},
+     {:poison, "~> 2.0"},
      {:ibrowse, "~> 4.2.2", override: true},
      {:uuid, "~> 1.1.3"},
      {:httpotion, "~> 3.0.0", override: true},
@@ -94,6 +94,7 @@ defmodule Cog.Mixfile do
      # Overriding httpoison here because bamboo depends on 0.9 but slack has
      # the dep locked at 0.8.3
      {:httpoison, "~> 0.9", override: true},
+     {:conduit, github: "operable/conduit", branch: "cm/tweaks"},
 
      {:credo, "~> 0.3", only: [:dev, :test]},
      {:phoenix_live_reload, "~> 1.0.3", only: :dev},

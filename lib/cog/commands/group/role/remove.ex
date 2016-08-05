@@ -16,7 +16,7 @@ defmodule Cog.Commands.Group.Role.Remove do
     -h, --help    Display this usage info
   """
 
-  @spec remove_role(%Cog.Command.Request{}, List.t) :: {:ok, String.t, Map.t} | {:error, any()}
+  @spec remove_role(%Cog.Messages.Command{}, List.t) :: {:ok, String.t, Map.t} | {:error, any()}
   def remove_role(req, arg_list) do
     if Helpers.flag?(req.options, "help") do
       show_usage
@@ -50,5 +50,3 @@ defmodule Cog.Commands.Group.Role.Remove do
     "Missing required args. At a minimum you must include the user group and at least one role name to remove"
   end
 end
-
-

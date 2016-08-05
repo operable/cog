@@ -248,8 +248,7 @@ defmodule Cog.V1.TriggerExecutionControllerTest do
     # Make the request
     conn = post(conn, "/v1/triggers/#{trigger.id}", Poison.encode!(%{}))
 
-    %{"id" => pipeline_id,
-      "status" => status} = json_response(conn, 202)
+    %{"status" => status} = json_response(conn, 202)
     assert "Request accepted and still processing after #{timeout_sec} seconds" == status
 
     # Wait to ensure that processing finishes and check that the chat
@@ -257,8 +256,7 @@ defmodule Cog.V1.TriggerExecutionControllerTest do
     :timer.sleep (timeout_sec + 1)* 1000
     [message] = Snoop.messages(test_snoop)
     expected_response = Poison.encode!(%{body: ["Hello"]}, pretty: true)
-    assert %{"id" => ^pipeline_id,
-             "response" => ^expected_response} = message
+    assert %{"response" => ^expected_response} = message
   end
 
   @tag content_type: "text/plain"
