@@ -31,7 +31,7 @@ defmodule Cog.Messages.AdapterRequest do
   field :adapter, :string, required: true
 
   # Name of the Elixir module implementing the adapter
-  field :module, :string, required: true
+  field :module, :string, required: false
 end
 
 defmodule Cog.Messages.Command do

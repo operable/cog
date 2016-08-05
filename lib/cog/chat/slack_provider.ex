@@ -77,4 +77,5 @@ defmodule Cog.Chat.SlackProvider do
     GenMqtt.cast(conn, incoming, "message", msg)
     {:noreply, state}
   end
+
 end

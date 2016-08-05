@@ -3,11 +3,12 @@ defmodule Cog.Chat.Adapter do
   require Logger
 
   use Carrier.Messaging.GenMqtt
+  alias Cog.Messages.AdapterRequest
 
   @adapter_topic "bot/chat/adapter"
   @incoming_topic "bot/chat/adapter/incoming"
 
-  defstruct [:providers]
+  defstruct [:providers, :counter]
 
   def start_link() do
     GenMqtt.start_link(__MODULE__, [], name: __MODULE__)
@@ -51,13 +52,36 @@ defmodule Cog.Chat.Adapter do
     GenMqtt.call(conn, @adapter_topic, "list_providers", %{}, :infinity)
   end
 
+  def is_chat_provider?(name) do
+    GenMqtt.call(@adapter_topic, "is_chat_provider", %{name: name}, :infinity)
+  end
+  def is_chat_provider(conn, name) do
+    GenMqtt.call(conn, @adapter_topic, "is_chat_provider", %{name: name}, :infinity)
+  end
 
   def send(provider, target, message) do
-    GenMqtt.cast(@adapter_topic, "send", %{provider: provider, target: target, message: message})
+    case prepare_target(target) do
+      {:ok, target} ->
+        GenMqtt.cast(@adapter_topic, "send", %{provider: provider, target: target, message: message})
+      error ->
+        Logger.error("#{inspect error}")
+        error
+    end
   end
   def send(conn, provider, target, message) do
-    GenMqtt.cast(conn, @adapter_topic, "send", %{provider: provider, target: target, message: message})
+    case prepare_target(target) do
+      {:ok, target} ->
+        GenMqtt.cast(conn, @adapter_topic, "send", %{provider: provider, target: target, message: message})
+      error ->
+        Logger.error("#{inspect error}")
+        error
+    end
   end
+
+
+  ##########
+  # Internals start here
+  ##########
 
   def init(conn, _) do
     Logger.info("Starting")
@@ -98,22 +122,47 @@ defmodule Cog.Chat.Adapter do
   def handle_call(_conn, @adapter_topic, _sender, "list_providers", %{}, state) do
     {:reply, {:ok, %{providers: Enum.filter(Map.keys(state.providers), &(is_binary(&1)))}}, state}
   end
+  def handle_call(_conn, @adapter_topic, _sender, "is_chat_provider", %{"name" => name}, state) do
+    result = Map.put(%{}, name, name != "http")
+    {:reply, {:ok, result}, state}
+  end
 
   # Non-blocking "cast" messages
   def handle_cast(_conn, @adapter_topic, "send",  %{"target" => target,
                                                     "message" => message,
                                                     "provider" => provider}, state) do
-    result = with_provider(provider, state, {"send_message", [target, message]})
-    Logger.debug("Sent message via #{provider}: #{inspect result}")
+    with_provider(provider, state, :send_message, [target, message])
+    Logger.info("Sent #{:erlang.size(message)} bytes via provider #{provider}.")
     {:noreply, state}
   end
   def handle_cast(_conn, @incoming_topic, "event", event, state) do
     Logger.debug("Received chat event: #{inspect event}")
     {:noreply, state}
   end
-  def handle_cast(_conn, @incoming_topic, "message", msg, state) do
-    Logger.debug("Received chat message: #{inspect msg}")
+  def handle_cast(conn, @incoming_topic, "message", %{"room" => room, "user" => user, "text" => text, "provider" => provider,
+                                                      "bot_name" => bot_name}, state) do
+    state = case is_pipeline?(text, bot_name, room) do
+              {true, text} ->
+                {id, state} = message_id(state)
+                request = %AdapterRequest{text: text, sender: user, room: room, reply: "", id: id,
+                                          adapter: provider, initial_context: %{}}
+                Connection.publish(conn, request, routed_by: "/bot/commands")
+                state
+              false ->
+                state
+            end
     {:noreply, state}
+  end
+
+  defp message_id(%__MODULE__{counter: counter}=state) do
+    {mega, secs, _} = :os.timestamp()
+    id = :erlang.iolist_to_binary(:io_lib.format('~p~p.~7..0B', [mega, secs, counter]))
+    counter = if counter == 9999999 do
+      1
+    else
+      counter + 1
+    end
+    {id, %{state | counter: counter}}
   end
 
   defp resolve_provider_names(names) do
@@ -132,7 +181,7 @@ defmodule Cog.Chat.Adapter do
     Connection.subscribe(conn, @incoming_topic)
     case start_providers(providers, %{}) do
       {:ok, providers} ->
-        {:ok, %__MODULE__{providers: providers}}
+        {:ok, %__MODULE__{providers: providers, counter: 1}}
       error ->
         error
     end
@@ -162,7 +211,7 @@ defmodule Cog.Chat.Adapter do
   defp resolve_provider_name(:http), do: {:ok, Cog.Chat.HttpProvider}
   defp resolve_provider_name(name), do: {:error, {:unknown_chat_provider, name}}
 
-  defp with_provider(provider, state, fun, args \\ []) when is_atom(fun) and is_list(args) do
+  defp with_provider(provider, state, fun, args) when is_atom(fun) and is_list(args) do
     case Map.get(state.providers, provider) do
       nil ->
         {:error, :unknown_provider}
@@ -171,4 +220,54 @@ defmodule Cog.Chat.Adapter do
     end
   end
 
+  defp is_pipeline?(text, bot_name, room) do
+    if room["name"] == "direct" do
+      {true, text}
+    else
+      case parse_spoken_command(text) do
+        nil ->
+          case parse_mention(text, bot_name) do
+            nil ->
+              false
+            updated ->
+              {true, updated}
+          end
+        updated ->
+          {true, updated}
+      end
+    end
+  end
+
+  defp parse_spoken_command(text) do
+    case Application.get_env(:cog, :enable_spoken_commands, true) do
+      false ->
+        nil
+      true ->
+        command_prefix = Application.get_env(:cog, :command_prefix, "!")
+        updated = Regex.replace(~r/^#{Regex.escape(command_prefix)}/, text, "")
+        if updated != text do
+          updated
+        else
+          nil
+        end
+    end
+  end
+
+  defp parse_mention(text, bot_name) do
+    updated = Regex.replace(~r/^#{Regex.escape(bot_name)}/, text, "")
+    if updated != text do
+      Regex.replace(~r/^:/, updated, "")
+    else
+      nil
+    end
+  end
+
+  defp prepare_target(target) do
+    case Cog.Chat.Room.from_map(target) do
+      {:ok, room} ->
+        {:ok, room.id}
+      error ->
+        error
+    end
+  end
 end

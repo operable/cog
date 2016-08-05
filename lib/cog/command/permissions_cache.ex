@@ -80,8 +80,7 @@ defmodule Cog.Command.PermissionsCache do
   end
 
   defp fetch_and_cache(user, state) do
-    Logger.info("Cache miss for #{inspect user.id}")
-
+    Logger.info("Permission cache miss for user #{user.username}")
     perms = Cog.Models.User.all_permissions(user)
     expiry = Cog.Time.now() + state.ttl
     :ets.insert(@ets_table, {user.id, perms, expiry})

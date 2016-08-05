@@ -11,6 +11,7 @@ defmodule Cog.Command.Pipeline.Destination do
              adapter: nil,
              room: nil]
   use Adz
+  alias Cog.Chat.Adapter
 
   @doc """
   Given a list of raw pipeline destinations, resolve them all to the
@@ -48,7 +49,7 @@ defmodule Cog.Command.Pipeline.Destination do
   defp maybe_add_origin([], _origin_adapter),
     do: [make_destination("here")]
   defp maybe_add_origin(destinations, origin_adapter) do
-    if originator_is_destination?(destinations) || origin_adapter.chat_adapter? do
+    if originator_is_destination?(destinations) || Adapter.is_chat_provider?(origin_adapter) do
       destinations
     else
       [%{make_destination("here") | output_level: :status_only} | destinations]
@@ -80,7 +81,7 @@ defmodule Cog.Command.Pipeline.Destination do
   end
 
   defp resolve_destination(%__MODULE__{raw: "here"}=dest, _sender, origin_room, adapter),
-    do: {:ok, %{dest | adapter: adapter.name, room: origin_room}}
+    do: {:ok, %{dest | adapter: adapter, room: origin_room}}
   defp resolve_destination(%__MODULE__{raw: "me"}=dest, sender, _origin_room, adapter) do
     user_id = sender["id"]
     case adapter.lookup_direct_room(user_id: user_id) do # TODO: user should be opaque to all but adapter?
