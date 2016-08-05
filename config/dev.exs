@@ -34,3 +34,5 @@ config :comeonin,
 config :phoenix, :generators,
   migration: true,
   binary_id: false
+
+config :cog, Cog.Mailer, adapter: Bamboo.LocalAdapter
