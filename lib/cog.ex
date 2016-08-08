@@ -78,11 +78,10 @@ defmodule Cog do
   # only really public to facilitate testing; once we have a more
   # dynamic scheme for managing adapters, they won't be necessary.
 
-  # TODO: the "null" and "test" adapters need to be brought in only in
-  # non-prod environments
+  # TODO: the "test" adapter needs to be brought in only in non-prod
+  # environments
   def chat_adapters do
     %{"slack"   => Cog.Adapters.Slack,
-      "null"    => Cog.Adapters.Null,
       "test"    => Cog.Adapters.Test}
   end
 
