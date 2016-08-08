@@ -36,8 +36,6 @@ defmodule Cog.Command.Pipeline.Initializer do
     payload = Cog.Messages.AdapterRequest.decode!(message)
     # Only self register when the feature is enabled via config
     # and the incoming request is from Slack.
-    # TODO: Teach HipChat adapter to add first name, last name, and email
-    # fields to the user object it returns.
     #
     # TODO: should only do this if the adapter is a chat adapter
     self_register_flag = Application.get_env(:cog, :self_registration, false) and payload.adapter == "slack"

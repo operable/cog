@@ -35,17 +35,6 @@ config :cog, Cog.Adapters.Slack,
   api_token: System.get_env("SLACK_API_TOKEN"),
   api_cache_ttl: System.get_env("SLACK_API_CACHE_TTL") || 60
 
-config :cog, Cog.Adapters.HipChat,
-  xmpp_jid: System.get_env("HIPCHAT_XMPP_JID"),
-  xmpp_password: System.get_env("HIPCHAT_XMPP_PASSWORD"),
-  xmpp_nickname: System.get_env("HIPCHAT_XMPP_NICKNAME") || "Cog",
-  xmpp_server: System.get_env("HIPCHAT_XMPP_SERVER"),
-  xmpp_port: System.get_env("HIPCHAT_XMPP_PORT") || 5222,
-  xmpp_resource: "bot",
-  xmpp_rooms: System.get_env("HIPCHAT_XMPP_ROOMS"),
-  api_token: System.get_env("HIPCHAT_API_TOKEN"),
-  mention_name: System.get_env("HIPCHAT_MENTION_NAME")
-
 config :cog, Cog.Adapters.IRC,
   host: System.get_env("IRC_HOST"),
   port: System.get_env("IRC_PORT"),
@@ -55,7 +44,6 @@ config :cog, Cog.Adapters.IRC,
   name: System.get_env("IRC_NAME"),
   password: System.get_env("IRC_PASSWORD"),
   use_ssl: System.get_env("IRC_USE_SSL") || true
-
 
 # Chat provider APIs may be slow to respond to requests in some cases
 # so we set a generous timeout.

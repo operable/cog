@@ -67,43 +67,6 @@ function verify_env_vars {
   fi
 }
 
-function verify_hipchat_vars {
-  verify=0
-  if ! verify_env_vars "HIPCHAT_XMPP_JID" ; then
-    echo -e "\tERROR! HIPCHAT_XMPP_JID environment variable is not set."
-    verify=$((verify+1))
-  fi
-  if ! verify_env_vars "HIPCHAT_XMPP_PASSWORD" ; then
-    echo -e "\tERROR! HIPCHAT_XMPP_PASSWORD environment variable is not set."
-    verify=$((verify+1))
-  fi
-  if ! verify_env_vars "HIPCHAT_XMPP_SERVER" ; then
-    echo -e "\tERROR! HIPCHAT_XMPP_SERVER environment variable is not set."
-    verify=$((verify+1))
-  fi
-  if ! verify_env_vars "HIPCHAT_XMPP_ROOMS" ; then
-    echo -e "\tERROR! HIPCHAT_XMPP_ROOMS environment variable is not set."
-    verify=$((verify+1))
-  fi
-  if ! verify_env_vars "HIPCHAT_API_TOKEN" ; then
-    echo -e "\tERROR! HIPCHAT_API_TOKEN environment variable is not set."
-    verify=$((verify+1))
-  fi
-  if ! verify_env_vars "HIPCHAT_MENTION_NAME" ; then
-    echo -e "\tERROR! HIPCHAT_MENTION_NAME environment variable is not set."
-    verify=$((verify+1))
-  fi
-  #Only give warning for these env vars
-  if ! verify_env_vars "HIPCHAT_XMPP_PORT" ; then
-    echo -e "\tWarning: HIPCHAT_XMPP_PORT environment variable is not set; using default value '5222'"
-  fi
-  if ! verify_env_vars "HIPCHAT_XMPP_NICKNAME" ; then
-    echo -e "\tWarning: HIPCHAT_XMPP_NICKNAME environment variable is not set; using default value 'Cog'"
-  fi
-  return ${verify}
-}
-
-
 function verify_slack_vars {
   verify=0
   if ! verify_env_vars "SLACK_API_TOKEN" ; then
@@ -133,13 +96,8 @@ function verify_cog_env {
         verify=$((verify+1))
       fi
       ;;
-    "HipChat")
-      if ! verify_hipchat_vars ; then
-        verify=$((verify+1))
-      fi
-      ;;
     *)
-      echo -e "\tERROR! COG_ADAPTER is set to an unknown Cog Adapter. (Try 'Slack' or 'HipChat'.)"
+      echo -e "\tERROR! COG_ADAPTER is set to an unknown Cog Adapter. (Try 'Slack'.)"
       verify=$((verify+1))
       ;;
   esac
