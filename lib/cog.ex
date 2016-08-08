@@ -82,7 +82,6 @@ defmodule Cog do
   # non-prod environments
   def chat_adapters do
     %{"slack"   => Cog.Adapters.Slack,
-      "irc"     => Cog.Adapters.IRC,
       "null"    => Cog.Adapters.Null,
       "test"    => Cog.Adapters.Test}
   end

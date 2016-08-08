@@ -49,8 +49,7 @@ defmodule Cog.Mixfile do
             :phoenix_html,
             :comeonin,
             :spanner,
-            :bamboo,
-            :exirc]
+            :bamboo]
     if System.get_env("COG_SASL_LOG") != nil do
       [:sasl|apps]
     else
@@ -87,7 +86,6 @@ defmodule Cog.Mixfile do
      {:probe, github: "operable/probe"},
      {:exml, github: "paulgray/exml", tag: "2.2.1"},
      {:fumanchu, github: "operable/fumanchu"},
-     {:exirc, "~> 0.9.2"},
      {:exjsx, "~> 3.2", override: true},
      {:bamboo_smtp, "~> 1.2.0"},
      # Overriding httpoison here because bamboo depends on 0.9 but slack has
