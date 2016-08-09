@@ -20,7 +20,7 @@ defmodule Cog.V1.PasswordResetController do
       {:error, :not_found} ->
         conn
         |> put_status(:not_found)
-        |> json(%{errors: "Password reset token not found"})
+        |> json(%{errors: "Invalid password reset token."})
       {:error, changeset} ->
         conn
         |> put_status(:unprocessable_entity)

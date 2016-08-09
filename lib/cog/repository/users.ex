@@ -159,12 +159,14 @@ defmodule Cog.Repository.Users do
   """
   @spec reset_password(String.t, String.t) :: {:ok, %User{}} | {:error, :not_found} | {:error, Ecto.Changeset.t}
   def reset_password(token, password) do
-    case Repo.get(PasswordReset, token) |> Repo.preload([:user]) do
+    case Repo.get(PasswordReset, token) do
       nil ->
         {:error, :not_found}
-      %{user: user}=password_reset ->
+      password_reset ->
         Repo.transaction(fn ->
-          with {:ok, updated_user} <- update(user, %{password: password}),
+          password_reset = Repo.preload(password_reset, [:user])
+
+          with {:ok, updated_user} <- update(password_reset.user, %{password: password}),
                {:ok, _}            <- Repo.delete(password_reset) do
              updated_user
           else
