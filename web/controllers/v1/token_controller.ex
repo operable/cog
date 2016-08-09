@@ -3,27 +3,49 @@ defmodule Cog.V1.TokenController do
 
   alias Cog.Models.EctoJson
   alias Cog.Models.Token
-  alias Cog.Models.User
   alias Cog.Passwords
+  alias Cog.Repository.Users
 
-  def create(conn, %{"username" => username,
-                     "password" => password}) when not(is_nil(username))
-                                               and not(is_nil (password)) do
-    case Repo.get_by(User, username: username) do
-      %User{} = user ->
-        verify_password(user, conn, password)
-      nil ->
-        Passwords.matches?(nil, "")
+  def create(conn, params) do
+    case validate_params(params) do
+      {:ok, %{"password" => password} = params} ->
+        case find_user(params) do
+          {:ok, user} ->
+            verify_password(user, conn, password)
+          {:error, :not_found} ->
+            Passwords.matches?(nil, "")
+
+            conn
+            |> put_status(:forbidden)
+            |> json(%{errors: "Invalid credentials"})
+        end
+      {:error, :invalid_params} ->
         conn
-        |> put_status(:forbidden)
-        |> json(%{errors: "Invalid username/password"})
+        |> put_status(:unauthorized)
+        |> json(%{errors: "Must supply both username/email and password"})
     end
   end
-  def create(conn, _params) do
-    conn
-    |> put_status(:unauthorized)
-    |> json(%{errors: "Must supply both a username and password"})
+
+  defp validate_params(%{"username" => username, "password" => password} = params)
+      when not(is_nil(username)) and not(is_nil(password)) do
+    {:ok, params}
   end
+
+  defp validate_params(%{"email" => email, "password" => password} = params)
+      when not(is_nil(email)) and not(is_nil(password)) do
+    {:ok, params}
+  end
+
+  defp validate_params(_params) do
+    {:error, :invalid_params}
+  end
+
+  defp find_user(%{"username" => username}),
+    do: Users.by_username(username)
+  defp find_user(%{"email" => email}),
+    do: Users.by_email(email)
+  defp find_user(_params),
+    do: {:error, :invalid_params}
 
   defp verify_password(user, conn, password) do
     case Passwords.matches?(password, user.password_digest) do
@@ -37,7 +59,7 @@ defmodule Cog.V1.TokenController do
           false ->
             conn
             |> put_status(:forbidden)
-            |> json(%{errors: "Invalid username/password"})
+            |> json(%{errors: "Invalid credentials"})
         end
     end
   end

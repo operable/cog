@@ -139,7 +139,7 @@ defmodule Cog.Repository.Groups do
   #                  "add" => [%User{}, %Role{}],
   #                  "remove" => [%User{}, %Role{}]}
   #
-  # Provide the email addresses of Users, that you want to be members (or not)
+  # Provide the usernames of Users, that you want to be members (or not)
   # of the target group (as specified by `id`). All changes are made
   # transactionally, so if any given names don't refer to a database entity,
   # no changes in membership are made.
@@ -212,7 +212,7 @@ defmodule Cog.Repository.Groups do
   #     > lookup_or_fail(%{"users" => %{"add" => ["cog"]}},
   #                         ["users", "add"],
   #                         User)
-  #     [%User{email_address: "cog", ...}]
+  #     [%User{username: "cog", ...}]
   #
   defp lookup_or_fail(member_spec, [kind, _operation]=path) do
     names = get_in(member_spec, path) || []
@@ -232,7 +232,7 @@ defmodule Cog.Repository.Groups do
   # Example:
   #
   #     > lookup_all("users", ["cog"])
-  #     {:ok, [%User{email_address: "cog", ...}]}
+  #     {:ok, [%User{username: "cog", ...}]}
   #
   #     > lookup_all("users", ["not_a_user", "cog", "badguy"])
   #     {:error, {:not_found, {"users", ["not_a_user", "badguy"]}}}
@@ -241,7 +241,7 @@ defmodule Cog.Repository.Groups do
   defp lookup_all(kind, names) when kind in ["users", "groups", "roles"] do
 
     type = kind_to_type(kind) # e.g. "users" -> User
-    unique_name_field = unique_name_field(type) # e.g. User -> :email_address
+    unique_name_field = unique_name_field(type) # e.g. User -> :username
 
     results = Repo.all(from t in type, where: field(t, ^unique_name_field) in ^names)
 
@@ -321,7 +321,7 @@ defmodule Cog.Repository.Groups do
   defp kind_to_type("roles"), do: Role
 
   # Given a type, return the field for its unique name
-  defp unique_name_field(User), do: :email_address
+  defp unique_name_field(User), do: :username
   defp unique_name_field(Group), do: :name
   defp unique_name_field(Role), do: :name
 
