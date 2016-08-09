@@ -3,8 +3,8 @@ defmodule Cog.V1.TokenController do
 
   alias Cog.Models.EctoJson
   alias Cog.Models.Token
-  alias Cog.Models.User
   alias Cog.Passwords
+  alias Cog.Repository.Users
 
   def create(conn, params) do
     case validate_params(params) do
@@ -40,27 +40,12 @@ defmodule Cog.V1.TokenController do
     {:error, :invalid_params}
   end
 
-  defp find_user(%{"username" => username}) do
-    case Repo.get_by(User, username: username) do
-      %User{} = user ->
-        {:ok, user}
-      nil ->
-        {:error, :not_found}
-    end
-  end
-
-  defp find_user(%{"email" => email}) do
-    case Repo.get_by(User, email_address: email) do
-      %User{} = user ->
-        {:ok, user}
-      nil ->
-        {:error, :not_found}
-    end
-  end
-
-  defp find_user(_params) do
-    {:error, :invalid_params}
-  end
+  defp find_user(%{"username" => username}),
+    do: Users.by_username(username)
+  defp find_user(%{"email" => email}),
+    do: Users.by_email(email)
+  defp find_user(_params),
+    do: {:error, :invalid_params}
 
   defp verify_password(user, conn, password) do
     case Passwords.matches?(password, user.password_digest) do
