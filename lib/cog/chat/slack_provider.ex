@@ -11,6 +11,8 @@ defmodule Cog.Chat.SlackProvider do
 
   defstruct [:token, :incoming, :connector, :mbus]
 
+  def display_name, do: "Slack"
+
   def start_link(config) do
     GenServer.start_link(__MODULE__, [config], name: __MODULE__)
   end

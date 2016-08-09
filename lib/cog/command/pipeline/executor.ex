@@ -470,17 +470,17 @@ defmodule Cog.Command.Pipeline.Executor do
   # Unregistered User Functions
 
   defp alert_unregistered_user(state) do
-    {:ok, adapter} = Cog.adapter_module(state.request.adapter)
     request = state.request
     handle = request.sender["handle"]
     creators = user_creator_handles(request)
 
     {:ok, mention_name} = Cog.Chat.Adapter.mention_name(state.request.adapter, handle)
+    {:ok, display_name} = Cog.Chat.Adapter.display_name(state.request.adapter)
 
     context = %{
       handle: handle,
-      display_name: adapter.display_name(),
       mention_name: mention_name,
+      display_name: display_name,
       user_creators: creators,
       user_creators?: Enum.any?(creators)
     }
@@ -498,18 +498,19 @@ defmodule Cog.Command.Pipeline.Executor do
   # necessarily have a chat handle registered for the chat provider
   # being used (most notably, the bootstrap admin user).
   defp user_creator_handles(request) do
-
-    adapter = request.adapter
-    adapter_module = String.to_existing_atom(request.module)
+    provider = request.adapter
 
     "operable:manage_users"
     |> Cog.Queries.Permission.from_full_name
     |> Cog.Repo.one!
     |> Cog.Queries.User.with_permission
-    |> Cog.Queries.User.for_chat_provider(adapter)
+    |> Cog.Queries.User.for_chat_provider(provider)
     |> Cog.Repo.all
     |> Enum.flat_map(&(&1.chat_handles))
-    |> Enum.map(&(adapter_module.mention_name(&1.handle)))
+    |> Enum.map(fn(h) ->
+      {:ok, mention} = Cog.Chat.Adapter.mention_name(provider, h.handle)
+      mention
+    end)
     |> Enum.sort
   end
 

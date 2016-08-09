@@ -22,6 +22,8 @@ defmodule Cog.Chat.Provider do
 
   @callback mention_name(handle :: String.t) :: String.t
 
+  @callback display_name :: String.t
+
   defmacro __using__(_) do
     quote do
       @behaviour unquote(__MODULE__)
@@ -44,12 +46,16 @@ defmodule Cog.Chat.Provider do
       def mention_name(handle),
         do: "@" <> handle
 
+      def display_name,
+        do: __MODULE__ |> Module.split |> List.last
+
       defoverridable [lookup_user: 1,
                       list_joined_rooms: 0,
                       join: 1,
                       leave: 1,
                       send_message: 2,
-                      mention_name: 1]
+                      mention_name: 1,
+                      display_name: 0]
     end
   end
 
