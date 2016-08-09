@@ -10,8 +10,6 @@ config :cog, :embedded_bundle_version, "0.12.0"
 # ========================================================================
 # Chat Adapters
 # ========================================================================
-config :cog,
-  adapter: System.get_env("COG_ADAPTER") || "slack"
 
 config :cog, Cog.Chat.SlackProvider,
   api_token: System.get_env("SLACK_API_TOKEN")
@@ -30,10 +28,6 @@ config :cog, :message_bus,
 # config :cog, :message_bus,
 #  ssl_cert: "public.crt",
 #  ssl_key: "secret.key"
-
-config :cog, Cog.Adapters.Slack,
-  api_token: System.get_env("SLACK_API_TOKEN"),
-  api_cache_ttl: System.get_env("SLACK_API_CACHE_TTL") || 60
 
 # Chat provider APIs may be slow to respond to requests in some cases
 # so we set a generous timeout.

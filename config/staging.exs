@@ -7,11 +7,7 @@ config :lager, :handlers,
   [{LagerLogger, [level: :error]}]
 
 config :cog,
-  adapter: System.get_env("COG_ADAPTER") || Cog.Adapters.Slack
-
-config :cog, Cog.Adapters.Slack,
-  api_token: System.get_env("SLACK_API_TOKEN"),
-  api_cache_ttl: System.get_env("SLACK_API_CACHE_TTL") || 900
+  adapter: System.get_env("COG_ADAPTER")
 
 config :cog, Carrier.Messaging.Connection,
   host: "127.0.0.1",
