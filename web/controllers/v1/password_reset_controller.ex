@@ -4,16 +4,12 @@ defmodule Cog.V1.PasswordResetController do
   alias Cog.Repository.Users
 
   def create(conn, %{"email_address" => email_address}) do
-    case Users.by_email(email_address) do
-      {:ok, user} ->
-        case Users.request_password_reset(user) do
-          {:ok, _} ->
-            send_resp(conn, :no_content, "")
-          _ ->
-            send_resp(conn, :internal_server_error, "")
-        end
-      _ ->
-        send_resp(conn, :ok, "")
+    with {:ok, user} <- Users.by_email(email_address),
+         {:ok, _} <- Users.request_password_reset(user) do
+      send_resp(conn, :no_content, "")
+    else
+      {:error, _error} ->
+        send_resp(conn, :internal_server_error, "")
     end
   end
 
