@@ -81,7 +81,7 @@ defmodule Cog do
   # TODO: the "test" adapter needs to be brought in only in non-prod
   # environments
   def chat_adapters do
-    %{"test" => Cog.Adapters.Test}
+    %{}
   end
 
   def non_chat_adapters,
