@@ -133,11 +133,17 @@ defmodule Cog.Repository.Users do
   end
 
   @doc """
-  Creates a password reset request
+  Creates a password reset request. Only one request allowed per user. If a
+  second is submitted, the old one is removed.
   """
   @spec request_password_reset(%User{}) :: :ok | {:error, any()}
   def request_password_reset(%User{id: user_id, email_address: email_address}) do
     Repo.transaction(fn ->
+      case Repo.get_by(PasswordReset, user_id: user_id) do
+        nil -> :noop
+        reset -> Repo.delete(reset)
+      end
+
       password_reset = PasswordReset.changeset(%PasswordReset{}, %{user_id: user_id})
       |> Repo.insert!
 
