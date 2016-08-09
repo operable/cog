@@ -94,7 +94,7 @@ defmodule Carrier.Messaging.Connection do
     :emqttc.sync_subscribe(conn, topic, :qos1)
   end
 
-  def unsubscribe(conn, topic) do
+  def unsubscribe(%__MODULE__{conn: conn}, topic) do
     :emqttc.unsubscribe(conn, topic)
   end
 

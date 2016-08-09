@@ -87,7 +87,7 @@ defmodule Cog.FakeRelay do
         response
     after
       @timeout ->
-        :emqttc.disconnect(conn)
+        Messaging.Connection.disconnect(conn)
         raise(RuntimeError, "Timed out waiting for response on #{reply_to}")
     end
   end
