@@ -22,7 +22,7 @@ defmodule Cog.V1.TokenController do
       {:error, :invalid_params} ->
         conn
         |> put_status(:unauthorized)
-        |> json(%{errors: "Must supply both username or email and password"})
+        |> json(%{errors: "Must supply both username/email and password"})
     end
   end
 

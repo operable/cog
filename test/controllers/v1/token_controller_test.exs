@@ -44,13 +44,13 @@ defmodule Cog.V1.TokenControllerTest do
   test "fails to provide token if username is not provided", %{conn: conn} do
     conn = post(conn, "/v1/token",
                 %{"password" => "not_even_close"})
-    assert json_response(conn, 401)["errors"] == "Must supply both username or email and password"
+    assert json_response(conn, 401)["errors"] == "Must supply both username/email and password"
   end
 
   test "fails to provide token if password is not provided", %{conn: conn} do
     conn = post(conn, "/v1/token",
                 %{"username" => "little_bobby_tables"})
-    assert json_response(conn, 401)["errors"] == "Must supply both username or email and password"
+    assert json_response(conn, 401)["errors"] == "Must supply both username/email and password"
   end
 
 end
