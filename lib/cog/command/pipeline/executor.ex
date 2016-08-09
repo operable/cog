@@ -475,10 +475,12 @@ defmodule Cog.Command.Pipeline.Executor do
     handle = request.sender["handle"]
     creators = user_creator_handles(request)
 
+    {:ok, mention_name} = Cog.Chat.Adapter.mention_name(state.request.adapter, handle)
+
     context = %{
       handle: handle,
-      mention_name: adapter.mention_name(handle),
       display_name: adapter.display_name(),
+      mention_name: mention_name,
       user_creators: creators,
       user_creators?: Enum.any?(creators)
     }

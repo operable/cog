@@ -126,23 +126,27 @@ defmodule Cog.Command.Pipeline.Initializer do
 
   defp self_registration_success(user, request, state) do
     {:ok, adapter} = Cog.adapter_module(request["adapter"])
+    provider = request["adapter"]
     handle = request["sender"]["handle"]
+    {:ok, mention_name} = Cog.Chat.Adapter.mention_name(provider, handle)
     context = %{
       handle: handle,
       first_name: request["sender"]["first_name"],
       username: user.username,
-      mention_name: adapter.mention_name(handle),
       display_name: adapter.display_name(),
+      mention_name: mention_name,
     }
     ReplyHelper.send_template(request, "self_registration_success", context, state.mq_conn)
   end
   defp self_registration_failed(request, state) do
     {:ok, adapter} = Cog.adapter_module(request["adapter"])
+    provider = request["adapter"]
     handle = request["sender"]["handle"]
+    {:ok, mention_name} = Cog.Chat.Adapter.mention_name(provider, handle)
     context = %{
       handle: handle,
-      mention_name: adapter.mention_name(handle),
       display_name: adapter.display_name(),
+      mention_name: mention_name,
     }
     ReplyHelper.send_template(request, "self_registration_failed", context, state.mq_conn)
   end

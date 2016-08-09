@@ -15,6 +15,10 @@ defmodule Cog.Chat.Adapter do
     GenMqtt.start_link(__MODULE__, [], name: __MODULE__)
   end
 
+  def mention_name(provider, handle) when is_binary(handle) do
+    GenMqtt.call(@adapter_topic , "mention_name", %{provider: provider, handle: handle}, :infinity)
+  end
+
   def lookup_user(provider, handle) when is_binary(handle) do
     GenMqtt.call(@adapter_topic, "lookup_user", %{provider: provider, handle: handle}, :infinity)
   end
@@ -150,6 +154,9 @@ defmodule Cog.Chat.Adapter do
   def handle_call(_conn, @adapter_topic, _sender, "is_chat_provider", %{"name" => name}, state) do
     result = Map.put(%{}, name, name != "http")
     {:reply, {:ok, result}, state}
+  end
+  def handle_call(_conn, @adapter_topic, _sender, "mention_name", %{"provider" => provider, "handle" => handle}, state) do
+    {:reply, with_provider(provider, state, :mention_name, [handle]), state}
   end
 
   # Non-blocking "cast" messages
