@@ -1,5 +1,6 @@
 defmodule Cog.V1.PasswordResetController do
   use Cog.Web, :controller
+  require Logger
 
   alias Cog.Repository.Users
 
@@ -8,7 +9,8 @@ defmodule Cog.V1.PasswordResetController do
          {:ok, _} <- Users.request_password_reset(user) do
       send_resp(conn, :no_content, "")
     else
-      {:error, _error} ->
+      {:error, error} ->
+        Logger.warn("Failed to generate password reset: #{inspect error}")
         send_resp(conn, :internal_server_error, "")
     end
   end
