@@ -9,6 +9,9 @@ defmodule Cog.V1.PasswordResetController do
          {:ok, _} <- Users.request_password_reset(user) do
       send_resp(conn, :no_content, "")
     else
+      {:error, :not_found} ->
+        Logger.warn("Unknown email address sent for password reset")
+        send_resp(conn, :no_content, "")
       {:error, error} ->
         Logger.warn("Failed to generate password reset: #{inspect error}")
         send_resp(conn, :internal_server_error, "")
