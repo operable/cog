@@ -11,7 +11,7 @@ defmodule Cog.EmailView do
     do: not(is_nil(Application.get_env(:cog, :password_reset_base_url)))
 
   def reset_url(token) do
-    base_url = Application.get_env(:cog, :password_reset_base_url, nil)
+    base_url = Application.get_env(:cog, :password_reset_base_url, "")
     |> URI.parse
 
     %{base_url | path: build_path(base_url.path, token)}
