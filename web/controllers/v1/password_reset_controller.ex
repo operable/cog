@@ -11,6 +11,9 @@ defmodule Cog.V1.PasswordResetController do
     else
       {:error, :not_found} ->
         Logger.warn("Unknown email address sent for password reset")
+        # We still return no_content here as an anti-phishing measure.
+        # We don't want folks spamming this endpoint to find valid email
+        # addresses.
         send_resp(conn, :no_content, "")
       {:error, error} ->
         Logger.warn("Failed to generate password reset: #{inspect error}")
@@ -20,8 +23,8 @@ defmodule Cog.V1.PasswordResetController do
 
   def update(conn, %{"id" => id, "password" => password}) do
     case Users.reset_password(id, password) do
-      {:ok, user} ->
-        render(conn, Cog.V1.UserView, "show.json", user: user)
+      {:ok, _user} ->
+        send_resp(conn, :no_content, "")
       {:error, :not_found} ->
         conn
         |> put_status(:not_found)
