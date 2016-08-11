@@ -124,14 +124,11 @@ defmodule Cog.Chat.Adapter do
       {:ok, config} ->
         case Keyword.get(config, :providers) do
           nil ->
-            {:error, :missing_chat_provider_name}
-          names ->
-            case resolve_provider_names(names) do
-              {:error, _}=error ->
-                error
-              providers ->
-                finish_initialization(conn, providers)
-            end
+            {:error, :missing_chat_providers}
+          providers ->
+            # TODO: validate that these providers actually implement
+            # the proper behavior
+            finish_initialization(conn, providers)
         end
     end
   end
@@ -205,17 +202,6 @@ defmodule Cog.Chat.Adapter do
     {id, %{state | counter: counter}}
   end
 
-  defp resolve_provider_names(names) do
-    Enum.reduce_while(names, [],
-      fn(name, acc) ->
-        case resolve_provider_name(name) do
-          {:ok, provider} ->
-            {:cont, [{name, provider}|acc]}
-          error ->
-            {:halt, error}
-        end end)
-  end
-
   defp finish_initialization(conn, providers) do
     Connection.subscribe(conn, @adapter_topic)
     Connection.subscribe(conn, @incoming_topic)
@@ -245,14 +231,6 @@ defmodule Cog.Chat.Adapter do
         end
     end
   end
-
-
-  defp resolve_provider_name(:slack), do: {:ok, Cog.Chat.SlackProvider}
-  defp resolve_provider_name(:http), do: {:ok, Cog.Chat.HttpProvider}
-  if Mix.env == :test do
-  defp resolve_provider_name(:test), do: {:ok, Cog.Chat.TestProvider}
-  end
-  defp resolve_provider_name(name), do: {:error, {:unknown_chat_provider, name}}
 
   defp with_provider(provider, state, fun, args) when is_atom(fun) and is_list(args) do
     case Map.get(state.providers, provider) do

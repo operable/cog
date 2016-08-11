@@ -11,6 +11,10 @@ config :cog, :embedded_bundle_version, "0.12.0"
 # Chat Adapters
 # ========================================================================
 
+config :cog, Cog.Chat.Adapter,
+  providers: [slack: Cog.Chat.SlackProvider,
+              http: Cog.Chat.HttpProvider]
+
 config :cog, Cog.Chat.SlackProvider,
   api_token: System.get_env("SLACK_API_TOKEN")
 
@@ -31,7 +35,6 @@ config :cog, :message_bus,
 
 # Chat provider APIs may be slow to respond to requests in some cases
 # so we set a generous timeout.
-
 config :httpotion, :default_timeout, 30000
 
 # ========================================================================
