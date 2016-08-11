@@ -2,13 +2,8 @@ defmodule Cog.EmailView do
   use Cog.Web, :view
   require Logger
 
-  def webui? do
-    if Application.get_env(:cog, :password_reset_base_url, false) == false do
-      false
-    else
-      true
-    end
-  end
+  def webui?(),
+    do: not(is_nil(Application.get_env(:cog, :password_reset_base_url)))
 
   def reset_url(token) do
     base_url = Application.get_env(:cog, :password_reset_base_url, nil)
