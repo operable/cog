@@ -7,7 +7,7 @@ defmodule Cog.Command.ReplyHelper do
   """
   @spec send_template(map, String.t, map, Connection.connection) :: :ok | {:error, any}
   def send_template(request, template_name, context, conn) do
-    send_template(request, template_name, request["room"], context, conn)
+    send_template(request, template_name, request.room, context, conn)
   end
 
   @doc """
@@ -15,9 +15,9 @@ defmodule Cog.Command.ReplyHelper do
   """
   @spec send_template(map, String.t, String.t, map, Connection.connection) :: :ok | {:error, any}
   def send_template(request, template_name, room_name, context, conn) do
-    case Template.render(request["adapter"], template_name, context) do
+    case Template.render(request.adapter, template_name, context) do
       {:ok, message} ->
-        publish_response(message, room_name, request["adapter"], conn)
+        publish_response(message, room_name, request.adapter, conn)
       error ->
         error
     end
