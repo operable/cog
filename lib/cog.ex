@@ -52,54 +52,20 @@ defmodule Cog do
   # Adapter Resolution Functions
 
   @doc """
-  Returns the currently configured chat adapter module, if found.
+  Returns the name of the currently configured chat provider module, if found
   """
-  @spec chat_adapter_module :: {:ok, module} | {:error, {:bad_adapter, configured_name :: String.t}}
-  def chat_adapter_module,
-    do: chat_adapter_module(Application.get_env(:cog, :adapter))
-
-  @doc """
-  For a given _chat_ adapter name return the implementing module, if
-  it exists.
-  """
-  @spec chat_adapter_module(String.t) :: {:ok, module} | {:error, {:bad_adapter, String.t}}
-  def chat_adapter_module(name),
-    do: adapter_module(name, chat_adapters)
-
-  @doc """
-  Same as `chat_adapter_module/1` but for _any_ adapter, chat or
-  otherwise.
-  """
-  @spec chat_adapter_module(String.t) :: {:ok, module} | {:error, {:bad_adapter, String.t}}
-  def adapter_module(name),
-    do: adapter_module(name, all_adapters)
-
-  # Note: chat_adapters/0, non_chat_adapters/0, and all_adapters/0 are
-  # only really public to facilitate testing; once we have a more
-  # dynamic scheme for managing adapters, they won't be necessary.
-
-  # TODO: the "test" adapter needs to be brought in only in non-prod
-  # environments
-  def chat_adapters do
-    %{}
-  end
-
-  def non_chat_adapters,
-    do: %{"http" => Cog.Adapters.Http}
-
-  def all_adapters,
-    do: Map.merge(chat_adapters, non_chat_adapters)
-
-  ########################################################################
-
-  defp adapter_module(name, source) do
-    case Map.fetch(source, name) do
-      {:ok, module} ->
-        {:ok, module}
+  def chat_adapter_module do
+    # TODO: really "chat provider name"
+    config = Application.fetch_env!(:cog, Cog.Chat.Adapter)
+    case Keyword.fetch(config, :chat) do
+      {:ok, name} when is_atom(name) ->
+        {:ok, Atom.to_string(name)}
       :error ->
-        {:error, {:bad_adapter, name}}
+        {:error, :no_chat_provider_declared}
     end
   end
+
+  ########################################################################
 
   defp verify_schema_migration! do
     case migration_status do
