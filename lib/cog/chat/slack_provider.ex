@@ -43,6 +43,7 @@ defmodule Cog.Chat.SlackProvider do
   def init([config]) do
     token = Keyword.fetch!(config, :api_token)
     incoming = Keyword.fetch!(config, :incoming_topic)
+
     {:ok, mbus} = Connection.connect()
     {:ok, pid} = SlackConnector.start_link(token)
     {:ok, %__MODULE__{token: token, incoming: incoming, connector: pid, mbus: mbus}}

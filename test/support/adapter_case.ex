@@ -17,9 +17,6 @@ defmodule Cog.AdapterCase do
       require Logger
       use ExUnit.Case, async: false
 
-      Logger.warn(">>>>>>> Module = #{inspect __MODULE__, pretty: true}")
-
-
       import unquote(adapter_helper)
       import unquote(__MODULE__)
       import Cog.Support.ModelUtilities
@@ -37,16 +34,17 @@ defmodule Cog.AdapterCase do
       end
 
       setup context do
-        recorder = start_recorder(unquote(adapter), context)
+        # recorder = start_recorder(unquote(adapter), context)
 
         Ecto.Adapters.SQL.Sandbox.checkout(Repo)
         Ecto.Adapters.SQL.Sandbox.mode(Repo, {:shared, self()})
+
         bootstrap
         Cog.Command.PermissionsCache.reset_cache
 
-        on_exit(fn ->
-          stop_recorder(recorder)
-        end)
+        # on_exit(fn ->
+        #   stop_recorder(recorder)
+        # end)
 
         :ok
       end
@@ -55,16 +53,15 @@ defmodule Cog.AdapterCase do
   end
 
   # If we are using the test adapter, we do nothing
-  def replace_adapter("test"),
-    do: Application.get_env(:cog, :adapter)
+  def replace_adapter("test") do
+    Application.get_env(:cog, :adapter)
+  end
   def replace_adapter(new_adapter) do
-    adapter = Application.get_env(:cog, :adapter)
+    old_adapter = Application.get_env(:cog, :adapter)
     Application.put_env(:cog, :adapter, new_adapter)
-
     set_chat_adapter(new_adapter)
-
     restart_application
-    adapter
+    old_adapter
   end
 
   def reset_adapter(adapter) do
@@ -77,8 +74,6 @@ defmodule Cog.AdapterCase do
     config = :cog
     |> Application.get_env(Cog.Chat.Adapter)
     |> Keyword.put(:chat, String.to_atom(adapter))
-
-    Logger.warn(">>>>>>> config = #{inspect config, pretty: true}")
 
     Application.put_env(:cog, Cog.Chat.Adapter, config)
   end

@@ -3,6 +3,7 @@ defmodule Cog.Chat.SlackConnector do
   use Slack
 
   alias Cog.Chat.SlackProvider
+  alias Cog.Chat.SlackFormatter
   alias Cog.Chat.User
   alias Cog.Chat.Room
 
@@ -75,7 +76,7 @@ defmodule Cog.Chat.SlackConnector do
   def handle_info({{ref, sender}, {:lookup_room, %{id: id, token: token}}}, state) do
     # Figure out what an internal Slack identifier actually points to
     # (user, channel, DM, etc).
-    result = case classify_id(id) do
+    result = case classify_id(id, state) do
                {:user, user_id} ->
                  case Slack.Web.Im.open(user_id, %{token: token}) do
                    %{"channel" => %{"id" => id}} ->
@@ -154,12 +155,8 @@ defmodule Cog.Chat.SlackConnector do
     end
   end
 
-  defp user_by_id(id, {id, user}, acc) do
-    if Map.has_key?(user.profile, :first_name) do
-      {:halt, make_user(user)}
-    else
-      {:cont, acc}
-    end
+  defp user_by_id(id, {id, user}, _acc) do
+    {:halt, make_user(user)}
   end
   defp user_by_id(_, _, acc), do: {:cont, acc}
 
@@ -183,20 +180,46 @@ defmodule Cog.Chat.SlackConnector do
   defp make_user(user) do
     if user.is_bot do
       %User{id: user.id,
-            first_name: user.profile.first_name,
-            last_name: user.profile.last_name,
+            first_name: user.name, #user.profile.first_name,
+            last_name: user.name, #user.profile.last_name,
             handle: user.name,
             provider: "slack"}
     else
+
+      # ACTUALLY IS BOT?!?!
+      #
+      # Is botci a bot or a user? If a user, do we just not have a
+      #name set?
+      #
+      # Does profile even have first_name / last_name, or just
+      #real_name, and real_name_normalized?
       %User{id: user.id,
-            first_name: user.profile.first_name,
-            last_name: user.profile.last_name,
+            first_name: user.name, #user.profile.first_name,
+            last_name: user.name, #user.profile.last_name,
             handle: user.name,
             provider: "slack",
-            email: user.profile.email}
+            }
+#            email: user.profile.email}
     end
   end
 
+  defp annotate(%{type: "message",
+                  subtype: "message_changed",
+                  channel: channel,
+                  message: %{type: "message", user: user}=message}, state) do
+    if user == state.me.id do
+      :ignore
+    else
+      # Edited "messages" don't have a channel key, so we'll pull it in
+      # from the outer "envelope"
+      case annotate_message(Map.put(message, :channel, channel), state) do
+        :ignore ->
+          :ignore
+        {:chat_message, annotated} ->
+          {:chat_message, Map.put(annotated, :edited, true)}
+      end
+    end
+  end
   defp annotate(%{type: "message", user: user}=message, state) do
     if user == state.me.id do
       :ignore
@@ -215,6 +238,7 @@ defmodule Cog.Chat.SlackConnector do
  defp annotate(_, _), do: :ignore
 
  defp annotate_message(%{channel: << <<"C">>, _::binary >>=channel, user: userid, text: text}, state) do
+   text = SlackFormatter.unescape(text, state)
    user = lookup_user(userid, state.users, by: :id)
    if user == nil do
      Logger.info("Failed looking up user '#{userid}'.")
@@ -225,11 +249,12 @@ defmodule Cog.Chat.SlackConnector do
        Logger.info("Failed looking up room '#{channel}'.")
        :ignore
      else
-       {:chat_message, %{room: room, user: user, type: "message", text: text, provider: "slack", bot_name: "<@#{state.me.id}>"}}
+       {:chat_message, %{room: room, user: user, type: "message", text: text, provider: "slack", bot_name: "@#{state.me.name}"}}
      end
    end
  end
  defp annotate_message(%{channel: << <<"D">>, _::binary >>=channel, user: userid, text: text}, state) do
+   text = SlackFormatter.unescape(text, state)
    user = lookup_user(userid, state.users, by: :id)
    if user == nil do
      Logger.info("Failed looking up user '#{userid}'.")
@@ -248,18 +273,30 @@ defmodule Cog.Chat.SlackConnector do
  # Strip off any enclosing angle brackets (Slack processes strings
  # like "#channel_name" and "@user_name" to their internal identifiers
  # like "<#C1234567>" and "<@U1234567>".)
- defp classify_id(id),
-   do: id |> String.replace(~r/(^<|>$)/, "") |> do_classify_id
+ defp classify_id(id, slack),
+   do: id |> String.replace(~r/(^<|>$)/, "") |> do_classify_id(slack)
 
  # TODO: use Slack.Lookups to verify the "C" and "U" cases here, to
  # guard against bare user / room names that start with those letters
- defp do_classify_id(<<"#C", id::binary>>), do: {:channel, "C#{id}"}
- defp do_classify_id(<<"C", id::binary>>), do: {:channel, "C#{id}"}
- defp do_classify_id(<<"@U", id::binary>>), do: {:user, "U#{id}"}
- defp do_classify_id(<<"U", id::binary>>), do: {:user, "U#{id}"}
- defp do_classify_id(other) do
-   Logger.warn("Could not classify Slack identifier '#{other}'")
-   :error
+ defp do_classify_id(<<"#C", id::binary>>, _), do: {:channel, "C#{id}"}
+ defp do_classify_id(<<"C", id::binary>>, _), do: {:channel, "C#{id}"}
+ defp do_classify_id(<<"@U", id::binary>>, _), do: {:user, "U#{id}"}
+ defp do_classify_id(<<"U", id::binary>>, _), do: {:user, "U#{id}"}
+ defp do_classify_id(other, slack) do
+
+   # Try it as a channel name as last resort; this is just for tests
+   # to work right now, and should probably go away
+
+   try do
+     id = Slack.Lookups.lookup_channel_id("##{other}", slack)
+     {:channel, id}
+   rescue
+     BadMapError ->
+       # TODO: this is a workaround for a too-permissive library call;
+       # that should really be fixed. In the meantime...
+       Logger.warn("Could not classify Slack identifier '#{other}'")
+       :error
+   end
  end
 
 end

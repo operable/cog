@@ -191,10 +191,16 @@ defmodule Cog.Chat.Adapter do
                                                       "user" => user,
                                                       "text" => text,
                                                       "provider" => provider,
-                                                      "bot_name" => bot_name}, state) do
+                                                      "bot_name" => bot_name}=message, state) do
     state = case is_pipeline?(text, bot_name, room) do
               {true, text} ->
                 {id, state} = message_id(state)
+
+                if Map.get(message, "edited") do
+                  mention_name = with_provider(provider, state, :mention_name, [user["handle"]])
+                  send(conn, provider, room, "#{mention_name} Executing edited command '#{text}'")
+                end
+
                 request = %AdapterRequest{text: text, sender: user, room: room, reply: "", id: id,
                                           adapter: provider,
                                           initial_context: %{}} # TODO: this'll need to change for HTTP adapter
@@ -289,9 +295,9 @@ defmodule Cog.Chat.Adapter do
     end
   end
 
-  defp parse_mention(text, bot_name) do
-    updated = Regex.replace(~r/^#{Regex.escape(bot_name)}/, text, "")
-    if updated != text do
+ defp parse_mention(text, bot_name) do
+   updated = Regex.replace(~r/^#{Regex.escape(bot_name)}/, text, "")
+   if updated != text do
       Regex.replace(~r/^:/, updated, "")
       |> String.trim
     else

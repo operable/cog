@@ -1,5 +1,4 @@
 defmodule Cog.Adapters.Slack.Helpers do
-  alias Cog.Adapters.Slack
   alias Cog.Assertions
 
   @bot_handle "deckard"
@@ -43,7 +42,7 @@ defmodule Cog.Adapters.Slack.Helpers do
   def retrieve_last_message(room: room, oldest: oldest),
     do: retrieve_last_message(room: room, oldest: oldest, count: 1)
   def retrieve_last_message(room: room, oldest: oldest, count: count) do
-    {:ok, %{id: channel}} = Slack.API.lookup_room(name: room)
+    {:ok, %{id: channel}} = Cog.Chat.Adapter.lookup_room("slack", room)
 
     url = "https://slack.com/api/channels.history"
     params = %{channel: channel, oldest: oldest, count: count, token: token}
@@ -53,25 +52,26 @@ defmodule Cog.Adapters.Slack.Helpers do
     parse_last_message(Poison.decode!(response.body))
   end
 
-  def send_message(user, message) do
-    {:ok, %{id: channel}} = Slack.API.lookup_room(name: @room)
+  def send_message(message) do
+    {:ok, %{id: channel}} = Cog.Chat.Adapter.lookup_room("slack", @room)
 
     url = "https://slack.com/api/chat.postMessage"
-    params = %{channel: channel, text: message, as_user: user.username, token: token}
+    params = %{channel: channel, text: message, as_user: true,
+               token: token, parse: "full"}
+
     query = URI.encode_query(params)
-
     response = HTTPotion.get(url <> "?" <> query, headers: ["Accept": "application/json"])
-
     {:ok, message} = parse_message(Poison.decode!(response.body))
     message
   end
 
-  def send_edited_message(user, message, initial_message \\ "FOO3rjha92") do
-    initial_response = send_message(user, initial_message)
 
-    {:ok, %{id: channel}} = Slack.API.lookup_room(name: @room)
+
+  def send_edited_message(message, initial_message \\ "FOO3rjha92") do
+    {:ok, %{id: channel}} = Cog.Chat.Adapter.lookup_room("slack", @room)
+    initial_response = send_message(initial_message)
     url = "https://slack.com/api/chat.update"
-    params = %{channel: channel, ts: initial_response["ts"], text: message, as_user: user.username, token: token}
+    params = %{channel: channel, ts: initial_response["ts"], text: message, parse: "full", as_user: true, token: token}
     query = URI.encode_query(params)
 
     response = HTTPotion.get(url <> "?" <> query, headers: ["Accept": "application/json"])
@@ -99,12 +99,15 @@ defmodule Cog.Adapters.Slack.Helpers do
             {:ok, nil}
           messages ->
             formatted = Enum.sort(messages, &(&1["ts"] < &2["ts"]))
-            |> Enum.map_join("\n", &(Slack.Formatter.unescape(&1["text"])))
+            |> Enum.map_join("\n", &(&1["text"]))
+
             {:ok, formatted}
         end
     end
   end
 
+  # So, this is the token of the USER that we're interacting with the
+  # bot as
   defp token do
     System.get_env("SLACK_USER_API_TOKEN")
   end
