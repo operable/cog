@@ -190,8 +190,22 @@ defmodule Cog.Chat.Adapter do
   def handle_cast(conn, @incoming_topic, "message", %{"room" => room,
                                                       "user" => user,
                                                       "text" => text,
-                                                      "provider" => provider,
-                                                      "bot_name" => bot_name}=message, state) do
+                                                      "provider" => provider}=message, state) do
+    Logger.warn(">>>>>>> message = #{inspect message, pretty: true}")
+
+    # The notion of "bot name" only really makes sense in the context
+    # of chat providers, where we can use that to determine whether or
+    # not a message is being addressed to the bot. For other providers
+    # (lookin' at you, HttpProvider), this makes no sense, because all
+    # messages are directed to the bot, by definition.
+    #
+    # TODO: require bot_name if message is coming from a chat adapter
+    bot_name = Map.get(message, "bot_name")
+
+    # Likewise, "initial_context" only really makes sense for requests
+    # coming in for the HTTP provider.
+    initial_context = Map.get(message, "initial_context", %{})
+
     state = case is_pipeline?(text, bot_name, room) do
               {true, text} ->
                 {id, state} = message_id(state)
@@ -201,9 +215,9 @@ defmodule Cog.Chat.Adapter do
                   send(conn, provider, room, "#{mention_name} Executing edited command '#{text}'")
                 end
 
+                # TODO: don't know if "id" is correct here
                 request = %AdapterRequest{text: text, sender: user, room: room, reply: "", id: id,
-                                          adapter: provider,
-                                          initial_context: %{}} # TODO: this'll need to change for HTTP adapter
+                                          adapter: provider, initial_context: initial_context}
                 Connection.publish(conn, request, routed_by: "/bot/commands")
                 state
               false ->
@@ -263,6 +277,8 @@ defmodule Cog.Chat.Adapter do
   end
 
   defp is_pipeline?(text, bot_name, room) do
+
+    # TODO: should this be name == "direct", or is_dm == true?
     if room["name"] == "direct" do
       {true, text}
     else
