@@ -86,10 +86,12 @@ defmodule Cog.Chat.Adapter do
   end
 
   def is_chat_provider?(name) do
-    GenMqtt.call(@adapter_topic, "is_chat_provider", %{name: name}, :infinity)
+    {:ok, result} = GenMqtt.call(@adapter_topic, "is_chat_provider", %{name: name}, :infinity)
+    result
   end
-  def is_chat_provider(conn, name) do
-    GenMqtt.call(conn, @adapter_topic, "is_chat_provider", %{name: name}, :infinity)
+  def is_chat_provider?(conn, name) do
+    {:ok, result} = GenMqtt.call(conn, @adapter_topic, "is_chat_provider", %{name: name}, :infinity)
+    result
   end
 
   def send(provider, target, message) do
@@ -153,7 +155,9 @@ defmodule Cog.Chat.Adapter do
     {:reply, {:ok, %{providers: Enum.filter(Map.keys(state.providers), &(is_binary(&1)))}}, state}
   end
   def handle_call(_conn, @adapter_topic, _sender, "is_chat_provider", %{"name" => name}, state) do
-    result = Map.put(%{}, name, name != "http")
+    # TODO: EXTRACT THIS!!!
+    result =  name != "http"
+
     {:reply, {:ok, result}, state}
   end
   def handle_call(_conn, @adapter_topic, _sender, "mention_name", %{"provider" => provider, "handle" => handle}, state) do
