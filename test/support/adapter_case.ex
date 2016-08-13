@@ -3,14 +3,23 @@ defmodule Cog.AdapterCase do
   alias Cog.Repo
   alias Cog.Bootstrap
 
+  require Logger
+
+
+
   @vcr_adapter ExVCR.Adapter.IBrowse
 
   defmacro __using__([adapter: adapter]) do
-    {:ok, adapter_module} = Cog.chat_adapter_module(String.downcase(adapter))
-    adapter_helper = Module.concat([adapter_module, "Helpers"])
+
+    adapter_helper = Module.concat([Cog, Adapters, String.capitalize(adapter), Helpers])
 
     quote do
+      require Logger
       use ExUnit.Case, async: false
+
+      Logger.warn(">>>>>>> Module = #{inspect __MODULE__, pretty: true}")
+
+
       import unquote(adapter_helper)
       import unquote(__MODULE__)
       import Cog.Support.ModelUtilities
@@ -51,13 +60,27 @@ defmodule Cog.AdapterCase do
   def replace_adapter(new_adapter) do
     adapter = Application.get_env(:cog, :adapter)
     Application.put_env(:cog, :adapter, new_adapter)
+
+    set_chat_adapter(new_adapter)
+
     restart_application
     adapter
   end
 
   def reset_adapter(adapter) do
     Application.put_env(:cog, :adapter, adapter)
+    set_chat_adapter(adapter)
     restart_application
+  end
+
+  defp set_chat_adapter(adapter) do
+    config = :cog
+    |> Application.get_env(Cog.Chat.Adapter)
+    |> Keyword.put(:chat, String.to_atom(adapter))
+
+    Logger.warn(">>>>>>> config = #{inspect config, pretty: true}")
+
+    Application.put_env(:cog, Cog.Chat.Adapter, config)
   end
 
   def restart_application do

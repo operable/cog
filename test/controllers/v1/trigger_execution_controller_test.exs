@@ -19,8 +19,7 @@ defmodule Cog.V1.TriggerExecutionControllerTest do
   end
 
   test "simple round trip works", %{conn: conn} do
-    assert {:ok, Cog.Adapters.Test} = Cog.chat_adapter_module
-    {:ok, snoop} = Snoop.start_link("/bot/adapters/test/send_message")
+    {:ok, snoop} = Snoop.adapter_traffic
 
     user("cog")
     trigger = trigger(%{name: "echo",
@@ -32,7 +31,8 @@ defmodule Cog.V1.TriggerExecutionControllerTest do
 
     # The chat adapter shouldn't have gotten anything, since we didn't
     # redirect to it.
-    assert [] = Snoop.messages(snoop)
+    assert [] = Snoop.provider_messages(snoop, "test")
+    assert ["foo"] = Snoop.provider_messages(snoop, "http")
   end
 
   test "executing a non-existent trigger fails", %{conn: conn} do
@@ -55,16 +55,13 @@ defmodule Cog.V1.TriggerExecutionControllerTest do
   end
 
   test "redirecting elsewhere results in 204 (OK, no content), as well as a message to the chat adapter", %{conn: conn} do
-    # Verify that we're using the "test" chat adapter, and then listen
-    # for responses sent to it
-    assert {:ok, Cog.Adapters.Test} = Cog.chat_adapter_module
-    {:ok, test_snoop} = Snoop.start_link("/bot/adapters/test/send_message")
+    {:ok, snoop} = Snoop.adapter_traffic
 
     # Set up initial data
     user("cog")
     trigger = trigger(%{name: "echo",
-                  pipeline: "echo foo > chat://#general",
-                  as_user: "cog"})
+                        pipeline: "echo foo > chat://#general",
+                        as_user: "cog"})
 
     # Make the request
     conn = post(conn, "/v1/triggers/#{trigger.id}", Poison.encode!(%{}))
@@ -73,14 +70,11 @@ defmodule Cog.V1.TriggerExecutionControllerTest do
     assert response(conn, 204)
 
     # And the adapter should get a message, too
-    [message] = Snoop.messages(test_snoop)
-    expected_response = Poison.encode!(%{body: ["foo"]}, pretty: true)
-    assert %{"response" => ^expected_response} = message
+    assert [%{"body" => ["foo"]}] = Snoop.provider_messages(snoop, "test")
   end
 
   test "errors only go back to the request, not any chat adapters", %{conn: conn} do
-    assert {:ok, Cog.Adapters.Test} = Cog.chat_adapter_module
-    {:ok, test_snoop} = Snoop.start_link("/bot/adapters/test/send_message")
+    {:ok, snoop} = Snoop.adapter_traffic
 
     user("cog")
     trigger = trigger(%{name: "echo",
@@ -96,7 +90,9 @@ defmodule Cog.V1.TriggerExecutionControllerTest do
     assert message =~ "An error has occurred"
 
     # And the adapter should not get a message, even though we redirected
-    assert [] = Snoop.messages(test_snoop)
+    assert [] = Snoop.provider_messages(snoop, "test")
+    [error_msg] = Snoop.provider_messages(snoop, "http")
+    assert String.contains?(error_msg, "I can't find the variable '$not_a_key'")
   end
 
   test "disabled triggers don't fire", %{conn: conn} do
@@ -112,7 +108,7 @@ defmodule Cog.V1.TriggerExecutionControllerTest do
 
   test "request sent to executor is correctly set up", %{conn: conn} do
     # Snoop on messages sent to the executor
-    {:ok, executor_snoop} = Snoop.start_link("/bot/commands")
+    {:ok, executor_snoop} = Snoop.incoming_executor_traffic
 
     # Set up initial data
     pipeline_text = "echo $body.message $query_params.thing $headers.content-type"
@@ -192,7 +188,7 @@ defmodule Cog.V1.TriggerExecutionControllerTest do
     Cog.Command.PermissionsCache.reset_cache
 
     # Now that the requestor has the permission, trigger execution succeeds
-    {:ok, executor_snoop} = Snoop.start_link("/bot/commands")
+    {:ok, executor_snoop} = Snoop.incoming_executor_traffic
     conn = api_request(tokened_user, :post, "/v1/triggers/#{trigger.id}", body: %{}, endpoint: Cog.TriggerEndpoint)
     assert ["token " <> _] = Plug.Conn.get_req_header(conn, "authorization")
     assert response(conn, 200)
@@ -204,7 +200,7 @@ defmodule Cog.V1.TriggerExecutionControllerTest do
   end
 
   test "the trigger's specified user overrides any token there might be in a request", %{conn: _conn} do
-    {:ok, executor_snoop} = Snoop.start_link("/bot/commands")
+    {:ok, executor_snoop} = Snoop.incoming_executor_traffic
 
     permission = permission("operable:manage_permissions")
     trigger_user = user("captain_hook") |> with_permission(permission)
@@ -232,8 +228,7 @@ defmodule Cog.V1.TriggerExecutionControllerTest do
   end
 
   test "execution that goes beyond the specified timeout returns 202, but continues processing", %{conn: conn} do
-    assert {:ok, Cog.Adapters.Test} = Cog.chat_adapter_module
-    {:ok, test_snoop} = Snoop.start_link("/bot/adapters/test/send_message")
+    {:ok, snoop} = Snoop.adapter_traffic
 
     user("cog")
 
@@ -248,15 +243,15 @@ defmodule Cog.V1.TriggerExecutionControllerTest do
     # Make the request
     conn = post(conn, "/v1/triggers/#{trigger.id}", Poison.encode!(%{}))
 
-    %{"status" => status} = json_response(conn, 202)
+    %{"id" => _,
+      "status" => status} = json_response(conn, 202)
     assert "Request accepted and still processing after #{timeout_sec} seconds" == status
 
     # Wait to ensure that processing finishes and check that the chat
     # adapter got it
     :timer.sleep (timeout_sec + 1)* 1000
-    [message] = Snoop.messages(test_snoop)
-    expected_response = Poison.encode!(%{body: ["Hello"]}, pretty: true)
-    assert %{"response" => ^expected_response} = message
+    assert [%{"body" => ["Hello"]}] = Snoop.provider_messages(snoop, "test")
+    assert ["ok"] = Snoop.provider_messages(snoop, "http")
   end
 
   @tag content_type: "text/plain"
@@ -272,7 +267,6 @@ defmodule Cog.V1.TriggerExecutionControllerTest do
   end
 
   test "JSON payloads are mapped to cog_env variables", %{conn: conn} do
-    assert {:ok, Cog.Adapters.Test} = Cog.chat_adapter_module
 
     user("cog")
     trigger = trigger(%{name: "echo",
@@ -288,7 +282,6 @@ defmodule Cog.V1.TriggerExecutionControllerTest do
 
   @tag content_type: "application/x-www-form-urlencoded"
   test "x-www-form-urlencoded payloads are mapped to cog_env variables", %{conn: conn} do
-    assert {:ok, Cog.Adapters.Test} = Cog.chat_adapter_module
 
     user("cog")
     trigger = trigger(%{name: "echo",
@@ -303,7 +296,7 @@ defmodule Cog.V1.TriggerExecutionControllerTest do
   end
 
   test "an empty body is treated as an empty JSON map", %{conn: conn} do
-    {:ok, executor_snoop} = Snoop.start_link("/bot/commands")
+    {:ok, executor_snoop} = Snoop.incoming_executor_traffic
     user("cog")
     trigger = trigger(%{name: "echo",
                   pipeline: "echo foo",
@@ -317,8 +310,8 @@ defmodule Cog.V1.TriggerExecutionControllerTest do
   end
 
   test "early-terminating pipeline doesn't send messages to chat destinations", %{conn: conn} do
-    assert {:ok, Cog.Adapters.Test} = Cog.chat_adapter_module
-    {:ok, test_snoop} = Snoop.start_link("/bot/adapters/test/send_message")
+
+    {:ok, snoop} = Snoop.adapter_traffic
 
     user("cog")
     trigger = trigger(%{name: "echo",
@@ -332,7 +325,8 @@ defmodule Cog.V1.TriggerExecutionControllerTest do
     assert message == "Pipeline executed successfully, but no output was returned"
 
     # And the adapter should not get a message, even though we redirected
-    assert [] = Snoop.messages(test_snoop)
+    assert [] = Snoop.provider_messages(snoop, "test")
+    assert ["Pipeline executed successfully, but no output was returned"] = Snoop.provider_messages(snoop, "http")
   end
 
   ########################################################################

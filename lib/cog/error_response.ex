@@ -33,14 +33,21 @@ defmodule Cog.ErrorResponse do
   # destinations that were found. `name` is the value as originally
   # typed by the user.
   defp redirection_error_message(errors) do
+    all_bad_redirects = errors
+    |> Enum.map(fn({_,r}) -> r end)
+
     main_message = """
 
     No commands were executed because the following redirects are invalid:
 
-    #{errors |> Keyword.values |> Enum.join(", ")}
+    #{all_bad_redirects |> Enum.join(", ")}
     """
+    not_a_member = errors
+    |> Enum.filter_map(
+      fn({k,_}) -> k == "not_a_member" end,
+      fn({_,v}) -> v end
+    )
 
-    not_a_member = Keyword.get_values(errors, :not_a_member)
     not_a_member_message = unless Enum.empty?(not_a_member) do
     """
 

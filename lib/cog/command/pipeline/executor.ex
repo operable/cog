@@ -102,7 +102,7 @@ defmodule Cog.Command.Pipeline.Executor do
   def init([%Cog.Messages.AdapterRequest{}=request]) do
     request = sanitize_request(request)
     {:ok, conn} = Connection.connect()
-    id = UUID.uuid4()
+    id = UUID.uuid4() # TODO: wait, doesn't this come in with the request?
     topic = "/bot/pipelines/#{id}"
     Connection.subscribe(conn, topic <> "/+")
 

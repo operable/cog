@@ -28,21 +28,21 @@ defmodule Integration.Commands.RelayGroupTest do
   end
 
   test "listing with no relay groups returns an empty list", %{user: user} do
-    payload = send_message(user, "@bot: operable:relay-group list") |> decode_payload
+    [payload] = send_message(user, "@bot: operable:relay-group list")
 
     # TODO: When we can properly test a command apart from the
     # execution pipeline, this payload should really be `[]`... this
     # message is generated in the executor
-    assert ["Pipeline executed successfully, but no output was returned"] = payload
+    assert "Pipeline executed successfully, but no output was returned" = payload
   end
 
   test "listing is the default operation", %{user: user} do
-    payload = send_message(user, "@bot: operable:relay-group") |> decode_payload
+    [payload] = send_message(user, "@bot: operable:relay-group")
 
     # TODO: When we can properly test a command apart from the
     # execution pipeline, this payload should really be `[]`... this
     # message is generated in the executor
-    assert ["Pipeline executed successfully, but no output was returned"] = payload
+    assert "Pipeline executed successfully, but no output was returned" = payload
   end
 
   test "renaming a relay group", %{user: user} do

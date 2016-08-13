@@ -51,9 +51,9 @@ defmodule Cog.Chat.SlackConnector do
     :ok
   end
   def handle_info({{ref, sender}, {:list_joined_rooms, _}}, state) do
-    rooms = Enum.filter(state.channels,
-      fn({_, info}) -> info.is_member == true and info.is_archived == false end)
-    rooms = Enum.map(rooms, fn({_, room}) -> make_room(room) end)
+    rooms = state
+    |> joined_channels
+    |> Enum.map(fn({_, room}) -> make_room(room) end)
     send(sender, {ref, rooms})
     :ok
   end
@@ -71,6 +71,47 @@ defmodule Cog.Chat.SlackConnector do
     result = Slack.Web.Chat.post_message(target, message, %{token: token, as_user: true})
     send(sender, {ref, result})
     :ok
+  end
+  def handle_info({{ref, sender}, {:lookup_room, %{id: id, token: token}}}, state) do
+    # Figure out what an internal Slack identifier actually points to
+    # (user, channel, DM, etc).
+    result = case classify_id(id) do
+               {:user, user_id} ->
+                 case Slack.Web.Im.open(user_id, %{token: token}) do
+                   %{"channel" => %{"id" => id}} ->
+                     {:ok, %Room{id: id,
+                                 name: "direct",
+                                 provider: "slack",
+                                 is_dm: true}}
+                   %{"error" => error} ->
+                     Logger.warn("Could not establish an IM with user #{Slack.Lookups.lookup_user_name(user_id, state)} (Slack ID: #{user_id}): #{inspect error}")
+                     {:error, :user_not_found}
+                 end
+               {:channel, channel_id} ->
+                 case lookup_room(channel_id, joined_channels(state), by: :id) do
+                   %Room{}=room ->
+                     {:ok, room}
+                   _ ->
+                     {:error, :not_a_member}
+                 end
+               :error ->
+                 {:error, :not_found}
+             end
+    send(sender, {ref, result})
+    :ok
+  end
+  def handle_info(message, _state) do
+    Logger.warn("Unexpected INFO message received: #{inspect message}")
+    :ok
+  end
+
+  # Return map of ID => Slack channels for channels the bot is a member
+  # of
+  #
+  # They're not Cog.Chat.Rooms!
+  defp joined_channels(state) do
+    Enum.filter(state.channels,
+      fn({_, info}) -> info.is_member == true and info.is_archived == false end)
   end
 
   defp lookup_room(value, rooms, [by: :name]) do
@@ -140,16 +181,20 @@ defmodule Cog.Chat.SlackConnector do
   end
 
   defp make_user(user) do
-    chat_user = %User{id: user.id,
-                      first_name: user.profile.first_name,
-                      last_name: user.profile.last_name,
-                      handle: user.name,
-                      provider: "slack"}
-   if user.is_bot == false do
-     %{chat_user | email: user.profile.email}
-   else
-    chat_user
-   end
+    if user.is_bot do
+      %User{id: user.id,
+            first_name: user.profile.first_name,
+            last_name: user.profile.last_name,
+            handle: user.name,
+            provider: "slack"}
+    else
+      %User{id: user.id,
+            first_name: user.profile.first_name,
+            last_name: user.profile.last_name,
+            handle: user.name,
+            provider: "slack",
+            email: user.profile.email}
+    end
   end
 
   defp annotate(%{type: "message", user: user}=message, state) do
@@ -198,6 +243,23 @@ defmodule Cog.Chat.SlackConnector do
        {:chat_message, %{room: room, user: user, type: "message", text: text, provider: "slack", bot_name: "@#{state.me.name}"}}
      end
    end
+ end
+
+ # Strip off any enclosing angle brackets (Slack processes strings
+ # like "#channel_name" and "@user_name" to their internal identifiers
+ # like "<#C1234567>" and "<@U1234567>".)
+ defp classify_id(id),
+   do: id |> String.replace(~r/(^<|>$)/, "") |> do_classify_id
+
+ # TODO: use Slack.Lookups to verify the "C" and "U" cases here, to
+ # guard against bare user / room names that start with those letters
+ defp do_classify_id(<<"#C", id::binary>>), do: {:channel, "C#{id}"}
+ defp do_classify_id(<<"C", id::binary>>), do: {:channel, "C#{id}"}
+ defp do_classify_id(<<"@U", id::binary>>), do: {:user, "U#{id}"}
+ defp do_classify_id(<<"U", id::binary>>), do: {:user, "U#{id}"}
+ defp do_classify_id(other) do
+   Logger.warn("Could not classify Slack identifier '#{other}'")
+   :error
  end
 
 end

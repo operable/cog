@@ -375,15 +375,13 @@ defmodule Integration.Commands.AliasTest do
   end
 
   test "list all aliases with no matching aliases", %{user: user} do
-    response = send_message(user, "@bot: operable:alias list \"my-*\"")
-
-    assert_payload(response, "Pipeline executed successfully, but no output was returned")
+    [response] = send_message(user, "@bot: operable:alias list \"my-*\"")
+    assert "Pipeline executed successfully, but no output was returned" = response
   end
 
   test "list all aliases with no aliases", %{user: user} do
-    response = send_message(user, "@bot: operable:alias list")
-
-    assert_payload(response, "Pipeline executed successfully, but no output was returned")
+    [response] = send_message(user, "@bot: operable:alias list")
+    assert "Pipeline executed successfully, but no output was returned" = response
   end
 
   test "list aliases with an invalid pattern", %{user: user} do

@@ -12,6 +12,8 @@ defmodule Cog.Chat.Provider do
 
   @callback lookup_user(name :: String.t) :: {:ok, %User{}} | {:error, term}
 
+  @callback lookup_room(name :: String.t) :: {:ok, %User{}} | {:error, term}
+
   @callback list_joined_rooms :: {:ok, [%Room{}] | []} | {:error, term}
 
   @callback join(room :: String.t) :: :ok | {:error, term}
@@ -32,6 +34,7 @@ defmodule Cog.Chat.Provider do
       alias Cog.Chat.User
 
       def lookup_user(_handle), do: {:error, :not_implemented}
+      def lookup_room(_id), do: {:error, :not_implemented}
       def list_joined_rooms, do: {:error, :not_implemented}
       def join(_room), do: {:error, :not_implemented}
       def leave(_room), do: {:error, :not_implemented}
@@ -50,6 +53,7 @@ defmodule Cog.Chat.Provider do
         do: __MODULE__ |> Module.split |> List.last
 
       defoverridable [lookup_user: 1,
+                      lookup_room: 1,
                       list_joined_rooms: 0,
                       join: 1,
                       leave: 1,

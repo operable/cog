@@ -30,18 +30,15 @@ defmodule Cog.Chat.Adapter do
     GenMqtt.call(conn, @adapter_topic, "lookup_user", %{provider: provider, handle: handle}, :infinity)
   end
 
-  def lookup_room(provider, room_name) do
-    case list_joined_rooms(provider) do
-      {:ok, rooms} ->
-        Enum.reduce_while(rooms, nil,
-          fn(room, acc) ->
-            if room["name"] == room_name do
-              {:halt, Room.from_map(room)}
-            else
-              {:cont, acc}
-            end end)
-      error ->
-        error
+  def lookup_room(provider, room_identifier) do
+    case GenMqtt.call(@adapter_topic , "lookup_room", %{provider: provider, id: room_identifier} , :infinity) do
+      {:ok, room} ->
+        Room.from_map(room)
+      {:error, :not_found} ->
+        {:error, :not_found}
+      other ->
+        Logger.warn(">>>>>>> other = #{inspect other, pretty: true}")
+        other
     end
   end
 
@@ -49,8 +46,8 @@ defmodule Cog.Chat.Adapter do
     case GenMqtt.call(@adapter_topic, "list_joined_rooms", %{provider: provider}, :infinity) do
       nil ->
         nil
-      rooms ->
-        Enum.map(rooms, &Room.from_map/1)
+      {:ok, rooms} ->
+        {:ok, Enum.map(rooms, &Room.from_map!/1)}
     end
   end
   def list_joined_rooms(conn, provider) do
@@ -136,6 +133,10 @@ defmodule Cog.Chat.Adapter do
   end
 
   # RPC calls
+
+  def handle_call(_conn, @adapter_topic, _sender, "lookup_room", %{"provider" => provider, "id" => id}, state) do
+    {:reply, with_provider(provider, state, :lookup_room, [id]), state}
+  end
   def handle_call(_conn, @adapter_topic, _sender, "lookup_user", %{"provider" => provider,
                                                                    "handle" => handle}, state) do
     {:reply, with_provider(provider, state, :lookup_user, [handle]), state}
@@ -172,21 +173,31 @@ defmodule Cog.Chat.Adapter do
   def handle_cast(_conn, @adapter_topic, "send",  %{"target" => target,
                                                     "message" => message,
                                                     "provider" => provider}, state) do
-    with_provider(provider, state, :send_message, [target, message])
-    Logger.info("Sent #{:erlang.size(message)} bytes via provider #{provider}.")
+    case with_provider(provider, state, :send_message, [target, message]) do
+      :ok ->
+        Logger.info("Sent #{:erlang.size(message)} bytes via provider #{provider}.")
+      {:error, :not_implemented} ->
+        Logger.error("send_message function not implemented for provider '#{provider}'! No message sent")
+      other ->
+        Logger.warn(">>>>>>> other = #{inspect other, pretty: true}")
+    end
     {:noreply, state}
   end
   def handle_cast(_conn, @incoming_topic, "event", event, state) do
     Logger.debug("Received chat event: #{inspect event}")
     {:noreply, state}
   end
-  def handle_cast(conn, @incoming_topic, "message", %{"room" => room, "user" => user, "text" => text, "provider" => provider,
+  def handle_cast(conn, @incoming_topic, "message", %{"room" => room,
+                                                      "user" => user,
+                                                      "text" => text,
+                                                      "provider" => provider,
                                                       "bot_name" => bot_name}, state) do
     state = case is_pipeline?(text, bot_name, room) do
               {true, text} ->
                 {id, state} = message_id(state)
                 request = %AdapterRequest{text: text, sender: user, room: room, reply: "", id: id,
-                                          adapter: provider, initial_context: %{}}
+                                          adapter: provider,
+                                          initial_context: %{}} # TODO: this'll need to change for HTTP adapter
                 Connection.publish(conn, request, routed_by: "/bot/commands")
                 state
               false ->
@@ -282,6 +293,7 @@ defmodule Cog.Chat.Adapter do
     updated = Regex.replace(~r/^#{Regex.escape(bot_name)}/, text, "")
     if updated != text do
       Regex.replace(~r/^:/, updated, "")
+      |> String.trim
     else
       nil
     end

@@ -8,7 +8,8 @@ config :lager, :handlers,
 
 config :cog, Cog.Chat.Adapter,
   providers: [test: Cog.Chat.TestProvider,
-              http: Cog.Chat.HttpProvider]
+              http: Cog.Chat.HttpProvider],
+  chat: :test
 
 config :cog, Cog.Chat.TestProvider,
   verbose: true

@@ -20,10 +20,10 @@ defmodule Integration.Commands.RuleTest do
   # List
 
   test "listing rules", %{user: user} do
-    response = interact(user, "@bot: rule -c operable:st-echo")
+    [response] = interact(user, "@bot: rule -c operable:st-echo")
 
-    assert response["command"] == "operable:st-echo"
-    assert response["rule"] == "when command is operable:st-echo must have operable:st-echo"
+    assert response[:command] == "operable:st-echo"
+    assert response[:rule] == "when command is operable:st-echo must have operable:st-echo"
   end
 
   test "error when listing rules for an unrecognized command", %{user: user} do
@@ -51,11 +51,11 @@ defmodule Integration.Commands.RuleTest do
   test "adding a rule for a command", %{user: user} do
     permission("site:permission")
 
-    response = interact(user, ~s(@bot: rule create "when command is operable:st-echo must have site:permission"))
+    [response] = interact(user, ~s(@bot: rule create "when command is operable:st-echo must have site:permission"))
 
-    assert_uuid(response["id"])
-    assert response["command"] == "operable:st-echo"
-    assert response["rule"] == "when command is operable:st-echo must have site:permission"
+    assert_uuid(response[:id])
+    assert response[:command] == "operable:st-echo"
+    assert response[:rule] == "when command is operable:st-echo must have site:permission"
   end
 
   test "error when specifying too many arguments for manual rule creation", %{user: user} do
@@ -90,15 +90,14 @@ defmodule Integration.Commands.RuleTest do
 
   test "dropping a rule via a rule id", %{user: user} do
     # Get an ID we can use to drop
-    response = interact(user, "@bot: rule list -c operable:st-echo")
-    id = response["id"]
-
-    response = interact(user, "@bot: rule delete #{id}")
+    [response] = interact(user, "@bot: rule list -c operable:st-echo")
+    id = response[:id]
+    [response] = interact(user, "@bot: rule delete #{id}")
 
     # TODO: why is this response not a list?
-    assert response["id"] == id
-    assert response["command"] == "operable:st-echo"
-    assert response["rule"] == "when command is operable:st-echo must have operable:st-echo"
+    assert response[:id] == id
+    assert response[:command] == "operable:st-echo"
+    assert response[:rule] == "when command is operable:st-echo must have operable:st-echo"
 
     rules = rules_for_command_name("operable:st-echo")
     assert rules == []
@@ -161,24 +160,11 @@ defmodule Integration.Commands.RuleTest do
   ########################################################################
   # Helper Functions
 
-  # If the command succeeded, the response should be valid JSON; if
-  # so, go ahead and transform that into an Elixir data structures.
-  #
-  # Otherwise, it'll be an error message; if so, return _that_.
-  defp parsed_response(%{"response" => response}) do
-    case Poison.decode(response) do
-      {:ok, map} ->
-        map
-      {:error, _} ->
-        response
-    end
-  end
-
   defp assert_uuid(maybe_uuid),
     do: assert Cog.UUID.is_uuid?(maybe_uuid)
 
   defp interact(user, pipeline),
-    do: send_message(user, pipeline) |> parsed_response
+    do: send_message(user, pipeline) |> decode_payload
 
   defp assert_error(user, pipeline, expected_message) when is_binary(expected_message),
     do: assert_error_message_contains(send_message(user, pipeline), expected_message)

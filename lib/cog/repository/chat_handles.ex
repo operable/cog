@@ -14,12 +14,16 @@ defmodule Cog.Repository.ChatHandles do
   """
   def set_handle(%User{id: user_id}, provider_name, handle) do
     Repo.transaction(fn() ->
-      case chat_handle_params(provider_name, handle, user_id) do
-        {:ok, params} ->
+      case chat_handle_params(provider_name, handle) do
+        {:ok, %Cog.Chat.User{}=user} ->
+          %ChatProvider{id: provider_id} = Repo.get_by!(ChatProvider, name: provider_name)
 
           result = user_id
-          |> find_handle_for(provider_name)
-          |> ChatHandle.changeset(params)
+          |> find_handle_for(user.provider)
+          |> ChatHandle.changeset(%{"chat_provider_user_id" => user.id,
+                                    "handle" => user.handle,
+                                    "user_id" => user_id,
+                                    "provider_id" => provider_id})
           |> Repo.insert_or_update
 
           case result do
@@ -82,26 +86,21 @@ defmodule Cog.Repository.ChatHandles do
   # running chat adapter is the one for the chat provider in
   # question. That is, if you're running Cog with the Slack adapter,
   # you can _only_ create or update Slack chat handles.
-  defp chat_handle_params(provider_name, handle, user_id) do
+  defp chat_handle_params(provider_name, handle) do
+
+    # TODO: how does this behave if provider_name isn't known?
+
     provider_name = String.downcase(provider_name)
-    {:ok, adapter} = Cog.chat_adapter_module
-    if provider_name == adapter.name do
-      case Repo.get_by(ChatProvider, name: provider_name) do
-        %ChatProvider{id: provider_id} ->
-          case adapter.lookup_user(handle) do
-            {:ok, %{id: chat_provider_user_id, handle: normalized_handle}} ->
-              {:ok, %{"handle" => normalized_handle,
-                      "provider_id" => provider_id,
-                      "user_id" => user_id,
-                      "chat_provider_user_id" => chat_provider_user_id}}
-            {:error, _} ->
-              {:error, :invalid_handle}
-          end
-        nil ->
-          {:error, :invalid_provider}
-      end
-    else
-      {:error, :adapter_not_running}
+    case Cog.Chat.Adapter.lookup_user(provider_name, handle) do
+      {:ok, %Cog.Chat.User{}=user} ->
+        {:ok, user}
+      {:error, :not_implemented} ->
+        raise "Provider #{provider_name} has not implemented lookup_user!"
+      {:error, _} ->
+        {:error, :invalid_handle}
+      {:ok, map} when is_map(map) ->
+        # TODO: why isn't this a User to begin with?
+        {:ok, Cog.Chat.User.from_map!(map)}
     end
   end
 

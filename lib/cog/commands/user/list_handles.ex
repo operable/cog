@@ -14,9 +14,9 @@ defmodule Cog.Commands.User.ListHandles do
 
   def list(%{options: %{"help" => true}}, _args),
     do: show_usage
-  def list(_req, _args) do
-    {:ok, adapter} = Cog.chat_adapter_module
-    handles = ChatHandles.for_provider(adapter.name)
+  def list(req, _args) do
+    provider_name = req.requestor["provider"]
+    handles = ChatHandles.for_provider(provider_name)
     {:ok, "user-list-handles",
      Enum.map(handles,
               &Cog.V1.ChatHandleView.render("show.json", %{chat_handle: &1}))}
