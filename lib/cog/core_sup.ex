@@ -9,6 +9,7 @@ defmodule Cog.CoreSup do
   def init(_) do
     adapter_supervisor = get_adapter_supervisor!()
     children = [worker(Cog.TokenReaper, []),
+                supervisor(Cog.Util.CacheSup, []),
                 supervisor(Cog.Relay.RelaySup, []),
                 supervisor(Cog.Command.CommandSup, []),
                 supervisor(adapter_supervisor, []),

@@ -1,9 +1,11 @@
 defmodule Cog.Template do
   alias Cog.Queries
   alias Cog.Repo
-  alias Cog.TemplateCache
+  alias Cog.Util.CacheSup
+  alias Cog.Util.Cache
 
   @fallback_adapter "any"
+  @cache_name :cog_output_templates_cache
 
   def render(adapter, template, context),
     do: render(adapter, nil, template, context)
@@ -16,10 +18,10 @@ defmodule Cog.Template do
   # First try to pull the template out of the cache and return it. If it's not
   # found, fetch the source, compile and store the template before returning.
   defp fetch_compiled_fun(adapter, bundle_version_id, template, context) do
-    with :error              <- TemplateCache.lookup(adapter, bundle_version_id, template),
+    with nil                 <- from_cache(make_key(adapter, bundle_version_id, template)),
          {:ok, source}       <- fetch_source(adapter, bundle_version_id, template, context),
          {:ok, template_fun} <- compile(source),
-         :ok                 <- TemplateCache.insert(adapter, bundle_version_id, template, template_fun),
+         :ok                 <- to_cache(make_key(adapter, bundle_version_id, template), template_fun),
          do: {:ok, template_fun}
   end
 
@@ -97,4 +99,33 @@ defmodule Cog.Template do
   defp default_template(context) when is_binary(context), do: "text"
   defp default_template(context) when is_map(context),    do: "json"
   defp default_template(_),                               do: "raw"
+
+  defp make_key(adapter, bundle_version_id, template) do
+    {adapter, bundle_version_id, template}
+  end
+
+  defp fetch_cache_ttl do
+    Application.get_env(:cog, :template_cache_ttl, {60, :sec})
+  end
+
+  defp from_cache(key) do
+    {:ok, cache} = CacheSup.get_or_create_cache(@cache_name, fetch_cache_ttl())
+    case cache[key] do
+      nil ->
+        nil
+      value ->
+        {:ok, value}
+    end
+  end
+
+  defp to_cache(key, value) do
+    {:ok, cache} = CacheSup.get_or_create_cache(@cache_name, fetch_cache_ttl())
+    case Cache.put(cache, key, value) do
+      {:ok, _} ->
+        :ok
+      error ->
+        error
+    end
+  end
+
 end
