@@ -12,6 +12,10 @@ config :cog, :enable_spoken_commands, ensure_boolean(System.get_env("ENABLE_SPOK
 config :cog,
   :template_cache_ttl, {1, :sec}
 
+config :cog, Cog.Chat.Adapter,
+  providers: [slack: Cog.Chat.SlackProvider],
+  chat: :slack
+
 config :cog, Cog.Endpoint,
   debug_errors: true,
   code_reloader: true,
