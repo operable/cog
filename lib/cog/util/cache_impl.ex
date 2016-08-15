@@ -30,12 +30,12 @@ defmodule Cog.Util.CacheImpl do
   end
 
   def close(cacheref) do
-    :erlang.exit(cacheref, :shutdown)
+    GenServer.stop(cacheref, :shutdown)
   end
 
   def init([args]) do
-    name = Keyword.get(args, :name)
-    ttl = Keyword.get(args, :ttl)
+    name = Keyword.fetch!(args, :name)
+    ttl = Keyword.fetch!(args, :ttl)
     tid = :ets.new(name, [:set, :protected, :named_table, {:read_concurrency, true}])
     :ets.insert_new(tid, {@cache_config_key, [ttl: ttl]})
     {:ok, tref} = if ttl > 0 do
