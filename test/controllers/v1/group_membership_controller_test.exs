@@ -288,6 +288,7 @@ defmodule Cog.V1.GroupMembershipController.Test do
              "roles" => [],
              "groups" => [group]} = json_response(conn, 200)["group"]["members"]
 
+    [user1, user2] = Enum.sort([user1, user2], &(&1["username"] > &2["username"]))
     assert user1 == %{"id" => hal.id,
                       "username" => hal.username,
                       "first_name" => hal.first_name,
