@@ -21,7 +21,7 @@ defmodule Cog.V1.TriggerExecutionController do
       {:ok, %Trigger{enabled: true}=trigger} ->
         conn = resolve_user(conn, trigger)
         case get_user(conn) do
-          %User{username: as_user} ->
+          %User{}=user ->
 
             conn = Plug.Conn.fetch_query_params(conn)
             request_id = get_request_id(conn)
@@ -33,13 +33,7 @@ defmodule Cog.V1.TriggerExecutionController do
                         raw_body: get_raw_body(conn),
                         body: get_parsed_body(conn)}
 
-            # Currently, non-chat providers (like HTTP!) only
-            # need to send the Cog username for their requestor.
-            #
-            # TODO: need to harmonize this with requestors that come
-            # in from chat adapters so we're consistent and not
-            # special-casing things all over.
-            requestor = %{id: as_user}
+            requestor = to_chat_user(user)
 
             case HttpConnector.submit_request(requestor, request_id, context, trigger.pipeline, timeout) do
               "ok" ->
@@ -202,4 +196,15 @@ defmodule Cog.V1.TriggerExecutionController do
         0
     end
   end
+
+  defp to_chat_user(%Cog.Models.User{username: username,
+                                     first_name: first_name,
+                                     last_name: last_name}) do
+    %Cog.Chat.User{id: username,
+                   first_name: first_name,
+                   last_name: last_name,
+                   provider: "http",
+                   handle: username}
+  end
+
 end
