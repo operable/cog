@@ -3,6 +3,7 @@ defmodule Cog.Chat.HttpProvider do
   use Cog.Chat.Provider
   alias Cog.Chat.HttpConnector
   alias Cog.Chat.Room
+  alias Cog.Chat.Message
   alias Carrier.Messaging.Connection
   alias Carrier.Messaging.GenMqtt
   require Logger
@@ -42,19 +43,16 @@ defmodule Cog.Chat.HttpProvider do
     # message, so for now we'll follow that convention for the HTTP
     # provider (we should probably just rely on the `is_dm` flag
     # instead of a name, though.)
-    GenMqtt.cast(state.mbus,
-                 state.incoming,
-                 "message",
-                 %{id: id,
-                   room: %Room{id: id,
-                               name: "direct",
-                               provider: "http",
-                               is_dm: true},
-                   user: requestor,
-                   type: "message",
-                   text: pipeline,
-                   provider: "http",
-                   initial_context: initial_context})
+    GenMqtt.cast(state.mbus, state.incoming, "message", %Message{id: id,
+                                                                 room: %Room{id: id,
+                                                                             name: "direct",
+                                                                             provider: "http",
+                                                                             is_dm: true},
+                                                                 # Is requestor a valid Cog.Chat.User struct?
+                                                                 user: requestor,
+                                                                 text: pipeline,
+                                                                 provider: "http",
+                                                                 initial_context: initial_context})
     {:noreply, state}
   end
 end

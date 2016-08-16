@@ -6,6 +6,9 @@ defmodule Cog.Chat.SlackConnector do
   alias Cog.Chat.SlackFormatter
   alias Cog.Chat.User
   alias Cog.Chat.Room
+  alias Cog.Chat.Message
+
+  @provider_name "slack"
 
   def call(connector, token, type, args \\ %{}) do
     args = Map.put(args, :token, token)
@@ -82,7 +85,7 @@ defmodule Cog.Chat.SlackConnector do
                    %{"channel" => %{"id" => id}} ->
                      {:ok, %Room{id: id,
                                  name: "direct",
-                                 provider: "slack",
+                                 provider: @provider_name,
                                  is_dm: true}}
                    %{"error" => error} ->
                      Logger.warn("Could not establish an IM with user #{Slack.Lookups.lookup_user_name(user_id, state)} (Slack ID: #{user_id}): #{inspect error}")
@@ -197,9 +200,8 @@ defmodule Cog.Chat.SlackConnector do
             first_name: user.name, #user.profile.first_name,
             last_name: user.name, #user.profile.last_name,
             handle: user.name,
-            provider: "slack",
-            }
-#            email: user.profile.email}
+            email: user.profile.email,
+            provider: "slack"}
     end
   end
 
@@ -216,7 +218,7 @@ defmodule Cog.Chat.SlackConnector do
         :ignore ->
           :ignore
         {:chat_message, annotated} ->
-          {:chat_message, Map.put(annotated, :edited, true)}
+          {:chat_message, %{annotated | edited: true}}
       end
     end
   end
@@ -249,7 +251,9 @@ defmodule Cog.Chat.SlackConnector do
        Logger.info("Failed looking up room '#{channel}'.")
        :ignore
      else
-       {:chat_message, %{room: room, user: user, type: "message", text: text, provider: "slack", bot_name: "@#{state.me.name}"}}
+       {:chat_message, %Message{id: Cog.Events.Util.unique_id,
+                                room: room, user: user, text: text, provider: @provider_name,
+                                bot_name: "@#{state.me.name}", edited: false}}
      end
    end
  end
@@ -265,7 +269,9 @@ defmodule Cog.Chat.SlackConnector do
        Logger.info("Failed looking up direct message session '#{channel}'.")
        :ignore
      else
-       {:chat_message, %{room: room, user: user, type: "message", text: text, provider: "slack", bot_name: "@#{state.me.name}"}}
+         {:chat_message, %Message{id: Cog.Events.Util.unique_id,
+                                  room: room, user: user, text: text, provider: @provider_name,
+                                  bot_name: "@#{state.me.name}", edited: false}}
      end
    end
  end

@@ -5,6 +5,7 @@ defmodule Cog.Chat.Adapter do
   use Carrier.Messaging.GenMqtt
   alias Cog.Messages.AdapterRequest
   alias Cog.Chat.Room
+  alias Cog.Chat.Message
 
   @adapter_topic "bot/chat/adapter"
   @incoming_topic "bot/chat/adapter/incoming"
@@ -187,39 +188,25 @@ defmodule Cog.Chat.Adapter do
     Logger.debug("Received chat event: #{inspect event}")
     {:noreply, state}
   end
-  def handle_cast(conn, @incoming_topic, "message", %{"room" => room,
-                                                      "user" => user,
-                                                      "text" => text,
-                                                      "provider" => provider}=message, state) do
-    Logger.warn(">>>>>>> message = #{inspect message, pretty: true}")
-
-    # The notion of "bot name" only really makes sense in the context
-    # of chat providers, where we can use that to determine whether or
-    # not a message is being addressed to the bot. For other providers
-    # (lookin' at you, HttpProvider), this makes no sense, because all
-    # messages are directed to the bot, by definition.
-    #
-    # TODO: require bot_name if message is coming from a chat adapter
-    bot_name = Map.get(message, "bot_name")
-
-    # Likewise, "initial_context" only really makes sense for requests
-    # coming in for the HTTP provider.
-    initial_context = Map.get(message, "initial_context", %{})
-
-    state = case is_pipeline?(text, bot_name, room) do
-              {true, text} ->
-
-                if Map.get(message, "edited") do
-                  mention_name = with_provider(provider, state, :mention_name, [user["handle"]])
-                  send(conn, provider, room, "#{mention_name} Executing edited command '#{text}'")
+  def handle_cast(conn, @incoming_topic, "message", message, state) do
+    state = case Message.from_map(message) do
+              {:ok, message} ->
+                Logger.warn(">>>>>>> message = #{inspect message, pretty: true}")
+                case is_pipeline?(message) do
+                  {true, text} ->
+                    if message.edited == true do
+                      mention_name = with_provider(message.provider, state, :mention_name, [message.user.handle])
+                      send(conn, message.provider, message.room, "#{mention_name} Executing edited command '#{text}'")
+                    end
+                    request = %AdapterRequest{text: text, sender: message.user, room: message.room, reply: "", id: message.id,
+                                              adapter: message.provider, initial_context: message.initial_context || %{}}
+                    Connection.publish(conn, request, routed_by: "/bot/commands")
+                    state
+                  false ->
+                    state
                 end
-
-                id = Map.get(message, "id", Cog.Events.Util.unique_id)
-                request = %AdapterRequest{text: text, sender: user, room: room, reply: "", id: id,
-                                          adapter: provider, initial_context: initial_context}
-                Connection.publish(conn, request, routed_by: "/bot/commands")
-                state
-              false ->
+              _error ->
+                Logger.error("Ignoring invalid chat message: #{inspect message, pretty: true}")
                 state
             end
     {:noreply, state}
@@ -264,15 +251,18 @@ defmodule Cog.Chat.Adapter do
     end
   end
 
-  defp is_pipeline?(text, bot_name, room) do
-
-    # TODO: should this be name == "direct", or is_dm == true?
-    if room["name"] == "direct" do
-      {true, text}
+  defp is_pipeline?(message) do
+    # The notion of "bot name" only really makes sense in the context
+    # of chat providers, where we can use that to determine whether or
+    # not a message is being addressed to the bot. For other providers
+    # (lookin' at you, HttpProvider), this makes no sense, because all
+    # messages are directed to the bot, by definition.
+    if message.room.is_dm == true do
+      {true, message.text}
     else
-      case parse_spoken_command(text) do
+      case parse_spoken_command(message.text) do
         nil ->
-          case parse_mention(text, bot_name) do
+          case parse_mention(message.text, message.bot_name) do
             nil ->
               false
             updated ->
@@ -299,6 +289,7 @@ defmodule Cog.Chat.Adapter do
     end
   end
 
+ defp parse_mention(_text, nil), do: nil
  defp parse_mention(text, bot_name) do
    updated = Regex.replace(~r/^#{Regex.escape(bot_name)}/, text, "")
    if updated != text do
