@@ -18,7 +18,7 @@ defmodule Cog.Commands.Filter do
     -p, --path       The key to focus on
 
   EXAMPLES
-    rules --list --for-command="permissions" | filter --path="rule" --matches="/manage_users/"
+    rule --list --for-command="permissions" | filter --path="rule" --matches="/manage_users/"
     > { "id": "91edb472-04cf-4bca-ba05-e51b63f26758",
         "rule": "operable:manage_users",
         "command": "operable:permissions" }
