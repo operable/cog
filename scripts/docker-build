@@ -11,7 +11,7 @@ mix hex.info
 cd /home/operable/cog
 
 # We do this so we know what branch to build for cogctl later on
-COG_BRANCH=`git symbolic-ref HEAD | sed 's!refs/heads/!!'`
+COG_BRANCH=`git rev-parse --abbrev-ref HEAD`
 if [ -z "$COG_BRANCH" ]
 then
     echo "Looks like cog isn't a git repository! Do you have '.git' in the '.dockerignore' file? If so, remove it and try again."
