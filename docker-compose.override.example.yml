@@ -1,6 +1,5 @@
 cog:
   environment:
-    - COG_ADAPTER=slack
     - SLACK_API_TOKEN=${SLACK_API_TOKEN}
     - COG_BOOTSTRAP_USERNAME=admin
     - COG_BOOTSTRAP_PASSWORD=changeme

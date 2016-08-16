@@ -6,9 +6,6 @@ config :logger, :console,
 config :lager, :handlers,
   [{LagerLogger, [level: :error]}]
 
-config :cog,
-  adapter: System.get_env("COG_ADAPTER")
-
 config :cog, Carrier.Messaging.Connection,
   host: "127.0.0.1",
   port: 1883
