@@ -12,7 +12,7 @@ defmodule Cog.Chat.Provider do
 
   @callback lookup_user(name :: String.t) :: {:ok, %User{}} | {:error, term}
 
-  @callback lookup_room(name :: String.t) :: {:ok, %User{}} | {:error, term}
+  @callback lookup_room(name :: String.t) :: {:ok, %Room{}} | {:error, term}
 
   @callback list_joined_rooms :: {:ok, [%Room{}] | []} | {:error, term}
 

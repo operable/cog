@@ -107,10 +107,9 @@ defmodule Cog.Support.ModelUtilities do
     {:ok, external_user} = Cog.Chat.Adapter.lookup_user(provider.name, handle)
     # TODO Provider ID!!!!!!
 
-    # external user is plain map???
     params = %{provider_id: provider.id,
-               handle: external_user["handle"],
-               chat_provider_user_id: external_user["id"],
+               handle: external_user.handle,
+               chat_provider_user_id: external_user.id,
                user_id: internal_user.id}
 
     %ChatHandle{}

@@ -3,14 +3,18 @@ defmodule Cog.Chat.Adapter do
   require Logger
 
   use Carrier.Messaging.GenMqtt
+  alias Cog.Util.CacheSup
+  alias Cog.Util.Cache
   alias Cog.Messages.AdapterRequest
   alias Cog.Chat.Room
   alias Cog.Chat.Message
+  alias Cog.Chat.User
 
   @adapter_topic "bot/chat/adapter"
   @incoming_topic "bot/chat/adapter/incoming"
+  @cache_name :cog_chat_adapter_cache
 
-  defstruct [:providers]
+  defstruct [:providers, :cache]
 
   def start_link() do
     GenMqtt.start_link(__MODULE__, [], name: __MODULE__)
@@ -25,21 +29,46 @@ defmodule Cog.Chat.Adapter do
   end
 
   def lookup_user(provider, handle) when is_binary(handle) do
-    GenMqtt.call(@adapter_topic, "lookup_user", %{provider: provider, handle: handle}, :infinity)
+    cache = get_cache
+    case cache[{provider, handle}] do
+      nil ->
+        case GenMqtt.call(@adapter_topic, "lookup_user", %{provider: provider, handle: handle}, :infinity) do
+          {:ok, user} ->
+            User.from_map(user)
+          {:error, _}=error ->
+            error
+        end
+      {:ok, value} ->
+        User.from_map(value)
+    end
   end
   def lookup_user(conn, provider, handle) when is_binary(handle) do
-    GenMqtt.call(conn, @adapter_topic, "lookup_user", %{provider: provider, handle: handle}, :infinity)
+    cache = get_cache
+    case cache[{provider, handle}] do
+      nil ->
+        case GenMqtt.call(conn, @adapter_topic, "lookup_user", %{provider: provider, handle: handle}, :infinity) do
+          {:ok, user} ->
+            User.from_map(user)
+          {:error, _}=error ->
+            error
+        end
+      {:ok, value} ->
+        User.from_map(value)
+    end
   end
 
   def lookup_room(provider, room_identifier) do
-    case GenMqtt.call(@adapter_topic , "lookup_room", %{provider: provider, id: room_identifier} , :infinity) do
-      {:ok, room} ->
-        Room.from_map(room)
-      {:error, :not_found} ->
-        {:error, :not_found}
-      other ->
-        Logger.warn(">>>>>>> other = #{inspect other, pretty: true}")
-        other
+    cache = get_cache
+    case cache[{provider, room_identifier}] do
+      nil ->
+        case GenMqtt.call(@adapter_topic , "lookup_room", %{provider: provider, id: room_identifier} , :infinity) do
+          {:ok, room} ->
+            Room.from_map(room)
+          {:error, _}=error ->
+            error
+        end
+      {:ok, value} ->
+        Room.from_map(value)
     end
   end
 
@@ -136,11 +165,11 @@ defmodule Cog.Chat.Adapter do
   # RPC calls
 
   def handle_call(_conn, @adapter_topic, _sender, "lookup_room", %{"provider" => provider, "id" => id}, state) do
-    {:reply, with_provider(provider, state, :lookup_room, [id]), state}
+    {:reply, maybe_cache(with_provider(provider, state, :lookup_room, [id]), {provider, id}, state), state}
   end
   def handle_call(_conn, @adapter_topic, _sender, "lookup_user", %{"provider" => provider,
                                                                    "handle" => handle}, state) do
-    {:reply, with_provider(provider, state, :lookup_user, [handle]), state}
+    {:reply, maybe_cache(with_provider(provider, state, :lookup_user, [handle]), {provider, handle}, state), state}
   end
   def handle_call(_conn, @adapter_topic, _sender, "list_joined_rooms", %{"provider" => provider}, state) do
     {:reply, with_provider(provider, state, :list_joined_rooms, []), state}
@@ -217,7 +246,7 @@ defmodule Cog.Chat.Adapter do
     Connection.subscribe(conn, @incoming_topic)
     case start_providers(providers, %{}) do
       {:ok, providers} ->
-        {:ok, %__MODULE__{providers: providers}}
+        {:ok, %__MODULE__{providers: providers, cache: get_cache()}}
       error ->
         error
     end
@@ -300,12 +329,30 @@ defmodule Cog.Chat.Adapter do
     end
   end
 
-  defp prepare_target(target) do
-    case Cog.Chat.Room.from_map(target) do
-      {:ok, room} ->
-        {:ok, room.id}
-      error ->
-        error
-    end
-  end
+ defp prepare_target(target) do
+   case Cog.Chat.Room.from_map(target) do
+     {:ok, room} ->
+       {:ok, room.id}
+     error ->
+       error
+   end
+ end
+
+ defp fetch_cache_ttl do
+   config = Application.get_env(:cog, __MODULE__)
+   Keyword.get(config, :cache_ttl, {10, :sec})
+ end
+
+ defp get_cache do
+   ttl = fetch_cache_ttl
+   {:ok, cache} = CacheSup.get_or_create_cache(@cache_name, ttl)
+   cache
+ end
+
+ defp maybe_cache({:ok, _}=value, key, state) do
+   Cache.put(state.cache, key, value)
+   value
+ end
+ defp maybe_cache(value, _key, _state), do: value
+
 end
