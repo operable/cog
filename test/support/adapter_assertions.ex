@@ -20,6 +20,15 @@ defmodule Cog.AdapterAssertions do
   end
 
   def decode_payload(%{"response" => response}) do
+    decode_payload(response)
+  end
+  def decode_payload([string]) when is_binary(string) do
+    decode_payload(string)
+  end
+  def decode_payload([map]) when is_map(map) do
+    [map]
+  end
+  def decode_payload(response) do
     response = response
     |> String.replace(~r/^}/m, "},")
     |> String.rstrip(?,)
@@ -41,7 +50,17 @@ defmodule Cog.AdapterAssertions do
   us to compare to a data structure instead of a string, and will
   allow these tests to be more robust.
   """
+
+  def assert_error_message_contains(%{error: actual_response}, expected_message_fragment) do
+    assert_error_message_contains(actual_response, expected_message_fragment)
+  end
   def assert_error_message_contains(%{"response" => actual_response}, expected_message_fragment) do
+    assert_error_message_contains(actual_response, expected_message_fragment)
+  end
+  def assert_error_message_contains([actual_response], expected_message_fragment) when is_binary(actual_response) do
+    assert_error_message_contains(actual_response, expected_message_fragment)
+  end
+  def assert_error_message_contains(actual_response, expected_message_fragment) do
     if String.contains?(actual_response, expected_message_fragment) do
       :ok
     else

@@ -21,13 +21,13 @@ defmodule Cog.Commands.User.AttachHandle do
   def attach(%{options: %{"help" => true}}, _args) do
     show_usage
   end
-  def attach(_req, [user_name, handle]) do
+  def attach(req, [user_name, handle]) do
     case Users.by_username(user_name) do
       {:error, :not_found} ->
         {:error, {:resource_not_found, "user", user_name}}
       {:ok, user} ->
-        {:ok, adapter} = Cog.chat_adapter_module
-        case ChatHandles.set_handle(user, adapter.name, handle) do
+        provider_name = req.requestor["provider"]
+        case ChatHandles.set_handle(user, provider_name, handle) do
           {:ok, handle} ->
             {:ok, "user-attach-handle", Cog.V1.ChatHandleView.render("show.json", %{chat_handle: handle})}
           {:error, error} ->

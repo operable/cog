@@ -63,8 +63,8 @@ defmodule Cog.V1.ChatHandleControllerTest do
 
   test "fails if chat adapter for provider is not running", params do
     chat_provider = "slack"
-    {:ok, chat_adapter} = Cog.chat_adapter_module
-    refute chat_provider == chat_adapter.name
+    {:ok, chat} = Cog.chat_adapter_module
+    refute chat_provider == chat
 
     conn = api_request(params.authed,
                        :post, "/v1/users/#{params.authed.id}/chat_handles",

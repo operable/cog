@@ -427,10 +427,8 @@ defmodule Cog.V1.BundlesControllerTest do
     templates:
       time:
         slack: "{{time}}"
-        hipchat: "{{time}}"
       date:
         slack: "{{date}}"
-        hipchat: "{{date}}"
     """
   end
 
@@ -465,10 +463,8 @@ defmodule Cog.V1.BundlesControllerTest do
     templates:
       time:
         slack: "{{time}}"
-        hipchat: "{{time}}"
       date:
         slack: "{{date}}"
-        hipchat: "{{date}}"
     """
   end
 

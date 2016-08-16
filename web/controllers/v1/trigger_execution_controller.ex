@@ -12,7 +12,7 @@ defmodule Cog.V1.TriggerExecutionController do
   alias Cog.Models.User
   alias Cog.Models.Trigger
   alias Cog.Repository.Triggers
-  alias Cog.Adapters.Http.AdapterBridge
+  alias Cog.Chat.HttpConnector
 
   plug :parse
 
@@ -21,7 +21,7 @@ defmodule Cog.V1.TriggerExecutionController do
       {:ok, %Trigger{enabled: true}=trigger} ->
         conn = resolve_user(conn, trigger)
         case get_user(conn) do
-          %User{username: as_user} ->
+          %User{}=user ->
 
             conn = Plug.Conn.fetch_query_params(conn)
             request_id = get_request_id(conn)
@@ -33,9 +33,9 @@ defmodule Cog.V1.TriggerExecutionController do
                         raw_body: get_raw_body(conn),
                         body: get_parsed_body(conn)}
 
-            requestor = requestor_map(trigger_id, as_user, trigger.name)
+            requestor = to_chat_user(user)
 
-            case AdapterBridge.submit_request(requestor, request_id, context, trigger.pipeline, timeout) do
+            case HttpConnector.submit_request(requestor, request_id, context, trigger.pipeline, timeout) do
               "ok" ->
                 conn |> send_resp(:no_content, "")
               {:error, :timeout} ->
@@ -74,16 +74,6 @@ defmodule Cog.V1.TriggerExecutionController do
   end
 
   ########################################################################
-
-  # This is the requestor map that will eventually make its way into
-  # the executor and subsequently to commands. It's how we'll expose
-  # trigger metadata to commands, for instance.
-  defp requestor_map(trigger_id, trigger_user, trigger_name) do
-    %{id: trigger_user,
-      trigger_user: trigger_user,
-      trigger_id: trigger_id,
-      trigger_name: trigger_name}
-  end
 
   # Convert a header list into a map, accumulating multiple values
   # into lists. Single values remain as single values.
@@ -206,4 +196,15 @@ defmodule Cog.V1.TriggerExecutionController do
         0
     end
   end
+
+  defp to_chat_user(%Cog.Models.User{username: username,
+                                     first_name: first_name,
+                                     last_name: last_name}) do
+    %Cog.Chat.User{id: username,
+                   first_name: first_name,
+                   last_name: last_name,
+                   provider: "http",
+                   handle: username}
+  end
+
 end

@@ -168,7 +168,7 @@ defmodule Integration.CommandTest do
   test "an empty response from the filter command single input item", %{user: user} do
     response = send_message(user, ~s(@bot: seed '[{ "foo": { "one": { "name": "asdf" }, "two": { "name": "fdsa" } } }]' | operable:filter --path="foo.one.name" --matches="/blurp/"))
 
-    assert_payload(response, "Pipeline executed successfully, but no output was returned")
+    assert ["Pipeline executed successfully, but no output was returned"] = response
   end
 
   test "filter matching using regular expression", %{user: user} do
@@ -180,7 +180,7 @@ defmodule Integration.CommandTest do
   test "filter where the path has no matching value but the matches value is in the input list", %{user: user} do
     response = send_message(user, ~s(@bot: seed '[ {"key": "Name", "value": "test1"}, {"key": "Name", "value": "test2"} ]' | operable:filter --path="value" --matches="Name"))
 
-    assert_payload(response, "Pipeline executed successfully, but no output was returned")
+    assert ["Pipeline executed successfully, but no output was returned"] = response
   end
 
   test "filter where execution further down the pipeline only executes how many times the output is generated from the filter command", %{user: user} do

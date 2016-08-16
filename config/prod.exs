@@ -8,3 +8,7 @@ config :lager, :handlers,
 
 config :comeonin,
   bcrypt_log_rounds: 14
+
+config :cog, Cog.Chat.Adapter,
+  providers: [slack: Cog.Chat.SlackProvider],
+  chat: :slack

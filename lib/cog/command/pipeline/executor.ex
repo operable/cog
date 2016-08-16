@@ -2,6 +2,7 @@ defmodule Cog.Command.Pipeline.Executor do
 
   alias Carrier.Messaging.Connection
   alias Cog.AuditMessage
+  alias Cog.Chat.Adapter, as: ChatAdapter
   alias Cog.Command.CommandResolver
   alias Cog.Command.PermissionsCache
   alias Cog.Command.Pipeline.Destination
@@ -143,7 +144,7 @@ defmodule Cog.Command.Pipeline.Executor do
         case Destination.process(Ast.Pipeline.redirect_targets(pipeline),
                                  state.request.sender,
                                  state.request.room,
-                                 originating_adapter(state)) do
+                                 state.request.adapter) do
           {:ok, destinations} ->
             {:next_state,
              :plan_next_invocation, %{state |
@@ -284,11 +285,6 @@ defmodule Cog.Command.Pipeline.Executor do
   # Redirection Resolution Functions
 
 
-  # Return the adapter module that initially handled the
-  # request. Won't always be the chat adapter!
-  defp originating_adapter(state),
-    do: String.to_existing_atom(state.request.module)
-
   ########################################################################
   # Response Rendering Functions
 
@@ -348,15 +344,12 @@ defmodule Cog.Command.Pipeline.Executor do
     # something that succeeds without output, we'll just be silent in
     # chat.
 
-    {:ok, chat_adapter} = Cog.chat_adapter_module
-
-    filtered_destinations = if originating_adapter(state) == chat_adapter do
+    filtered_destinations = if ChatAdapter.is_chat_provider?(state.request.adapter) do
       state.destinations
     else
       state.destinations
-      |> Enum.reject(&(&1.adapter == chat_adapter.name))
+      |> Enum.reject(&(ChatAdapter.is_chat_provider?(&1.adapter)))
     end
-
     succeed_with_response(%{state |
                             destinations: filtered_destinations,
                             output: [{"Pipeline executed successfully, but no output was returned", nil}]})
@@ -412,12 +405,10 @@ defmodule Cog.Command.Pipeline.Executor do
   end
 
   defp publish_response(message, room, adapter, state) do
-    response = %Cog.Messages.SendMessage{response: message,
-                                         room: room}
-    # Remember, it might not be a *chat* adapter we're responding to
-    {:ok, adapter_mod} = Cog.adapter_module(adapter)
-
-    reply_topic = adapter_mod.reply_topic
+    #response = %Cog.Messages.SendMessage{response: message,
+    #                                     id: state.id,
+    #                                     room: room}
+    ChatAdapter.send(state.mq_conn, adapter, room, message)
 
     # Slack has a limit of 16kb (https://api.slack.com/rtm#limits),
     # while HipChat has 10,000 characters
@@ -427,7 +418,7 @@ defmodule Cog.Command.Pipeline.Executor do
     # (e.g. Slack attachments), etc.). For now, though, we can at the
     # very least tell Carrier to emit a warning when we get a message
     # that looks like it is potentially too big.
-    Connection.publish(state.mq_conn, response, routed_by: reply_topic, threshold: 10000)
+    #Connection.publish(state.mq_conn, response, routed_by: reply_topic, threshold: 10000)
   end
 
   ########################################################################
@@ -456,12 +447,18 @@ defmodule Cog.Command.Pipeline.Executor do
   end
 
   defp success_event(%__MODULE__{id: id, output: output}=state) do
-    PipelineEvent.succeeded(id, elapsed(state), strip_templates(output))
+    elapsed_time = elapsed(state)
+    elapsed_time_ms = round(elapsed_time / 1000)
+    Logger.info("Pipeline #{id} ran for #{elapsed_time_ms} ms.")
+    PipelineEvent.succeeded(id, elapsed_time, strip_templates(output))
     |> Probe.notify
   end
 
   defp failure_event(%__MODULE__{id: id}=state) do
-    PipelineEvent.failed(id, elapsed(state), state.error_type, state.error_message)
+    elapsed_time = elapsed(state)
+    elapsed_time_ms = round(elapsed_time / 1000)
+    Logger.info("Pipeline #{id} ran for #{elapsed_time_ms} ms.")
+    PipelineEvent.failed(id, elapsed_time, state.error_type, state.error_message)
     |> Probe.notify
   end
 
@@ -473,15 +470,17 @@ defmodule Cog.Command.Pipeline.Executor do
   # Unregistered User Functions
 
   defp alert_unregistered_user(state) do
-    {:ok, adapter} = Cog.adapter_module(state.request.adapter)
     request = state.request
     handle = request.sender["handle"]
     creators = user_creator_handles(request)
 
+    {:ok, mention_name} = Cog.Chat.Adapter.mention_name(state.request.adapter, handle)
+    {:ok, display_name} = Cog.Chat.Adapter.display_name(state.request.adapter)
+
     context = %{
       handle: handle,
-      mention_name: adapter.mention_name(handle),
-      display_name: adapter.display_name(),
+      mention_name: mention_name,
+      display_name: display_name,
       user_creators: creators,
       user_creators?: Enum.any?(creators)
     }
@@ -499,18 +498,19 @@ defmodule Cog.Command.Pipeline.Executor do
   # necessarily have a chat handle registered for the chat provider
   # being used (most notably, the bootstrap admin user).
   defp user_creator_handles(request) do
-
-    adapter = request.adapter
-    adapter_module = String.to_existing_atom(request.module)
+    provider = request.adapter
 
     "operable:manage_users"
     |> Cog.Queries.Permission.from_full_name
     |> Cog.Repo.one!
     |> Cog.Queries.User.with_permission
-    |> Cog.Queries.User.for_chat_provider(adapter)
+    |> Cog.Queries.User.for_chat_provider(provider)
     |> Cog.Repo.all
     |> Enum.flat_map(&(&1.chat_handles))
-    |> Enum.map(&(adapter_module.mention_name(&1.handle)))
+    |> Enum.map(fn(h) ->
+      {:ok, mention} = Cog.Chat.Adapter.mention_name(provider, h.handle)
+      mention
+    end)
     |> Enum.sort
   end
 
@@ -614,9 +614,8 @@ defmodule Cog.Command.Pipeline.Executor do
   end
 
   defp sender_name(state) do
-    adapter = originating_adapter(state)
-    if adapter.chat_adapter? do
-      adapter.mention_name(state.request.sender["handle"])
+    if ChatAdapter.is_chat_provider?(state.request.adapter) do
+      "@#{state.request.sender["handle"]}"
     else
       state.request.sender["id"]
     end
@@ -689,9 +688,8 @@ defmodule Cog.Command.Pipeline.Executor do
   end
 
   defp fetch_user_from_request(%Cog.Messages.AdapterRequest{}=request) do
-    adapter_module = request.module |> String.to_existing_atom
-
-    if adapter_module.chat_adapter? do
+    # TODO: This should happen when we validate the request
+    if ChatAdapter.is_chat_provider?(request.adapter) do
       adapter   = request.adapter
       sender_id = request.sender["id"]
 

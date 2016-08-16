@@ -14,17 +14,17 @@ defmodule Integration.Commands.GroupTest do
   end
 
   test "adding and removing users to groups", %{user: user} do
-    response = send_message(user, "@bot: operable:group member add elves #{user.username}")
+    [response] = send_message(user, "@bot: operable:group member add elves #{user.username}")
     assert_error_message_contains(response, "Whoops! An error occurred. Could not find 'user group' with the name 'elves'")
 
     [response] = send_message(user, "@bot: operable:group create elves")
     |> decode_payload
     assert response.name == "elves"
 
-    response = send_message(user, "@bot: operable:group member add elves papa_elf")
+    [response] = send_message(user, "@bot: operable:group member add elves papa_elf")
     assert_error_message_contains(response, "Whoops! An error occurred. Could not find 'user' with the name 'papa_elf'")
 
-    response = send_message(user, "@bot: operable:group member add elves")
+    [response] = send_message(user, "@bot: operable:group member add elves")
     assert_error_message_contains(response, "Missing required args. At a minimum you must include the user group and at least one user name to add")
 
     [response] = send_message(user, "@bot: operable:group member add elves belf")
@@ -76,10 +76,10 @@ defmodule Integration.Commands.GroupTest do
   end
 
   test "errors using the group command", %{user: user} do
-    response = send_message(user, "@bot: operable:group create")
+    [response] = send_message(user, "@bot: operable:group create")
     assert_error_message_contains(response, "Missing required argument: group_name")
 
-    response = send_message(user, "@bot: operable:group member add belf")
+    [response] = send_message(user, "@bot: operable:group member add belf")
     assert_error_message_contains(response, "Missing required args. At a minimum you must include the user group and at least one user name to add")
   end
 

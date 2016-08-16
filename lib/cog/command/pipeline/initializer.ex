@@ -36,8 +36,6 @@ defmodule Cog.Command.Pipeline.Initializer do
     payload = Cog.Messages.AdapterRequest.decode!(message)
     # Only self register when the feature is enabled via config
     # and the incoming request is from Slack.
-    # TODO: Teach HipChat adapter to add first name, last name, and email
-    # fields to the user object it returns.
     #
     # TODO: should only do this if the adapter is a chat adapter
     self_register_flag = Application.get_env(:cog, :self_registration, false) and payload.adapter == "slack"
@@ -127,24 +125,30 @@ defmodule Cog.Command.Pipeline.Initializer do
   end
 
   defp self_registration_success(user, request, state) do
-    {:ok, adapter} = Cog.adapter_module(request["adapter"])
+    provider = request["adapter"]
     handle = request["sender"]["handle"]
+    {:ok, mention_name} = Cog.Chat.Adapter.mention_name(provider, handle)
+    {:ok, display_name} = Cog.Chat.Adapter.display_name(provider)
+
     context = %{
       handle: handle,
       first_name: request["sender"]["first_name"],
       username: user.username,
-      mention_name: adapter.mention_name(handle),
-      display_name: adapter.display_name(),
+      mention_name: mention_name,
+      display_name: display_name
     }
     ReplyHelper.send_template(request, "self_registration_success", context, state.mq_conn)
   end
   defp self_registration_failed(request, state) do
-    {:ok, adapter} = Cog.adapter_module(request["adapter"])
+    provider = request["adapter"]
     handle = request["sender"]["handle"]
+    {:ok, mention_name} = Cog.Chat.Adapter.mention_name(provider, handle)
+    {:ok, display_name} = Cog.Chat.Adapter.display_name(provider)
+
     context = %{
       handle: handle,
-      mention_name: adapter.mention_name(handle),
-      display_name: adapter.display_name(),
+      mention_name: mention_name,
+      display_name: display_name
     }
     ReplyHelper.send_template(request, "self_registration_failed", context, state.mq_conn)
   end

@@ -6,8 +6,12 @@ config :logger, :console,
 config :lager, :handlers,
   [{LagerLogger, [level: :error]}]
 
-config :cog,
-  adapter: "test"
+config :cog, Cog.Chat.Adapter,
+  providers: [test: Cog.Chat.TestProvider],
+  chat: :test
+
+config :cog, Cog.Chat.TestProvider,
+  verbose: true
 
 config :cog, Cog.Repo,
   pool: Ecto.Adapters.SQL.Sandbox
@@ -36,9 +40,6 @@ config :ex_unit,
   timeout: 180000 # 3 minutes
   # The increased timeout allows integration tests enough time to properly
   # timeout on their own after 2 minutes.
-
-config :cog, Cog.Adapters.Slack,
-  api_cache_ttl: -1
 
 # ========================================================================
 # Emails
