@@ -49,7 +49,7 @@
   "phoenix_ecto": {:hex, :phoenix_ecto, "3.0.0", "b947aaf03d076f5b1448f87828f22fb7710478ee38455c67cc3fe8e9a4dfd015", [:mix], [{:ecto, "~> 2.0.0-rc", [hex: :ecto, optional: false]}, {:phoenix_html, "~> 2.6", [hex: :phoenix_html, optional: true]}]},
   "phoenix_html": {:hex, :phoenix_html, "2.6.0", "b9f7e091eb3d908586d9634596478fb9e577ee033d76f4ff327a745569bdd2d8", [:mix], [{:plug, "~> 0.13 or ~> 1.0", [hex: :plug, optional: false]}]},
   "phoenix_live_reload": {:hex, :phoenix_live_reload, "1.0.5", "829218c4152ba1e9848e2bf8e161fcde6b4ec679a516259442561d21fde68d0b", [:mix], [{:fs, "~> 0.9.1", [hex: :fs, optional: false]}, {:phoenix, "~> 1.0 or ~> 1.2-rc", [hex: :phoenix, optional: false]}]},
-  "piper": {:git, "https://github.com/operable/piper.git", "4bd80f3820d184d989dbb058db4141847eea8449", []},
+  "piper": {:git, "https://github.com/operable/piper.git", "8bd8b7393adc3c8b8d99ae4b1c640654dab6bb0c", []},
   "plug": {:hex, :plug, "1.1.6", "8927e4028433fcb859e000b9389ee9c37c80eb28378eeeea31b0273350bf668b", [:mix], [{:cowboy, "~> 1.0", [hex: :cowboy, optional: true]}]},
   "poison": {:hex, :poison, "2.2.0", "4763b69a8a77bd77d26f477d196428b741261a761257ff1cf92753a0d4d24a63", [:mix], []},
   "poolboy": {:hex, :poolboy, "1.5.1", "6b46163901cfd0a1b43d692657ed9d7e599853b3b21b95ae5ae0a777cf9b6ca8", [:rebar], []},
