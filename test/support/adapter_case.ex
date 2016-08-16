@@ -77,9 +77,6 @@ defmodule Cog.AdapterCase do
     if old_provider == new_provider do
       :no_change
     else
-      # TODO: This is "old" configuration that will eventually be replaced
-      Application.put_env(:cog, :adapter, new_provider)
-
       providers = config
       |> Keyword.fetch!(:providers)
       |> Keyword.delete(old_provider)

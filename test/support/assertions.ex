@@ -37,7 +37,7 @@ defmodule Cog.Assertions do
           actual
       end
     else
-      adapter = Application.get_env(:cog, :adapter)
+      adapter = current_chat_adapter
       raise "Timed out waiting to receive a new message using adapter #{inspect adapter}"
     end
   end
@@ -53,7 +53,7 @@ defmodule Cog.Assertions do
           assert expected == actual
       end
     else
-      adapter = Application.get_env(:cog, :adapter)
+      adapter = current_chat_adapter
       raise "Timed out waiting to receive a new message using adapter #{inspect adapter}"
     end
   end
@@ -69,9 +69,12 @@ defmodule Cog.Assertions do
           String.contains?(actual, expected)
       end
     else
-      adapter = Application.get_env(:cog, :adapter)
+      adapter = current_chat_adapter
       raise "Timed out waiting to receive a new message using adapter #{inspect adapter}"
     end
   end
+
+  defp current_chat_adapter,
+    do: Application.get_env(:cog, Cog.Chat.Adapter) |> Keyword.fetch!(:chat)
 
 end

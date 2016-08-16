@@ -13,9 +13,6 @@ config :cog, Cog.Chat.Adapter,
 config :cog, Cog.Chat.TestProvider,
   verbose: true
 
-config :cog,
-  adapter: "test"
-
 config :cog, Cog.Repo,
   pool: Ecto.Adapters.SQL.Sandbox
 
