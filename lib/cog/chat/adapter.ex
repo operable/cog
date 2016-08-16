@@ -208,8 +208,8 @@ defmodule Cog.Chat.Adapter do
         Logger.info("Sent #{:erlang.size(message)} bytes via provider #{provider}.")
       {:error, :not_implemented} ->
         Logger.error("send_message function not implemented for provider '#{provider}'! No message sent")
-      other ->
-        Logger.warn(">>>>>>> other = #{inspect other, pretty: true}")
+      {:error, reason} ->
+        Logger.error("Failed to send message to provider #{provider}: #{inspect reason, pretty: true}")
     end
     {:noreply, state}
   end
@@ -220,7 +220,6 @@ defmodule Cog.Chat.Adapter do
   def handle_cast(conn, @incoming_topic, "message", message, state) do
     state = case Message.from_map(message) do
               {:ok, message} ->
-                Logger.warn(">>>>>>> message = #{inspect message, pretty: true}")
                 case is_pipeline?(message) do
                   {true, text} ->
                     if message.edited == true do

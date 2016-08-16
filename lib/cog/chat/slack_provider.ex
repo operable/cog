@@ -76,7 +76,13 @@ defmodule Cog.Chat.SlackProvider do
     end
   end
   def handle_call({:send_message, target, message}, _from, %__MODULE__{connector: connector, token: token}=state) do
-    {:reply, SlackConnector.call(connector, token, :send_message, %{target: target, message: message}), state}
+    result = SlackConnector.call(connector, token, :send_message, %{target: target, message: message})
+    case result["ok"] do
+      true ->
+        {:reply, :ok, state}
+      false ->
+        {:reply, {:error, result["error"]}, state}
+    end
   end
 
   def handle_cast({:chat_event, event}, %__MODULE__{mbus: conn, incoming: incoming}=state) do
