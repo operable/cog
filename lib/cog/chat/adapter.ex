@@ -9,7 +9,7 @@ defmodule Cog.Chat.Adapter do
   @adapter_topic "bot/chat/adapter"
   @incoming_topic "bot/chat/adapter/incoming"
 
-  defstruct [:providers, :counter]
+  defstruct [:providers]
 
   def start_link() do
     GenMqtt.start_link(__MODULE__, [], name: __MODULE__)
@@ -208,14 +208,13 @@ defmodule Cog.Chat.Adapter do
 
     state = case is_pipeline?(text, bot_name, room) do
               {true, text} ->
-                {id, state} = message_id(state)
 
                 if Map.get(message, "edited") do
                   mention_name = with_provider(provider, state, :mention_name, [user["handle"]])
                   send(conn, provider, room, "#{mention_name} Executing edited command '#{text}'")
                 end
 
-                # TODO: don't know if "id" is correct here
+                id = Map.get(message, "id", Cog.Events.Util.unique_id)
                 request = %AdapterRequest{text: text, sender: user, room: room, reply: "", id: id,
                                           adapter: provider, initial_context: initial_context}
                 Connection.publish(conn, request, routed_by: "/bot/commands")
@@ -226,23 +225,12 @@ defmodule Cog.Chat.Adapter do
     {:noreply, state}
   end
 
-  defp message_id(%__MODULE__{counter: counter}=state) do
-    {mega, secs, _} = :os.timestamp()
-    id = :erlang.iolist_to_binary(:io_lib.format('~p~p.~7..0B', [mega, secs, counter]))
-    counter = if counter == 9999999 do
-      1
-    else
-      counter + 1
-    end
-    {id, %{state | counter: counter}}
-  end
-
   defp finish_initialization(conn, providers) do
     Connection.subscribe(conn, @adapter_topic)
     Connection.subscribe(conn, @incoming_topic)
     case start_providers(providers, %{}) do
       {:ok, providers} ->
-        {:ok, %__MODULE__{providers: providers, counter: 1}}
+        {:ok, %__MODULE__{providers: providers}}
       error ->
         error
     end
