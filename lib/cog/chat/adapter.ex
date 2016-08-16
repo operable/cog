@@ -30,7 +30,7 @@ defmodule Cog.Chat.Adapter do
 
   def lookup_user(provider, handle) when is_binary(handle) do
     cache = get_cache
-    case cache[{provider, handle}] do
+    case cache[{provider, :user, handle}] do
       nil ->
         case GenMqtt.call(@adapter_topic, "lookup_user", %{provider: provider, handle: handle}, :infinity) do
           {:ok, user} ->
@@ -44,7 +44,7 @@ defmodule Cog.Chat.Adapter do
   end
   def lookup_user(conn, provider, handle) when is_binary(handle) do
     cache = get_cache
-    case cache[{provider, handle}] do
+    case cache[{provider, :user, handle}] do
       nil ->
         case GenMqtt.call(conn, @adapter_topic, "lookup_user", %{provider: provider, handle: handle}, :infinity) do
           {:ok, user} ->
@@ -59,7 +59,7 @@ defmodule Cog.Chat.Adapter do
 
   def lookup_room(provider, room_identifier) do
     cache = get_cache
-    case cache[{provider, room_identifier}] do
+    case cache[{provider, :room, room_identifier}] do
       nil ->
         case GenMqtt.call(@adapter_topic , "lookup_room", %{provider: provider, id: room_identifier} , :infinity) do
           {:ok, room} ->
@@ -165,11 +165,11 @@ defmodule Cog.Chat.Adapter do
   # RPC calls
 
   def handle_call(_conn, @adapter_topic, _sender, "lookup_room", %{"provider" => provider, "id" => id}, state) do
-    {:reply, maybe_cache(with_provider(provider, state, :lookup_room, [id]), {provider, id}, state), state}
+    {:reply, maybe_cache(with_provider(provider, state, :lookup_room, [id]), {provider, :room, id}, state), state}
   end
   def handle_call(_conn, @adapter_topic, _sender, "lookup_user", %{"provider" => provider,
                                                                    "handle" => handle}, state) do
-    {:reply, maybe_cache(with_provider(provider, state, :lookup_user, [handle]), {provider, handle}, state), state}
+    {:reply, maybe_cache(with_provider(provider, state, :lookup_user, [handle]), {provider, :user, handle}, state), state}
   end
   def handle_call(_conn, @adapter_topic, _sender, "list_joined_rooms", %{"provider" => provider}, state) do
     {:reply, with_provider(provider, state, :list_joined_rooms, []), state}
