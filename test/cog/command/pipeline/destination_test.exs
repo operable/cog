@@ -17,9 +17,9 @@ defmodule Cog.Command.Pipeline.DestinationTest do
 
   test "'me' is resolved to current user" do
     {:ok, resolved} = Destination.process(["me"],
-                                           %{"id" => "user1"},
-                                           :origin_room,
-                                           "test")
+                                          %Cog.Chat.User{id: "user1"},
+                                          :origin_room,
+                                          "test")
 
     assert [%Destination{output_level: :full,
                          raw: "me",

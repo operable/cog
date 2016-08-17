@@ -435,7 +435,7 @@ defmodule Cog.Command.Pipeline.Executor do
                                         user: user}) do
 
     PipelineEvent.initialized(id, request.text, request.adapter,
-                              user.username, request.sender["handle"])
+                              user.username, request.sender.handle)
     |> Probe.notify
   end
 
@@ -471,7 +471,7 @@ defmodule Cog.Command.Pipeline.Executor do
 
   defp alert_unregistered_user(state) do
     request = state.request
-    handle = request.sender["handle"]
+    handle = request.sender.handle
     creators = user_creator_handles(request)
 
     {:ok, mention_name} = Cog.Chat.Adapter.mention_name(state.request.adapter, handle)
@@ -615,9 +615,9 @@ defmodule Cog.Command.Pipeline.Executor do
 
   defp sender_name(state) do
     if ChatAdapter.is_chat_provider?(state.request.adapter) do
-      "@#{state.request.sender["handle"]}"
+      "@#{state.request.sender.handle}"
     else
-      state.request.sender["id"]
+      state.request.sender.id
     end
   end
 
@@ -691,7 +691,7 @@ defmodule Cog.Command.Pipeline.Executor do
     # TODO: This should happen when we validate the request
     if ChatAdapter.is_chat_provider?(request.adapter) do
       adapter   = request.adapter
-      sender_id = request.sender["id"]
+      sender_id = request.sender.id
 
       user = Queries.User.for_chat_provider_user_id(sender_id, adapter)
       |> Repo.one
@@ -703,7 +703,7 @@ defmodule Cog.Command.Pipeline.Executor do
           {:ok, user}
       end
     else
-      cog_name = request.sender["id"]
+      cog_name = request.sender.id
       case Repo.get_by(Cog.Models.User, username: cog_name) do
         %Cog.Models.User{}=user ->
           {:ok, user}

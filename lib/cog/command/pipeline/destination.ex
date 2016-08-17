@@ -86,7 +86,7 @@ defmodule Cog.Command.Pipeline.Destination do
     # TODO: handle the pathological case of the sender ID not actually
     # resolving to a destination... also need to handle the case where
     # "me" isn't a recognized destination (e.g., for HTTP adapter)
-    {:ok, room} = Cog.Chat.Adapter.lookup_room(adapter, sender["id"])
+    {:ok, room} = Cog.Chat.Adapter.lookup_room(adapter, sender.id)
     {:ok, %{dest | adapter: adapter, room: room}}
   end
   defp resolve_destination(%__MODULE__{raw: redir}=dest, _sender, _origin_room, origin_adapter) do

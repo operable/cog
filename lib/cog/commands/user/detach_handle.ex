@@ -22,12 +22,12 @@ defmodule Cog.Commands.User.DetachHandle do
   def detach(%{options: %{"help" => true}}, _args) do
     show_usage
   end
-  def detach(req, [user_name]) do
+  def detach(%Cog.Messages.Command{}=command, [user_name]) do
     case Users.by_username(user_name) do
       {:error, :not_found} ->
         {:error, {:resource_not_found, "user", user_name}}
       {:ok, user} ->
-        provider_name = req.requestor["provider"]
+        provider_name = command.requestor.provider
         :ok = ChatHandles.remove_handle(user, provider_name)
         {:ok, "user-detach-handle", %{"username" => user.username,
                                       "chat_provider" => %{"name" => provider_name}}}
