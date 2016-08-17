@@ -93,10 +93,13 @@ defmodule Cog.Command.OptionInterpreter do
   end
 
   defp store_option_value(opts, opt_def, value) do
-    if opt_def.option_type.name == "incr" do
-      Map.update(opts, opt_def.name, value, &(&1+value))
-    else
-      Map.put(opts, opt_def.name, value)
+    case opt_def.option_type.name do
+      "incr" ->
+        Map.update(opts, opt_def.name, value, &(&1+value))
+      "list" ->
+        Map.update(opts, opt_def.name, value, &Enum.concat(&1, value))
+      _ ->
+        Map.put(opts, opt_def.name, value)
     end
   end
 
@@ -161,8 +164,12 @@ defmodule Cog.Command.OptionInterpreter do
   end
   defp coerce_value("string", value) when is_binary(value),
     do: {:ok, value}
-  defp coerce_value("list", value) when is_binary(value),
-    do: {:ok, String.split(value, ",", trim: true)}
+  defp coerce_value("list", value) when is_binary(value) do
+    # Due to this String.split/3 call, anything that's list-typed will
+    # end up being coerced into a list, even if there's only one value
+    # given.
+    {:ok, String.split(value, ",", trim: true)}
+  end
   defp coerce_value(type, value),
     do: {:error, error_msg(:type_error, value, type)}
 
