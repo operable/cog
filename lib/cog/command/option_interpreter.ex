@@ -165,10 +165,23 @@ defmodule Cog.Command.OptionInterpreter do
   defp coerce_value("string", value) when is_binary(value),
     do: {:ok, value}
   defp coerce_value("list", value) when is_binary(value) do
-    # Due to this String.split/3 call, anything that's list-typed will
-    # end up being coerced into a list, even if there's only one value
-    # given.
-    {:ok, String.split(value, ",", trim: true)}
+    # DON'T HATE
+    #
+    # So, we go through this regex-laden hack in order to provide an
+    # expedient way to allow users to escape commas in strings that
+    # they actually want to keep, and not use as string-splitting
+    # boundaries.
+    #
+    # That is, a value of "one,two" would get converted to ["one",
+    # "two"], but a value of "one\,two" would get converted to
+    # ["one,two"].
+    #
+    # TODO: A real solution probably lies in the realm of the parser
+    # and bindings.
+    splits = value
+    |> String.split(~r/(?<!\\),/, trim: true)
+    |> Enum.map(&String.replace(&1, ~r/\\,/, ","))
+    {:ok, splits}
   end
   defp coerce_value(type, value),
     do: {:error, error_msg(:type_error, value, type)}

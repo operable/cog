@@ -279,6 +279,15 @@ defmodule Cog.Command.OptionInterpreter.Test do
                             [])
   end
 
+  test "commas in list values can be optionally escaped" do
+    opt_args = options_and_args("test-command --foo=one --foo=two\\,three,four --foo=five",
+                                %{},
+                                options: [[name: "foo", type: "list"]])
+    assert_options_and_args(opt_args,
+                            %{"foo" => ["one", "two,three", "four","five"]},
+                            [])
+  end
+
   test "complex example" do
     opt_args = options_and_args("test-command --foo=bar --baz=$var --active -z=123 456 true what",
                                 %{"var" => "one,two,three",
