@@ -261,6 +261,23 @@ defmodule Cog.Command.OptionInterpreter.Test do
     assert {:error, "Looks like you forgot to include some required options: 'needed, really_needed'"} = opt_args
   end
 
+  test "multiple values for a list" do
+    opt_args = options_and_args("test-command --foo=one --foo=two --foo=three",
+                                %{},
+                                options: [[name: "foo", type: "list"]])
+    assert_options_and_args(opt_args,
+                            %{"foo" => ["one", "two", "three"]},
+                            [])
+  end
+
+  test "multiple values for a list with a comma-delimited value all goes into the same list" do
+    opt_args = options_and_args("test-command --foo=one --foo=two,three,four --foo=five",
+                                %{},
+                                options: [[name: "foo", type: "list"]])
+    assert_options_and_args(opt_args,
+                            %{"foo" => ["one", "two", "three", "four","five"]},
+                            [])
+  end
 
   test "complex example" do
     opt_args = options_and_args("test-command --foo=bar --baz=$var --active -z=123 456 true what",
