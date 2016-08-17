@@ -6,38 +6,47 @@ defmodule Cog.Adapters.Slack.Helpers do
   @interval 1000 # 1 second
   @timeout 120000 # 2 minutes
 
-  def assert_response(message, [after: %{"ts" => ts}]) do
+  # keyword args:
+  #   after: the last Slack message sent; you only want to look at
+  #          responses that came in after this one. Required argument.
+  #   count: the number of messages you want to retrieve and assert
+  #          against. Optional, defaulting to 1
+  def assert_response(message, opts) do
+
+    %{"ts" => ts} = Keyword.fetch!(opts, :after)
+    expected_count = Keyword.get(opts, :count, 1)
+
     :timer.sleep(@interval)
 
     last_message_func = fn ->
-      {:ok, last_message} = retrieve_last_message(room: @room, oldest: ts)
+      {:ok, last_message} = retrieve_last_message(room: @room, oldest: ts, count: expected_count)
       last_message
     end
 
     Assertions.polling_assert(message, last_message_func, @interval, @timeout)
   end
 
-  def assert_response_contains(message, [after: %{"ts" => ts}]) do
+  # keyword args:
+  #   after: the last Slack message sent; you only want to look at
+  #          responses that came in after this one. Required argument.
+  #   count: the number of messages you want to retrieve and assert
+  #          against. Optional, defaulting to 1
+  def assert_response_contains(message, opts) do
+    %{"ts" => ts} = Keyword.fetch!(opts, :after)
+    expected_count = Keyword.get(opts, :count, 1)
+
     :timer.sleep(@interval)
 
     last_message_func = fn ->
-      {:ok, last_message} = retrieve_last_message(room: @room, oldest: ts)
+      {:ok, last_message} = retrieve_last_message(room: @room, oldest: ts, count: expected_count)
       last_message
     end
 
     Assertions.polling_assert_in(message, last_message_func, @interval, @timeout)
   end
 
-  def assert_edited_response(message, [after: %{"ts" => ts}]) do
-    :timer.sleep(@interval)
-
-    last_message_func = fn ->
-      {:ok, last_message} = retrieve_last_message(room: @room, oldest: ts, count: 2)
-      last_message
-    end
-
-    Assertions.polling_assert(message, last_message_func, @interval, @timeout)
-  end
+  def assert_edited_response(message, opts),
+    do: assert_response(message, Keyword.put(opts, :count, 2))
 
   def retrieve_last_message(room: room, oldest: oldest),
     do: retrieve_last_message(room: room, oldest: oldest, count: 1)
@@ -49,7 +58,7 @@ defmodule Cog.Adapters.Slack.Helpers do
     query = URI.encode_query(params)
 
     response = HTTPotion.get(url <> "?" <> query, headers: ["Accept": "application/json"])
-    parse_last_message(Poison.decode!(response.body))
+    maybe_consume_messages(Poison.decode!(response.body), count)
   end
 
   def send_message(message) do
@@ -64,8 +73,6 @@ defmodule Cog.Adapters.Slack.Helpers do
     {:ok, message} = parse_message(Poison.decode!(response.body))
     message
   end
-
-
 
   def send_edited_message(message, initial_message \\ "FOO3rjha92") do
     {:ok, %{id: channel}} = Cog.Chat.Adapter.lookup_room("slack", @room)
@@ -89,19 +96,28 @@ defmodule Cog.Adapters.Slack.Helpers do
     end
   end
 
-  defp parse_last_message(result) do
+  # If the response contains at least `expected_count` messages,
+  # process the first `expected_count` of them and return.
+  #
+  # Otherwise, we are still waiting for Slack to get some
+  # messages.
+  defp maybe_consume_messages(result, expected_count) do
     case result["ok"] do
       false ->
         {:error, result["error"]}
       true ->
-        case result["messages"] do
-          [] ->
-            {:ok, nil}
-          messages ->
-            formatted = Enum.sort(messages, &(&1["ts"] < &2["ts"]))
-            |> Enum.map_join("\n", &(&1["text"]))
-
-            {:ok, formatted}
+        messages = result["messages"]
+        if length(messages) < expected_count do
+          # we haven't gotten everything we expect. Return nil;
+          # we'll try and get the rest of the messages next time
+          {:ok, nil}
+        else
+          # We've gotten at least as many messages as we asked
+          # for; we'll take just as many as we expected to get
+          formatted = Enum.sort(messages, &(&1["ts"] < &2["ts"]))
+          |> Enum.take(expected_count)
+          |> Enum.map_join("\n", &(&1["text"]))
+          {:ok, formatted}
         end
     end
   end
