@@ -14,8 +14,8 @@ defmodule Cog.Commands.User.ListHandles do
 
   def list(%{options: %{"help" => true}}, _args),
     do: show_usage
-  def list(req, _args) do
-    provider_name = req.requestor["provider"]
+  def list(%Cog.Messages.Command{}=command, _args) do
+    provider_name = command.requestor.provider
     handles = ChatHandles.for_provider(provider_name)
     {:ok, "user-list-handles",
      Enum.map(handles,

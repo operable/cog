@@ -18,11 +18,11 @@ defmodule Cog.Messages.AdapterRequest do
 
   # Adapter-specific information about the user initiating the
   # request (e.g., Slack chat handle, internal Slack user ID, etc.)
-  field :sender, :map, required: true
+  field :sender, Cog.Chat.User, required: true
 
   # Adapter-specific information about the "room" the request was
   # initiated from (e.g., Slack channel, HTTP request, etc.)
-  field :room, :map, required: true
+  field :room, Cog.Chat.Room, required: true
 
   # Message queue topic to send the reply to
   field :reply, :string, required: true
@@ -30,8 +30,6 @@ defmodule Cog.Messages.AdapterRequest do
   # Short name of adapter, e.g. "slack"
   field :adapter, :string, required: true
 
-  # Name of the Elixir module implementing the adapter
-  field :module, :string, required: false
 end
 
 defmodule Cog.Messages.Command do
@@ -70,13 +68,13 @@ defmodule Cog.Messages.Command do
   # request (e.g., Slack chat handle, internal Slack user ID, etc.)
   #
   # (see Cog.Messages.AdapterRequest.sender)
-  field :requestor, :map, required: true
+  field :requestor, Cog.Chat.User, required: true
 
   # Adapter-specific information about the "room" the request was
   # initiated from (e.g., Slack channel, HTTP request, etc.)
   #
   # (See Cog.Messages.AdapterRequest.room)
-  field :room, :map, required: true
+  field :room, Cog.Chat.Room, required: true
 
   # Token to access services (e.g. memory)
   field :service_token, :string, required: true
@@ -123,7 +121,7 @@ defmodule Cog.Messages.SendMessage do
   # Adapter-specific information about the "room" the response is
   # targeted to. May or may not be the same as the initial source of
   # the request (e.g., multiple redirect destinations)
-  field :room, :map, required: true
+  field :room, Cog.Chat.Room, required: true
 end
 
 ########################################################################

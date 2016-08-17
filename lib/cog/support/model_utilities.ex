@@ -79,7 +79,7 @@ defmodule Cog.Support.ModelUtilities do
     |> User.changeset(%{username: username,
                         first_name: Access.get(options, :first_name, String.capitalize(username)),
                         last_name: Access.get(options, :last_name, "Mc#{String.capitalize(username)}"),
-                        email_address: "#{username}@operable.io",
+                        email_address: Access.get(options, :email_address, "#{username}@operable.io"),
                         password: username})
     |> Repo.insert!
 
