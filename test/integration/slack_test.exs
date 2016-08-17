@@ -20,8 +20,6 @@ defmodule Integration.SlackTest do
   end
 
   test "editing a command", %{user: user} do
-    :timer.sleep(5000)
-
     user |> with_permission("operable:st-echo")
 
     message = send_edited_message("@#{@bot}: operable:st-echo test")
