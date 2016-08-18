@@ -97,7 +97,7 @@ defmodule Cog.Mixfile do
      {:phoenix_live_reload, "~> 1.0.3", only: :dev},
      {:earmark, "~> 1.0", only: :dev},
      {:ex_doc, "~> 0.13", only: :dev},
-     {:mix_test_watch, "~> 0.1.1", only: [:test, :dev]},
+     {:mix_test_watch, "~> 0.2", only: [:test, :dev]},
      {:excoveralls, "~> 0.5", only: :test},
      {:exvcr, "~> 0.7.3", only: [:dev, :test]}
     ]
