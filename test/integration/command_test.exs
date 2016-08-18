@@ -103,7 +103,7 @@ defmodule Integration.CommandTest do
     |> with_permission("operable:t-echo")
     |> with_permission("operable:st-thorn")
 
-    response = send_message(user, ~s(@bot: operable:t-echo "this is a test" | operable:st-thorn $body))
+    response = send_message(user, ~s(@bot: operable:t-echo "this is a test" | operable:st-thorn $body[0]))
 
     assert_payload(response, %{body: ["þis is a test"]})
   end

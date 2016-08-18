@@ -231,7 +231,7 @@ defmodule Cog.V1.TriggerExecutionControllerTest do
     timeout_sec = 2
     set_timeout_buffer(1)
     trigger = trigger(%{name: "sleepytime",
-                        pipeline: "echo Hello | sleep #{timeout_sec} | echo $body > chat://#general",
+                        pipeline: "echo Hello | sleep #{timeout_sec} | echo $body[0] > chat://#general",
                         as_user: "cog",
                         timeout_sec: timeout_sec})
 

@@ -28,13 +28,13 @@ defmodule Integration.AliasExecutionTest do
   test "alias executes properly in pipelines", %{user: user} do
     send_message(user, "@bot: operable:alias create my-alias \"echo my alias\"")
 
-    response = send_message(user, "@bot: my-alias | echo $body")
+    response = send_message(user, "@bot: my-alias | echo $body[0]")
 
     assert_payload(response, %{body: ["my alias"]})
   end
 
   test "alias executes properly in mid pipeline", %{user: user} do
-    send_message(user, "@bot: operable:alias create my-alias \"echo $body\"")
+    send_message(user, "@bot: operable:alias create my-alias \"echo $body[0]\"")
 
     response = send_message(user, "@bot: echo \"foo\" | my-alias")
 
