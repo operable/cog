@@ -93,7 +93,7 @@ defmodule Cog.Mixfile do
      {:httpoison, "~> 0.9", override: true},
      {:conduit, github: "operable/conduit"},
 
-     {:credo, "~> 0.3", only: [:dev, :test]},
+     {:credo, "~> 0.4", only: [:dev, :test]},
      {:phoenix_live_reload, "~> 1.0.3", only: :dev},
      {:earmark, "~> 0.2.1", only: :dev},
      {:ex_doc, "~> 0.10", only: :dev},
