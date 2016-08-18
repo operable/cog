@@ -3,7 +3,7 @@
   "bamboo_smtp": {:hex, :bamboo_smtp, "1.2.0", "d0bad70890910a3c7f58ab600d7a3fe6ce9637746dbb968b0610412c544375c4", [:mix], [{:bamboo, "~> 0.7.0", [hex: :bamboo, optional: false]}, {:gen_smtp, "~> 0.11.0", [hex: :gen_smtp, optional: false]}]},
   "bunt": {:hex, :bunt, "0.1.6", "5d95a6882f73f3b9969fdfd1953798046664e6f77ec4e486e6fafc7caad97c6f", [:mix], []},
   "certifi": {:hex, :certifi, "0.4.0", "a7966efb868b179023618d29a407548f70c52466bf1849b9e8ebd0e34b7ea11f", [:rebar3], []},
-  "comeonin": {:hex, :comeonin, "2.1.1", "6187c3764e98c3a963650f64cef067e01daed2f2de4177f666f60b50c14e9981", [:mix, :make, :make], []},
+  "comeonin": {:hex, :comeonin, "2.5.2", "bbad773af30a7632a63053014d5cfebf6df2c1ad114167b4db02f05b5c60901b", [:mix, :make, :make], []},
   "conduit": {:git, "https://github.com/operable/conduit.git", "8fee081c1b125e60f530280e04f44c2ded34803c", []},
   "connection": {:hex, :connection, "1.0.4", "a1cae72211f0eef17705aaededacac3eb30e6625b04a6117c1b2db6ace7d5976", [:mix], []},
   "cowboy": {:hex, :cowboy, "1.0.4", "a324a8df9f2316c833a470d918aaf73ae894278b8aa6226ce7a9bf699388f878", [:rebar, :make], [{:cowlib, "~> 1.0.0", [hex: :cowlib, optional: false]}, {:ranch, "~> 1.0", [hex: :ranch, optional: false]}]},

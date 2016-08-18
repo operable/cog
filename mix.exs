@@ -78,7 +78,7 @@ defmodule Cog.Mixfile do
      {:phoenix, "~> 1.1.4"},
      {:phoenix_ecto, "~> 3.0.0"},
      {:phoenix_html, "~> 2.6.0"},
-     {:comeonin, "~> 2.1.1"},
+     {:comeonin, "~> 2.5"},
      {:gproc, "~> 0.5.0", override: true},
      {:html_entities, "~> 0.3.0"},
      {:adz, github: "operable/adz"},
