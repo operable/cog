@@ -81,6 +81,15 @@ defimpl Cog.Eval, for: Piper.Permissions.Ast.ContainExpr do
         member?(lhs, t, context)
     end
   end
+  defp member?({{:option, name}, lhsv}=lhs, [rhs|t], context) do
+    {rhsv, context} = Eval.value_of(rhs, context)
+    case expr_match?(lhsv, rhsv) do
+      true ->
+        {true, Context.add_match(context, :option, name)}
+      false ->
+        member?(lhs, t, context)
+    end
+  end
 
   defp expr_match?(lhsv, %Regex{}=rhsv) do
     Regex.match?(rhsv, "#{lhsv}")
