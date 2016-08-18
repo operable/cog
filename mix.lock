@@ -38,7 +38,7 @@
   "idna": {:hex, :idna, "1.2.0", "ac62ee99da068f43c50dc69acf700e03a62a348360126260e87f2b54eced86b2", [:rebar3], []},
   "jsx": {:hex, :jsx, "2.8.0", "749bec6d205c694ae1786d62cea6cc45a390437e24835fd16d12d74f07097727", [:mix, :rebar], []},
   "lager": {:hex, :lager, "3.0.2", "25dc81bc3659b62f5ab9bd073e97ddd894fc4c242019fccef96f3889d7366c97", [:rebar3], [{:goldrush, "0.1.7", [hex: :goldrush, optional: false]}]},
-  "lager_logger": {:hex, :lager_logger, "1.0.2", "360d6a5f1e4b0e230bfc96d4d35cc86c0760933e18bfb64bc9a2b8a398dc52cb", [:mix], [{:lager, ">= 2.1.0", [hex: :lager, optional: false]}]},
+  "lager_logger": {:hex, :lager_logger, "1.0.3", "05c23ab1c1aeca6c059b49d44cb4706f6185c03429122b05bae8451dc73c86b9", [:mix], [{:lager, ">= 2.1.0", [hex: :lager, optional: false]}]},
   "logger_file_backend": {:git, "https://github.com/onkel-dirtus/logger_file_backend.git", "19a1fea3625040b7f07dd31f864f929e5432361d", []},
   "meck": {:hex, :meck, "0.8.4", "59ca1cd971372aa223138efcf9b29475bde299e1953046a0c727184790ab1520", [:rebar, :make], []},
   "metrics": {:hex, :metrics, "1.0.1", "25f094dea2cda98213cecc3aeff09e940299d950904393b2a29d191c346a8486", [:rebar3], []},

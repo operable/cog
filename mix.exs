@@ -67,7 +67,7 @@ defmodule Cog.Mixfile do
      {:jsx, "~> 2.8.0", override: true},
      {:postgrex, "~> 0.11.2"},
      {:ecto, "~> 2.0.2"},
-     {:lager_logger, "~> 1.0.2"},
+     {:lager_logger, "~> 1.0.3"},
      {:logger_file_backend, github: "onkel-dirtus/logger_file_backend"},
      {:gen_logger, github: "emqtt/gen_logger", branch: "master", override: true},
      {:esockd, github: "emqtt/esockd", ref: "e6c27801bb5331d064081ef6d6af291a2878038c", override: true},
