@@ -93,10 +93,13 @@ defmodule Cog.Command.OptionInterpreter do
   end
 
   defp store_option_value(opts, opt_def, value) do
-    if opt_def.option_type.name == "incr" do
-      Map.update(opts, opt_def.name, value, &(&1+value))
-    else
-      Map.put(opts, opt_def.name, value)
+    case opt_def.option_type.name do
+      "incr" ->
+        Map.update(opts, opt_def.name, value, &(&1+value))
+      "list" ->
+        Map.update(opts, opt_def.name, value, &Enum.concat(&1, value))
+      _ ->
+        Map.put(opts, opt_def.name, value)
     end
   end
 
@@ -161,8 +164,25 @@ defmodule Cog.Command.OptionInterpreter do
   end
   defp coerce_value("string", value) when is_binary(value),
     do: {:ok, value}
-  defp coerce_value("list", value) when is_binary(value),
-    do: {:ok, String.split(value, ",", trim: true)}
+  defp coerce_value("list", value) when is_binary(value) do
+    # DON'T HATE
+    #
+    # So, we go through this regex-laden hack in order to provide an
+    # expedient way to allow users to escape commas in strings that
+    # they actually want to keep, and not use as string-splitting
+    # boundaries.
+    #
+    # That is, a value of "one,two" would get converted to ["one",
+    # "two"], but a value of "one\,two" would get converted to
+    # ["one,two"].
+    #
+    # TODO: A real solution probably lies in the realm of the parser
+    # and bindings.
+    splits = value
+    |> String.split(~r/(?<!\\),/, trim: true)
+    |> Enum.map(&String.replace(&1, ~r/\\,/, ","))
+    {:ok, splits}
+  end
   defp coerce_value(type, value),
     do: {:error, error_msg(:type_error, value, type)}
 
