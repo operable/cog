@@ -17,7 +17,7 @@ defmodule Cog.V1.ServiceViewTest do
   test "renders index.json", %{model: model, json: json} do
     content = render_to_string(Cog.V1.ServiceView,
                                "index.json",
-                               conn: conn(), services: [model])
+                               conn: build_conn(), services: [model])
     |> Poison.decode!
 
     assert %{"info" => %{"cog_version" => "0.5.0",
@@ -28,7 +28,7 @@ defmodule Cog.V1.ServiceViewTest do
   test "renders show.json", %{model: model, json: json} do
     content = render_to_string(Cog.V1.ServiceView,
                                "show.json",
-                               conn: conn(), service: model)
+                               conn: build_conn(), service: model)
     |> Poison.decode!
 
     assert %{"service" => json} == content

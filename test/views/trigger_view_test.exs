@@ -28,7 +28,7 @@ defmodule Cog.V1.TriggerViewTest do
   test "renders trigger.json", %{model: model, json: json} do
     content = render_to_string(Cog.V1.TriggerView,
                                "trigger.json",
-                               conn: conn(), trigger: model)
+                               conn: build_conn(), trigger: model)
     |> Poison.decode!
     assert json == content
   end
@@ -36,7 +36,7 @@ defmodule Cog.V1.TriggerViewTest do
   test "renders index.json", %{model: model, json: json} do
     content = render_to_string(Cog.V1.TriggerView,
                                "index.json",
-                               conn: conn(), triggers: [model])
+                               conn: build_conn(), triggers: [model])
     |> Poison.decode!
 
     assert %{"triggers" => [json]} == content
@@ -45,7 +45,7 @@ defmodule Cog.V1.TriggerViewTest do
   test "renders show.json", %{model: model, json: json} do
     content = render_to_string(Cog.V1.TriggerView,
                                "show.json",
-                               conn: conn(), trigger: model)
+                               conn: build_conn(), trigger: model)
     |> Poison.decode!
 
     assert %{"trigger" => json} == content

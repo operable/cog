@@ -61,13 +61,13 @@ defmodule Cog.Controller.Helpers do
     # Route the request, with appropriate headers in place
     case Keyword.fetch!(options, :content_type) do
       :json ->
-        ConnTest.conn()
+        ConnTest.build_conn()
         |> Conn.put_req_header("accept", "application/json")
         |> Conn.put_req_header("content-type", "application/json")
         |> Conn.put_req_header("authorization", "token #{token}")
         |> ConnTest.dispatch(endpoint, method, path, Poison.encode!(body))
       :multipart ->
-        ConnTest.conn()
+        ConnTest.build_conn()
         |> Conn.put_req_header("accept", "application/json")
         |> Conn.put_req_header("content-type", "multipart/form-data")
         |> Conn.put_req_header("authorization", "token #{token}")

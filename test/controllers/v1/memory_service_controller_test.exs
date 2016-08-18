@@ -17,13 +17,13 @@ defmodule Cog.V1.MemoryServiceControllerTest do
   end
 
   defp tokened_connection(token) do
-    conn()
+    build_conn()
     |> Plug.Conn.put_req_header("content-type", "application/json")
     |> Plug.Conn.put_req_header("authorization", "pipeline #{token}")
   end
 
   test "requests without a token are denied" do
-    conn = get(conn(), @path <> "/food")
+    conn = get(build_conn(), @path <> "/food")
     assert response(conn, 401)
   end
 

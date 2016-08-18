@@ -5,7 +5,7 @@ defmodule Cog.V1.TokenControllerTest do
   alias Cog.Models.Token
 
   setup do
-    conn = conn() |> put_req_header("accept", "application/json")
+    conn = build_conn() |> put_req_header("accept", "application/json")
     {:ok, conn: conn}
   end
 
@@ -20,7 +20,7 @@ defmodule Cog.V1.TokenControllerTest do
 
   test "creates a token via email address" do
     user("tester")
-    conn = post(conn, "/v1/token",
+    conn = post(build_conn(), "/v1/token",
                 %{"email" => "tester@operable.io", "password" => "tester"})
 
     token_value = json_response(conn, 201)["token"]["value"]
