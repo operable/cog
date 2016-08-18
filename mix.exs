@@ -63,7 +63,6 @@ defmodule Cog.Mixfile do
      {:poison, "~> 2.0"},
      {:uuid, "~> 1.1.3"},
      {:httpotion, "~> 3.0"},
-     {:jsx, "~> 2.8.0", override: true},
      {:postgrex, "~> 0.11.2"},
      {:ecto, "~> 2.0.2"},
      {:lager_logger, "~> 1.0.3"},
@@ -85,7 +84,6 @@ defmodule Cog.Mixfile do
      {:probe, github: "operable/probe"},
      {:exml, github: "paulgray/exml", tag: "2.2.1"},
      {:fumanchu, github: "operable/fumanchu"},
-     {:exjsx, "~> 3.2", override: true},
      {:bamboo_smtp, "~> 1.2.0"},
      # Overriding httpoison here because bamboo depends on 0.9 but slack has
      # the dep locked at 0.8.3
