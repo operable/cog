@@ -40,7 +40,6 @@ defmodule Cog.Mixfile do
             :httpotion,
             :gproc,
             :esockd,
-            :exml,
             :slack,
             :cowboy,
             :phoenix,
@@ -82,7 +81,6 @@ defmodule Cog.Mixfile do
      {:adz, github: "operable/adz"},
      {:spanner, github: "operable/spanner"},
      {:probe, github: "operable/probe"},
-     {:exml, github: "paulgray/exml", tag: "2.2.1"},
      {:fumanchu, github: "operable/fumanchu"},
      {:bamboo_smtp, "~> 1.2.0"},
      # Overriding httpoison here because bamboo depends on 0.9 but slack has
