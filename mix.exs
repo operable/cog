@@ -99,7 +99,7 @@ defmodule Cog.Mixfile do
      {:ex_doc, "~> 0.13", only: :dev},
      {:mix_test_watch, "~> 0.2", only: [:test, :dev]},
      {:excoveralls, "~> 0.5", only: :test},
-     {:exvcr, "~> 0.7.3", only: [:dev, :test]}
+     {:exvcr, "~> 0.8", only: [:dev, :test]}
     ]
   end
 

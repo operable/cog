@@ -22,7 +22,7 @@
   "excoveralls": {:hex, :excoveralls, "0.5.5", "d97b6fc7aa59c5f04f2fa7ec40fc0b7555ceea2a5f7e7c442aad98ddd7f79002", [:mix], [{:exjsx, "~> 3.0", [hex: :exjsx, optional: false]}, {:hackney, ">= 0.12.0", [hex: :hackney, optional: false]}]},
   "exjsx": {:hex, :exjsx, "3.2.0", "7136cc739ace295fc74c378f33699e5145bead4fdc1b4799822d0287489136fb", [:mix], [{:jsx, "~> 2.6.2", [hex: :jsx, optional: false]}]},
   "exml": {:git, "https://github.com/paulgray/exml.git", "4ae6dea65f97764663c43d0bafb177dc702b5c3f", [tag: "2.2.1"]},
-  "exvcr": {:hex, :exvcr, "0.7.3", "a04822dc125f3eb9c127961245d3b8a6bded9a7521351ce227f33ef5ae19a3b4", [:mix], [{:exactor, "~> 2.2", [hex: :exactor, optional: false]}, {:exjsx, "~> 3.2", [hex: :exjsx, optional: false]}, {:httpoison, "~> 0.8", [hex: :httpoison, optional: true]}, {:httpotion, "~> 2.1", [hex: :httpotion, optional: true]}, {:meck, "~> 0.8.3", [hex: :meck, optional: false]}]},
+  "exvcr": {:hex, :exvcr, "0.8.2", "8ad46e077995e1ff1278b44001844fcd1e9c172bd1d9f6303e6c8f9ba8bbb679", [:mix], [{:exactor, "~> 2.2", [hex: :exactor, optional: false]}, {:exjsx, "~> 3.2", [hex: :exjsx, optional: false]}, {:httpoison, "~> 0.8", [hex: :httpoison, optional: true]}, {:httpotion, "~> 3.0", [hex: :httpotion, optional: true]}, {:ibrowse, "~> 4.2.2", [hex: :ibrowse, optional: true]}, {:meck, "~> 0.8.3", [hex: :meck, optional: false]}]},
   "fs": {:hex, :fs, "0.9.2", "ed17036c26c3f70ac49781ed9220a50c36775c6ca2cf8182d123b6566e49ec59", [:rebar], []},
   "fumanchu": {:git, "https://github.com/operable/fumanchu.git", "8ad13215241d928d55bd488ee512bc8d835996c1", []},
   "gen_logger": {:git, "https://github.com/emqtt/gen_logger.git", "530af9cc2babcb77c541d46af34a9879d4a5ac07", [branch: "master"]},
