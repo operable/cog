@@ -1,5 +1,26 @@
 #  Changelog
 
+## 0.13.0
+
+### Enhancements
+
+- New chat API [#873](https://github.com/operable/cog/issues/873), [#925](https://github.com/operable/cog/issues/925)
+
+  - The API Cog uses to interop with various chat networks has been thoroughly revamped. A temporary side-effect of this work
+    is the removal of HipChat and IRC support. We expect to restore support for both of these chat networks in an upcoming
+    release.
+
+- Expose room/channel name to commands [#914](https://github.com/operable/cog/issues/914) (requested by Tu Hoang)
+- Improve handling of list option types [#919](https://github.com/operable/cog/issues/919)
+- Reset passwords via cogctl [#894](https://github.com/operable/cog/issues/894), [#907](https://github.com/operable/cog/issues/907)
+- Update stale dependencies [#864](https://github.com/operable/cog/issues/864)
+
+### Bug Fixes
+
+- $PATH lost to standard bundles [#839](https://github.com/operable/cog/issues/839) (reported by George Adams)
+- Access rule evaluation crashes on rules using option values with "in" [#918](https://github.com/operable/cog/issues/918)
+- Chat pipeline evaluation crashes on non-scalar variable bindings [#916](https://github.com/operable/cog/issues/916)
+
 ## 0.12.0
 
 ### Enhancements
