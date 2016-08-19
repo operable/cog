@@ -13,7 +13,7 @@ defmodule Cog.V1.TriggerExecutionControllerTest do
       type -> type
     end
 
-    conn = conn()
+    conn = build_conn()
     |> put_req_header("content-type", content_type)
     {:ok, conn: conn}
   end

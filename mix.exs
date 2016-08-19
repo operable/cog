@@ -40,7 +40,6 @@ defmodule Cog.Mixfile do
             :httpotion,
             :gproc,
             :esockd,
-            :exml,
             :slack,
             :cowboy,
             :phoenix,
@@ -58,48 +57,63 @@ defmodule Cog.Mixfile do
   end
 
   defp deps do
-    [{:slack, "~> 0.7.0"},
-     {:websocket_client, github: "jeremyong/websocket_client"},
-     {:poison, "~> 2.0"},
-     {:ibrowse, "~> 4.2.2", override: true},
-     {:uuid, "~> 1.1.3"},
-     {:httpotion, "~> 3.0.0", override: true},
-     {:jsx, "~> 2.8.0", override: true},
-     {:postgrex, "~> 0.11.2"},
-     {:ecto, "~> 2.0.2"},
-     {:lager_logger, "~> 1.0.2"},
-     {:logger_file_backend, github: "onkel-dirtus/logger_file_backend"},
-     {:gen_logger, github: "emqtt/gen_logger", branch: "master", override: true},
-     {:esockd, github: "emqtt/esockd", ref: "e6c27801bb5331d064081ef6d6af291a2878038c", override: true},
-     {:emqttc, github: "emqtt/emqttc", branch: "master"},
-     {:emqttd, github: "emqtt/emqttd", tag: "1.1.2"},
-     {:lager, "~> 3.0.2", override: true},
-     {:cowboy, "~> 1.0.4"},
-     {:phoenix, "~> 1.1.4"},
-     {:phoenix_ecto, "~> 3.0.0"},
-     {:phoenix_html, "~> 2.6.0"},
-     {:comeonin, "~> 2.1.1"},
-     {:gproc, "~> 0.5.0", override: true},
-     {:html_entities, "~> 0.3.0"},
-     {:adz, github: "operable/adz"},
-     {:spanner, github: "operable/spanner"},
-     {:probe, github: "operable/probe"},
-     {:exml, github: "paulgray/exml", tag: "2.2.1"},
-     {:fumanchu, github: "operable/fumanchu"},
-     {:exjsx, "~> 3.2", override: true},
-     {:bamboo_smtp, "~> 1.2.0"},
-     # Overriding httpoison here because bamboo depends on 0.9 but slack has
-     # the dep locked at 0.8.3
-     {:httpoison, "~> 0.9", override: true},
-     {:conduit, github: "operable/conduit"},
+    [
+      # Operable Code
+      ########################################################################
+      {:adz, github: "operable/adz"},
+      {:conduit, github: "operable/conduit"},
+      {:fumanchu, github: "operable/fumanchu"},
+      {:probe, github: "operable/probe"},
+      {:spanner, github: "operable/spanner"},
 
-     {:credo, "~> 0.3", only: [:dev, :test]},
-     {:phoenix_live_reload, "~> 1.0.3", only: :dev},
-     {:earmark, "~> 0.2.1", only: :dev},
-     {:ex_doc, "~> 0.10", only: :dev},
-     {:mix_test_watch, "~> 0.1.1", only: [:test, :dev]},
-     {:excoveralls, "~> 0.5", only: :test},
-     {:exvcr, "~> 0.7.3", only: [:dev, :test]}
+      # MQTT-related
+      ########################################################################
+      {:emqttc, github: "emqtt/emqttc", branch: "master"},
+      {:emqttd, github: "emqtt/emqttd", tag: "1.1.2"},
+      {:esockd, github: "emqtt/esockd", ref: "e6c27801bb5331d064081ef6d6af291a2878038c", override: true},
+      {:gen_logger, github: "emqtt/gen_logger", branch: "master", override: true},
+      # Used by cowboy, emqttd, esockd... they don't seem to lock to a
+      # particular version, though.
+      {:gproc, "~> 0.5.0", override: true},
+
+      # Logging
+      ########################################################################
+      # lager_logger depends on lager, but is using an old version
+      {:lager, "~> 3.0.2", override: true},
+      {:lager_logger, "~> 1.0.3"},
+      {:logger_file_backend, github: "onkel-dirtus/logger_file_backend"},
+
+      # Other Direct Dependencies
+      ########################################################################
+      {:bamboo_smtp, "~> 1.2.0"},
+      {:comeonin, "~> 2.5"},
+      {:cowboy, "~> 1.0.4"},
+      {:ecto, "~> 2.0.2"},
+      {:html_entities, "~> 0.3.0"},
+      # Bamboo depends httpoison 0.9 but slack has the dep locked at
+      # 0.8.3
+      {:httpoison, "~> 0.9", override: true},
+      {:httpotion, "~> 3.0"},
+      {:phoenix, "~> 1.2"},
+      {:phoenix_ecto, "~> 3.0"},
+      {:phoenix_html, "~> 2.6"},
+      {:poison, "~> 2.0"},
+      {:postgrex, "~> 0.11.2"},
+      {:slack, "~> 0.7.0"},
+      {:uuid, "~> 1.1.3"},
+      # The Slack library depends on this Github repo, and not the
+      # version in Hex. Thus, we need to declare it manually :(
+      {:websocket_client, github: "jeremyong/websocket_client"},
+
+      # Test and Development
+      ########################################################################
+      {:credo, "~> 0.4", only: [:dev, :test]},
+      {:earmark, "~> 1.0", only: :dev},
+      {:ex_doc, "~> 0.13", only: :dev},
+      {:excoveralls, "~> 0.5", only: :test},
+      {:exvcr, "~> 0.8", only: [:dev, :test]},
+      {:mix_test_watch, "~> 0.2", only: [:dev, :test]},
+      {:phoenix_live_reload, "~> 1.0", only: :dev}
     ]
   end
 

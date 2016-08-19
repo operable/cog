@@ -7,7 +7,7 @@ defmodule Cog.V1.PasswordResetController.Test do
   import Ecto.Query, only: [from: 2]
 
   setup_all context do
-    {:ok, Map.merge(context, %{conn: Phoenix.ConnTest.conn()})}
+    {:ok, Map.merge(context, %{conn: Phoenix.ConnTest.build_conn()})}
   end
 
   setup context do
