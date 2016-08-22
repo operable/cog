@@ -1,6 +1,6 @@
 defmodule Cog.Commands.User do
   use Cog.Command.GenCommand.Base,
-    bundle: Cog.embedded_bundle
+    bundle: Cog.Util.Misc.embedded_bundle
 
   alias Cog.Commands.User.{AttachHandle, DetachHandle, Info, List, ListHandles}
 
@@ -32,7 +32,7 @@ defmodule Cog.Commands.User do
 
   permission "manage_users"
 
-  rule "when command is #{Cog.embedded_bundle}:user must have #{Cog.embedded_bundle}:manage_users"
+  rule "when command is #{Cog.Util.Misc.embedded_bundle}:user must have #{Cog.Util.Misc.embedded_bundle}:manage_users"
 
   def handle_message(req, state) do
     {subcommand, args} = Helpers.get_subcommand(req.args)

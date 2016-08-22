@@ -7,7 +7,7 @@ defmodule Cog.V1.BundleStatusController do
   alias Cog.Repository
 
   plug Cog.Plug.Authentication
-  plug Cog.Plug.Authorization, permission: "#{Cog.embedded_bundle}:manage_commands"
+  plug Cog.Plug.Authorization, permission: "#{Cog.Util.Misc.embedded_bundle}:manage_commands"
 
   def show(conn, %{"id" => id}) do
     case Repository.Bundles.bundle(id) do

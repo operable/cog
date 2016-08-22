@@ -5,7 +5,7 @@ defmodule Cog.V1.BundlesController do
   alias Cog.Models.Bundle
 
   plug Cog.Plug.Authentication
-  plug Cog.Plug.Authorization, permission: "#{Cog.embedded_bundle}:manage_commands"
+  plug Cog.Plug.Authorization, permission: "#{Cog.Util.Misc.embedded_bundle}:manage_commands"
 
   alias Cog.Repository
 

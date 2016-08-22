@@ -10,7 +10,7 @@ defmodule Cog.V1.ChatHandleControllerTest do
 
   setup context do
     # Requests handled by the role controller require this permission
-    required_permission = permission("#{Cog.embedded_bundle}:manage_users")
+    required_permission = permission("#{Cog.Util.Misc.embedded_bundle}:manage_users")
 
     # This user will be used to test the normal operation of the controller
     authed_user = user("cog")
@@ -63,7 +63,7 @@ defmodule Cog.V1.ChatHandleControllerTest do
 
   test "fails if chat adapter for provider is not running", params do
     chat_provider = "slack"
-    {:ok, chat} = Cog.chat_adapter_module
+    {:ok, chat} = Cog.Util.Misc.chat_adapter_module
     refute chat_provider == chat
 
     conn = api_request(params.authed,

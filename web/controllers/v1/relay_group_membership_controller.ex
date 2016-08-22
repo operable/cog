@@ -5,7 +5,7 @@ defmodule Cog.V1.RelayGroupMembershipController do
   alias Cog.Repository.RelayGroups
 
   plug Cog.Plug.Authentication
-  plug Cog.Plug.Authorization, permission: "#{Cog.embedded_bundle}:manage_relays"
+  plug Cog.Plug.Authorization, permission: "#{Cog.Util.Misc.embedded_bundle}:manage_relays"
 
   plug :put_view, Cog.V1.RelayGroupView
 

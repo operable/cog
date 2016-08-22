@@ -1,6 +1,6 @@
 defmodule Cog.Commands.Min do
   use Cog.Command.GenCommand.Base,
-    bundle: Cog.embedded_bundle
+    bundle: Cog.Util.Misc.embedded_bundle
 
   alias Cog.Command.Service.MemoryClient
   require Logger
@@ -27,7 +27,7 @@ defmodule Cog.Commands.Min do
     > {"a": {"b": -1}}
   """
 
-  rule "when command is #{Cog.embedded_bundle}:min allow"
+  rule "when command is #{Cog.Util.Misc.embedded_bundle}:min allow"
 
   def handle_message(req, state) do
     root  = req.services_root

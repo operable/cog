@@ -1,5 +1,5 @@
 defmodule Cog.Commands.Filter do
-  use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle
+  use Cog.Command.GenCommand.Base, bundle: Cog.Util.Misc.embedded_bundle
 
   @description "Filter elements of a collection"
 
@@ -30,7 +30,7 @@ defmodule Cog.Commands.Filter do
     > { "foo": {"bar.qux": {"baz": "stuff"} } }
   """
 
-  rule "when command is #{Cog.embedded_bundle}:filter allow"
+  rule "when command is #{Cog.Util.Misc.embedded_bundle}:filter allow"
 
   option "matches", short: "m", type: "string", required: false
   option "path", short: "p", type: "string", required: false

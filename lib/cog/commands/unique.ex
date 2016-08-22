@@ -1,6 +1,6 @@
 defmodule Cog.Commands.Unique do
   use Cog.Command.GenCommand.Base,
-    bundle: Cog.embedded_bundle
+    bundle: Cog.Util.Misc.embedded_bundle
 
   alias Cog.Command.Service.MemoryClient
 
@@ -17,7 +17,7 @@ defmodule Cog.Commands.Unique do
     > [{"a": 1}, {"a": 3}]
   """
 
-  rule "when command is #{Cog.embedded_bundle}:unique allow"
+  rule "when command is #{Cog.Util.Misc.embedded_bundle}:unique allow"
 
   def handle_message(req, state) do
     root  = req.services_root

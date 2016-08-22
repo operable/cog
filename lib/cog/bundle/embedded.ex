@@ -10,7 +10,7 @@ defmodule Cog.Bundle.Embedded do
   alias Cog.Repository
 
   @doc """
-  Start up a supervisor for the embedded `#{Cog.embedded_bundle}` bundle.
+  Start up a supervisor for the embedded `#{Cog.Util.Misc.embedded_bundle}` bundle.
 
   If the bundle is not present in the database (because the system has
   not been bootstrapped yet, for instance), no supervisor will be
@@ -29,7 +29,7 @@ defmodule Cog.Bundle.Embedded do
     announce_embedded_bundle(bundle_version)
     Logger.info("Embedded bundle announced; starting bundle supervision tree")
 
-    Logger.info("Loading embedded `#{Cog.embedded_bundle}` bundle")
+    Logger.info("Loading embedded `#{Cog.Util.Misc.embedded_bundle}` bundle")
     config = bundle_version.config_file
     children = Enum.map(config["commands"], fn({command_name, command}) ->
       name = command_name
@@ -60,7 +60,7 @@ defmodule Cog.Bundle.Embedded do
     version = Application.fetch_env!(:cog, :embedded_bundle_version)
     modules = Application.spec(:cog, :modules)
 
-    Config.gen_config(Cog.embedded_bundle,
+    Config.gen_config(Cog.Util.Misc.embedded_bundle,
                       "Core chat commands for Cog",
                       version,
                       modules,

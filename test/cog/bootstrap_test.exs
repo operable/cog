@@ -14,37 +14,37 @@ defmodule Cog.Bootstrap.Test do
       {:ok, bootstrapped: false}
     else
       {:ok, admin_user} = Cog.Bootstrap.bootstrap(@admin_user)
-      admin_role = Cog.Repo.get_by!(Role, name: Cog.admin_role)
-      admin_group = Cog.Repo.get_by!(Group, name: Cog.admin_group)
+      admin_role = Cog.Repo.get_by!(Role, name: Cog.Util.Misc.admin_role)
+      admin_group = Cog.Repo.get_by!(Group, name: Cog.Util.Misc.admin_group)
       {:ok, admin: admin_user, admin_role: admin_role, admin_group: admin_group, bootstrapped: true}
     end
   end
 
   test "creates the embedded bundle" do
-    assert Repo.get_by!(Bundle, name: Cog.embedded_bundle)
+    assert Repo.get_by!(Bundle, name: Cog.Util.Misc.embedded_bundle)
   end
 
   test "creates core permissions in the embedded bundle namespace" do
-    assert retrieve("#{Cog.embedded_bundle}:manage_users")
-    assert retrieve("#{Cog.embedded_bundle}:manage_roles")
-    assert retrieve("#{Cog.embedded_bundle}:manage_groups")
-    assert retrieve("#{Cog.embedded_bundle}:manage_permissions")
-    assert retrieve("#{Cog.embedded_bundle}:manage_commands")
+    assert retrieve("#{Cog.Util.Misc.embedded_bundle}:manage_users")
+    assert retrieve("#{Cog.Util.Misc.embedded_bundle}:manage_roles")
+    assert retrieve("#{Cog.Util.Misc.embedded_bundle}:manage_groups")
+    assert retrieve("#{Cog.Util.Misc.embedded_bundle}:manage_permissions")
+    assert retrieve("#{Cog.Util.Misc.embedded_bundle}:manage_commands")
   end
 
   test "creates the site bundle" do
-    assert Repo.get_by!(Bundle, name: Cog.site_namespace)
+    assert Repo.get_by!(Bundle, name: Cog.Util.Misc.site_namespace)
   end
 
   test "creates single site bundle version" do
-    bundle = Repo.get_by!(Bundle, name: Cog.site_namespace) |> Repo.preload(:versions)
+    bundle = Repo.get_by!(Bundle, name: Cog.Util.Misc.site_namespace) |> Repo.preload(:versions)
 
     {:ok, version} = Version.parse("0.0.0")
     assert [%BundleVersion{version: ^version}] = bundle.versions
   end
 
   test "the 'site' bundle contains no permissions" do
-    bundle = Repo.get_by!(Bundle, name: Cog.site_namespace) |> Repo.preload(:permissions)
+    bundle = Repo.get_by!(Bundle, name: Cog.Util.Misc.site_namespace) |> Repo.preload(:permissions)
     assert [] == bundle.permissions
   end
 
@@ -54,11 +54,11 @@ defmodule Cog.Bootstrap.Test do
   end
 
   test "admin role has all the embedded bundle permissions", %{admin_role: admin_role} do
-    assert_permission_is_granted(admin_role, retrieve("#{Cog.embedded_bundle}:manage_users"))
-    assert_permission_is_granted(admin_role, retrieve("#{Cog.embedded_bundle}:manage_roles"))
-    assert_permission_is_granted(admin_role, retrieve("#{Cog.embedded_bundle}:manage_groups"))
-    assert_permission_is_granted(admin_role, retrieve("#{Cog.embedded_bundle}:manage_permissions"))
-    assert_permission_is_granted(admin_role, retrieve("#{Cog.embedded_bundle}:manage_commands"))
+    assert_permission_is_granted(admin_role, retrieve("#{Cog.Util.Misc.embedded_bundle}:manage_users"))
+    assert_permission_is_granted(admin_role, retrieve("#{Cog.Util.Misc.embedded_bundle}:manage_roles"))
+    assert_permission_is_granted(admin_role, retrieve("#{Cog.Util.Misc.embedded_bundle}:manage_groups"))
+    assert_permission_is_granted(admin_role, retrieve("#{Cog.Util.Misc.embedded_bundle}:manage_permissions"))
+    assert_permission_is_granted(admin_role, retrieve("#{Cog.Util.Misc.embedded_bundle}:manage_commands"))
   end
 
   test "admin role is granted to admin group", %{admin_role: admin_role, admin_group: admin_group} do
@@ -74,7 +74,7 @@ defmodule Cog.Bootstrap.Test do
     refute Cog.Bootstrap.is_bootstrapped?
 
     Cog.Bootstrap.bootstrap(@admin_user)
-    assert Cog.Models.Group |> Cog.Repo.one! |> Map.get(:name) == Cog.admin_group
+    assert Cog.Models.Group |> Cog.Repo.one! |> Map.get(:name) == Cog.Util.Misc.admin_group
     assert Cog.Bootstrap.is_bootstrapped?
   end
 
@@ -106,7 +106,7 @@ defmodule Cog.Bootstrap.Test do
   end
 
   test "installs embedded bundle" do
-    assert Repo.get_by(Bundle, name: Cog.embedded_bundle)
+    assert Repo.get_by(Bundle, name: Cog.Util.Misc.embedded_bundle)
   end
 
   defp retrieve(permission_name) do

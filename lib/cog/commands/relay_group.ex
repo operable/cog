@@ -1,5 +1,5 @@
 defmodule Cog.Commands.RelayGroup do
-  use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle, name: "relay-group"
+  use Cog.Command.GenCommand.Base, bundle: Cog.Util.Misc.embedded_bundle, name: "relay-group"
   alias Cog.Commands.RelayGroup
   alias Cog.Commands.Helpers
 
@@ -25,7 +25,7 @@ defmodule Cog.Commands.RelayGroup do
 
   permission "manage_relays"
 
-  rule "when command is #{Cog.embedded_bundle}:relay-group must have #{Cog.embedded_bundle}:manage_relays"
+  rule "when command is #{Cog.Util.Misc.embedded_bundle}:relay-group must have #{Cog.Util.Misc.embedded_bundle}:manage_relays"
 
   # general options
   option "help", type: "bool", short: "h"

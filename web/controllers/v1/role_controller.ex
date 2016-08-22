@@ -4,7 +4,7 @@ defmodule Cog.V1.RoleController do
   alias Cog.Models.Role
 
   plug Cog.Plug.Authentication
-  plug Cog.Plug.Authorization, permission: "#{Cog.embedded_bundle}:manage_roles"
+  plug Cog.Plug.Authorization, permission: "#{Cog.Util.Misc.embedded_bundle}:manage_roles"
 
   # Search by name only for now
   def index(conn, %{"name" => name}) do

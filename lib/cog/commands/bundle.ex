@@ -1,6 +1,6 @@
 defmodule Cog.Commands.Bundle do
   use Cog.Command.GenCommand.Base,
-    bundle: Cog.embedded_bundle
+    bundle: Cog.Util.Misc.embedded_bundle
 
   alias Cog.Models.{Bundle, BundleVersion}
   alias Cog.Commands.Bundle.{List, Versions, Info, Enable, Disable}
@@ -35,7 +35,7 @@ defmodule Cog.Commands.Bundle do
 
   permission "manage_commands"
 
-  rule "when command is #{Cog.embedded_bundle}:bundle must have #{Cog.embedded_bundle}:manage_commands"
+  rule "when command is #{Cog.Util.Misc.embedded_bundle}:bundle must have #{Cog.Util.Misc.embedded_bundle}:manage_commands"
 
   def handle_message(req, state) do
     {subcommand, args} = Helpers.get_subcommand(req.args)
@@ -72,10 +72,10 @@ defmodule Cog.Commands.Bundle do
     do: "Bundle #{inspect name} cannot be found."
   defp error({:not_found, name, version}),
     do: "Bundle #{inspect name} with version #{inspect to_string(version)} cannot be found."
-  defp error({:protected_bundle, unquote(Cog.embedded_bundle)}),
-    do: "Bundle #{inspect Cog.embedded_bundle} is protected and cannot be disabled."
-  defp error({:protected_bundle, unquote(Cog.site_namespace)}),
-    do: "Bundle #{inspect Cog.site_namespace} is protected and cannot be enabled."
+  defp error({:protected_bundle, unquote(Cog.Util.Misc.embedded_bundle)}),
+    do: "Bundle #{inspect Cog.Util.Misc.embedded_bundle} is protected and cannot be disabled."
+  defp error({:protected_bundle, unquote(Cog.Util.Misc.site_namespace)}),
+    do: "Bundle #{inspect Cog.Util.Misc.site_namespace} is protected and cannot be enabled."
   defp error({:protected_bundle, bundle_name}),
     do: "Bundle #{inspect bundle_name} is protected and cannot be enabled or disabled."
   defp error({:invalid_version, version}),

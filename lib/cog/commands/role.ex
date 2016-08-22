@@ -1,5 +1,5 @@
 defmodule Cog.Commands.Role do
-  use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle
+  use Cog.Command.GenCommand.Base, bundle: Cog.Util.Misc.embedded_bundle
   require Cog.Commands.Helpers, as: Helpers
 
   alias Cog.Commands.Role.{Create, Delete, Grant, Info, List, Rename, Revoke}
@@ -30,15 +30,15 @@ defmodule Cog.Commands.Role do
   permission "manage_groups"
 
   # This rule is for the default
-  rule "when command is #{Cog.embedded_bundle}:role must have #{Cog.embedded_bundle}:manage_roles"
+  rule "when command is #{Cog.Util.Misc.embedded_bundle}:role must have #{Cog.Util.Misc.embedded_bundle}:manage_roles"
 
-  rule "when command is #{Cog.embedded_bundle}:role with arg[0] == create must have #{Cog.embedded_bundle}:manage_roles"
-  rule "when command is #{Cog.embedded_bundle}:role with arg[0] == delete must have #{Cog.embedded_bundle}:manage_roles"
-  rule "when command is #{Cog.embedded_bundle}:role with arg[0] == info must have #{Cog.embedded_bundle}:manage_roles"
-  rule "when command is #{Cog.embedded_bundle}:role with arg[0] == list must have #{Cog.embedded_bundle}:manage_roles"
-  rule "when command is #{Cog.embedded_bundle}:role with arg[0] == grant must have #{Cog.embedded_bundle}:manage_groups"
-  rule "when command is #{Cog.embedded_bundle}:role with arg[0] == rename must have #{Cog.embedded_bundle}:manage_roles"
-  rule "when command is #{Cog.embedded_bundle}:role with arg[0] == revoke must have #{Cog.embedded_bundle}:manage_groups"
+  rule "when command is #{Cog.Util.Misc.embedded_bundle}:role with arg[0] == create must have #{Cog.Util.Misc.embedded_bundle}:manage_roles"
+  rule "when command is #{Cog.Util.Misc.embedded_bundle}:role with arg[0] == delete must have #{Cog.Util.Misc.embedded_bundle}:manage_roles"
+  rule "when command is #{Cog.Util.Misc.embedded_bundle}:role with arg[0] == info must have #{Cog.Util.Misc.embedded_bundle}:manage_roles"
+  rule "when command is #{Cog.Util.Misc.embedded_bundle}:role with arg[0] == list must have #{Cog.Util.Misc.embedded_bundle}:manage_roles"
+  rule "when command is #{Cog.Util.Misc.embedded_bundle}:role with arg[0] == grant must have #{Cog.Util.Misc.embedded_bundle}:manage_groups"
+  rule "when command is #{Cog.Util.Misc.embedded_bundle}:role with arg[0] == rename must have #{Cog.Util.Misc.embedded_bundle}:manage_roles"
+  rule "when command is #{Cog.Util.Misc.embedded_bundle}:role with arg[0] == revoke must have #{Cog.Util.Misc.embedded_bundle}:manage_groups"
 
   def handle_message(req, state) do
     {subcommand, args} = Helpers.get_subcommand(req.args)

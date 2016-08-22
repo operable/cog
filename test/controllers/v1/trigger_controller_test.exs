@@ -8,7 +8,7 @@ defmodule Cog.V1.TriggerControllerTest do
 
   setup do
     # Requests handled by the role controller require this permission
-    required_permission = permission("#{Cog.embedded_bundle}:manage_triggers")
+    required_permission = permission("#{Cog.Util.Misc.embedded_bundle}:manage_triggers")
 
     # This user will be used to test the normal operation of the controller
     authed_user = user("cog")

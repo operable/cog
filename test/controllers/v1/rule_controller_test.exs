@@ -5,7 +5,7 @@ defmodule Cog.V1.RuleController.Test do
   @bad_uuid "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
 
   setup do
-    required_permission = permission("#{Cog.embedded_bundle}:manage_commands")
+    required_permission = permission("#{Cog.Util.Misc.embedded_bundle}:manage_commands")
 
     # This user will be used to test the normal operation of the controller
     authed_user = user("cog")

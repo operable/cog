@@ -15,7 +15,7 @@ defmodule Cog.Repository.Roles do
     end
   end
 
-  def delete(%Role{name: unquote(Cog.admin_role)=name}),
+  def delete(%Role{name: unquote(Cog.Util.Misc.admin_role)=name}),
     do: {:error, {:protected_role, name}}
   def delete(%Role{}=role),
     do: Repo.delete(role)
@@ -45,7 +45,7 @@ defmodule Cog.Repository.Roles do
   end
 
   # We don't (yet) have need of general update
-  def rename(%Role{name: unquote(Cog.admin_role)=name}, _),
+  def rename(%Role{name: unquote(Cog.Util.Misc.admin_role)=name}, _),
     do: {:error, {:protected_role, name}}
   def rename(%Role{}=role, new_name) do
     case role

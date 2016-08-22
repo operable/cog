@@ -1,5 +1,5 @@
 defmodule Cog.Support.TestCommands.TypesTestCommand do
-  use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle, name: "type-test"
+  use Cog.Command.GenCommand.Base, bundle: Cog.Util.Misc.embedded_bundle, name: "type-test"
 
   @description "description"
 
@@ -9,7 +9,7 @@ defmodule Cog.Support.TestCommands.TypesTestCommand do
   option "float", type: "float", required: false
   option "incr", type: "incr", required: false
 
-  rule "when command is #{Cog.embedded_bundle}:type-test allow"
+  rule "when command is #{Cog.Util.Misc.embedded_bundle}:type-test allow"
 
   def handle_message(req, state) do
     {:reply, req.reply_to, "type-test response", state}

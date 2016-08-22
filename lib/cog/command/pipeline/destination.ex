@@ -111,10 +111,11 @@ defmodule Cog.Command.Pipeline.Destination do
   # the adapter that initially serviced the request.
   @spec adapter_destination(String.t, String.t) :: {String.t, String.t}
   defp adapter_destination("chat://" <> destination, _origin_adapter) do
-    {:ok, adapter} = Cog.chat_adapter_module
+    {:ok, adapter} = Cog.Util.Misc.chat_adapter_module
     {adapter, destination}
   end
   defp adapter_destination(destination, origin_adapter),
     do: {origin_adapter, destination}
+
 
 end

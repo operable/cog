@@ -1,6 +1,6 @@
 defmodule Cog.Commands.Help do
   use Cog.Command.GenCommand.Base,
-    bundle: Cog.embedded_bundle
+    bundle: Cog.Util.Misc.embedded_bundle
 
   use Cog.Models
   alias Cog.Repository.Commands
@@ -45,7 +45,7 @@ defmodule Cog.Commands.Help do
       operable:which
   """
 
-  rule "when command is #{Cog.embedded_bundle}:help allow"
+  rule "when command is #{Cog.Util.Misc.embedded_bundle}:help allow"
 
   option "disabled", short: "d", type: "bool", required: false
 

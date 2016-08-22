@@ -1,5 +1,5 @@
 defmodule Cog.Commands.Group do
-  use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle
+  use Cog.Command.GenCommand.Base, bundle: Cog.Util.Misc.embedded_bundle
   require Cog.Commands.Helpers, as: Helpers
   alias Cog.Commands.Group
 
@@ -27,8 +27,8 @@ defmodule Cog.Commands.Group do
   permission "manage_groups"
   permission "manage_users"
 
-  rule ~s(when command is #{Cog.embedded_bundle}:group must have #{Cog.embedded_bundle}:manage_groups)
-  rule ~s(when command is #{Cog.embedded_bundle}:group with arg[0] == 'member' must have #{Cog.embedded_bundle}:manage_users)
+  rule ~s(when command is #{Cog.Util.Misc.embedded_bundle}:group must have #{Cog.Util.Misc.embedded_bundle}:manage_groups)
+  rule ~s(when command is #{Cog.Util.Misc.embedded_bundle}:group with arg[0] == 'member' must have #{Cog.Util.Misc.embedded_bundle}:manage_users)
 
   # list options
   option "verbose", type: "bool", short: "v"

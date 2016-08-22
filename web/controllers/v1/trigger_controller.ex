@@ -3,7 +3,7 @@ defmodule Cog.V1.TriggerController do
   require Logger
 
   plug Cog.Plug.Authentication
-  plug Cog.Plug.Authorization, permission: "#{Cog.embedded_bundle}:manage_triggers"
+  plug Cog.Plug.Authorization, permission: "#{Cog.Util.Misc.embedded_bundle}:manage_triggers"
 
   alias Cog.Repository.Triggers
 

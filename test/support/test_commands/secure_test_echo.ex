@@ -1,5 +1,5 @@
 defmodule Cog.Support.TestCommands.SecureTestEcho do
-  use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle, name: "st-echo"
+  use Cog.Command.GenCommand.Base, bundle: Cog.Util.Misc.embedded_bundle, name: "st-echo"
 
   @description "description"
 
@@ -8,13 +8,13 @@ defmodule Cog.Support.TestCommands.SecureTestEcho do
 
   ## Example
 
-      @bot #{Cog.embedded_bundle}:secure-test-echo this is nifty
+      @bot #{Cog.Util.Misc.embedded_bundle}:secure-test-echo this is nifty
       > this if nifty
 
   """
 
   permission "st-echo"
-  rule "when command is #{Cog.embedded_bundle}:st-echo must have #{Cog.embedded_bundle}:st-echo"
+  rule "when command is #{Cog.Util.Misc.embedded_bundle}:st-echo must have #{Cog.Util.Misc.embedded_bundle}:st-echo"
 
   def handle_message(req, state) do
     {:reply, req.reply_to, echo_string(req.args), state}

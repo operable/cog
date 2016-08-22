@@ -9,7 +9,7 @@ defmodule Cog.V1.DynamicConfigControllerTest do
 
   setup do
     # Requests handled by the dynamic config controller require this permission
-    required_permission = permission("#{Cog.embedded_bundle}:manage_commands")
+    required_permission = permission("#{Cog.Util.Misc.embedded_bundle}:manage_commands")
 
     # This user will be used to test the normal operation of the controller
     authed_user = user("cog")

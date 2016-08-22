@@ -3,7 +3,7 @@ defmodule Cog.V1.RoleGrantController.Test do
   use Cog.ConnCase
 
   setup do
-    required_permission = permission("#{Cog.embedded_bundle}:manage_groups")
+    required_permission = permission("#{Cog.Util.Misc.embedded_bundle}:manage_groups")
 
     # This user will be used to test the normal operation of the controller
     authed_user = user("cog")
@@ -233,19 +233,19 @@ defmodule Cog.V1.RoleGrantController.Test do
     assert_role_is_granted(group, role)
   end
 
-  test "cannot revoke the #{Cog.admin_role} role from the #{Cog.admin_group} group", %{authed: requestor} do
+  test "cannot revoke the #{Cog.Util.Misc.admin_role} role from the #{Cog.Util.Misc.admin_group} group", %{authed: requestor} do
     # This is how the role and group get there in the first place
     Cog.Bootstrap.bootstrap
 
-    admin_role = %Cog.Models.Role{} = Cog.Repository.Roles.by_name(Cog.admin_role)
-    {:ok, admin_group}              = Cog.Repository.Groups.by_name(Cog.admin_group)
+    admin_role = %Cog.Models.Role{} = Cog.Repository.Roles.by_name(Cog.Util.Misc.admin_role)
+    {:ok, admin_group}              = Cog.Repository.Groups.by_name(Cog.Util.Misc.admin_group)
 
     conn = api_request(requestor, :post, "/v1/groups/#{admin_group.id}/roles",
                        body: %{"roles" => %{"revoke" => [admin_role.name]}})
 
     # TODO: Ideally, I'd like an error here instead... this'll change
     # when we get to https://github.com/operable/cog/issues/825
-    assert %{"roles" => [%{"name" => unquote(Cog.admin_role)}]} = json_response(conn, 200)
+    assert %{"roles" => [%{"name" => unquote(Cog.Util.Misc.admin_role)}]} = json_response(conn, 200)
 
     assert_role_is_granted(admin_group, admin_role)
   end

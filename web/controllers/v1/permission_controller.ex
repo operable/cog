@@ -7,7 +7,7 @@ defmodule Cog.V1.PermissionController do
   plug :scrub_params, "permission" when action in [:create, :update]
 
   plug Cog.Plug.Authentication
-  plug Cog.Plug.Authorization, permission: "#{Cog.embedded_bundle}:manage_permissions"
+  plug Cog.Plug.Authorization, permission: "#{Cog.Util.Misc.embedded_bundle}:manage_permissions"
 
   @site "site"
 

@@ -8,7 +8,7 @@ RETURNS TRIGGER
 LANGUAGE plpgsql
 AS $$
 BEGIN
-  IF OLD.NAME = '#{Cog.admin_role}' THEN
+  IF OLD.NAME = '#{Cog.Util.Misc.admin_role}' THEN
     RAISE EXCEPTION 'cannot modify admin role';
   END IF;
   RETURN NULL;
@@ -29,7 +29,7 @@ RETURNS TRIGGER
 LANGUAGE plpgsql
 AS $$
 BEGIN
-  IF OLD.NAME = '#{Cog.admin_group}' THEN
+  IF OLD.NAME = '#{Cog.Util.Misc.admin_group}' THEN
     RAISE EXCEPTION 'cannot modify admin group';
   END IF;
   RETURN NULL;
@@ -50,7 +50,7 @@ RETURNS TRIGGER
 LANGUAGE plpgsql
 AS $$
 BEGIN
-  IF OLD.NAME = '#{Cog.embedded_bundle}' THEN
+  IF OLD.NAME = '#{Cog.Util.Misc.embedded_bundle}' THEN
     RAISE EXCEPTION 'cannot modify embedded bundle';
   END IF;
   RETURN NULL;

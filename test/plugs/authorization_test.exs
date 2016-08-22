@@ -6,15 +6,15 @@ defmodule Cog.Plug.Authorization.Test do
   setup do
     user = user("cog")
     no_perm_user = user("noperm")
-    granted = permission("#{Cog.embedded_bundle}:manage_users")
-    ungranted = permission("#{Cog.embedded_bundle}:manage_groups")
+    granted = permission("#{Cog.Util.Misc.embedded_bundle}:manage_users")
+    ungranted = permission("#{Cog.Util.Misc.embedded_bundle}:manage_groups")
     :ok = Permittable.grant_to(user, granted)
     {:ok, [user: user,
            no_perm_user: no_perm_user,
            granted: granted,
-           granted_name: "#{Cog.embedded_bundle}:manage_users",
+           granted_name: "#{Cog.Util.Misc.embedded_bundle}:manage_users",
            ungranted: ungranted,
-           ungranted_name: "#{Cog.embedded_bundle}:manage_groups"]}
+           ungranted_name: "#{Cog.Util.Misc.embedded_bundle}:manage_groups"]}
   end
 
   test "errors if :user assigns is missing", %{granted_name: permission} do
@@ -31,7 +31,7 @@ defmodule Cog.Plug.Authorization.Test do
 
   test "init fails when passing a list of permissions" do
     # permission lookup expects a single string
-    error = catch_error(Authorization.init(permission: ["#{Cog.embedded_bundle}:manage_users", "#{Cog.embedded_bundle}:manage_groups"]))
+    error = catch_error(Authorization.init(permission: ["#{Cog.Util.Misc.embedded_bundle}:manage_users", "#{Cog.Util.Misc.embedded_bundle}:manage_groups"]))
     assert %RuntimeError{} = error
   end
 
@@ -47,7 +47,7 @@ defmodule Cog.Plug.Authorization.Test do
   # TODO: we might want to rescue this error, log the problem, and
   # still return 403
   test "plug fails when passing an unrecognized permission" do
-    error = catch_error(conn(:get, "/") |> Authorization.call(Authorization.init(permission: "#{Cog.embedded_bundle}:do_stuff")))
+    error = catch_error(conn(:get, "/") |> Authorization.call(Authorization.init(permission: "#{Cog.Util.Misc.embedded_bundle}:do_stuff")))
     assert %Ecto.NoResultsError{} = error
   end
 

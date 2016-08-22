@@ -5,7 +5,7 @@ defmodule Cog.V1.RuleController do
   require Logger
 
   plug Cog.Plug.Authentication
-  plug Cog.Plug.Authorization, permission: "#{Cog.embedded_bundle}:manage_commands"
+  plug Cog.Plug.Authorization, permission: "#{Cog.Util.Misc.embedded_bundle}:manage_commands"
 
   def index(conn, %{"for-command" => command}) do
     case Rules.rules_for_command(command) do

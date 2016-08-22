@@ -34,7 +34,7 @@ defmodule Cog.Bootstrap do
   Returns `true` if the system has been bootstrapped, `false` if not.
   """
   def is_bootstrapped? do
-    case Repo.get_by(Group, name: Cog.admin_group) do
+    case Repo.get_by(Group, name: Cog.Util.Misc.admin_group) do
       %Group{} -> true
       nil -> false
     end
@@ -58,8 +58,8 @@ defmodule Cog.Bootstrap do
   def bootstrap(params) do
     Repo.transaction(fn() ->
       user  = create_admin(params)
-      role  = create_by_name(Role, Cog.admin_role)
-      group = create_by_name(Group, Cog.admin_group)
+      role  = create_by_name(Role, Cog.Util.Misc.admin_role)
+      group = create_by_name(Group, Cog.Util.Misc.admin_group)
 
       grant_embedded_permissions_to(role)
       Permittable.grant_to(group, role)
@@ -156,7 +156,7 @@ defmodule Cog.Bootstrap do
   end
 
   defp grant_embedded_permissions_to(role) do
-    Cog.embedded_bundle
+    Cog.Util.Misc.embedded_bundle
     |> Cog.Queries.Permission.from_bundle_name
     |> Repo.all
     |> Enum.each(&Permittable.grant_to(role, &1))

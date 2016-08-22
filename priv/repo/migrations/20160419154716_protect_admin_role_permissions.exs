@@ -19,7 +19,7 @@ BEGIN
    WHERE namespaces.id=permissions.namespace_id
      AND permissions.id=OLD.permission_id;
 
-  IF role = '#{Cog.admin_role}' AND namespace = '#{Cog.embedded_bundle}' THEN
+  IF role = '#{Cog.Util.Misc.admin_role}' AND namespace = '#{Cog.Util.Misc.embedded_bundle}' THEN
     RAISE EXCEPTION 'cannot remove embedded permissions from admin role';
   END IF;
   RETURN NULL;

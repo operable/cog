@@ -7,7 +7,7 @@ defmodule Cog.V1.RelayGroupController do
   alias Cog.Repo
 
   plug Cog.Plug.Authentication
-  plug Cog.Plug.Authorization, permission: "#{Cog.embedded_bundle}:manage_relays"
+  plug Cog.Plug.Authorization, permission: "#{Cog.Util.Misc.embedded_bundle}:manage_relays"
 
   plug :scrub_params, "relay_group" when action in [:create, :update]
 

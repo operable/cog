@@ -54,7 +54,7 @@ defmodule Cog.Models.Group do
   end
 
   defp protect_admin_group(%Changeset{data: data}=changeset) do
-    if data.name == Cog.admin_group do
+    if data.name == Cog.Util.Misc.admin_group do
       changeset
       |> add_error(:name, "admin group may not be modified")
     else
@@ -69,8 +69,8 @@ defimpl Permittable, for: Cog.Models.Group do
   def grant_to(group, permission_or_role),
     do: Cog.Models.JoinTable.associate(group, permission_or_role)
 
-  def revoke_from(%Cog.Models.Group{name: unquote(Cog.admin_group)=group_name},
-                  %Cog.Models.Role{name: unquote(Cog.admin_role)=role_name}),
+  def revoke_from(%Cog.Models.Group{name: unquote(Cog.Util.Misc.admin_group)=group_name},
+                  %Cog.Models.Role{name: unquote(Cog.Util.Misc.admin_role)=role_name}),
     do: {:error, {:permanent_role_grant, role_name, group_name}}
   def revoke_from(group, permission_or_role),
     do: Cog.Models.JoinTable.dissociate(group, permission_or_role)

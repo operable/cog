@@ -16,8 +16,8 @@ defmodule Cog.Models.Group.Test do
 
   test "admin group cannot be renamed" do
     Cog.Bootstrap.bootstrap
-    group = Group |> Repo.get_by(name: Cog.admin_group)
-    assert group.name == Cog.admin_group
+    group = Group |> Repo.get_by(name: Cog.Util.Misc.admin_group)
+    assert group.name == Cog.Util.Misc.admin_group
     {:error, changeset} = Repo.update(Group.changeset(group, %{"name" => "not-cog-admin"}))
     assert {:name, {"admin group may not be modified", []}} in changeset.errors
   end

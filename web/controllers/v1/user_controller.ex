@@ -4,7 +4,7 @@ defmodule Cog.V1.UserController do
   alias Cog.Repository.Users
 
   plug Cog.Plug.Authentication
-  plug Cog.Plug.Authorization, [permission: "#{Cog.embedded_bundle}:manage_users",
+  plug Cog.Plug.Authorization, [permission: "#{Cog.Util.Misc.embedded_bundle}:manage_users",
                                 self_updates_on: [:update, :show]]
 
   plug :scrub_params, "user" when action in [:create, :update]
