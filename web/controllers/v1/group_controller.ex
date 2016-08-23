@@ -4,7 +4,7 @@ defmodule Cog.V1.GroupController do
   alias Cog.Repository.Groups
 
   plug Cog.Plug.Authentication
-  plug Cog.Plug.Authorization, permission: "#{Cog.embedded_bundle}:manage_groups"
+  plug Cog.Plug.Authorization, permission: "#{Cog.Util.Misc.embedded_bundle}:manage_groups"
 
   plug :scrub_params, "group" when action in [:create, :update]
 

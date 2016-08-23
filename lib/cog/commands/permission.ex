@@ -1,5 +1,5 @@
 defmodule Cog.Commands.Permission do
-  use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle
+  use Cog.Command.GenCommand.Base, bundle: Cog.Util.Misc.embedded_bundle
   require Cog.Commands.Helpers, as: Helpers
 
   alias Cog.Commands.Permission.{Create, Delete, Grant, Info, List, Revoke}
@@ -29,14 +29,14 @@ defmodule Cog.Commands.Permission do
   permission "manage_roles"
 
   # first rule is for default list scenario
-  rule "when command is #{Cog.embedded_bundle}:permission must have #{Cog.embedded_bundle}:manage_permissions"
+  rule "when command is #{Cog.Util.Misc.embedded_bundle}:permission must have #{Cog.Util.Misc.embedded_bundle}:manage_permissions"
 
-  rule "when command is #{Cog.embedded_bundle}:permission with arg[0] == create must have #{Cog.embedded_bundle}:manage_permissions"
-  rule "when command is #{Cog.embedded_bundle}:permission with arg[0] == delete must have #{Cog.embedded_bundle}:manage_permissions"
-  rule "when command is #{Cog.embedded_bundle}:permission with arg[0] == info must have #{Cog.embedded_bundle}:manage_permissions"
-  rule "when command is #{Cog.embedded_bundle}:permission with arg[0] == list must have #{Cog.embedded_bundle}:manage_permissions"
-  rule "when command is #{Cog.embedded_bundle}:permission with arg[0] == grant must have #{Cog.embedded_bundle}:manage_roles"
-  rule "when command is #{Cog.embedded_bundle}:permission with arg[0] == revoke must have #{Cog.embedded_bundle}:manage_roles"
+  rule "when command is #{Cog.Util.Misc.embedded_bundle}:permission with arg[0] == create must have #{Cog.Util.Misc.embedded_bundle}:manage_permissions"
+  rule "when command is #{Cog.Util.Misc.embedded_bundle}:permission with arg[0] == delete must have #{Cog.Util.Misc.embedded_bundle}:manage_permissions"
+  rule "when command is #{Cog.Util.Misc.embedded_bundle}:permission with arg[0] == info must have #{Cog.Util.Misc.embedded_bundle}:manage_permissions"
+  rule "when command is #{Cog.Util.Misc.embedded_bundle}:permission with arg[0] == list must have #{Cog.Util.Misc.embedded_bundle}:manage_permissions"
+  rule "when command is #{Cog.Util.Misc.embedded_bundle}:permission with arg[0] == grant must have #{Cog.Util.Misc.embedded_bundle}:manage_roles"
+  rule "when command is #{Cog.Util.Misc.embedded_bundle}:permission with arg[0] == revoke must have #{Cog.Util.Misc.embedded_bundle}:manage_roles"
 
   def handle_message(req, state) do
     {subcommand, args} = Helpers.get_subcommand(req.args)

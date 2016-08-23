@@ -6,7 +6,7 @@ defmodule Cog.V1.PermissionGrantController do
 
   plug Cog.Plug.Authentication
 
-  plug Cog.Plug.Authorization, [permission: "#{Cog.embedded_bundle}:manage_roles"] when action == :manage_role_permissions
+  plug Cog.Plug.Authorization, [permission: "#{Cog.Util.Misc.embedded_bundle}:manage_roles"] when action == :manage_role_permissions
 
   plug :put_view, Cog.V1.PermissionView
 

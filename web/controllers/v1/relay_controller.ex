@@ -4,7 +4,7 @@ defmodule Cog.V1.RelayController do
   alias Cog.Repository.Relays, as: RelaysRepo
 
   plug Cog.Plug.Authentication
-  plug Cog.Plug.Authorization, permission: "#{Cog.embedded_bundle}:manage_relays"
+  plug Cog.Plug.Authorization, permission: "#{Cog.Util.Misc.embedded_bundle}:manage_relays"
 
   plug :scrub_params, "relay" when action in [:create, :update]
 

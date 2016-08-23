@@ -1,6 +1,6 @@
 defmodule Cog.Commands.Rule do
   use Cog.Command.GenCommand.Base,
-    bundle: Cog.embedded_bundle
+    bundle: Cog.Util.Misc.embedded_bundle
 
   alias Cog.Commands.Rule.{Info, List, Create, Delete}
   require Cog.Commands.Helpers, as: Helpers
@@ -28,7 +28,7 @@ defmodule Cog.Commands.Rule do
 
   permission "manage_commands"
 
-  rule "when command is #{Cog.embedded_bundle}:rule must have #{Cog.embedded_bundle}:manage_commands"
+  rule "when command is #{Cog.Util.Misc.embedded_bundle}:rule must have #{Cog.Util.Misc.embedded_bundle}:manage_commands"
 
   def handle_message(req, state) do
     {subcommand, args} = Helpers.get_subcommand(req.args)

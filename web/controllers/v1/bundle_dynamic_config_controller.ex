@@ -7,7 +7,7 @@ defmodule Cog.V1.BundleDynamicConfigController do
   alias Cog.Repository.Bundles
 
   plug Cog.Plug.Authentication
-  plug Cog.Plug.Authorization, permission: "#{Cog.embedded_bundle}:manage_commands"
+  plug Cog.Plug.Authorization, permission: "#{Cog.Util.Misc.embedded_bundle}:manage_commands"
 
   def show_all(conn, %{"bundle_id" => id}),
     do: all_config(conn, id)

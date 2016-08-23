@@ -1,5 +1,5 @@
 defmodule Cog.Commands.Which do
-  use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle
+  use Cog.Command.GenCommand.Base, bundle: Cog.Util.Misc.embedded_bundle
   alias Cog.Commands.Helpers
   alias Cog.Models.UserCommandAlias
   alias Cog.Models.SiteCommandAlias
@@ -34,7 +34,7 @@ defmodule Cog.Commands.Which do
     > No matching commands or aliases.
   """
 
-  rule "when command is #{Cog.embedded_bundle}:which allow"
+  rule "when command is #{Cog.Util.Misc.embedded_bundle}:which allow"
 
   def handle_message(req, state) do
     results = with {:ok, [arg]} <- Helpers.get_args(req.args, count: 1),

@@ -7,7 +7,7 @@ defmodule Cog.V1.PermissionControllerTest do
   @bad_uuid "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
 
   setup do
-    required_permission = permission("#{Cog.embedded_bundle}:manage_permissions")
+    required_permission = permission("#{Cog.Util.Misc.embedded_bundle}:manage_permissions")
 
     # This user will be used to test the normal operation of the controller
     authed_user = user("cog")
@@ -98,7 +98,7 @@ defmodule Cog.V1.PermissionControllerTest do
 
 
     # embedded bundle namespace
-    embedded_perm = permission("#{Cog.embedded_bundle}:test_perm") |> Repo.preload(:bundle)
+    embedded_perm = permission("#{Cog.Util.Misc.embedded_bundle}:test_perm") |> Repo.preload(:bundle)
     conn = api_request(user, :get, "/v1/permissions/#{embedded_perm.id}")
     assert json_response(conn, 200) == %{
       "permission" =>

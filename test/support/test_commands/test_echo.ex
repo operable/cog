@@ -1,5 +1,5 @@
 defmodule Cog.Support.TestCommands.TestEcho do
-  use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle, name: "t-echo"
+  use Cog.Command.GenCommand.Base, bundle: Cog.Util.Misc.embedded_bundle, name: "t-echo"
 
   @description "description"
 
@@ -8,12 +8,12 @@ defmodule Cog.Support.TestCommands.TestEcho do
 
   ## Example
 
-      @bot #{Cog.embedded_bundle}:t-echo this is nifty
+      @bot #{Cog.Util.Misc.embedded_bundle}:t-echo this is nifty
       > this if nifty
 
   """
 
-  rule "when command is #{Cog.embedded_bundle}:t-echo allow"
+  rule "when command is #{Cog.Util.Misc.embedded_bundle}:t-echo allow"
 
   def handle_message(req, state) do
     {:reply, req.reply_to, echo_string(req.args), state}

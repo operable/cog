@@ -1,5 +1,5 @@
 defmodule Cog.Commands.Alias do
-  use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle
+  use Cog.Command.GenCommand.Base, bundle: Cog.Util.Misc.embedded_bundle
   alias Cog.Commands.Alias
   require Cog.Commands.Helpers, as: Helpers
 
@@ -40,7 +40,7 @@ defmodule Cog.Commands.Alias do
       Pipeline: 'echo my-other-awesome-alias'
   """
 
-  rule "when command is #{Cog.embedded_bundle}:alias allow"
+  rule "when command is #{Cog.Util.Misc.embedded_bundle}:alias allow"
 
   def handle_message(req, state) do
     {subcommand, args} = Helpers.get_subcommand(req.args)

@@ -14,7 +14,7 @@ defmodule Cog.Commands.Bundle.Disable do
   A disabled bundle can be re-enabled using this the `enable`
   sub-command.
 
-  Cannot be used on the `#{Cog.embedded_bundle}` bundle.
+  Cannot be used on the `#{Cog.Util.Misc.embedded_bundle}` bundle.
 
   USAGE
     bundle disable [FLAGS] <name>

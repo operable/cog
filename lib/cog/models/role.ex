@@ -47,7 +47,7 @@ defmodule Cog.Models.Role do
   end
 
   defp protect_admin_role(%Changeset{data: data}=changeset) do
-    if data.name == Cog.admin_role do
+    if data.name == Cog.Util.Misc.admin_role do
       changeset
       |> add_error(:name, "admin role may not be modified")
     else
@@ -67,7 +67,7 @@ defimpl Permittable, for: Cog.Models.Role do
 
   def revoke_from(role, permission) do
     bundle = Repo.get(Bundle, permission.bundle_id)
-    if role.name == Cog.admin_role and bundle.name == Cog.embedded_bundle do
+    if role.name == Cog.Util.Misc.admin_role and bundle.name == Cog.Util.Misc.embedded_bundle do
       {:error, "cannot remove embedded permissions from admin role"}
     else
       JoinTable.dissociate(role, permission)

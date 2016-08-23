@@ -1,6 +1,6 @@
 defmodule Cog.Commands.Sort do
   use Cog.Command.GenCommand.Base,
-    bundle: Cog.embedded_bundle
+    bundle: Cog.Util.Misc.embedded_bundle
 
   alias Cog.Command.Service.MemoryClient
 
@@ -31,7 +31,7 @@ defmodule Cog.Commands.Sort do
     > [{"a": 1, "b": 4}, {"a: 3, "b": 4}, {"a": 2, "b": 6}]
   """
 
-  rule "when command is #{Cog.embedded_bundle}:sort allow"
+  rule "when command is #{Cog.Util.Misc.embedded_bundle}:sort allow"
 
   option "desc", short: "d", type: "bool", required: false
   option "asc",  short: "a", type: "bool", required: false

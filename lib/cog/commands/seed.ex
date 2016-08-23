@@ -1,5 +1,5 @@
 defmodule Cog.Command.Seed do
-  use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle
+  use Cog.Command.GenCommand.Base, bundle: Cog.Util.Misc.embedded_bundle
 
   alias Cog.Messages.Command
   require Logger
@@ -30,7 +30,7 @@ defmodule Cog.Command.Seed do
 
   """
 
-  rule "when command is #{Cog.embedded_bundle}:seed allow"
+  rule "when command is #{Cog.Util.Misc.embedded_bundle}:seed allow"
 
   def handle_message(%Command{args: [input]}=req, state) when not(is_binary(input)),
     do: {:error, req.reply_to, "Argument must be a string", state}

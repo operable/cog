@@ -1,12 +1,12 @@
 defmodule Cog.Commands.Trigger do
-  use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle
+  use Cog.Command.GenCommand.Base, bundle: Cog.Util.Misc.embedded_bundle
 
   alias Cog.Commands.Trigger.{Create, Delete, Disable, Enable, Info, List, Update}
   require Cog.Commands.Helpers, as: Helpers
 
   permission "manage_triggers"
 
-  rule "when command is #{Cog.embedded_bundle}:trigger must have #{Cog.embedded_bundle}:manage_triggers"
+  rule "when command is #{Cog.Util.Misc.embedded_bundle}:trigger must have #{Cog.Util.Misc.embedded_bundle}:manage_triggers"
 
   @description "Manage triggered pipelines"
 

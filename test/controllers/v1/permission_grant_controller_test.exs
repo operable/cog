@@ -33,9 +33,9 @@ defmodule Cog.V1.PermissionGrantController.Test do
     # the permission that the user making the API requests needs to
     # have in order to be authorized to make the request.
     required_permission = case context[:base] do
-                            :user -> permission("#{Cog.embedded_bundle}:manage_users")
-                            :role -> permission("#{Cog.embedded_bundle}:manage_roles")
-                            :group -> permission("#{Cog.embedded_bundle}:manage_groups")
+                            :user -> permission("#{Cog.Util.Misc.embedded_bundle}:manage_users")
+                            :role -> permission("#{Cog.Util.Misc.embedded_bundle}:manage_roles")
+                            :group -> permission("#{Cog.Util.Misc.embedded_bundle}:manage_groups")
                           end
 
     # This user will be used to test the normal operation of the controller

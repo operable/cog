@@ -9,10 +9,10 @@ defmodule Cog.Models.Role.Test do
     if _ = context[:bootstrap] do
       Cog.Bootstrap.bootstrap
 
-      admin_role = Role |> Repo.get_by(name: Cog.admin_role)
-      assert admin_role.name == Cog.admin_role
+      admin_role = Role |> Repo.get_by(name: Cog.Util.Misc.admin_role)
+      assert admin_role.name == Cog.Util.Misc.admin_role
 
-      admin_perms = Queries.Permission.from_bundle_name(Cog.embedded_bundle) |> Repo.all
+      admin_perms = Queries.Permission.from_bundle_name(Cog.Util.Misc.embedded_bundle) |> Repo.all
 
       {:ok, admin_role: admin_role, admin_perms: admin_perms, bootstrapped: true}
     else

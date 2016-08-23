@@ -1,5 +1,5 @@
 defmodule Cog.Commands.SecureTestThorn do
-  use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle, name: "st-thorn"
+  use Cog.Command.GenCommand.Base, bundle: Cog.Util.Misc.embedded_bundle, name: "st-thorn"
 
   @upcase_thorn "Þ"
   @downcase_thorn "þ"
@@ -7,7 +7,7 @@ defmodule Cog.Commands.SecureTestThorn do
   @description "description"
 
   permission "st-thorn"
-  rule "when command is #{Cog.embedded_bundle}:st-thorn must have #{Cog.embedded_bundle}:st-thorn"
+  rule "when command is #{Cog.Util.Misc.embedded_bundle}:st-thorn must have #{Cog.Util.Misc.embedded_bundle}:st-thorn"
 
   def handle_message(req, state) do
     text = Enum.join(req.args, " ")

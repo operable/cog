@@ -1,6 +1,6 @@
 defmodule Cog.Commands.Sleep do
   use Cog.Command.GenCommand.Base,
-    bundle: Cog.embedded_bundle
+    bundle: Cog.Util.Misc.embedded_bundle
 
   alias Cog.Command.Service.MemoryClient
 
@@ -19,7 +19,7 @@ defmodule Cog.Commands.Sleep do
     > Lasagna is done cooking!
   """
 
-  rule "when command is #{Cog.embedded_bundle}:sleep allow"
+  rule "when command is #{Cog.Util.Misc.embedded_bundle}:sleep allow"
 
   def handle_message(%{args: [seconds]} = req, state) when is_integer(seconds) do
     root  = req.services_root

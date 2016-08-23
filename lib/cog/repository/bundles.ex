@@ -26,8 +26,8 @@ defmodule Cog.Repository.Bundles do
   @bundle_dynamic_config_preloads [:bundle]
 
   @reserved_bundle_names [
-    Cog.embedded_bundle,
-    Cog.site_namespace,
+    Cog.Util.Misc.embedded_bundle,
+    Cog.Util.Misc.site_namespace,
     "user", # a bundle named "user" would break alias resolution
     "cog"   # we're going to squat on this for now to prevent potential confusion
   ]
@@ -75,7 +75,7 @@ defmodule Cog.Repository.Bundles do
     Logger.info("Dev mode detected. Resetting embedded bundle.")
     Repo.delete_all(from bv in BundleVersion,
                     join: b in assoc(bv, :bundle),
-                    where: b.name == ^Cog.embedded_bundle)
+                    where: b.name == ^Cog.Util.Misc.embedded_bundle)
   end
 
   @doc """
@@ -431,7 +431,7 @@ defmodule Cog.Repository.Bundles do
     # just select the highest-version of the bundle.
     #
     # Yay, abstraction!
-    embedded_name = Cog.embedded_bundle
+    embedded_name = Cog.Util.Misc.embedded_bundle
 
     Repo.one(from bv in BundleVersion,
              join: b in assoc(bv, :bundle),
@@ -450,7 +450,7 @@ defmodule Cog.Repository.Bundles do
     do: Repo.one!(site_bundle_version_query)
 
   def is_site_version?(version) do
-    (version.bundle.name == Cog.site_namespace) and
+    (version.bundle.name == Cog.Util.Misc.site_namespace) and
     (to_string(version.version) == @permanent_site_bundle_version)
   end
 
@@ -460,7 +460,7 @@ defmodule Cog.Repository.Bundles do
   def ensure_site_bundle do
     case Repo.one(site_bundle_version_query) do
       nil ->
-        {:ok, _} = __install(%{"name" => Cog.site_namespace,
+        {:ok, _} = __install(%{"name" => Cog.Util.Misc.site_namespace,
                                "version" => @permanent_site_bundle_version,
                                "config_file" => %{}})
         :ok
@@ -470,7 +470,7 @@ defmodule Cog.Repository.Bundles do
   end
 
   defp site_bundle_version_query do
-    site = Cog.site_namespace
+    site = Cog.Util.Misc.site_namespace
 
     from bv in BundleVersion,
     join: b in assoc(bv, :bundle),

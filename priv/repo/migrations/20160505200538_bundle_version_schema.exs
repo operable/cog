@@ -242,7 +242,7 @@ defmodule Cog.Repo.Migrations.BundleVersionSchema do
        WHERE bundles_v2.id=permissions_v2.bundle_id
          AND permissions_v2.id=OLD.permission_id;
 
-      IF role = '#{Cog.admin_role}' AND bundle = '#{Cog.embedded_bundle}' THEN
+      IF role = '#{Cog.Util.Misc.admin_role}' AND bundle = '#{Cog.Util.Misc.embedded_bundle}' THEN
         RAISE EXCEPTION 'cannot remove embedded permissions from admin role';
       END IF;
       RETURN NULL;

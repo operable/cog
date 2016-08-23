@@ -1,5 +1,5 @@
 defmodule Cog.Command.Raw do
-  use Cog.Command.GenCommand.Base, bundle: Cog.embedded_bundle
+  use Cog.Command.GenCommand.Base, bundle: Cog.Util.Misc.embedded_bundle
 
   alias Cog.Messages.Command
 
@@ -23,7 +23,7 @@ defmodule Cog.Command.Raw do
 
   """
 
-  rule "when command is #{Cog.embedded_bundle}:raw allow"
+  rule "when command is #{Cog.Util.Misc.embedded_bundle}:raw allow"
 
   def handle_message(%Command{cog_env: nil}=req, state),
     do: {:reply, req.reply_to, "nil", state}

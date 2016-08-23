@@ -11,7 +11,7 @@ defmodule Cog.Commands.Bundle.Enable do
   Enabling a bundle allows chat commands to be routed to it. Running
   this subcommand has no effect if a bundle is already enabled.
 
-  Cannot be used on the `#{Cog.embedded_bundle}` bundle.
+  Cannot be used on the `#{Cog.Util.Misc.embedded_bundle}` bundle.
 
   USAGE
     bundle enable [FLAGS] <name> [<version>]

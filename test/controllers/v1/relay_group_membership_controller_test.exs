@@ -12,8 +12,8 @@ defmodule Cog.V1.RelayGroupMembershipControllerTest do
     # This user will be used to test the normal operation of the controller
     authed_user = user("cog")
     |> with_token
-    |> with_permission("#{Cog.embedded_bundle}:manage_relays")
-    |> with_permission("#{Cog.embedded_bundle}:manage_commands")
+    |> with_permission("#{Cog.Util.Misc.embedded_bundle}:manage_relays")
+    |> with_permission("#{Cog.Util.Misc.embedded_bundle}:manage_commands")
 
     # This user will be used to verify that the above permission is
     # indeed required for requests
@@ -254,7 +254,7 @@ defmodule Cog.V1.RelayGroupMembershipControllerTest do
     assert bundle_ids == sorted_response
   end
 
-  Enum.each([Cog.embedded_bundle, Cog.site_namespace], fn(bundle_name)->
+  Enum.each([Cog.Util.Misc.embedded_bundle, Cog.Util.Misc.site_namespace], fn(bundle_name)->
     test "cannot assign protected bundle #{bundle_name} to a relay", %{authed: requestor} do
       relay_group = relay_group("test-group")
 
