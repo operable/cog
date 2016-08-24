@@ -1,4 +1,4 @@
-defmodule Cog.Chat.SlackProvider do
+defmodule Cog.Chat.Slack.Provider do
 
   require Logger
 
@@ -7,7 +7,7 @@ defmodule Cog.Chat.SlackProvider do
 
   alias Carrier.Messaging.Connection
   alias Carrier.Messaging.GenMqtt
-  alias Cog.Chat.SlackConnector
+  alias Cog.Chat.Slack.Connector
 
   defstruct [:token, :incoming, :connector, :mbus]
 
@@ -45,22 +45,22 @@ defmodule Cog.Chat.SlackProvider do
     incoming = Keyword.fetch!(config, :incoming_topic)
 
     {:ok, mbus} = Connection.connect()
-    {:ok, pid} = SlackConnector.start_link(token)
+    {:ok, pid} = Connector.start_link(token)
     {:ok, %__MODULE__{token: token, incoming: incoming, connector: pid, mbus: mbus}}
   end
 
   def handle_call({:lookup_room, id}, _from, %__MODULE__{connector: connector, token: token}=state) do
-    {:reply, SlackConnector.call(connector, token, :lookup_room, %{id: id}), state}
+    {:reply, Connector.call(connector, token, :lookup_room, %{id: id}), state}
   end
 
   def handle_call({:lookup_user, handle}, _from, %__MODULE__{connector: connector, token: token}=state) do
-    {:reply, SlackConnector.call(connector, token, :lookup_user, %{handle: handle}), state}
+    {:reply, Connector.call(connector, token, :lookup_user, %{handle: handle}), state}
   end
   def handle_call(:list_joined_rooms, _from, %__MODULE__{connector: connector, token: token}=state) do
-    {:reply, SlackConnector.call(connector, token, :list_joined_rooms), state}
+    {:reply, Connector.call(connector, token, :list_joined_rooms), state}
   end
   def handle_call({:join, room}, _from, %__MODULE__{connector: connector, token: token}=state) do
-    case SlackConnector.call(connector, token, :join, %{room: room}) do
+    case Connector.call(connector, token, :join, %{room: room}) do
       %{"ok" => true} ->
         {:reply, :ok, state}
       reply ->
@@ -68,7 +68,7 @@ defmodule Cog.Chat.SlackProvider do
     end
   end
   def handle_call({:leave, room}, _from, %__MODULE__{connector: connector, token: token}=state) do
-    case SlackConnector.call(connector, token, :leave, %{room: room}) do
+    case Connector.call(connector, token, :leave, %{room: room}) do
       %{"ok" => true} ->
         {:reply, :ok, state}
       reply ->
@@ -76,7 +76,7 @@ defmodule Cog.Chat.SlackProvider do
     end
   end
   def handle_call({:send_message, target, message}, _from, %__MODULE__{connector: connector, token: token}=state) do
-    result = SlackConnector.call(connector, token, :send_message, %{target: target, message: message})
+    result = Connector.call(connector, token, :send_message, %{target: target, message: message})
     case result["ok"] do
       true ->
         {:reply, :ok, state}

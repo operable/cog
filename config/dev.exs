@@ -13,7 +13,7 @@ config :cog,
   :template_cache_ttl, {1, :sec}
 
 config :cog, Cog.Chat.Adapter,
-  providers: [slack: Cog.Chat.SlackProvider],
+  providers: [slack: Cog.Chat.Slack.Provider],
   chat: :slack
 
 config :cog, Cog.Endpoint,

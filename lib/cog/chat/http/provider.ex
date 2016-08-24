@@ -1,11 +1,13 @@
-defmodule Cog.Chat.HttpProvider do
+defmodule Cog.Chat.Http.Provider do
   use GenServer
   use Cog.Chat.Provider
-  alias Cog.Chat.HttpConnector
-  alias Cog.Chat.Room
-  alias Cog.Chat.Message
+
   alias Carrier.Messaging.Connection
   alias Carrier.Messaging.GenMqtt
+  alias Cog.Chat.Http.Connector
+  alias Cog.Chat.Message
+  alias Cog.Chat.Room
+
   require Logger
 
   @provider_name "http"
@@ -19,7 +21,7 @@ defmodule Cog.Chat.HttpProvider do
   # Provider Implementation
 
   def send_message(room, response),
-    do: HttpConnector.finish_request(room, response)
+    do: Connector.finish_request(room, response)
 
   def lookup_room(_room),
     do: {:error, :not_found}

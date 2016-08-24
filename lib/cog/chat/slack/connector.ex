@@ -1,12 +1,12 @@
-defmodule Cog.Chat.SlackConnector do
+defmodule Cog.Chat.Slack.Connector do
   require Logger
   use Slack
 
-  alias Cog.Chat.SlackProvider
-  alias Cog.Chat.SlackFormatter
-  alias Cog.Chat.User
-  alias Cog.Chat.Room
   alias Cog.Chat.Message
+  alias Cog.Chat.Room
+  alias Cog.Chat.Slack.Formatter
+  alias Cog.Chat.Slack.Provider
+  alias Cog.Chat.User
 
   @provider_name "slack"
 
@@ -31,7 +31,7 @@ defmodule Cog.Chat.SlackConnector do
       :ignore ->
         :ok
       msg ->
-        GenServer.cast(SlackProvider, msg)
+        GenServer.cast(Provider, msg)
         :ok
     end
   end
@@ -240,7 +240,7 @@ defmodule Cog.Chat.SlackConnector do
  defp annotate(_, _), do: :ignore
 
  defp annotate_message(%{channel: << <<"C">>, _::binary >>=channel, user: userid, text: text}, state) do
-   text = SlackFormatter.unescape(text, state)
+   text = Formatter.unescape(text, state)
    user = lookup_user(userid, state.users, by: :id)
    if user == nil do
      Logger.info("Failed looking up user '#{userid}'.")
@@ -258,7 +258,7 @@ defmodule Cog.Chat.SlackConnector do
    end
  end
  defp annotate_message(%{channel: << <<"D">>, _::binary >>=channel, user: userid, text: text}, state) do
-   text = SlackFormatter.unescape(text, state)
+   text = Formatter.unescape(text, state)
    user = lookup_user(userid, state.users, by: :id)
    if user == nil do
      Logger.info("Failed looking up user '#{userid}'.")

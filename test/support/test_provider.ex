@@ -1,4 +1,4 @@
-defmodule Cog.Chat.TestProvider do
+defmodule Cog.Chat.Test.Provider do
   require Logger
 
   use GenServer

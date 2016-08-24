@@ -1,4 +1,4 @@
-defmodule Cog.Chat.SlackFormatter do
+defmodule Cog.Chat.Slack.Formatter do
 
   @channel ~r/<\#(C.*)(\|(.*))?>/U
   @user    ~r/<\@(U.*)(\|(.*))?>/U

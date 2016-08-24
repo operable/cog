@@ -1,7 +1,8 @@
-defmodule Cog.Chat.HttpConnector do
+defmodule Cog.Chat.Http.Connector do
   @moduledoc """
   Mediates interactions between HTTP requests and pipeline executions
   """
+  alias Cog.Chat.Http.Provider
 
   use GenServer
   use Adz
@@ -30,7 +31,7 @@ defmodule Cog.Chat.HttpConnector do
 
   # TODO: pass timeout in order to queue up clearing the data from the map?
   def handle_call({:submit_request, requestor, id, initial_context, pipeline}, from, state) do
-    GenServer.cast(Cog.Chat.HttpProvider, {:pipeline, requestor, id, initial_context, pipeline})
+    GenServer.cast(Provider, {:pipeline, requestor, id, initial_context, pipeline})
     {:noreply, Map.put(state, id, from)}
   end
   def handle_call({:finish_request, room_id, response}, _from, state) do

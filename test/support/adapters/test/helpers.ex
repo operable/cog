@@ -51,6 +51,6 @@ defmodule Cog.Adapters.Test.Helpers do
   end
 
   def send_message(%Cog.Models.User{}=user, here_id, "@bot: " <> message) do
-    Cog.Chat.TestProvider.chat_message(user, here_id, "@bot: " <> message)
+    Cog.Chat.Test.Provider.chat_message(user, here_id, "@bot: " <> message)
   end
 end
