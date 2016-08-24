@@ -283,7 +283,7 @@ defmodule Cog.Chat.Adapter do
     # The notion of "bot name" only really makes sense in the context
     # of chat providers, where we can use that to determine whether or
     # not a message is being addressed to the bot. For other providers
-    # (lookin' at you, HttpProvider), this makes no sense, because all
+    # (lookin' at you, Http.Provider), this makes no sense, because all
     # messages are directed to the bot, by definition.
     if message.room.is_dm == true do
       {true, message.text}

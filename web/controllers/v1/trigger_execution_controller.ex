@@ -12,7 +12,7 @@ defmodule Cog.V1.TriggerExecutionController do
   alias Cog.Models.User
   alias Cog.Models.Trigger
   alias Cog.Repository.Triggers
-  alias Cog.Chat.HttpConnector
+  alias Cog.Chat.Http.Connector
 
   plug :parse
 
@@ -35,7 +35,7 @@ defmodule Cog.V1.TriggerExecutionController do
 
             requestor = to_chat_user(user)
 
-            case HttpConnector.submit_request(requestor, request_id, context, trigger.pipeline, timeout) do
+            case Connector.submit_request(requestor, request_id, context, trigger.pipeline, timeout) do
               "ok" ->
                 conn |> send_resp(:no_content, "")
               {:error, :timeout} ->

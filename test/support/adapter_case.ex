@@ -92,8 +92,8 @@ defmodule Cog.AdapterCase do
     end
   end
 
-  defp provider_for(:test),  do: Cog.Chat.TestProvider
-  defp provider_for(:slack), do: Cog.Chat.SlackProvider
+  defp provider_for(:test),  do: Cog.Chat.Test.Provider
+  defp provider_for(:slack), do: Cog.Chat.Slack.Provider
   defp provider_for(other),
     do: raise "I don't know what implements the #{other} provider yet!"
 
