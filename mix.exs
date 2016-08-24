@@ -48,7 +48,8 @@ defmodule Cog.Mixfile do
             :phoenix_html,
             :comeonin,
             :spanner,
-            :bamboo]
+            :bamboo,
+            :table_rex]
     if System.get_env("COG_SASL_LOG") != nil do
       [:sasl|apps]
     else
@@ -100,6 +101,7 @@ defmodule Cog.Mixfile do
       {:poison, "~> 2.0"},
       {:postgrex, "~> 0.11.2"},
       {:slack, "~> 0.7.0"},
+      {:table_rex, "~> 0.8"},
       {:uuid, "~> 1.1.3"},
       # The Slack library depends on this Github repo, and not the
       # version in Hex. Thus, we need to declare it manually :(

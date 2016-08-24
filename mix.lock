@@ -60,6 +60,7 @@
   "slack": {:hex, :slack, "0.7.0", "f25c7b9153eafa9bc2d7175982871848388858501a9e2e696e5477b8a6b930f2", [:mix], [{:exjsx, "~> 3.2.0", [hex: :exjsx, optional: false]}, {:httpoison, "~> 0.8.0", [hex: :httpoison, optional: false]}]},
   "spanner": {:git, "https://github.com/operable/spanner.git", "74e4e3e3c42d297643fadf264539aa3fbefda706", []},
   "ssl_verify_fun": {:hex, :ssl_verify_fun, "1.1.0", "edee20847c42e379bf91261db474ffbe373f8acb56e9079acb6038d4e0bf414f", [:rebar, :make], []},
+  "table_rex": {:hex, :table_rex, "0.8.3", "1c68dfc6886d6f118f5047b0449d6402ae0ac5709064789e578c2f4659f4064b", [:mix], []},
   "uuid": {:hex, :uuid, "1.1.3", "06ca38801a1a95b751701ca40716bb97ddf76dfe7e26da0eec7dba636740d57a", [:mix], []},
   "websocket_client": {:git, "https://github.com/jeremyong/websocket_client.git", "f6892c8b55004008ce2d52be7d98b156f3e34569", []},
   "yamerl": {:hex, :yamerl, "0.3.2", "9eac1537d251e926f47763ab1db0d9e6e8f2397646c290d58aa6ceebc6832fb7", [:rebar3], []},
