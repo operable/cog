@@ -401,22 +401,8 @@ defmodule Cog.Command.Pipeline.Executor do
                             output: [{"Pipeline executed successfully, but no output was returned", nil}]})
   end
 
-  defp publish_response(message, room, adapter, state) do
-    #response = %Cog.Messages.SendMessage{response: message,
-    #                                     id: state.id,
-    #                                     room: room}
-    ChatAdapter.send(state.mq_conn, adapter, room, message)
-
-    # Slack has a limit of 16kb (https://api.slack.com/rtm#limits),
-    # while HipChat has 10,000 characters
-    # (https://developer.atlassian.com/hipchat/guide/sending-messages). Eventually,
-    # over-long messages will need adapter-specific customization
-    # (breaking into multiple messages, using alternative formats
-    # (e.g. Slack attachments), etc.). For now, though, we can at the
-    # very least tell Carrier to emit a warning when we get a message
-    # that looks like it is potentially too big.
-    #Connection.publish(state.mq_conn, response, routed_by: reply_topic, threshold: 10000)
-  end
+  defp publish_response(message, room, adapter, state),
+    do: ChatAdapter.send(state.mq_conn, adapter, room, message)
 
   ########################################################################
   # Event Logging Functions
