@@ -19,6 +19,11 @@ defmodule Cog.Command.Pipeline.Executor do
   alias Piper.Command.Parser
   alias Piper.Command.ParserOptions
 
+  # Last bundle configuration version that accepts the old
+  # Mustache-based templates; later versions are processed
+  # differently.
+  @old_template_version 3
+
   @type adapter_name :: String.t
 
   @typedoc """
@@ -40,6 +45,13 @@ defmodule Cog.Command.Pipeline.Executor do
   * `:output` - The accumulated output of the execution plans executed
     so far for the current command invocation. This will feed into
     subsequent pipeline stages as the "context"
+  * `:template` - The single template to render a response for bundles
+    v4 and higher. This is defined as the last template received from
+    a command response. Not used for v3 bundles and earlier.
+  * `:template_version` - ONLY used until v3 bundles and earlier are
+    phased out. This is the version of the bundle from which the
+    template in `:template` comes from; we need to know in order to
+    figure out how to do the final processing.
   * `:user` - the Cog User model for the invoker of the pipeline
   * `:user_permissions` - a list of the fully-qualified names of all
     permissions that `user` has (recursively). Used for permission
@@ -63,6 +75,8 @@ defmodule Cog.Command.Pipeline.Executor do
     current_plan: Cog.Command.Pipeline.Plan.t,
     plans: [Cog.Command.Pipeline.Plan.t],
     output: [{Map.t, String.t}], # {output, template}
+    template: String.t, # Only used for bundles v4 and higher
+    template_version: integer(), # ONLY used until v3 and earlier are phased out!
     user: %Cog.Models.User{},
     user_permissions: [String.t],
     service_token: String.t,
@@ -79,6 +93,8 @@ defmodule Cog.Command.Pipeline.Executor do
     invocations: [],
     current_plan: nil,
     plans: [],
+    template: nil,
+    template_version: nil,
     output: [],
     started: nil,
     user: nil,
@@ -167,6 +183,7 @@ defmodule Cog.Command.Pipeline.Executor do
     # any templating information, because the current command now
     # controls how the output will be presented
     context = strip_templates(previous_output)
+    state = %{state | template: nil, template_version: nil}
 
     case Cog.Command.Pipeline.Planner.plan(current_invocation, context, permissions) do
       {:ok, plans} ->
@@ -233,7 +250,10 @@ defmodule Cog.Command.Pipeline.Executor do
         case resp.status do
           "ok" ->
             collected_output = collect_output(resp, state.output)
-            {:next_state, :execute_plan, %{state | output: collected_output}, 0}
+            {:next_state, :execute_plan, %{state | output: collected_output,
+                                           template: resp.template,
+                                           template_version: state.current_plan.parser_meta.bundle_config_version},
+             0}
           "abort" ->
             collected_output = collect_output(resp, state.output)
             abort_pipeline(%{state | output: collected_output})
@@ -291,7 +311,12 @@ defmodule Cog.Command.Pipeline.Executor do
 
   # Given pipeline output, apply templating as appropriate for each
   # adapter/destination it is to be sent to, and send it to each.
-  defp respond(%__MODULE__{}=state) do
+  defp respond(%__MODULE__{template_version: version}=state)
+  when is_integer(version) and version <= @old_template_version do
+    ########################################################################
+    # THIS IS THE OLD TEMPLATE PROCESSING
+    ########################################################################
+
     output = state.output
     parser_meta = state.current_plan.parser_meta
     by_output_level = Enum.group_by(state.destinations, &(&1.output_level))
@@ -322,7 +347,27 @@ defmodule Cog.Command.Pipeline.Executor do
       # bare string... let's find a less hacky way to address things
       publish_response("ok", dest.room, dest.adapter, state)
     end)
-
+  end
+  defp respond(%__MODULE__{template_version: version}) when is_integer(version) do
+    raise "Whoa, I don't know about template_version #{version} yet... somebody should fix that"
+  end
+  # This happens when the pipeline runs with no output... This is
+  # totally a hack for now. This basically means we're going to be
+  # falling back to a default template. Once we have the new template
+  # rendering engine in place, though, we can just categorically use
+  # new templates for defaults, so this won't really matter.
+  #
+  # To state it a different way: as long as this code is in place,
+  # default templates are going to be old-style Mustache templates.
+  defp respond(%__MODULE__{template_version: nil, template: nil}=state) do
+    respond(%{state | template_version: @old_template_version})
+  end
+  defp respond(%__MODULE__{template_version: nil}=state) do
+    # TODO: This shouldn't ever happen, and is only here to help debug
+    # stuff as we add the new template rendering engine
+    state = %{state | current_plan: "REDACTED FOR SIZE"}
+    Logger.error(">>>>>>> state = #{inspect state, pretty: true}")
+    raise "Whoa, nil template_version!"
   end
 
   defp succeed_with_response(state) do
@@ -351,6 +396,8 @@ defmodule Cog.Command.Pipeline.Executor do
     end
     succeed_with_response(%{state |
                             destinations: filtered_destinations,
+                            template: nil,
+                            template_version: nil,
                             output: [{"Pipeline executed successfully, but no output was returned", nil}]})
   end
 
