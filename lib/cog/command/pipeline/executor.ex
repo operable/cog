@@ -6,7 +6,6 @@ defmodule Cog.Command.Pipeline.Executor do
   alias Cog.Command.CommandResolver
   alias Cog.Command.PermissionsCache
   alias Cog.Command.Pipeline.Destination
-  alias Cog.Command.Pipeline.ParserMeta
   alias Cog.Command.Pipeline.Plan
   alias Cog.Command.ReplyHelper
   alias Cog.ErrorResponse
@@ -301,7 +300,7 @@ defmodule Cog.Command.Pipeline.Executor do
     full = Map.get(by_output_level, :full, [])
     adapters = full |> Enum.map(&(&1.adapter)) |> Enum.uniq
 
-    case render_for_adapters(adapters, parser_meta, output) do
+    case Cog.Template.Old.Renderer.render_for_adapters(adapters, parser_meta, output) do
       {:error, {error, template, adapter}} ->
         # TODO: need to send error, THEN fail at the end, since we may
         # need to do it for status-only destinations
@@ -353,55 +352,6 @@ defmodule Cog.Command.Pipeline.Executor do
     succeed_with_response(%{state |
                             destinations: filtered_destinations,
                             output: [{"Pipeline executed successfully, but no output was returned", nil}]})
-  end
-
-  # Return a map of adapter -> rendered message
-  @spec render_for_adapters([adapter_name], %ParserMeta{}, List.t) ::
-                           %{adapter_name => String.t} |
-                           {:error, {term, term, term}} # {error, template, adapter}
-  defp render_for_adapters(adapters, parser_meta, output) do
-    Enum.reduce_while(adapters, %{}, fn(adapter, acc) ->
-      case render_templates(adapter, parser_meta, output) do
-        {:error, _}=error ->
-          {:halt, error}
-        message ->
-          {:cont, Map.put(acc, adapter, message)}
-      end
-    end)
-  end
-
-  # For a specific adapter, render each output, concatenating all
-  # results into a single response string
-  defp render_templates(adapter, parser_meta, output) do
-    rendered_templates = Enum.reduce_while(output, [], fn({context, template}, acc) ->
-      case render_template(adapter, parser_meta, template, context) do
-        {:ok, result} ->
-          {:cont, [result|acc]}
-        {:error, error} ->
-          {:halt, {:error, {error, template, adapter}}}
-      end
-    end)
-
-    case rendered_templates do
-      {:error, error} ->
-        {:error, error}
-      messages ->
-        messages
-        |> Enum.reverse
-        |> Enum.join("\n")
-    end
-  end
-
-  defp render_template(adapter, parser_meta, template, context) do
-    case Template.render(adapter, parser_meta.bundle_version_id, template, context) do
-      {:ok, output} ->
-        {:ok, output}
-      {:error, :template_not_found} ->
-        Logger.warn("The template `#{template}` was not found for adapter `#{adapter}` in bundle `#{parser_meta.bundle_name} #{parser_meta.version}`; falling back to the json template")
-        Template.render(adapter, "json", context)
-      {:error, error} ->
-        {:error, error}
-    end
   end
 
   defp publish_response(message, room, adapter, state) do
