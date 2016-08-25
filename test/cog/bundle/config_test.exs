@@ -65,7 +65,8 @@ defmodule Cog.Bundle.Config.Test do
   test "creates a config when there are no commands, services, permissions, or rules" do
     config = Config.gen_config("testing", "test all the things", "1.0.0", [NeitherCommandNorService], ".")
 
-    assert %{"name" => "testing",
+    assert %{"cog_bundle_version" => Spanner.Config.current_config_version,
+             "name" => "testing",
              "description" => "test all the things",
              "type" => "elixir",
              "version" => "1.0.0",
