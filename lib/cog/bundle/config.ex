@@ -98,7 +98,8 @@ defmodule Cog.Bundle.Config do
     # We create single key/value pair maps for each
     # top-level key in the overall configuration, and then merge all
     # those maps together.
-    Enum.reduce([gen_bundle(name, description, version),
+    Enum.reduce([%{"cog_bundle_version" => Spanner.Config.current_config_version},
+                 gen_bundle(name, description, version),
                  gen_commands(modules),
                  gen_permissions(name, modules),
                  gen_templates(template_dir)],
