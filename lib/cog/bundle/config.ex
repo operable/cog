@@ -1,67 +1,10 @@
 defmodule Cog.Bundle.Config do
-  @moduledoc """
-  Interact with and generate bundle configurations.
-
-  A bundle configuration is a map that contains the following information:
-
-  - The bundle name
-  - A list of all commands in the bundle, including the command's
-    invocation name, the Elixir module that implements it, and the
-    various options the command may take
-  - A list of permissions the bundle will create
-  - A list of initial rules for the commands in the bundle, using the
-    bundle permissions.
-
-  ## Example
-
-      %{bundle: %{name: "foo"},
-        commands: [%{module: "Cog.Commands.AddRule",
-                     name: "add-rule",
-                     options: []},
-                   %{module: "Cog.Commands.Admin",
-                     name: "admin",
-                     options: [%{name: "add", required: false, type: "bool"},
-                               %{name: "list", required: false, type: "bool"},
-                               %{name: "drop", required: false, type: "bool"},
-                               %{name: "id", required: false, type: "string"},
-                               %{name: "arg0", required: false, type: "string"},
-                               %{name: "permission", required: false, type: "string"},
-                               %{name: "for-command", required: false, type: "string"}]},
-                   %{module: "Cog.Commands.Builds",
-                     name: "builds",
-                     options: [%{name: "state", required: true, type: "string"}]},
-                   %{module: "Cog.Commands.Echo",
-                     name: "echo",
-                     options: []},
-                   %{module: "Cog.Commands.Giphy",
-                     name: "giphy",
-                     options: []},
-                   %{module: "Cog.Commands.Grant",
-                     name: "grant",
-                     options: [%{name: "command", required: true, type: "string"},
-                               %{name: "permission", required: true, type: "string"},
-                               %{name: "to", required: true, type: "string"}]},
-                   %{module: "Cog.Commands.Greet",
-                     name: "greet",
-                     options: []},
-                   %{module: "Cog.Commands.Math",
-                     name: "math",
-                     options: []},
-                   %{module: "Cog.Commands.Stackoverflow",
-                     name: "stackoverflow",
-                     options: []},
-        permissions: ["foo:admin", "foo:read", "foo:write"],
-        rules: ["when command is foo:add-rule must have foo:admin",
-                "when command is foo:grant must have foo:admin"]}
-
-  """
-
-  # TODO: Worthwhile creating structs for this?
 
   require Logger
   alias Cog.Command.GenCommand
 
-  def commands(config), do: process_args(config, "commands")
+  def commands(config),
+    do: process_args(config, "commands")
 
   # TODO: Scope these to avoid conflicts with pre-existing modules
   # TODO: Pass each command process config from the bundle config
