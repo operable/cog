@@ -12,15 +12,17 @@ defmodule Cog.Chat.Slack.TemplateProcessor do
     |> Enum.join
   end
 
-  defp process_directive(%{name: "text", text: text}),
+  defp process_directive(%{"name" =>  "text", "text" => text}),
     do: text
-  defp process_directive(%{name: "italic", text: text}),
+  defp process_directive(%{"name" =>  "italic", "text" => text}),
     do: "_#{text}_"
-  defp process_directive(%{name: "bold", text: text}),
+  defp process_directive(%{"name" =>  "bold", "text" => text}),
     do: "*#{text}*"
-  defp process_directive(%{name: "fixed_width", text: text}),
+  defp process_directive(%{"name" =>  "fixed_width", "text" => text}),
     do: "```#{text}```"
-  defp process_directive(%{name: "table", columns: columns, rows: rows}),
+  defp process_directive(%{"name" =>  "table", "columns" => columns, "rows" => rows}),
     do: "```#{TableRex.quick_render!(rows, columns)}```"
+  defp process_directive(%{"name" =>  "newline"}),
+    do: "\n"
 
 end
