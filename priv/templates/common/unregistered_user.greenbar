@@ -1,0 +1,10 @@
+~$results[0].mention_name~: I'm terribly sorry, but either I don't have a Cog account for you, or your ~$results[0].display_name~ chat handle has not been registered. Currently, only registered users can interact with me.
+
+ You'll need to ask a Cog administrator to fix this situation and to register your ~$results[0].display_name~ handle.
+
+# TODO: This should only be presented if there is something in $results[0].user_creators
+The following users can help you right here in chat:
+
+~each var=$results[0].user_creators~
+~$item~
+~end~

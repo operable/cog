@@ -128,29 +128,30 @@ defmodule Cog.Command.Pipeline.Initializer do
     provider = request.adapter
     handle = request.sender.handle
     {:ok, mention_name} = Cog.Chat.Adapter.mention_name(provider, handle)
-    {:ok, display_name} = Cog.Chat.Adapter.display_name(provider)
 
-    context = %{
-      handle: handle,
-      first_name: request.sender.first_name,
-      username: user.username,
-      mention_name: mention_name,
-      display_name: display_name
-    }
-    ReplyHelper.send_template(request, "self_registration_success", context, state.mq_conn)
+    context = %{"results" => [%{"first_name" => request.sender.first_name,
+                                "username" => user.username,
+                                "mention_name" => mention_name}]}
+    ReplyHelper.send("self_registration-success",
+                     context,
+                     request.room,
+                     request.adapter,
+                     state.mq_conn)
   end
+
   defp self_registration_failed(request, state) do
     provider = request.adapter
     handle = request.sender.handle
     {:ok, mention_name} = Cog.Chat.Adapter.mention_name(provider, handle)
     {:ok, display_name} = Cog.Chat.Adapter.display_name(provider)
 
-    context = %{
-      handle: handle,
-      mention_name: mention_name,
-      display_name: display_name
-    }
-    ReplyHelper.send_template(request, "self_registration_failed", context, state.mq_conn)
+    context = %{"results" => [%{"mention_name" => mention_name,
+                                "display_name" => display_name}]}
+    ReplyHelper.send("self_registration-failed",
+                     context,
+                     request.room,
+                     request.adapter,
+                     state.mq_conn)
   end
 
   defp find_available_username(username) do

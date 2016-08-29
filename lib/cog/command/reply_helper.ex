@@ -15,4 +15,10 @@ defmodule Cog.Command.ReplyHelper do
     end
   end
 
+  def send(common_template, message_data, room, adapter, connection) do
+    {:ok, template} = Cog.Template.New.Resolver.fetch_source(common_template)
+    [directives] = Greenbar.eval(template, message_data)
+    Cog.Chat.Adapter.send(connection, adapter, room, directives)
+  end
+
 end
