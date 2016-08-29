@@ -132,19 +132,14 @@ defmodule Cog.Bundle.Config do
     do: "#{bundle_name}:#{permission_name}"
 
   defp gen_templates(template_dir) do
-    paths = Path.wildcard("#{template_dir}/*/*.mustache")
+    paths = Path.wildcard("#{template_dir}/*.greenbar")
 
     templates = Enum.reduce(paths, %{}, fn(path, acc) ->
-      relative_path = Path.relative_to(path, template_dir)
-      [provider, file] = Path.split(relative_path)
-      name = Path.basename(file, ".mustache")
+      name = Path.basename(path, ".greenbar")
       contents = File.read!(path)
-
-      Map.update(acc, name, %{provider => contents}, fn(val) ->
-        Map.merge(val, %{provider => contents})
-      end)
+      acc = Map.put(acc, name, %{"body" => contents})
+      acc
     end)
-
     %{"templates" => templates}
   end
 

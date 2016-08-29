@@ -89,7 +89,7 @@ defmodule Cog.Bundle.Config.Test do
     config = Config.gen_config("testing", "test all the things", "2.0.0", [], "test/support/test-bundle/templates")
 
     assert %{"templates" => %{"help" => %{
-                                "slack" => "{{#command}}\n  Documentation for `{{command}}`\n  {{{documentation}}}\n{{/command}}\n"
+                                "body" => "{{#command}}\n  Documentation for `{{command}}`\n  {{{documentation}}}\n{{/command}}\n"
                               }}} = config
   end
 end

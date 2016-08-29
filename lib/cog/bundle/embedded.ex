@@ -64,7 +64,7 @@ defmodule Cog.Bundle.Embedded do
                       "Core chat commands for Cog",
                       version,
                       modules,
-                      Path.join([:code.priv_dir(:cog), "templates"]))
+                      Path.join([:code.priv_dir(:cog), "templates", "embedded"]))
   end
 
 end
