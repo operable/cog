@@ -1,0 +1,6 @@
+Found ~count var=$results~ matching aliases.
+~each var=$results as=alias~
+Name: `~$alias.name~`
+Visibility: `~$alias.visibility~`
+Pipeline: `$alias.pipeline`
+~end~

@@ -1,0 +1,7 @@
+Here are the commands I know about:
+
+~each var=$results as=command~
+~$command.bundle.name~:~$command.name~
+~end~
+
+Have a nice day!
