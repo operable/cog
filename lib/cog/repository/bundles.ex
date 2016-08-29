@@ -365,6 +365,8 @@ defmodule Cog.Repository.Bundles do
                        "description" => description,
                        "config_file" => config}) do
           {:ok, latest_version} ->
+            # TODO: This doesn't *quite* feel right here...
+            Cog.Template.New.Common.refresh_all_common_templates
             :ok = delete_outdated_embedded_version(latest_version)
             postprocess_embedded_bundle_version(latest_version)
           {:error, reason} ->

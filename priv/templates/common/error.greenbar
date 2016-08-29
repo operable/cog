@@ -1,0 +1,27 @@
+Damn, dude; an error has occurred!
+
+At ~$results[0].started~, ~$results[0].initiator~ initiated the following pipeline, assigned the unique ID ~$results[0].id~:
+
+```
+~$results[0].pipeline_text~
+```
+
+# IF THERE WAS A PLANNING FAILURE...
+The pipeline failed planning the invocation:
+
+```
+~$results[0].planning_failure~
+```
+
+# IF THERE WAS AN EXECUTION FAILURE...
+The pipeline failed executing the command:
+
+```
+~$results[0].execution_failure~
+```
+
+The specific error was:
+
+```
+~$results[0].error_message~
+```

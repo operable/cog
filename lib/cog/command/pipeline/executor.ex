@@ -563,17 +563,19 @@ defmodule Cog.Command.Pipeline.Executor do
         {false, false}
     end
 
-    context = %{
-      id: id,
-      started: started,
-      initiator: initiator,
-      pipeline_text: pipeline_text,
-      error_message: error_message,
-      planning_failure: planning_failure,
-      execution_failure: execution_failure
-    }
+    # TODO: Extract this "wrap in a results envelope" logic
+    context = %{"results" => [%{"id" => id,
+                                "started" => started,
+                                "initiator" => initiator,
+                                "pipeline_text" => pipeline_text,
+                                "error_message" => error_message,
+                                "planning_failure" => planning_failure,
+                                "execution_failure" => execution_failure}]}
 
-    Template.render("any", "error", context)
+    # This logic can be shared!
+    {:ok, template} = Cog.Template.New.Resolver.fetch_source("error")
+    [directives] = Greenbar.eval(template, context)
+    directives
   end
 
   defp abort_pipeline(%__MODULE__{current_plan: plan}=state) do
@@ -586,8 +588,8 @@ defmodule Cog.Command.Pipeline.Executor do
   # Catch-all function that sends an error message back to the user,
   # emits a pipeline failure audit event, and terminates the pipeline.
   defp fail_pipeline_with_error({reason, _detail}=error, state) do
-    {:ok, user_message} = user_error(error, state)
-    publish_response(user_message,
+    directives = user_error(error, state)
+    publish_response(directives,
                      state.request.room,
                      state.request.adapter,
                      state)
