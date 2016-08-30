@@ -6,6 +6,9 @@ defmodule Cog.Models.BundleVersion do
     field :version, VersionTriple
     field :config_file, :map
     field :description, :string
+    field :long_description, :string
+    field :author, :string
+    field :homepage, :string
     field :status, :string, virtual: true
 
     belongs_to :bundle, Bundle
@@ -25,7 +28,7 @@ defmodule Cog.Models.BundleVersion do
   end
 
   @required_fields ~w(version config_file)
-  @optional_fields ~w(description)
+  @optional_fields ~w(description long_description author homepage)
 
   summary_fields [:id, :inserted_at]
   detail_fields [:id, :inserted_at]
