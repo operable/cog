@@ -621,6 +621,8 @@ defmodule Cog.Repository.Bundles do
   end
 
   defp new_version!(bundle, params) do
+    params = Map.merge(params, Map.take(params["config_file"], ["author", "homepage"]))
+
     bundle
     |> Ecto.build_assoc(:versions)
     |> BundleVersion.changeset(params)
