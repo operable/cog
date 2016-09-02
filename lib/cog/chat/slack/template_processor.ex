@@ -1,28 +1,30 @@
 defmodule Cog.Chat.Slack.TemplateProcessor do
+  require Logger
 
-  # TODO: Escape HTML-encode &, <, and >
-  # (see https://api.slack.com/docs/message-formatting#how_to_escape_characters)
-  #
-  # TODO: Handle errors (e.g. unrecognized directives, table-rendering
-  # issues) in a sane way
+  def render(directives),
+    do: Enum.map_join(directives, &process_directive/1)
 
-  def render(directives) do
-    directives
-    |> Enum.map(&process_directive/1)
-    |> Enum.join
-  end
+  ########################################################################
 
-  defp process_directive(%{"name" =>  "text", "text" => text}),
+  defp process_directive(%{"name" => "text", "text" => text}),
     do: text
-  defp process_directive(%{"name" =>  "italic", "text" => text}),
+  defp process_directive(%{"name" => "italic", "text" => text}),
     do: "_#{text}_"
-  defp process_directive(%{"name" =>  "bold", "text" => text}),
+  defp process_directive(%{"name" => "bold", "text" => text}),
     do: "*#{text}*"
-  defp process_directive(%{"name" =>  "fixed_width", "text" => text}),
+  defp process_directive(%{"name" => "fixed_width", "text" => text}),
     do: "```#{text}```"
-  defp process_directive(%{"name" =>  "table", "columns" => columns, "rows" => rows}),
+  defp process_directive(%{"name" => "table", "columns" => columns, "rows" => rows}),
     do: "```#{TableRex.quick_render!(rows, columns)}```"
-  defp process_directive(%{"name" =>  "newline"}),
+  defp process_directive(%{"name" => "newline"}),
     do: "\n"
+  defp process_directive(%{"text" => text}=directive) do
+    Logger.warn("Unrecognized directive; formatting as plain text: #{inspect directive}")
+    text
+  end
+  defp process_directive(%{"name" => name}=directive) do
+    Logger.warn("Unrecognized directive; #{inspect directive}")
+    "\nUnrecognized directive: #{name}\n"
+  end
 
 end
