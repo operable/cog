@@ -74,17 +74,8 @@ defmodule Cog.Bundle.Config do
   defp namespace_permission(bundle_name, permission_name),
     do: "#{bundle_name}:#{permission_name}"
 
-  defp gen_templates(template_dir) do
-    paths = Path.wildcard("#{template_dir}/*.greenbar")
-
-    templates = Enum.reduce(paths, %{}, fn(path, acc) ->
-      name = Path.basename(path, ".greenbar")
-      contents = File.read!(path)
-      acc = Map.put(acc, name, %{"body" => contents})
-      acc
-    end)
-    %{"templates" => templates}
-  end
+  defp gen_templates(template_dir),
+    do: %{"templates" => Cog.Repository.Templates.templates_from_files(template_dir)}
 
   # Extract all commands from `modules` and generate configuration
   # maps for them

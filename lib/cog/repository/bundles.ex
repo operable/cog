@@ -365,8 +365,6 @@ defmodule Cog.Repository.Bundles do
                        "description" => description,
                        "config_file" => config}) do
           {:ok, latest_version} ->
-            # TODO: This doesn't *quite* feel right here...
-            Cog.Template.New.Common.refresh_all_common_templates
             :ok = delete_outdated_embedded_version(latest_version)
             postprocess_embedded_bundle_version(latest_version)
           {:error, reason} ->
@@ -676,7 +674,7 @@ defmodule Cog.Repository.Bundles do
         # Add templates
         version.config_file
         |> Map.get("templates", %{})
-        |> Enum.each(&create_template!(version, &1))
+        |> Enum.each(&Cog.Repository.Templates.create_template!(version, &1))
 
         # Once we go to Ecto 2.0 and there's a Repo.preload/3, I'd like
         # to add the ability to selectively force preloading on our
@@ -727,42 +725,6 @@ defmodule Cog.Repository.Bundles do
     CommandOption.build_new(command_version, option)
     |> Repo.insert!
   end
-
-  defp create_template!(bundle_version, {name, template}) do
-    template
-    |> handle_old_and_new_templates
-    |> Enum.each(fn({provider, contents}) ->
-      contents = String.replace(contents, ~r{\n\z}, "")
-      params = %{
-        adapter: provider,
-        name: name,
-        source: contents
-      }
-
-      bundle_version
-      |> Ecto.build_assoc(:templates)
-      |> Template.changeset(params)
-      |> Repo.insert!
-    end)
-  end
-
-  # While we still support adapter-specific templates, we need to be
-  # able to properly ingest those old templates, as well as the new,
-  # provider-independent templates.
-  #
-  # The new ones just have a "body" key; for our current purposes,
-  # we'll treat these templates as applying to a default provider. This
-  # will fit into our existing database and processing structure. Once
-  # the old templates are phased out completely, we can just remove
-  # any kind of provider labels.
-  #
-  # On the other hand, if we get a map without a "body" key, then
-  # we're dealing with the old templates. The keys are the name of the
-  # provider (e.g., "slack", "hipchat"), and the value is the body.
-  defp handle_old_and_new_templates(%{"body" => body}),
-    do: [{Cog.Template.New.default_provider, body}]
-  defp handle_old_and_new_templates(old_provider_specific_templates),
-    do: Map.to_list(old_provider_specific_templates)
 
   defp register_permissions_for_version(bundle, bundle_version) do
     # Get just raw names... they'll come in as fully-qualified
