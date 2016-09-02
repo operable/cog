@@ -28,6 +28,6 @@ defmodule Cog.Command.Raw do
   def handle_message(%Command{cog_env: nil}=req, state),
     do: {:reply, req.reply_to, "nil", state}
   def handle_message(req, state),
-    do: {:reply, req.reply_to, "json", req.cog_env, state}
+    do: {:reply, req.reply_to, req.cog_env, state}
 
 end

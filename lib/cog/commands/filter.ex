@@ -108,9 +108,9 @@ defmodule Cog.Commands.Filter do
     do: Map.update!(input, :errors, &Enum.concat(&1, List.wrap(error_or_errors)))
 
   defp translate_error(:missing_path),
-    do: "Must specify `--path` with the `--matches` option."
+    do: "Must specify '--path' with the '--matches' option."
   defp translate_error(:bad_match),
-    do: "The regular expression in `--matches` does not compile correctly."
+    do: "The regular expression in '--matches' does not compile correctly."
 
   # Helper functions for the filter command
   defp build_path(path) do
