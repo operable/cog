@@ -1,0 +1,7 @@
+```
+ID: ~$results[0].id~
+Name: ~$results[0].name~
+Permissions: ~each var=$results[0].permissions~
+~$item.bundle~:~$item.name~
+~end~
+```

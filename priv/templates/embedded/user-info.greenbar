@@ -1,0 +1,14 @@
+```
+Username: ~$results[0].username~
+First Name: ~$results[0].first_name~
+Last Name: ~$results[0].last_name~
+Email Address: ~$results[0].email_address~
+Groups:
+~each var=$results[0].groups~
+  ~$item.name~
+~end~
+Chat Handles:
+~each var=$results[0].chat_handles~
+  ~$item.chat_provider.name~: ~$item.handle~
+~end~
+```

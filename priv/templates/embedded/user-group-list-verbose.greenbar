@@ -1,0 +1,11 @@
+~each var=$results~
+```
+Name: ~$item.name~
+Roles: ~each var=$item.roles as=role~
+~$role.name~
+~end~
+Members: ~each var=$item.members as=member~
+~$member.username~
+~end~
+```
+~end~

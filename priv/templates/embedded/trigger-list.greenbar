@@ -1,0 +1,12 @@
+~each var=$results as=trigger~
+```
+ID: ~$trigger.id~
+Name: ~$trigger.name~
+Description: ~$trigger.description~
+Enabled?: ~$trigger.enabled~
+Pipeline: ~$trigger.pipeline~
+As User: ~$trigger.as_user~
+Timeout (sec): ~$trigger.timeout_sec~
+Invocation URL: ~$trigger.invocation_url~
+```
+~end~

@@ -1,7 +1,7 @@
 Here are the commands I know about:
-
+~br~
 ~each var=$results as=command~
 ~$command.bundle.name~:~$command.name~
 ~end~
-
+~br~
 Have a nice day!

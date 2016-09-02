@@ -1,0 +1,10 @@
+```
+ID: ~$results[0].id~
+Name: ~$results[0].name~
+Description: ~$results[0].description~
+Enabled?: ~$results[0].enabled~
+Pipeline: ~$results[0].pipeline~
+As User: ~$results[0].as_user~
+Timeout (sec): ~$results[0].timeout_sec~
+Invocation URL: ~$results[0].invocation_url~
+```

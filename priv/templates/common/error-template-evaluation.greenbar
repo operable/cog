@@ -1,0 +1,17 @@
+An error rendering the `~$template~` template occurred!
+
+The template source is:
+
+```
+~$source.wut~
+```
+
+The error is:
+
+```
+~$error~
+```
+
+The raw data generated was:
+
+~json var=$data~

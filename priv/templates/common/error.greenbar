@@ -1,27 +1,26 @@
 An error has occurred!
-
-At ~$results[0].started~, ~$results[0].initiator~ initiated the following pipeline, assigned the unique ID ~$results[0].id~:
-
+At ~$started~, ~$initiator~ initiated the following pipeline, assigned the unique ID ~$id~:
+~br~
 ```
-~$results[0].pipeline_text~
+~$pipeline_text~
 ```
-
+~br~
 # IF THERE WAS A PLANNING FAILURE...
 The pipeline failed planning the invocation:
-
+~br~
 ```
-~$results[0].planning_failure~
+~$planning_failure~
 ```
-
+~br~
 # IF THERE WAS AN EXECUTION FAILURE...
 The pipeline failed executing the command:
-
+~br~
 ```
-~$results[0].execution_failure~
+~$execution_failure~
 ```
-
+~br~
 The specific error was:
-
+~br~
 ```
-~$results[0].error_message~
+~$error_message~
 ```

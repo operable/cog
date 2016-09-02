@@ -1,0 +1,6 @@
+~enum var=$results~
+```
+ID: ~$item.id~
+Rule: ~$item.rule~
+```
+~end~

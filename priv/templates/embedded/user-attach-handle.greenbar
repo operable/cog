@@ -1,0 +1,2 @@
+# TODO: Needs to be a mention name, not a handle, if we're going to have the "@" there
+Attached `~$results[0].chat_provider.name~` handle @~$results[0].handle~ to Cog user `~$results[0].username~`
