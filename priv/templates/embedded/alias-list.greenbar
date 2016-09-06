@@ -1,6 +1,8 @@
+# Won't ever have 0 here, because Cog handles that situation for us
 Found ~count var=$results~ matching aliases.
-~each var=$results as=alias~
-Name: `~$alias.name~`
-Visibility: `~$alias.visibility~`
-Pipeline: `$alias.pipeline`
+~each var=$results~
+~br~
+Name: `~$item.name~`
+Visibility: `~$item.visibility~`
+Pipeline: `~$item.pipeline~`
 ~end~

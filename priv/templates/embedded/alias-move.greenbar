@@ -1,1 +1,3 @@
-Successfully moved ~$results[0].source.visibility~:~$results[0].source.name~ to ~$results[0].destination.visibility~:~$results[0].destination.name~
+~each var=$results~
+Successfully moved ~$item.source.visibility~:~$item.source.name~ to ~$item.destination.visibility~:~$item.destination.name~
+~end~

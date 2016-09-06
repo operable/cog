@@ -1,1 +1,3 @@
-Alias 'user:~results[0].name~' has been created
+~each var=$results~
+Alias 'user:~$item.name~' has been created
+~end~

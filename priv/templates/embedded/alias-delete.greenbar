@@ -1,1 +1,3 @@
-Deleted '~$results[0].visibility~:~$results[0].name~'
+~each var=$results~
+Deleted '~$item.visibility~:~$item.name~'
+~end~
