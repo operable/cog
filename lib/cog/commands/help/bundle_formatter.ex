@@ -5,8 +5,8 @@ defmodule Cog.Commands.Help.BundleFormatter do
     body = bundle_version
     |> render_sections
     |> Enum.reject(&is_nil/1)
-    |> Enum.join("\n")
-    |> String.trim_trailing
+    |> Enum.map(&String.trim_trailing/1)
+    |> Enum.join("\n\n")
 
     """
     ```

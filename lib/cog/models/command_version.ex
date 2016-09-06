@@ -23,7 +23,7 @@ defmodule Cog.Models.CommandVersion do
   end
 
   @required_fields ~w(command_id bundle_version_id)
-  @optional_fields ~w(description documentation long_description examples notes arguments)
+  @optional_fields ~w(description documentation long_description examples notes arguments subcommands)
 
   summary_fields [:documentation]
   detail_fields [:documentation]

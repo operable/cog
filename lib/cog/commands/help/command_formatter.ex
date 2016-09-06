@@ -14,8 +14,8 @@ defmodule Cog.Commands.Help.CommandFormatter do
     body = command_version
     |> render_sections
     |> Enum.reject(&is_nil/1)
-    |> Enum.join("\n")
-    |> String.trim_trailing
+    |> Enum.map(&String.trim_trailing/1)
+    |> Enum.join("\n\n")
 
     """
     ```
@@ -30,6 +30,7 @@ defmodule Cog.Commands.Help.CommandFormatter do
      render_synopsis(command_version),
      render_required_options(command_version),
      render_options(command_version),
+     render_subcommands(command_version),
      render_examples(command_version),
      render_notes(command_version),
      render_author(command_version),
@@ -138,6 +139,26 @@ defmodule Cog.Commands.Help.CommandFormatter do
     ["--#{long_flag} <#{name}>", desc]
     |> Enum.reject(&is_nil/1)
     |> Enum.join("\n")
+  end
+
+  defp render_subcommands(%CommandVersion{subcommands: nil}),
+    do: nil
+  defp render_subcommands(%CommandVersion{subcommands: subcommands}) when map_size(subcommands) == 0,
+    do: nil
+  defp render_subcommands(%CommandVersion{subcommands: subcommands}) do
+    padding = subcommands
+    |> Map.keys
+    |> Enum.map(&String.length/1)
+    |> Enum.max
+
+    subcommands = Enum.map_join(subcommands, "\n", fn {command, description} ->
+      "#{String.pad_trailing(command, padding)}  #{description}"
+    end)
+
+    """
+    SUBCOMMANDS
+    #{indent(subcommands)}
+    """
   end
 
   defp render_examples(%CommandVersion{examples: nil}),
