@@ -411,6 +411,4 @@ defmodule Cog.V1.BundlesControllerTest do
         slack: "{{date}}"
     """
   end
-
-
 end

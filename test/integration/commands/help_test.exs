@@ -9,32 +9,21 @@ defmodule Integration.Commands.HelpTest do
     {:ok, %{user: user}}
   end
 
-  test "listing enabled commands", %{user: user} do
-    commands = send_message(user, "@bot: operable:help")
+  test "listing bundles", %{user: user} do
+    ModelUtilities.command("test-command")
 
-    # We should only have the operable bundle installed at this point
-    assert Enum.all?(commands, fn command ->
-      command.bundle.name == "operable"
-    end)
+    [%{body: body}] = send_message(user, "@bot: operable:help")
+
+    assert String.contains?(body, "operable")
+    assert String.contains?(body, "test-bundle")
   end
 
-  test "list disabled commands", %{user: user} do
-    ModelUtilities.command("test_command")
+  test "showing docs for a command", %{user: user} do
+    ModelUtilities.command("test-command", %{description: "Does test command things", arguments: "[test-arg]"})
 
-    [command] = send_message(user, "@bot: operable:help --disabled")
+    [%{body: body}] = send_message(user, "@bot: operable:help test-bundle:test-command")
 
-    assert command.bundle.name == "test-bundle"
-    assert command.name == "test_command"
-  end
-
-  test "list enabled commands when there are also disabled commands", %{user: user} do
-    ModelUtilities.command("test_command")
-
-    commands = send_message(user, "@bot: operable:help")
-
-    # All enabled commands should be in the operable bundle
-    assert Enum.all?(commands, fn command ->
-      command.bundle.name == "operable"
-    end)
+    assert String.contains?(body, "Does test command things")
+    assert String.contains?(body, "test-bundle:test-command [test-arg]")
   end
 end

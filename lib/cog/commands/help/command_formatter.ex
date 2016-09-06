@@ -5,7 +5,7 @@ defmodule Cog.Commands.Help.CommandFormatter do
       when version < 4 do
     """
     ```
-    #{String.trim_trailing(documentation)}
+    #{String.trim_trailing(to_string(documentation))}
     ```
     """
   end
