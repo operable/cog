@@ -4,25 +4,19 @@ defmodule Cog.Commands.Rule do
 
   alias Cog.Commands.Rule.{Info, List, Create, Delete}
   require Cog.Commands.Helpers, as: Helpers
-  require Logger
+
+  Helpers.usage :root, ""
 
   @description "Manage authorization rules"
 
-  Helpers.usage :root, """
-  #{@description}
+  @arguments "<subcommand>"
 
-  USAGE
-    rule [subcommand]
-
-  FLAGS
-    -h, --help  Display this usage info
-
-  SUBCOMMANDS
-    create  Add a rule
-    delete  Delete a rule
-    info    Retrieve a rule by ID
-    list    List all rules (default)
-  """
+  @subcommands %{
+    "list" => "List all rules (default)",
+    "info <id>" => "Retrieve a rule by ID",
+    "create [<rule> | <command> <permission>]" => "Add a rule",
+    "delete <id>" => "Delete a rule",
+  }
 
   option "command", type: "string", short: "c"
 

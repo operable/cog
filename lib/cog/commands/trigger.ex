@@ -4,31 +4,25 @@ defmodule Cog.Commands.Trigger do
   alias Cog.Commands.Trigger.{Create, Delete, Disable, Enable, Info, List, Update}
   require Cog.Commands.Helpers, as: Helpers
 
-  permission "manage_triggers"
-
-  rule "when command is #{Cog.Util.Misc.embedded_bundle}:trigger must have #{Cog.Util.Misc.embedded_bundle}:manage_triggers"
+  Helpers.usage :root, ""
 
   @description "Manage triggered pipelines"
 
-  Helpers.usage :root, """
-  #{@description}
+  @arguments "<subcommand>"
 
-  USAGE
-    trigger [subcommand]
+  @subcommands %{
+    "list" => "List all triggers (default)",
+    "info <trigger>" => "Detailed information on an existing trigger",
+    "create <trigger> <pipeline>" => "Create a new trigger",
+    "update <trigger>" => "Update an existing trigger",
+    "delete <trigger>" => "Delete an existing trigger",
+    "enable <trigger>" => "Enable an existing trigger",
+    "disable <trigger>" => "Disable an existing trigger"
+  }
 
-  FLAGS
-    -h, --help  Display this usage info
+  permission "manage_triggers"
 
-  SUBCOMMANDS
-    create    Create a new trigger
-    delete    Delete an existing trigger
-    disable   Disable an existing trigger
-    enable    Enable an existing trigger
-    info      Detailed information on an existing trigger
-    list      List all triggers (default)
-    update    Update an existing trigger
-
-  """
+  rule "when command is #{Cog.Util.Misc.embedded_bundle}:trigger must have #{Cog.Util.Misc.embedded_bundle}:manage_triggers"
 
   option "enabled", type: "bool", short: "e"
   option "description", type: "string", short: "d"

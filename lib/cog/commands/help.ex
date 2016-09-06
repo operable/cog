@@ -9,35 +9,21 @@ defmodule Cog.Commands.Help do
 
   @description "Show documentation for available commands"
 
-  @moduledoc """
-  NAME
-    operable:help - #{@description}
+  @examples """
+  View all installed bundles:
 
-  SYNOPSIS
-    operable:help [--disabled] [<bundle> | <bundle:command>]
+    operable:help
 
-  ARGS
-    command  prints long form documentation
+  View documentation for a bundle:
 
-  EXAMPLES
-    View all installed bundles:
+    operable:help mist
 
-      operable:help
+  View documentation for a command:
 
-    View documentation for a bundle:
-
-      operable:help mist
-
-    View documentation for a command:
-
-      operable:help mist:ec2-find
-
-  AUTHOR
-    Patrick Van Stee <patrick@operable.io>
-
-  HOMEPAGE
-    https://github.com/operable/cog
+    operable:help mist:ec2-find
   """
+
+  @arguments "[<bundle> | <bundle:command>]"
 
   rule "when command is #{Cog.Util.Misc.embedded_bundle}:help allow"
 

@@ -3,26 +3,21 @@ defmodule Cog.Commands.Group do
   require Cog.Commands.Helpers, as: Helpers
   alias Cog.Commands.Group
 
+  Helpers.usage :root, ""
+
   @description "Manage user groups"
 
-  Helpers.usage :root, """
-  #{@description}
+  @arguments "[subcommand]"
 
-  USAGE
-    group [FLAGS] <SUBCOMMAND>
-
-  SUBCOMMANDS
-    list      List user groups (Default)
-    info      Get info about a specific user group
-    create    Creates a new user group
-    delete    Deletes a user group
-    member    Manage members of user groups
-    rename    Rename a group
-    role      Manage roles associated with user groups
-
-  FLAGS
-    -h, --help    Display this usage info
-  """
+  @subcommands %{
+    "list" => "List user groups (default)",
+    "info <group>" => "Get info about a specific user group",
+    "create <group>" => "Creates a new user group",
+    "delete <group>" => "Deletes a user group",
+    "member <subcommand>" => "Manage members of user groups",
+    "rename <group> <new-group>" => "Rename a group",
+    "role <subcommand>" => "Manage roles associated with user groups"
+  }
 
   permission "manage_groups"
   permission "manage_users"

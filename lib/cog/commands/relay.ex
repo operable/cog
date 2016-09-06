@@ -1,26 +1,20 @@
 defmodule Cog.Commands.Relay do
   use Cog.Command.GenCommand.Base, bundle: Cog.Util.Misc.embedded_bundle
   alias Cog.Commands.Relay
-
   require Cog.Commands.Helpers, as: Helpers
+
+  Helpers.usage :root, ""
 
   @description "Manage relays"
 
-  Helpers.usage :root, """
-  #{@description}
+  @arguments "<subcommand>"
 
-  USAGE
-    relay [FLAGS] <subcommand>
+  @subcommands %{
+    "list" => "Lists relays and their status (default)",
+    "info <relay>" => "Get information on a specific relay",
+    "update" => "Update the name or description of a relay"
+  }
 
-  FLAGS
-    -h, --help  Display this usage info
-
-  SUBCOMMANDS
-    info      Get information on a specific relay
-    list      Lists relays and their status (default)
-    update    Update the name or description of a relay
-
-  """
   permission "manage_relays"
 
   rule "when command is #{Cog.Util.Misc.embedded_bundle}:relay must have #{Cog.Util.Misc.embedded_bundle}:manage_relays"

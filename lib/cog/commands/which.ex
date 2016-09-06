@@ -9,29 +9,27 @@ defmodule Cog.Commands.Which do
 
   @description "Determine whether a given input is a command or an alias"
 
-  @moduledoc """
-  #{@description}
+  @long_description """
+  Returns the type of input and it's bundle or visibility. In the case of
+  aliases it also returns the aliased command string. This command is only
+  useful non fully qualified commands or aliases. Fully qualified commands or
+  aliases will return no match.
+  """
 
-  Returns the type of input and it's bundle or visibility. In the case
-  of aliases it also returns the aliased command string. This command
-  is only useful non fully qualified commands or aliases. Fully
-  qualified commands or aliases will return no match.
+  @examples """
+  which my-awesome-alias
+  > alias - user:my-awesome-alias -> "echo my awesome alias"
 
-  Note: If a command is shadowed, it has an alias with the same name, the alias
-  will be returned.
+  which an-awesome-command
+  > command - operable:an-awesome-command
 
-  USAGE
-    which [alias]
+  which not-anything
+  > No matching commands or aliases.
+  """
 
-  EXAMPLE
-    which my-awesome-alias
-    > alias - user:my-awesome-alias -> "echo my awesome alias"
-
-    which an-awesome-command
-    > command - operable:an-awesome-command
-
-    which not-anything
-    > No matching commands or aliases.
+  @notes """
+  If a command is shadowed, it has an alias with the same name, the alias will
+  be returned.
   """
 
   rule "when command is #{Cog.Util.Misc.embedded_bundle}:which allow"

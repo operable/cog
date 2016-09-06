@@ -1,29 +1,22 @@
 defmodule Cog.Commands.Permission do
   use Cog.Command.GenCommand.Base, bundle: Cog.Util.Misc.embedded_bundle
   require Cog.Commands.Helpers, as: Helpers
-
   alias Cog.Commands.Permission.{Create, Delete, Grant, Info, List, Revoke}
+
+  Helpers.usage :root, ""
 
   @description "Manage authorization permissions"
 
-  Helpers.usage :root, """
-  #{@description}
+  @arguments "[subcommand]"
 
-  USAGE
-    permission [subcommand]
-
-  FLAGS
-    -h, --help  Display this usage info
-
-  SUBCOMMANDS
-    create     Create a new site permission
-    delete     Delete an existing site permission
-    grant      Grant a permission to a role
-    info       Get detailed information about a specific permission
-    list       List all permissions (default)
-    revoke     Revoke a permission from a group
-
-  """
+  @subcommands %{
+    "list" => "List all permissions (default)",
+    "info <permission>" => "Get detailed information about a specific permission",
+    "create site:<permission>" => "Create a new site permission",
+    "delete site:<permission>" => "Delete an existing site permission",
+    "grant <permission> <role>" => "Grant a permission to a role",
+    "revoke <permission> <role>" => "Revoke a permission from a group"
+  }
 
   permission "manage_permissions"
   permission "manage_roles"

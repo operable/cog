@@ -3,32 +3,25 @@ defmodule Cog.Commands.User do
     bundle: Cog.Util.Misc.embedded_bundle
 
   alias Cog.Commands.User.{AttachHandle, DetachHandle, Info, List, ListHandles}
-
   require Cog.Commands.Helpers, as: Helpers
-  require Logger
+
+  Helpers.usage :root, ""
 
   @description "Manage Cog users and chat handles"
 
-  Helpers.usage :root, """
-  #{@description}
-
-  Note: for creation and deletion of users, please continue to use
-  `cogctl`.
-
-  USAGE
-
-    user [subcommand]
-
-  FLAGS
-    -h, --help  Display this usage info
-
-  SUBCOMMANDS
-    attach-handle   Associate a chat handle with a user
-    detach-handle   Sever association between a chat handle and a user
-    info            Show detailed information on a given user
-    list            List all users (default)
-    list-handles    List all chat handles associated with users
+  @note """
+  For creation and deletion of users, please continue to use `cogctl`.
   """
+
+  @arguments "<subcommand>"
+
+  @subcommands %{
+    "list" => "List all users (default)",
+    "info <username>" => "Show detailed information on a given user",
+    "list-handles" => "List all chat handles associated with users",
+    "attach-handle <username> <handle>" => "Associate a chat handle with a user",
+    "detach-handle <username>" => "Sever association between a chat handle and a user"
+  }
 
   permission "manage_users"
 

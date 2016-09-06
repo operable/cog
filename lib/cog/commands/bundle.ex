@@ -8,29 +8,24 @@ defmodule Cog.Commands.Bundle do
   require Cog.Commands.Helpers, as: Helpers
   require Logger
 
+  # FIXME
+  Helpers.usage(:root, "")
+
   @description "Manage command bundles"
 
-  Helpers.usage :root, """
-  #{@description}
+  @arguments "[subcommand]"
 
-  Note that installation and uninstallation of bundles cannot
-  currently be done via chat; please use `cogctl` for this
-  functionality.
+  @subcommands %{
+    "list" => "List all installed bundles (default)",
+    "info <bundle>" => "Detailed information on an installed bundle",
+    "enable <bundle> [<version>]" => "Enable a specific version of an installed bundle",
+    "disable <bundle>" => "Disable an installed bundle",
+    "versions <bundle>" => "List all installed versions for a given bundle"
+  }
 
-  USAGE
-
-    bundle [subcommand]
-
-  FLAGS
-    -h, --help  Display this usage info
-
-  SUBCOMMANDS
-    disable   Disable an installed bundle
-    enable    Enable a specific version of an installed bundle
-    info      Detailed information on an installed bundle
-    list      List all installed bundles (default)
-    versions  List all installed versions for a given bundle
-
+  @notes """
+  Installation and uninstallation of bundles cannot currently be done via
+  chat; please use `cogctl` for this functionality.
   """
 
   permission "manage_commands"

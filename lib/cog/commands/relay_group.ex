@@ -5,23 +5,14 @@ defmodule Cog.Commands.RelayGroup do
 
   @description "Manage relay groups"
 
-  @moduledoc """
-  #{@description}
-
-  USAGE
-    relay-group <SUBCOMMAND>
-
-  FLAGS
-    -h, --help      Display this usage info
-
-  SUBCOMMANDS
-    create    Creates a relay group
-    delete    Deletes a relay group
-    info      Get info about one or more relay groups
-    list      List relay groups
-    member    Managers relay and bundle assignments
-    rename    Renames a relay group
-  """
+  @subcommands %{
+    "list" => "List relay groups (default)",
+    "info <relay-group>" => "Get info about one or more relay groups",
+    "create <relay-group>" => "Creates a relay group",
+    "delete <relay-group>" => "Deletes a relay group",
+    "member <subcommand>" => "Managers relay and bundle assignments",
+    "rename <relay-group> <new-relay-group>" => "Renames a relay group"
+  }
 
   permission "manage_relays"
 

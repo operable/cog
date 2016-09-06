@@ -4,27 +4,19 @@ defmodule Cog.Commands.Role do
 
   alias Cog.Commands.Role.{Create, Delete, Grant, Info, List, Rename, Revoke}
 
+  Helpers.usage :root, ""
+
   @description "Manage authorization roles"
 
-  Helpers.usage :root, """
-  #{@description}
-
-  USAGE
-    role [subcommand]
-
-  FLAGS
-    -h, --help  Display this usage info
-
-  SUBCOMMANDS
-    create     Create a new role
-    delete     Delete an existing role
-    grant      Grant a role to a group
-    info       Get detailed information about a specific role
-    list       List all roles (default)
-    rename     Rename a role
-    revoke     Revoke a role from a group
-
-  """
+  @subcommands %{
+    "list" => "List all roles (default)",
+    "info <role>" => "Get detailed information about a specific role",
+    "create <role>" => "Create a new role",
+    "delete <role>" => "Delete an existing role",
+    "grant <role> <group>" => "Grant a role to a group",
+    "rename <role> <new-role>" => "Rename a role",
+    "revoke <role> <group>" => "Revoke a role from a group"
+  }
 
   permission "manage_roles"
   permission "manage_groups"

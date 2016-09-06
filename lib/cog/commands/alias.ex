@@ -3,41 +3,36 @@ defmodule Cog.Commands.Alias do
   alias Cog.Commands.Alias
   require Cog.Commands.Helpers, as: Helpers
 
+  # FIXME
+  Helpers.usage(:root, "")
+
   @description "Manage command aliases"
 
-  Helpers.usage :root, """
-  #{@description}
+  @arguments "[subcommand]"
 
-  USAGE
-    alias <subcommand>
+  @subcommands %{
+    "create <alias> <pipeline>" => "Create a new alias visible to the creator",
+    "move <alias> <site|user>:<new-alias>" => "Move an alias between user and site visibility and optionally rename alias",
+    "delete <alias>" => "Delete alias",
+    "list [pattern]" => "List all aliases optionally filtered by a pattern (supports basic wildcard with \"*\")"
+  }
 
-  FLAGS
-    -h, --help  Display this usage info
+  @examples """
+  Create a new alias:
 
-  SUBCOMMANDS
-    create <alias-name> <alias-definition>             creates a new alias visible to the creating user.
-    move <alias-name> <site | user>:[new-alias-name]   moves aliases between user and site visibility. Optionally renames aliases.
-    delete <alias-name>                                deletes aliases
-    list [pattern]                                     Returns the list of aliases optionally filtered by pattern. Pattern support basic wildcards with '*'.
-
-  EXAMPLES
     alias create my-awesome-alias "echo \"My Awesome Alias\""
-    > user:my-awesome-alias has been created
+
+  Move a user alias to a site alias:
 
     alias move my-awesome-alias site:awesome-alias
-    > Moved user:my-awesome-alias to site:awesome-alias
+
+  Delete an alias:
 
     alias delete awesome-alias
-    > Removed site:awesome-alias
+
+  View all user and site aliases:
 
     alias list
-    > Name: 'my-awesome-alias'
-      Visibility: 'user'
-      Pipeline: 'echo my-awesome-alias'
-
-      Name: 'my-other-awesome-alias'
-      Visibility: 'site'
-      Pipeline: 'echo my-other-awesome-alias'
   """
 
   rule "when command is #{Cog.Util.Misc.embedded_bundle}:alias allow"
