@@ -4,7 +4,7 @@ defmodule Cog.Commands.Role do
 
   alias Cog.Commands.Role.{Create, Delete, Grant, Info, List, Rename, Revoke}
 
-  Helpers.usage :root, ""
+  Helpers.usage(:root)
 
   @description "Manage authorization roles"
 

@@ -3,8 +3,7 @@ defmodule Cog.Commands.Alias do
   alias Cog.Commands.Alias
   require Cog.Commands.Helpers, as: Helpers
 
-  # FIXME
-  Helpers.usage(:root, "")
+  Helpers.usage(:root)
 
   @description "Manage command aliases"
 

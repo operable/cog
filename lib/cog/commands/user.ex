@@ -5,7 +5,7 @@ defmodule Cog.Commands.User do
   alias Cog.Commands.User.{AttachHandle, DetachHandle, Info, List, ListHandles}
   require Cog.Commands.Helpers, as: Helpers
 
-  Helpers.usage :root, ""
+  Helpers.usage(:root)
 
   @description "Manage Cog users and chat handles"
 

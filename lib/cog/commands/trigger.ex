@@ -4,7 +4,7 @@ defmodule Cog.Commands.Trigger do
   alias Cog.Commands.Trigger.{Create, Delete, Disable, Enable, Info, List, Update}
   require Cog.Commands.Helpers, as: Helpers
 
-  Helpers.usage :root, ""
+  Helpers.usage(:root)
 
   @description "Manage triggered pipelines"
 

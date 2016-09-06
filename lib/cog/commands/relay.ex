@@ -3,7 +3,7 @@ defmodule Cog.Commands.Relay do
   alias Cog.Commands.Relay
   require Cog.Commands.Helpers, as: Helpers
 
-  Helpers.usage :root, ""
+  Helpers.usage(:root)
 
   @description "Manage relays"
 

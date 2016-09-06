@@ -8,8 +8,7 @@ defmodule Cog.Commands.Bundle do
   require Cog.Commands.Helpers, as: Helpers
   require Logger
 
-  # FIXME
-  Helpers.usage(:root, "")
+  Helpers.usage(:root)
 
   @description "Manage command bundles"
 

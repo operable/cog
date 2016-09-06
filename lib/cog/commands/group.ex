@@ -3,7 +3,7 @@ defmodule Cog.Commands.Group do
   require Cog.Commands.Helpers, as: Helpers
   alias Cog.Commands.Group
 
-  Helpers.usage :root, ""
+  Helpers.usage(:root)
 
   @description "Manage user groups"
 

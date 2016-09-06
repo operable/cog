@@ -5,7 +5,7 @@ defmodule Cog.Commands.Rule do
   alias Cog.Commands.Rule.{Info, List, Create, Delete}
   require Cog.Commands.Helpers, as: Helpers
 
-  Helpers.usage :root, ""
+  Helpers.usage(:root)
 
   @description "Manage authorization rules"
 

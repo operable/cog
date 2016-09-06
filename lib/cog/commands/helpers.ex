@@ -1,35 +1,41 @@
 defmodule Cog.Commands.Helpers do
   alias Cog.Repo
-  alias Cog.Models.UserCommandAlias
-  alias Cog.Models.SiteCommandAlias
-  alias Cog.Models.EctoJson
+  alias Cog.Models.{UserCommandAlias, SiteCommandAlias, EctoJson}
+  require Cog.Util.Misc
 
   @moduledoc """
   A collection of helper functions and macros for working with commands.
   """
 
-  # Adds moduledoc and the show_usage function
-  defmacro usage(usage_str) do
-    quote do
-      @moduledoc unquote(usage_str)
+  # In addition to the standard usage bits this also
+  # add the 'help' option. Note that this will fail
+  # if used outside of a gen_command
+  defmacro usage(:root) do
 
-      defp show_usage(error \\ nil) do
-        if error do
-          {:error, error}
-        else
-          {:ok, "usage", %{usage: @moduledoc}}
-        end
+    quote do
+      option "help", type: "bool", short: "h"
+
+      def show_usage(error \\ nil) do
+        bundle_name = Cog.Util.Misc.embedded_bundle
+        command_name = Cog.Command.GenCommand.Base.command_name(__MODULE__)
+
+        [command_version] = bundle_name <> ":" <> command_name
+        |> Cog.Repository.Commands.with_status_by_any_name
+        |> Cog.Repo.preload([:bundle_version, :options])
+
+        usage = Cog.Commands.Help.CommandFormatter.format(command_version)
+
+        {:ok, "usage", %{usage: usage, error: error}}
       end
     end
   end
 
-  # In addition to the standard usage bits this also
-  # add the 'help' option. Note that this will fail
-  # if used outside of a gen_command
-  defmacro usage(:root, usage_str) do
+  # Adds moduledoc and the show_usage function
+  defmacro usage(usage) do
     quote do
-      Cog.Commands.Helpers.usage(unquote(usage_str))
-      option "help", type: "bool", short: "h"
+      defp show_usage(error \\ nil) do
+        {:ok, "usage", %{usage: "```#{unquote(usage)}```", error: error}}
+      end
     end
   end
 

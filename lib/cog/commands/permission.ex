@@ -3,7 +3,7 @@ defmodule Cog.Commands.Permission do
   require Cog.Commands.Helpers, as: Helpers
   alias Cog.Commands.Permission.{Create, Delete, Grant, Info, List, Revoke}
 
-  Helpers.usage :root, ""
+  Helpers.usage(:root)
 
   @description "Manage authorization permissions"
 
