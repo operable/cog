@@ -14,7 +14,8 @@ defmodule Cog.Command.Pipeline.Executor do
   alias Cog.Relay.Relays
   alias Cog.Repo
   alias Cog.ServiceEndpoint
-  alias Cog.Template
+  alias Cog.Template.New, as: NewTemplate
+  alias Cog.Template.New.Evaluator
   alias Piper.Command.Ast
   alias Piper.Command.Parser
   alias Piper.Command.ParserOptions
@@ -140,7 +141,11 @@ defmodule Cog.Command.Pipeline.Executor do
             initialization_event(loop_data)
             {:ok, :parse, loop_data, 0}
           {:error, :not_found} ->
-            alert_unregistered_user(%__MODULE__{id: id, mq_conn: conn, request: request})
+            ReplyHelper.send("unregistered-user",
+                             unregistered_user_data(request),
+                             request.room,
+                             request.adapter,
+                             conn)
             :ignore
         end
       :error ->
@@ -342,37 +347,46 @@ defmodule Cog.Command.Pipeline.Executor do
     by_output_level
     |> Map.get(:status_only, [])
     |> Enum.each(fn(dest) ->
+      publish_response("ok", dest.room, dest.adapter, state)
+    end)
+  end
+  defp respond(%__MODULE__{template_version: version}=state) when is_integer(version) do
+    ########################################################################
+    # NEW TEMPLATE PROCESSING
+    ########################################################################
+    template_name = state.template
+    output        = strip_templates(state.output)
+    parser_meta   = state.current_plan.parser_meta
+    by_output_level = Enum.group_by(state.destinations, &(&1.output_level))
 
+    # Render full output first
+    full = Map.get(by_output_level, :full, [])
+
+    directives = Evaluator.evaluate(parser_meta.bundle_version_id,
+                                    template_name,
+                                    NewTemplate.with_envelope(output))
+
+    Enum.each(full, fn(dest) ->
+      # TODO: Might want to push this iteration into the provider
+      # itself. Otherwise, we have to pull the provider logic into
+      # here to render the directives once.
+
+      payload = ReplyHelper.choose_payload(dest.adapter, directives, output)
+      publish_response(payload, dest.room, dest.adapter, state)
+    end)
+
+    # Now for status only
+    by_output_level
+    |> Map.get(:status_only, [])
+    |> Enum.each(fn(dest) ->
       # TODO: For the mesasge typing to work out, this has to be a
       # bare string... let's find a less hacky way to address things
       publish_response("ok", dest.room, dest.adapter, state)
     end)
   end
-  defp respond(%__MODULE__{template_version: version}) when is_integer(version) do
-    raise "Whoa, I don't know about template_version #{version} yet... somebody should fix that"
-  end
-  # This happens when the pipeline runs with no output... This is
-  # totally a hack for now. This basically means we're going to be
-  # falling back to a default template. Once we have the new template
-  # rendering engine in place, though, we can just categorically use
-  # new templates for defaults, so this won't really matter.
-  #
-  # To state it a different way: as long as this code is in place,
-  # default templates are going to be old-style Mustache templates.
-  defp respond(%__MODULE__{template_version: nil, template: nil}=state) do
-    respond(%{state | template_version: @old_template_version})
-  end
-  defp respond(%__MODULE__{template_version: nil}=state) do
-    # TODO: This shouldn't ever happen, and is only here to help debug
-    # stuff as we add the new template rendering engine
-    state = %{state | current_plan: "REDACTED FOR SIZE"}
-    Logger.error(">>>>>>> state = #{inspect state, pretty: true}")
-    raise "Whoa, nil template_version!"
-  end
 
   defp succeed_with_response(state) do
     respond(state)
-    # TODO: what happens if we fail due to a template error?
     {:stop, :shutdown, state}
   end
 
@@ -394,15 +408,21 @@ defmodule Cog.Command.Pipeline.Executor do
       state.destinations
       |> Enum.reject(&(ChatAdapter.is_chat_provider?(&1.adapter)))
     end
-    succeed_with_response(%{state |
-                            destinations: filtered_destinations,
-                            template: nil,
-                            template_version: nil,
-                            output: [{"Pipeline executed successfully, but no output was returned", nil}]})
+
+    # TODO: We're not going through the normal "respond" path here, because
+    # we're explicitly setting a common template... if "respond" gets
+    # the smarts to deal with that, then this can just call
+    # succeed_with_response again... might want to wait until the old
+    # template support is removed to do that.
+    Enum.each(filtered_destinations, fn(d) ->
+      ReplyHelper.send("early-exit", %{}, d.room, d.adapter, state.mq_conn)
+    end)
+
+    {:stop, :shutdown, state}
   end
 
   defp publish_response(message, room, adapter, state),
-    do: ChatAdapter.send(state.mq_conn, adapter, room, message)
+    do: ReplyHelper.publish(state.mq_conn, adapter, room, message)
 
   ########################################################################
   # Event Logging Functions
@@ -452,24 +472,19 @@ defmodule Cog.Command.Pipeline.Executor do
   ########################################################################
   # Unregistered User Functions
 
-  defp alert_unregistered_user(state) do
-    request = state.request
-    handle = request.sender.handle
+  defp unregistered_user_data(request) do
+    handle   = request.sender.handle
     creators = user_creator_handles(request)
 
-    {:ok, mention_name} = Cog.Chat.Adapter.mention_name(state.request.adapter, handle)
-    {:ok, display_name} = Cog.Chat.Adapter.display_name(state.request.adapter)
+    {:ok, mention_name} = Cog.Chat.Adapter.mention_name(request.adapter, handle)
+    {:ok, display_name} = Cog.Chat.Adapter.display_name(request.adapter)
 
-    context = %{
-      handle: handle,
-      mention_name: mention_name,
-      display_name: display_name,
-      user_creators: creators,
-      user_creators?: Enum.any?(creators)
-    }
-
-    ReplyHelper.send_template(state.request, "unregistered_user", context, state.mq_conn)
+    %{"handle" => handle,
+      "mention_name" => mention_name,
+      "display_name" => display_name,
+      "user_creators" => creators}
   end
+
   # Returns a list of adapter-appropriate "mention names" of all Cog
   # users with registered handles for the adapter that currently have
   # the permissions required to create and manipulate new Cog user
@@ -563,19 +578,13 @@ defmodule Cog.Command.Pipeline.Executor do
         {false, false}
     end
 
-    # TODO: Extract this "wrap in a results envelope" logic
-    context = %{"results" => [%{"id" => id,
-                                "started" => started,
-                                "initiator" => initiator,
-                                "pipeline_text" => pipeline_text,
-                                "error_message" => error_message,
-                                "planning_failure" => planning_failure,
-                                "execution_failure" => execution_failure}]}
-
-    # This logic can be shared!
-    {:ok, template} = Cog.Template.New.Resolver.fetch_source("error")
-    [directives] = Greenbar.eval(template, context)
-    directives
+    %{"id" => id,
+      "started" => started,
+      "initiator" => initiator,
+      "pipeline_text" => pipeline_text,
+      "error_message" => error_message,
+      "planning_failure" => planning_failure,
+      "execution_failure" => execution_failure}
   end
 
   defp abort_pipeline(%__MODULE__{current_plan: plan}=state) do
@@ -588,11 +597,13 @@ defmodule Cog.Command.Pipeline.Executor do
   # Catch-all function that sends an error message back to the user,
   # emits a pipeline failure audit event, and terminates the pipeline.
   defp fail_pipeline_with_error({reason, _detail}=error, state) do
-    directives = user_error(error, state)
-    publish_response(directives,
+    data = user_error(error, state)
+
+    ReplyHelper.send("error",
+                     data,
                      state.request.room,
                      state.request.adapter,
-                     state)
+                     state.mq_conn)
 
     audit_message = AuditMessage.render(error, state.request)
     fail_pipeline(state, reason, audit_message)

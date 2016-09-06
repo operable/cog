@@ -20,7 +20,7 @@ defmodule Integration.Commands.RoleTest do
 
   test "listing roles works", %{user: user} do
     role("admin")
-    payload = payload_from(user, "operable:role list")
+    payload = send_message(user, "@bot: operable:role list")
     |> Enum.sort_by(&(&1[:name]))
 
     assert [%{name: "admin"},
@@ -29,7 +29,7 @@ defmodule Integration.Commands.RoleTest do
 
   test "listing is the default action", %{user: user} do
     role("admin")
-    payload = payload_from(user, "operable:role")
+    payload = send_message(user, "@bot: operable:role")
     |> Enum.sort_by(&(&1[:name]))
 
     assert [%{name: "admin"},
@@ -39,7 +39,7 @@ defmodule Integration.Commands.RoleTest do
   test "getting information on a role works", %{user: user} do
     role("testing") |> with_permission("site:foo") |> with_permission("site:bar")
 
-    [payload] = payload_from(user, "operable:role info testing")
+    [payload] = send_message(user, "@bot: operable:role info testing")
 
     assert %{id: _,
              name: "testing"} = payload
@@ -70,7 +70,7 @@ defmodule Integration.Commands.RoleTest do
   end
 
   test "creating a role works", %{user: user} do
-    payload = payload_from(user, "operable:role create foo")
+    payload = send_message(user, "@bot: operable:role create foo")
     assert [%{name: "foo"}] = payload
     assert Roles.by_name("foo")
   end
@@ -102,7 +102,7 @@ defmodule Integration.Commands.RoleTest do
 
   test "deleting a role works", %{user: user} do
     role("foo")
-    payload = payload_from(user, "operable:role delete foo")
+    payload = send_message(user, "@bot: operable:role delete foo")
     assert [%{name: "foo"}] = payload
     refute Roles.by_name("foo")
   end
@@ -150,7 +150,7 @@ defmodule Integration.Commands.RoleTest do
     role = role("aws-admin")
     group = group("ops")
 
-    [payload] = payload_from(user, "operable:role grant aws-admin ops")
+    [payload] = send_message(user, "@bot: operable:role grant aws-admin ops")
     assert %{role: %{name: "aws-admin"},
              group: %{name: "ops"}} = payload
 
@@ -197,7 +197,7 @@ defmodule Integration.Commands.RoleTest do
   test "can grant the cog-admin role to a group", %{user: user} do
     group = group("ops")
 
-    [payload] = payload_from(user, "operable:role grant cog-admin ops")
+    [payload] = send_message(user, "@bot: operable:role grant cog-admin ops")
     assert %{role: %{name: "cog-admin"},
              group: %{name: "ops"}} = payload
 
@@ -210,7 +210,7 @@ defmodule Integration.Commands.RoleTest do
     group = group("ops")
     Permittable.grant_to(group, role)
 
-    [payload] = payload_from(user, "operable:role revoke aws-admin ops")
+    [payload] = send_message(user, "@bot: operable:role revoke aws-admin ops")
     assert %{role: %{name: "aws-admin"},
              group: %{name: "ops"}} = payload
 
@@ -261,7 +261,7 @@ defmodule Integration.Commands.RoleTest do
     group = group("ops")
     Permittable.grant_to(group, role)
 
-    [payload] = payload_from(user, "operable:role revoke cog-admin ops")
+    [payload] = send_message(user, "@bot: operable:role revoke cog-admin ops")
     assert %{role: %{name: "cog-admin"},
              group: %{name: "ops"}} = payload
 
@@ -286,7 +286,7 @@ defmodule Integration.Commands.RoleTest do
   test "renaming a role works", %{user: user} do
     %Role{id: id} = role("foo")
 
-    [payload] = payload_from(user, "operable:role rename foo bar")
+    [payload] = send_message(user, "@bot: operable:role rename foo bar")
     assert %{id: ^id,
              name: "bar",
              old_name: "foo"} = payload
@@ -331,15 +331,6 @@ defmodule Integration.Commands.RoleTest do
   test "passing an unknown subcommand fails", %{user: user} do
     response = send_message(user, "@bot: operable:role not-a-subcommand")
     assert_error_message_contains(response, "Whoops! An error occurred. Unknown subcommand 'not-a-subcommand'")
-  end
-
-  ########################################################################
-
-  # TODO: pull this out to adapter test
-  defp payload_from(user, pipeline) do
-    user
-    |> send_message("@bot: #{pipeline}")
-    |> decode_payload
   end
 
 end

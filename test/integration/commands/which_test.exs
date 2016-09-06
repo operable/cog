@@ -13,12 +13,10 @@ defmodule Integration.Commands.WhichTest do
 
     response = send_message(user, "@bot: operable:which my-new-alias")
 
-    assert_payload(response, %{
-      type: "alias",
-      scope: "user",
-      name: "my-new-alias",
-      pipeline: "echo My New Alias"
-    })
+    assert response == [%{type: "alias",
+                          scope: "user",
+                          name: "my-new-alias",
+                          pipeline: "echo My New Alias"}]
   end
 
   test "an alias in the 'site' visibility", %{user: user} do
@@ -27,28 +25,24 @@ defmodule Integration.Commands.WhichTest do
 
     response = send_message(user, "@bot: operable:which my-new-alias")
 
-    assert_payload(response, %{
-      type: "alias",
-      scope: "site",
-      name: "my-new-alias",
-      pipeline: "echo My New Alias"
-    })
+    assert response == [%{type: "alias",
+                          scope: "site",
+                          name: "my-new-alias",
+                          pipeline: "echo My New Alias"}]
   end
 
   test "a command", %{user: user} do
     response = send_message(user, "@bot: operable:which alias")
 
-    assert_payload(response, %{
-      type: "command",
-      scope: "operable",
-      name: "alias"
-    })
+    assert response == [%{type: "command",
+                          scope: "operable",
+                          name: "alias"}]
   end
 
   test "an unknown", %{user: user} do
     response = send_message(user, "@bot: operable:which foo")
 
-    assert_payload(response, %{not_found: true})
+    assert response == [%{not_found: true}]
   end
 
 end

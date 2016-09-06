@@ -10,9 +10,6 @@ defmodule Integration.Commands.EchoTest do
 
   test "Repeats whatever it is passed", %{user: user} do
     response = send_message(user, "@bot: operable:echo this is nifty")
-
-    [echoed] = decode_payload(response)
-
-    assert echoed.body == ["this is nifty"]
+    assert response == "this is nifty"
   end
 end

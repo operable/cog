@@ -1,5 +1,6 @@
-# TODO If there's an error display it
+~if cond=$results[0].error bound?~
 *~$results[0].error~*
+~end~
 ```
 ~$results[0].usage~
 ```

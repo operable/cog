@@ -12,7 +12,6 @@ defmodule Integration.Commands.UserTest do
   test "listing users", %{user: user} do
     payload = user
     |> send_message("@bot: operable:user list")
-    |> decode_payload
     |> Enum.sort_by(fn(b) -> b[:username] end)
 
     assert [%{username: "admin"},
@@ -22,7 +21,6 @@ defmodule Integration.Commands.UserTest do
   test "information about a specific user", %{user: user} do
     [payload] = user
     |> send_message("@bot: operable:user info admin")
-    |> decode_payload
 
     assert %{username: "admin"} = payload
   end
@@ -47,7 +45,6 @@ defmodule Integration.Commands.UserTest do
 
     [payload] = user
     |> send_message("@bot: operable:user attach-handle dummy dummy-handle")
-    |> decode_payload
 
     assert %{chat_provider: %{name: "test"},
              handle: "dummy-handle",
@@ -76,7 +73,6 @@ defmodule Integration.Commands.UserTest do
 
     [payload] = user
     |> send_message("@bot: operable:user detach-handle dummy")
-    |> decode_payload
 
     assert %{chat_provider: %{name: "test"},
              username: "dummy"} = payload
@@ -87,7 +83,6 @@ defmodule Integration.Commands.UserTest do
 
     [payload] = user
     |> send_message("@bot: operable:user detach-handle dummy")
-    |> decode_payload
 
     assert %{chat_provider: %{name: "test"},
              username: "dummy"} = payload
@@ -109,7 +104,6 @@ defmodule Integration.Commands.UserTest do
 
     payload = user
     |> send_message("@bot: operable:user list-handles")
-    |> decode_payload
     |> Enum.sort_by(fn(h) -> h[:username] end)
 
     assert [%{username: "dummy",

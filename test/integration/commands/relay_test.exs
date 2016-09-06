@@ -18,9 +18,8 @@ defmodule Integration.Commands.RelayTest do
     relay2 = ModelUtilities.relay("foo2", "otherfootoken")
 
     # Check to see that they show up in the list
-    response = send_message(user, "@bot: operable:relay list")
+    [foo1, foo2] = send_message(user, "@bot: operable:relay list")
 
-    [foo1, foo2] = decode_payload(response)
     assert foo1.name == "foo"
     assert foo1.id == relay1.id
     assert foo2.name == "foo2"
@@ -32,20 +31,18 @@ defmodule Integration.Commands.RelayTest do
     group = ModelUtilities.relay_group("foogroup")
     ModelUtilities.add_relay_to_group(group.id, relay.id)
 
-    response = send_message(user, "@bot: operable:relay list --group")
+    [response] = send_message(user, "@bot: operable:relay list --group")
 
-    [decoded] = decode_payload(response)
-    [decoded_group] = decoded.relay_groups
+    [decoded_group] = response.relay_groups
     assert decoded_group.name == group.name
   end
 
   test "updating a relay name", %{user: user} do
     relay = ModelUtilities.relay("foo", "footoken")
 
-    response = send_message(user, "@bot: operable:relay update foo --name bar")
+    [response] = send_message(user, "@bot: operable:relay update foo --name bar")
 
-    [decoded] = decode_payload(response)
-    assert decoded.name == "bar"
+    assert response.name == "bar"
 
     relay = Repo.get(Relay, relay.id)
     assert relay.name == "bar"
@@ -53,7 +50,7 @@ defmodule Integration.Commands.RelayTest do
 
   test "getting information on a single relay works", %{user: user} do
     %Relay{} = ModelUtilities.relay("foo", "footoken")
-    [response] = send_message(user, "@bot: operable:relay info foo") |> decode_payload
+    [response] = send_message(user, "@bot: operable:relay info foo")
     assert %{id: _,
              created_at: _,
              name: "foo",

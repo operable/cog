@@ -16,7 +16,6 @@ defmodule Integration.Commands.BundleTest do
   test "listing bundles", %{user: user} do
     payload = user
     |> send_message("@bot: operable:bundle list")
-    |> decode_payload
     |> Enum.sort_by(fn(b) -> b[:name] end)
 
     assert [%{name: "operable"},
@@ -26,7 +25,6 @@ defmodule Integration.Commands.BundleTest do
   test "information about a single bundle", %{user: user} do
     [payload] = user
     |> send_message("@bot: operable:bundle info operable")
-    |> decode_payload
 
     version = Application.fetch_env!(:cog, :embedded_bundle_version)
 
@@ -37,7 +35,6 @@ defmodule Integration.Commands.BundleTest do
   test "list versions for a bundle", %{user: user} do
     payload = user
     |> send_message("@bot: operable:bundle versions operable")
-    |> decode_payload
 
     version = Application.fetch_env!(:cog, :embedded_bundle_version)
 
@@ -47,7 +44,7 @@ defmodule Integration.Commands.BundleTest do
 
   test "enable a bundle", %{user: user, bundle_version: bundle_version} do
     response = send_message(user, "@bot: bundle enable test_bundle")
-    assert_payload(response, %{name: "test_bundle", status: "enabled", version: "0.1.0"})
+    assert response == [%{name: "test_bundle", status: "enabled", version: "0.1.0"}]
     assert Bundles.enabled?(bundle_version)
   end
 
@@ -55,7 +52,7 @@ defmodule Integration.Commands.BundleTest do
     Bundles.set_bundle_version_status(bundle_version, :enabled)
 
     response = send_message(user, "@bot: bundle disable test_bundle")
-    assert_payload(response, %{name: "test_bundle", status: "disabled", version: "0.1.0"})
+    assert response == [%{name: "test_bundle", status: "disabled", version: "0.1.0"}]
     refute Bundles.enabled?(bundle_version)
   end
 

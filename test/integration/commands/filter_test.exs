@@ -20,12 +20,10 @@ defmodule Integration.Commands.FilterTest do
 
     response = send_message(user, command)
 
-    things = decode_payload(response)
-
     assert [%{foo: %{bar: "stuff",
                      baz: "other stuff"}},
             %{foo: %{bar: "stuff",
-                     baz: "more stuff"}}] = things
+                     baz: "more stuff"}}] = response
   end
 
   test "filters a list of things based on a key", %{user: user} do
@@ -39,11 +37,9 @@ defmodule Integration.Commands.FilterTest do
 
     response = send_message(user, command)
 
-    things = decode_payload(response)
-
     assert [%{foo: %{bar: "stuff",
                      baz: "other stuff"}},
             %{foo: %{bar: "me",
-                     baz: "now this stuff"}}] = things
+                     baz: "now this stuff"}}] = response
   end
 end

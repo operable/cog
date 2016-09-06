@@ -5,19 +5,20 @@ At ~$started~, ~$initiator~ initiated the following pipeline, assigned the uniqu
 ~$pipeline_text~
 ```
 ~br~
-# IF THERE WAS A PLANNING FAILURE...
+~if cond=$planning_failure ~
 The pipeline failed planning the invocation:
 ~br~
 ```
 ~$planning_failure~
 ```
-~br~
-# IF THERE WAS AN EXECUTION FAILURE...
+~end~
+~if cond=$execution_failure~
 The pipeline failed executing the command:
 ~br~
 ```
 ~$execution_failure~
 ```
+~end~
 ~br~
 The specific error was:
 ~br~

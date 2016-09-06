@@ -129,10 +129,10 @@ defmodule Cog.Command.Pipeline.Initializer do
     handle = request.sender.handle
     {:ok, mention_name} = Cog.Chat.Adapter.mention_name(provider, handle)
 
-    context = %{"results" => [%{"first_name" => request.sender.first_name,
-                                "username" => user.username,
-                                "mention_name" => mention_name}]}
-    ReplyHelper.send("self_registration-success",
+    context = %{"first_name" => request.sender.first_name,
+                "username" => user.username,
+                "mention_name" => mention_name}
+    ReplyHelper.send("self-registration-success",
                      context,
                      request.room,
                      request.adapter,
@@ -145,9 +145,9 @@ defmodule Cog.Command.Pipeline.Initializer do
     {:ok, mention_name} = Cog.Chat.Adapter.mention_name(provider, handle)
     {:ok, display_name} = Cog.Chat.Adapter.display_name(provider)
 
-    context = %{"results" => [%{"mention_name" => mention_name,
-                                "display_name" => display_name}]}
-    ReplyHelper.send("self_registration-failed",
+    context = %{"mention_name" => mention_name,
+                "display_name" => display_name}
+    ReplyHelper.send("self-registration-failed",
                      context,
                      request.room,
                      request.adapter,

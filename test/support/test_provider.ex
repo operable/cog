@@ -57,8 +57,8 @@ defmodule Cog.Chat.Test.Provider do
                  is_dm: false}]}
   end
 
-  def send_message(target, message),
-    do: GenServer.call(__MODULE__, {:send_message, target, message}, :infinity)
+  def send_message(target, directives),
+    do: GenServer.call(__MODULE__, {:send_message, target, directives}, :infinity)
 
   ########################################################################
   # Testing API

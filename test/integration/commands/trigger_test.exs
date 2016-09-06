@@ -15,7 +15,6 @@ defmodule Integration.Commands.TriggerTest do
   test "creating a trigger (simple)", %{user: user} do
     [payload] = user
     |> send_message("@bot: operable:trigger create foo 'echo stuff'")
-    |> decode_payload
 
     assert %{id: _,
              name: "foo",
@@ -30,7 +29,6 @@ defmodule Integration.Commands.TriggerTest do
   test "creating a trigger (complex)", %{user: user} do
     [payload] = user
     |> send_message("@bot: operable:trigger create foo 'echo stuff' --description='behold, a trigger' --enabled=false --as-user=bobby_tables --timeout-sec=100")
-    |> decode_payload
 
     assert %{id: _,
              name: "foo",
@@ -51,7 +49,6 @@ defmodule Integration.Commands.TriggerTest do
     {:ok, %Trigger{id: id}} = Triggers.new(%{name: "foo", pipeline: "echo stuff"})
     [payload] = user
     |> send_message("@bot: operable:trigger info foo")
-    |> decode_payload
 
     assert %{id: ^id,
              name: "foo",
@@ -73,7 +70,6 @@ defmodule Integration.Commands.TriggerTest do
     {:ok, %Trigger{id: bar_id}} = Triggers.new(%{name: "bar", pipeline: "echo more stuff"})
     results = user
     |> send_message("@bot: operable:trigger list")
-    |> decode_payload
     |> Enum.sort_by(fn(m) -> m[:name] end)
 
     assert [%{id: ^bar_id,
@@ -99,7 +95,6 @@ defmodule Integration.Commands.TriggerTest do
     {:ok, %Trigger{id: bar_id}} = Triggers.new(%{name: "bar", pipeline: "echo more stuff"})
     results = user
     |> send_message("@bot: operable:trigger")
-    |> decode_payload
     |> Enum.sort_by(fn(m) -> m[:name] end)
 
     assert  [%{id: ^bar_id,
@@ -112,7 +107,6 @@ defmodule Integration.Commands.TriggerTest do
     {:ok, %Trigger{id: id}} = Triggers.new(%{name: "foo", pipeline: "echo stuff"})
     [payload] = user
     |> send_message("@bot: operable:trigger update foo --pipeline='echo all the things'")
-    |> decode_payload
 
     assert %{id: ^id,
              pipeline: "echo all the things"} = payload
@@ -122,7 +116,6 @@ defmodule Integration.Commands.TriggerTest do
     {:ok, %Trigger{id: id, enabled: false}} = Triggers.new(%{name: "foo", pipeline: "echo stuff", enabled: false})
     [payload] = user
     |> send_message("@bot: operable:trigger enable foo")
-    |> decode_payload
 
     assert %{id: ^id,
              name: "foo",
@@ -133,7 +126,6 @@ defmodule Integration.Commands.TriggerTest do
     {:ok, %Trigger{id: id, enabled: true}} = Triggers.new(%{name: "foo", pipeline: "echo stuff"})
     [payload] = user
     |> send_message("@bot: operable:trigger disable foo")
-    |> decode_payload
 
     assert %{id: ^id,
              name: "foo",
@@ -144,7 +136,6 @@ defmodule Integration.Commands.TriggerTest do
     {:ok, %Trigger{id: id}} = Triggers.new(%{name: "foo", pipeline: "echo stuff"})
     [payload] = user
     |> send_message("@bot: operable:trigger delete foo")
-    |> decode_payload
 
     assert %{id: ^id,
              name: "foo"} = payload
@@ -159,7 +150,6 @@ defmodule Integration.Commands.TriggerTest do
 
     payload = user
     |> send_message("@bot: operable:trigger delete foo bar baz")
-    |> decode_payload
     |> Enum.sort_by(fn(m) -> m[:name] end)
 
     assert [%{id: ^bar_id,

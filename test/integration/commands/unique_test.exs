@@ -10,9 +10,6 @@ defmodule Integration.Commands.UniqueTest do
 
   test "basic uniquing", %{user: user} do
     response = send_message(user, ~s(@bot: seed '[{"a": 1}, {"a": 3}, {"a": 1}]' | unique))
-
-    uniqued = decode_payload(response)
-
-    assert [%{a: 1}, %{a: 3}] == uniqued
+    assert [%{a: 1}, %{a: 3}] == response
   end
 end

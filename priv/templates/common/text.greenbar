@@ -1,9 +1,4 @@
-# TODO: only shows the first line of the first item, but we'll do better once we have iteration working better, and also a join tag
-
-
-# ~each var=$results~
+~each var=$results~
 # # TODO: Need to have a join tag for this; body is a list
-# ~$item.body~
-# ~end~
-
-~$results[0].body[0]~
+~$item.body[0]~
+~end~

@@ -10,9 +10,6 @@ defmodule Integration.Commands.SleepTest do
 
   test "basic sleeping", %{user: user} do
     response = send_message(user, ~s(@bot: sleep 1 | echo Lasagna is done cooking!))
-
-    [sleep] = decode_payload(response)
-
-    assert sleep.body == ["Lasagna is done cooking!"]
+    assert response == "Lasagna is done cooking!"
   end
 end

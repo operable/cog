@@ -14,7 +14,11 @@ defmodule Cog.Commands.Helpers do
       @moduledoc unquote(usage_str)
 
       defp show_usage(error \\ nil) do
-        {:ok, "usage", %{usage: @moduledoc, error: error}}
+        if error do
+          {:error, error}
+        else
+          {:ok, "usage", %{usage: @moduledoc}}
+        end
       end
     end
   end

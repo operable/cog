@@ -13,7 +13,7 @@ defmodule Integration.AliasExecutionTest do
 
     response = send_message(user, "@bot: my-alias")
 
-    assert_payload(response, %{body: ["my alias"]})
+    assert response == "my alias"
   end
 
   test "alias executes properly in the site namespace", %{user: user} do
@@ -22,7 +22,7 @@ defmodule Integration.AliasExecutionTest do
 
     response = send_message(user, "@bot: my-alias")
 
-    assert_payload(response, %{body: ["my alias"]})
+    assert response == "my alias"
   end
 
   test "alias executes properly in pipelines", %{user: user} do
@@ -30,7 +30,7 @@ defmodule Integration.AliasExecutionTest do
 
     response = send_message(user, "@bot: my-alias | echo $body[0]")
 
-    assert_payload(response, %{body: ["my alias"]})
+    assert response == "my alias"
   end
 
   test "alias executes properly in mid pipeline", %{user: user} do
@@ -38,7 +38,7 @@ defmodule Integration.AliasExecutionTest do
 
     response = send_message(user, "@bot: echo \"foo\" | my-alias")
 
-    assert_payload(response, %{body: ["foo"]})
+    assert response == "foo"
   end
 
   test "alias nested expansion works properly", %{user: user} do
@@ -47,7 +47,7 @@ defmodule Integration.AliasExecutionTest do
 
     response = send_message(user, "@bot: my-other-alias")
 
-    assert_payload(response, %{body: ["my alias"]})
+    assert response == "my alias"
   end
 
   test "alias expansion fails on infinite expansion", %{user: user} do
@@ -63,7 +63,7 @@ defmodule Integration.AliasExecutionTest do
 
     response = send_message(user, "@bot: :boom:")
 
-    assert_payload(response, %{body: ["BOOM"]})
+    assert response == "BOOM"
   end
 
 end

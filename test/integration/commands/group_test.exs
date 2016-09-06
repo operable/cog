@@ -14,26 +14,23 @@ defmodule Integration.Commands.GroupTest do
   end
 
   test "adding and removing users to groups", %{user: user} do
-    [response] = send_message(user, "@bot: operable:group member add elves #{user.username}")
+    response = send_message(user, "@bot: operable:group member add elves #{user.username}")
     assert_error_message_contains(response, "Whoops! An error occurred. Could not find 'user group' with the name 'elves'")
 
     [response] = send_message(user, "@bot: operable:group create elves")
-    |> decode_payload
     assert response.name == "elves"
 
-    [response] = send_message(user, "@bot: operable:group member add elves papa_elf")
+    response = send_message(user, "@bot: operable:group member add elves papa_elf")
     assert_error_message_contains(response, "Whoops! An error occurred. Could not find 'user' with the name 'papa_elf'")
 
-    [response] = send_message(user, "@bot: operable:group member add elves")
+    response = send_message(user, "@bot: operable:group member add elves")
     assert_error_message_contains(response, "Missing required args. At a minimum you must include the user group and at least one user name to add")
 
     [response] = send_message(user, "@bot: operable:group member add elves belf")
-    |> decode_payload
     member = hd(response.members)
     assert member.username == "belf"
 
     [response] = send_message(user, "@bot: operable:group member remove elves belf")
-    |> decode_payload
     assert length(response.members) == 0
   end
 
@@ -42,19 +39,15 @@ defmodule Integration.Commands.GroupTest do
     role("admin")
 
     [response] = send_message(user, "@bot: operable:group role add cheer admin")
-    |> decode_payload
     assert response.name == "cheer"
 
     [response] = send_message(user, "@bot: operable:group info cheer")
-    |> decode_payload
     assert hd(response.roles).name == "admin"
 
     [response] = send_message(user, "@bot: operable:group role remove cheer admin")
-    |> decode_payload
     assert response.name == "cheer"
 
     [response] = send_message(user, "@bot: operable:group info cheer")
-    |> decode_payload
     assert length(response.roles) == 0
   end
 
@@ -62,13 +55,11 @@ defmodule Integration.Commands.GroupTest do
     group("cheer")
 
     [response] = send_message(user, "@bot: operable:group info cheer")
-    |> decode_payload
     assert response.name == "cheer"
   end
 
   test "creating a group", %{user: user} do
     [response] = send_message(user, "@bot: operable:group create test")
-    |> decode_payload
     assert response.name == "test"
 
     response = send_message(user, "@bot: operable:group create test")
@@ -76,10 +67,10 @@ defmodule Integration.Commands.GroupTest do
   end
 
   test "errors using the group command", %{user: user} do
-    [response] = send_message(user, "@bot: operable:group create")
+    response = send_message(user, "@bot: operable:group create")
     assert_error_message_contains(response, "Missing required argument: group_name")
 
-    [response] = send_message(user, "@bot: operable:group member add belf")
+    response = send_message(user, "@bot: operable:group member add belf")
     assert_error_message_contains(response, "Missing required args. At a minimum you must include the user group and at least one user name to add")
   end
 
@@ -87,7 +78,6 @@ defmodule Integration.Commands.GroupTest do
     cheer = group("cheer")
 
     [response] = send_message(user, "@bot: operable:group member add cheer belf")
-    |> decode_payload
     assert response.id == cheer.id
     assert response.name == cheer.name
     member = hd(response.members)
@@ -96,7 +86,6 @@ defmodule Integration.Commands.GroupTest do
     assert member.last_name == user.last_name
 
     [response] = send_message(user, "@bot: operable:group delete cheer")
-    |> decode_payload
     assert response.name == "cheer"
 
     response = send_message(user, "@bot: operable:group member remove cheer belf")
@@ -108,7 +97,6 @@ defmodule Integration.Commands.GroupTest do
     cheer = group("cheer")
 
     [response] = send_message(user, "@bot: operable:group member add cheer belf")
-    |> decode_payload
     assert response.id == cheer.id
     assert response.name == cheer.name
     member = hd(response.members)
@@ -117,21 +105,17 @@ defmodule Integration.Commands.GroupTest do
     assert member.last_name == user.last_name
 
     response = send_message(user, "@bot: operable:group list")
-    |> decode_payload
     group_names = Enum.map(response, &(&1.name)) |> Enum.sort
     assert group_names == ["cheer", "cog-admin", "elves"]
 
     [response] = send_message(user, "@bot: operable:group delete cheer")
-    |> decode_payload
     assert response.name == "cheer"
 
     response = send_message(user, "@bot: operable:group list")
-    |> decode_payload
     group_names = Enum.map(response, &(&1.name)) |> Enum.sort
     assert group_names == ["cog-admin", "elves"]
 
     response = send_message(user, "@bot: operable:group")
-    |> decode_payload
     group_names = Enum.map(response, &(&1.name)) |> Enum.sort
     assert group_names == ["cog-admin", "elves"]
   end
@@ -139,7 +123,7 @@ defmodule Integration.Commands.GroupTest do
   test "renaming a group works", %{user: user} do
     %Group{id: id} = group("foo")
 
-    [payload] = send_message(user, "@bot: operable:group rename foo bar") |> decode_payload
+    [payload] = send_message(user, "@bot: operable:group rename foo bar")
     assert %{id: ^id,
              name: "bar",
              old_name: "foo"} = payload

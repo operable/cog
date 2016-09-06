@@ -1,1 +1,0 @@
-~$results[0].mention_name~: Hello ~$results[0].first_name~! It's great to meet you! You're the proud owner of a shiny new Cog account named '~$results[0].username~'.
