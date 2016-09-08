@@ -17,7 +17,7 @@ defmodule Cog.Chat.Slack.TemplateProcessor do
 
   defp process_directive(%{"name" => "text", "text" => text}, _),
     do: text
-  defp process_directive(%{"name" => "italic", "text" => text}, _),
+  defp process_directive(%{"name" => "italics", "text" => text}, _),
     do: "_#{text}_"
   defp process_directive(%{"name" => "bold", "text" => text}, _),
     do: "*#{text}*"
