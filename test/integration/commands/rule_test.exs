@@ -20,7 +20,7 @@ defmodule Integration.Commands.RuleTest do
   # List
 
   test "listing rules", %{user: user} do
-    [response] = interact(user, "@bot: rule -c operable:st-echo")
+    [response] = send_message(user, "@bot: rule -c operable:st-echo")
 
     assert response[:command] == "operable:st-echo"
     assert response[:rule] == "when command is operable:st-echo must have operable:st-echo"
@@ -51,7 +51,7 @@ defmodule Integration.Commands.RuleTest do
   test "adding a rule for a command", %{user: user} do
     permission("site:permission")
 
-    [response] = interact(user, ~s(@bot: rule create "when command is operable:st-echo must have site:permission"))
+    [response] = send_message(user, ~s(@bot: rule create "when command is operable:st-echo must have site:permission"))
 
     assert_uuid(response[:id])
     assert response[:command] == "operable:st-echo"
@@ -90,9 +90,9 @@ defmodule Integration.Commands.RuleTest do
 
   test "dropping a rule via a rule id", %{user: user} do
     # Get an ID we can use to drop
-    [response] = interact(user, "@bot: rule list -c operable:st-echo")
+    [response] = send_message(user, "@bot: rule list -c operable:st-echo")
     id = response[:id]
-    [response] = interact(user, "@bot: rule delete #{id}")
+    [response] = send_message(user, "@bot: rule delete #{id}")
 
     # TODO: why is this response not a list?
     assert response[:id] == id
@@ -117,7 +117,7 @@ defmodule Integration.Commands.RuleTest do
 
   test "retrieving a rule by ID works", %{user: user} do
     {:ok, %Rule{id: id}} = Rules.ingest("when command is operable:rule allow")
-    [payload] = send_message(user, "@bot: operable:rule info #{id}") |> decode_payload
+    [payload] = send_message(user, "@bot: operable:rule info #{id}")
 
     assert %{id: id,
              command_name: "operable:rule",
@@ -162,9 +162,6 @@ defmodule Integration.Commands.RuleTest do
 
   defp assert_uuid(maybe_uuid),
     do: assert Cog.UUID.is_uuid?(maybe_uuid)
-
-  defp interact(user, pipeline),
-    do: send_message(user, pipeline) |> decode_payload
 
   defp assert_error(user, pipeline, expected_message) when is_binary(expected_message),
     do: assert_error_message_contains(send_message(user, pipeline), expected_message)

@@ -1,6 +1,6 @@
 defmodule Cog.Command.Pipeline.Binder do
-  alias Piper.Command.Bind.Scope
-  alias Piper.Command.Bindable
+  alias Piper.Common.Scope
+  alias Piper.Common.Bindable
 
   def bind(unbound_invocation, context) when is_map(context) do
     scope = Scope.from_map(context)
@@ -10,7 +10,7 @@ defmodule Cog.Command.Pipeline.Binder do
         {:ok, bound_invocation}
       end
     catch
-      %Piper.Command.BindError{meta: meta, reason: reason} ->
+      %Piper.Common.BindError{meta: meta, reason: reason} ->
         {:error, {reason, meta}}
     end
   end

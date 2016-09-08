@@ -1,0 +1,10 @@
+~each var=$results~
+```
+Name: ~$item.name~
+Status: ~$item.status~
+# TODO if _show_groups
+Relay Groups: ~each var=$items.relay_groups as=group~
+~$group.name~
+~end~
+```
+~end~

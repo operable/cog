@@ -1,0 +1,3 @@
+~each var=$results~
+Deleted role '~$item.name~'
+~end~

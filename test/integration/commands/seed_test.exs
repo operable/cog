@@ -11,10 +11,7 @@ defmodule Integration.Commands.SeedTest do
 
   test "basic seeding", %{user: user} do
     response = send_message(user, ~s(@bot: seed '[{"a": 1}, {"a": 3}, {"a": 2}]'))
-
-    json = decode_payload(response)
-
-    assert [%{a: 1}, %{a: 3}, %{a: 2}] = json
+    assert [%{a: 1}, %{a: 3}, %{a: 2}] = response
   end
 
 end

@@ -65,7 +65,8 @@ defmodule Cog.Bundle.Config.Test do
   test "creates a config when there are no commands, services, permissions, or rules" do
     config = Config.gen_config("testing", "test all the things", "1.0.0", [NeitherCommandNorService], ".")
 
-    assert %{"name" => "testing",
+    assert %{"cog_bundle_version" => Spanner.Config.current_config_version,
+             "name" => "testing",
              "description" => "test all the things",
              "type" => "elixir",
              "version" => "1.0.0",
@@ -85,10 +86,9 @@ defmodule Cog.Bundle.Config.Test do
   end
 
   test "includes templates in the config" do
-    config = Config.gen_config("testing", "test all the things", "2.0.0", [], "test/support/test-bundle/templates")
+    config = Config.gen_config("testing", "test all the things", "2.0.0", [], "test/support/test-bundle/templates/embedded")
 
     assert %{"templates" => %{"help" => %{
-                                "slack" => "{{#command}}\n  Documentation for `{{command}}`\n  {{{documentation}}}\n{{/command}}\n"
-                              }}} = config
+                                "body" => "Documentation for `~$results[0].command~`\n~$results[0].documentation~\n"}}} = config
   end
 end

@@ -1,0 +1,3 @@
+~each var=$results~
+Deleted relay-group '~$item.name~'
+~end~

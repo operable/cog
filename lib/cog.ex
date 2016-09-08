@@ -30,6 +30,15 @@ defmodule Cog do
         # bootstrapped.
         Cog.Bootstrap.maybe_bootstrap
 
+        # In the absence of persistent tracking of the previous
+        # vs. current Cog version running, we'll just ensure at
+        # startup that the common templates in the database mirror the
+        # template files currently in Cog's priv directory. If we did
+        # track previous vs. current Cog version, then we could just
+        # do this when Cog was upgraded.
+        Logger.info("Ensuring common templates are up-to-date")
+        Cog.Repository.Templates.refresh_common_templates!
+
         {:ok, top_sup}
       error ->
         error

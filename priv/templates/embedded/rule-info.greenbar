@@ -1,0 +1,7 @@
+~each var=$results~
+```
+ID: ~$item.id~
+Command: ~$item.command_name~
+Rule: ~$item.rule~
+```
+~end~

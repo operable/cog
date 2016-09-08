@@ -1,0 +1,3 @@
+~each var=$results~
+Deleted trigger '~$item.name~'
+~end~

@@ -1,0 +1,8 @@
+~each var=$results~
+```
+Username: ~$item.username~
+First Name: ~$item.first_name~
+Last Name: ~$item.last_name~
+Email Address: ~$item.email_address~
+```
+~end~

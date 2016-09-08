@@ -674,7 +674,7 @@ defmodule Cog.Repository.Bundles do
         # Add templates
         version.config_file
         |> Map.get("templates", %{})
-        |> Enum.each(&create_template!(version, &1))
+        |> Enum.each(&Cog.Repository.Templates.create_template!(version, &1))
 
         # Once we go to Ecto 2.0 and there's a Repo.preload/3, I'd like
         # to add the ability to selectively force preloading on our
@@ -724,22 +724,6 @@ defmodule Cog.Repository.Bundles do
 
     CommandOption.build_new(command_version, option)
     |> Repo.insert!
-  end
-
-  defp create_template!(bundle_version, {name, template}) do
-    Enum.each(template, fn({provider, contents}) ->
-      contents = String.replace(contents, ~r{\n\z}, "")
-      params = %{
-        adapter: provider,
-        name: name,
-        source: contents
-      }
-
-      bundle_version
-      |> Ecto.build_assoc(:templates)
-      |> Template.changeset(params)
-      |> Repo.insert!
-    end)
   end
 
   defp register_permissions_for_version(bundle, bundle_version) do

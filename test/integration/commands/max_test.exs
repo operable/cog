@@ -10,17 +10,17 @@ defmodule Integration.MaxTest do
 
   test "basic max", %{user: user} do
     response = send_message(user, ~s(@bot: seed '[{"a": 1}, {"a": 3}, {"a": 2}]' | max))
-    assert_payload(response, %{a: 3})
+    assert response == [%{a: 3}]
   end
 
   test "max by simple key", %{user: user} do
     response = send_message(user, ~s(@bot: seed '[{"a": 1}, {"a": 3}, {"a": 2}]' | max a))
-    assert_payload(response, %{a: 3})
+    assert response == [%{a: 3}]
   end
 
   test "max by complex key", %{user: user} do
     response = send_message(user, ~s(@bot: seed '[{"a": {"b": 1}}, {"a": {"b": 3}}, {"a": {"b": 2}}]' | max a.b))
-    assert_payload(response, %{a: %{b: 3}})
+    assert response == [%{a: %{b: 3}}]
   end
 
   test "max by incorrect key", %{user: user} do

@@ -10,8 +10,7 @@ defmodule Integration.Commands.HelpTest do
   end
 
   test "listing enabled commands", %{user: user} do
-    response = send_message(user, "@bot: operable:help")
-    commands = decode_payload(response)
+    commands = send_message(user, "@bot: operable:help")
 
     # We should only have the operable bundle installed at this point
     assert Enum.all?(commands, fn command ->
@@ -22,8 +21,7 @@ defmodule Integration.Commands.HelpTest do
   test "list disabled commands", %{user: user} do
     ModelUtilities.command("test_command")
 
-    response = send_message(user, "@bot: operable:help --disabled")
-    [command] = decode_payload(response)
+    [command] = send_message(user, "@bot: operable:help --disabled")
 
     assert command.bundle.name == "test-bundle"
     assert command.name == "test_command"
@@ -32,8 +30,7 @@ defmodule Integration.Commands.HelpTest do
   test "list enabled commands when there are also disabled commands", %{user: user} do
     ModelUtilities.command("test_command")
 
-    response = send_message(user, "@bot: operable:help")
-    commands = decode_payload(response)
+    commands = send_message(user, "@bot: operable:help")
 
     # All enabled commands should be in the operable bundle
     assert Enum.all?(commands, fn command ->

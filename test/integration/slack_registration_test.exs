@@ -14,7 +14,7 @@ defmodule Integration.SlackRegistrationTest do
 
   test "executing a command without a registered handle" do
     message = send_message("@#{@bot}: operable:echo If only Cog could automatically register me!")
-    assert_response("@#{@user}: I'm terribly sorry, but either I don't have a Cog account for you, or your Slack chat handle has not been registered. Currently, only registered users can interact with me.\n\nYou'll need to ask a Cog administrator to fix this situation and to register your Slack handle. \n",
+    assert_response("@#{@user}: I'm terribly sorry, but either I don't have a Cog account for you, or your Slack chat handle has not been registered. Currently, only registered users can interact with me.\n\nYou'll need to ask a Cog administrator to fix this situation and to register your Slack handle.",
                     after: message)
   end
 
@@ -24,7 +24,7 @@ defmodule Integration.SlackRegistrationTest do
 
     # We should get a confirmation message, as well as the actual
     # output of the command
-    assert_response("@#{@user}: Hello #{@user}! It's great to meet you! You're the proud owner of a shiny new Cog account named '#{@user}'.\n\nYay, I autoregistered!",
+    assert_response("@#{@user}: Hello #{@user}! It's great to meet you! You're the proud owner of a shiny new Cog account named '#{@user}'.\nYay, I autoregistered!",
                     after: message,
                     count: 2)
   end
@@ -49,7 +49,7 @@ defmodule Integration.SlackRegistrationTest do
 
     # We should get a confirmation message, as well as the actual
     # output of the command
-    assert_response("@#{@user}: Hello #{@user}! It's great to meet you! You're the proud owner of a shiny new Cog account named '#{expected_username}'.\n\nI am slow but I get there eventually",
+    assert_response("@#{@user}: Hello #{@user}! It's great to meet you! You're the proud owner of a shiny new Cog account named '#{expected_username}'.\nI am slow but I get there eventually",
                      after: message,
                      count: 2)
 
@@ -71,7 +71,7 @@ defmodule Integration.SlackRegistrationTest do
     Enum.each(1..max, &user("#{@user}_#{&1}"))
 
     message = send_message("@#{@bot}: operable:echo alas it was not meant to be")
-    assert_response("@#{@user}: Unfortunately I was unable to automatically create a Cog account for your Slack chat handle. Only users with Cog accounts can interact with me.\n\nYou'll need to ask a Cog administrator to investigate the situation and set up your account.\n",
+    assert_response("@#{@user}: Unfortunately I was unable to automatically create a Cog account for your Slack chat handle. Only users with Cog accounts can interact with me.\n\nYou'll need to ask a Cog administrator to investigate the situation and set up your account.",
                     after: message)
   end
 

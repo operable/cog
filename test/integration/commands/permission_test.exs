@@ -16,7 +16,7 @@ defmodule Integration.Commands.PermissionTest do
   end
 
   test "listing permissions works", %{user: user} do
-    payload = payload_from(user, "operable:permission list")
+    payload = send_message(user, "@bot: operable:permission list")
     |> Enum.sort_by(fn(p) -> "#{p[:bundle]}:#{p[:name]}" end)
 
     assert [%{bundle: "operable", name: "manage_commands"},
@@ -31,7 +31,7 @@ defmodule Integration.Commands.PermissionTest do
   end
 
   test "listing is the default action", %{user: user} do
-    payload = payload_from(user, "operable:permission")
+    payload = send_message(user, "@bot: operable:permission")
     |> Enum.sort_by(fn(p) -> "#{p[:bundle]}:#{p[:name]}" end)
 
     assert [%{bundle: "operable", name: "manage_commands"},
@@ -47,7 +47,7 @@ defmodule Integration.Commands.PermissionTest do
 
   test "getting information on a permission works", %{user: user} do
     permission("site:foo")
-    [payload] = payload_from(user, "operable:permission info site:foo")
+    [payload] = send_message(user, "@bot: operable:permission info site:foo")
     assert %{id: _,
              bundle: "site",
              name: "foo"} = payload
@@ -76,7 +76,7 @@ defmodule Integration.Commands.PermissionTest do
   end
 
   test "creating a permission works", %{user: user} do
-    payload = payload_from(user, "operable:permission create site:foo")
+    payload = send_message(user, "@bot: operable:permission create site:foo")
     assert [%{bundle: "site", name: "foo"}] = payload
     assert Permissions.by_name("site:foo")
   end
@@ -115,7 +115,7 @@ defmodule Integration.Commands.PermissionTest do
   test "deleting a permission works", %{user: user} do
     permission("site:foo")
 
-    payload = payload_from(user, "operable:permission delete site:foo")
+    payload = send_message(user, "@bot: operable:permission delete site:foo")
     assert [%{bundle: "site", name: "foo"}] = payload
 
     refute Permissions.by_name("site:foo")
@@ -150,7 +150,7 @@ defmodule Integration.Commands.PermissionTest do
     role = role("admin")
     permission = permission("site:foo")
 
-    [payload] = payload_from(user, "operable:permission grant site:foo admin")
+    [payload] = send_message(user, "@bot: operable:permission grant site:foo admin")
     assert %{permission: %{bundle: "site", name: "foo"},
              role: %{name: "admin",
                      permissions: [%{bundle: "site",
@@ -200,7 +200,7 @@ defmodule Integration.Commands.PermissionTest do
     permission = permission("site:foo")
     role = role("admin") |> with_permission(permission)
 
-    [payload] = payload_from(user, "operable:permission revoke site:foo admin")
+    [payload] = send_message(user, "@bot: operable:permission revoke site:foo admin")
     assert %{permission: %{bundle: "site", name: "foo"},
              role: %{name: "admin",
                      permissions: []}} = payload
@@ -248,14 +248,6 @@ defmodule Integration.Commands.PermissionTest do
   test "providing an unrecognized subcommand fails", %{user: user} do
     response = send_message(user, "@bot: operable:permission do-something")
     assert_error_message_contains(response , "Unknown subcommand 'do-something'")
-  end
-
-  ########################################################################
-
-  defp payload_from(user, pipeline) do
-    user
-    |> send_message("@bot: #{pipeline}")
-    |> decode_payload
   end
 
 end

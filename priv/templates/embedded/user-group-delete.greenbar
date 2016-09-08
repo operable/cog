@@ -1,0 +1,3 @@
+~each var=$results~
+Deleted user group '~$item.name~'
+~end~

@@ -14,11 +14,9 @@ defmodule Integration.Commands.AliasTest do
   test "creating a new alias", %{user: user} do
     response = send_message(user, "@bot: operable:alias create my-new-alias \"echo My New Alias\"")
 
-    assert_payload(response, %{
-      name: "my-new-alias",
-      pipeline: "echo My New Alias",
-      visibility: "user"
-    })
+    assert response, [%{name: "my-new-alias",
+                        pipeline: "echo My New Alias",
+                        visibility: "user"}]
 
     created_alias = Repo.get_by(UserCommandAlias, name: "my-new-alias", user_id: user.id)
 
@@ -42,11 +40,9 @@ defmodule Integration.Commands.AliasTest do
 
     response = send_message(user, "@bot: operable:alias delete my-new-alias")
 
-    assert_payload(response, %{
-      name: "my-new-alias",
-      pipeline: "echo My New Alias",
-      visibility: "user"
-    })
+    assert response == [%{name: "my-new-alias",
+                          pipeline: "echo My New Alias",
+                          visibility: "user"}]
 
     deleted_alias = Repo.get_by(UserCommandAlias, name: "my-new-alias", user_id: user.id)
 
@@ -64,18 +60,14 @@ defmodule Integration.Commands.AliasTest do
 
     response = send_message(user, "@bot: operable:alias move user:my-new-alias site")
 
-    assert_payload(response, %{
-      source: %{
-        name: "my-new-alias",
-        pipeline: "echo My New Alias",
-        visibility: "user"
-      },
-      destination: %{
-        name: "my-new-alias",
-        pipeline: "echo My New Alias",
-        visibility: "site"
-      }
-    })
+    assert response == [%{source: %{
+                             name: "my-new-alias",
+                             pipeline: "echo My New Alias",
+                             visibility: "user"},
+                          destination: %{
+                            name: "my-new-alias",
+                            pipeline: "echo My New Alias",
+                            visibility: "site"}}]
 
     command_alias = Repo.get_by(SiteCommandAlias, name: "my-new-alias")
 
@@ -87,18 +79,15 @@ defmodule Integration.Commands.AliasTest do
 
     response = send_message(user, "@bot: operable:alias move user:my-new-alias site:my-renamed-alias")
 
-    assert_payload(response, %{
-      source: %{
-        name: "my-new-alias",
-        pipeline: "echo My New Alias",
-        visibility: "user"
-      },
-      destination: %{
-        name: "my-renamed-alias",
-        pipeline: "echo My New Alias",
-        visibility: "site"
-      }
-    })
+    assert response == [%{source: %{
+                             name: "my-new-alias",
+                             pipeline: "echo My New Alias",
+                             visibility: "user"},
+                          destination: %{
+                            name: "my-renamed-alias",
+                            pipeline: "echo My New Alias",
+                            visibility: "site"
+                          }}]
 
     command_alias = Repo.get_by(SiteCommandAlias, name: "my-renamed-alias")
 
@@ -110,18 +99,14 @@ defmodule Integration.Commands.AliasTest do
 
     response = send_message(user, "@bot: operable:alias move my-new-alias site")
 
-    assert_payload(response, %{
-      source: %{
-        name: "my-new-alias",
-        pipeline: "echo My New Alias",
-        visibility: "user"
-      },
-      destination: %{
-        name: "my-new-alias",
-        pipeline: "echo My New Alias",
-        visibility: "site"
-      }
-    })
+    assert response == [%{source: %{
+                             name: "my-new-alias",
+                             pipeline: "echo My New Alias",
+                             visibility: "user"},
+                          destination: %{
+                            name: "my-new-alias",
+                            pipeline: "echo My New Alias",
+                            visibility: "site"}}]
 
     command_alias = Repo.get_by(SiteCommandAlias, name: "my-new-alias")
 
@@ -133,18 +118,14 @@ defmodule Integration.Commands.AliasTest do
 
     response = send_message(user, "@bot: operable:alias move my-new-alias site:my-renamed-alias")
 
-    assert_payload(response, %{
-      source: %{
-        name: "my-new-alias",
-        pipeline: "echo My New Alias",
-        visibility: "user"
-      },
-      destination: %{
-        name: "my-renamed-alias",
-        pipeline: "echo My New Alias",
-        visibility: "site"
-      }
-    })
+    assert response == [%{source: %{
+                             name: "my-new-alias",
+                             pipeline: "echo My New Alias",
+                             visibility: "user"},
+                          destination: %{
+                            name: "my-renamed-alias",
+                            pipeline: "echo My New Alias",
+                            visibility: "site"}}]
 
     command_alias = Repo.get_by(SiteCommandAlias, name: "my-renamed-alias")
 
@@ -157,18 +138,14 @@ defmodule Integration.Commands.AliasTest do
 
     response = send_message(user, "@bot: operable:alias move site:my-new-alias user")
 
-    assert_payload(response, %{
-      source: %{
-        name: "my-new-alias",
-        pipeline: "echo My New Alias",
-        visibility: "site"
-      },
-      destination: %{
-        name: "my-new-alias",
-        pipeline: "echo My New Alias",
-        visibility: "user"
-      }
-    })
+    assert response == [%{source: %{
+                             name: "my-new-alias",
+                             pipeline: "echo My New Alias",
+                             visibility: "site"},
+                          destination: %{
+                            name: "my-new-alias",
+                            pipeline: "echo My New Alias",
+                            visibility: "user"}}]
 
     command_alias = Repo.get_by(UserCommandAlias, name: "my-new-alias")
 
@@ -181,18 +158,14 @@ defmodule Integration.Commands.AliasTest do
 
     response = send_message(user, "@bot: operable:alias move site:my-new-alias user:my-renamed-alias")
 
-    assert_payload(response, %{
-      source: %{
-        name: "my-new-alias",
-        pipeline: "echo My New Alias",
-        visibility: "site"
-      },
-      destination: %{
-        name: "my-renamed-alias",
-        pipeline: "echo My New Alias",
-        visibility: "user"
-      }
-    })
+    assert response == [%{source: %{
+                             name: "my-new-alias",
+                             pipeline: "echo My New Alias",
+                             visibility: "site"},
+                          destination: %{
+                            name: "my-renamed-alias",
+                            pipeline: "echo My New Alias",
+                            visibility: "user"}}]
 
     command_alias = Repo.get_by(UserCommandAlias, name: "my-renamed-alias")
 
@@ -205,17 +178,14 @@ defmodule Integration.Commands.AliasTest do
 
     response = send_message(user, "@bot: operable:alias move my-new-alias user")
 
-    assert_payload(response, %{
-      source: %{
-        name: "my-new-alias",
-        pipeline: "echo My New Alias",
-        visibility: "site"},
-      destination: %{
-        name: "my-new-alias",
-        pipeline: "echo My New Alias",
-        visibility: "user"
-      }
-    })
+    assert response == [%{source: %{
+                             name: "my-new-alias",
+                             pipeline: "echo My New Alias",
+                             visibility: "site"},
+                          destination: %{
+                            name: "my-new-alias",
+                            pipeline: "echo My New Alias",
+                            visibility: "user"}}]
 
     command_alias = Repo.get_by(UserCommandAlias, name: "my-new-alias")
 
@@ -228,17 +198,14 @@ defmodule Integration.Commands.AliasTest do
 
     response = send_message(user, "@bot: operable:alias move my-new-alias user:my-renamed-alias")
 
-    assert_payload(response, %{
-      source: %{
-        name: "my-new-alias",
-        pipeline: "echo My New Alias",
-        visibility: "site"},
-      destination: %{
-        name: "my-renamed-alias",
-        pipeline: "echo My New Alias",
-        visibility: "user"
-      }
-    })
+    assert response == [%{source: %{
+                             name: "my-new-alias",
+                             pipeline: "echo My New Alias",
+                             visibility: "site"},
+                          destination: %{
+                            name: "my-renamed-alias",
+                            pipeline: "echo My New Alias",
+                            visibility: "user"}}]
 
     command_alias = Repo.get_by(UserCommandAlias, name: "my-renamed-alias")
 
@@ -250,17 +217,14 @@ defmodule Integration.Commands.AliasTest do
 
     response = send_message(user, "@bot: operable:alias move my-new-alias my-renamed-alias")
 
-    assert_payload(response, %{
-      source: %{
-        name: "my-new-alias",
-        pipeline: "echo My New Alias",
-        visibility: "user"},
-      destination: %{
-        name: "my-renamed-alias",
-        pipeline: "echo My New Alias",
-        visibility: "user"
-      }
-    })
+    assert response == [%{source: %{
+                             name: "my-new-alias",
+                             pipeline: "echo My New Alias",
+                             visibility: "user"},
+                          destination: %{
+                            name: "my-renamed-alias",
+                            pipeline: "echo My New Alias",
+                            visibility: "user"}}]
 
     command_alias = Repo.get_by(UserCommandAlias, name: "my-renamed-alias")
 
@@ -273,17 +237,14 @@ defmodule Integration.Commands.AliasTest do
 
     response = send_message(user, "@bot: operable:alias move my-new-alias my-renamed-alias")
 
-    assert_payload(response, %{
-      source: %{
-        name: "my-new-alias",
-        pipeline: "echo My New Alias",
-        visibility: "site"},
-      destination: %{
-        name: "my-renamed-alias",
-        pipeline: "echo My New Alias",
-        visibility: "site"
-      }
-    })
+    assert response == [%{source: %{
+                             name: "my-new-alias",
+                             pipeline: "echo My New Alias",
+                             visibility: "site"},
+                          destination: %{
+                            name: "my-renamed-alias",
+                            pipeline: "echo My New Alias",
+                            visibility: "site"}}]
 
     command_alias = Repo.get_by(SiteCommandAlias, name: "my-renamed-alias")
 
@@ -319,28 +280,18 @@ defmodule Integration.Commands.AliasTest do
 
     response = send_message(user, "@bot: operable:alias list")
 
-    assert_payload(response, [
-      %{
-        visibility: "site",
-        pipeline: "echo My New Alias",
-        name: "my-new-alias"
-      },
-      %{
-        visibility: "user",
-        pipeline: "echo My New Alias",
-        name: "my-new-alias1"
-      },
-      %{
-        visibility: "user",
-        pipeline: "echo My New Alias",
-        name: "my-new-alias2"
-      },
-      %{
-        visibility: "user",
-        pipeline: "echo My New Alias",
-        name: "my-new-alias3"
-      }
-    ])
+    assert response == [%{visibility: "site",
+                          pipeline: "echo My New Alias",
+                          name: "my-new-alias"},
+                        %{visibility: "user",
+                          pipeline: "echo My New Alias",
+                          name: "my-new-alias1"},
+                        %{visibility: "user",
+                          pipeline: "echo My New Alias",
+                          name: "my-new-alias2"},
+                        %{visibility: "user",
+                          pipeline: "echo My New Alias",
+                          name: "my-new-alias3"}]
   end
 
   test "list all aliases matching a pattern", %{user: user} do
@@ -352,35 +303,29 @@ defmodule Integration.Commands.AliasTest do
 
     response = send_message(user, "@bot: operable:alias list \"my-*\"")
 
-    assert_payload(response, [
-      %{
-        visibility: "site",
-        pipeline: "echo My New Alias",
-        name: "my-new-alias"
-      },
-      %{
-        visibility: "user",
-        pipeline: "echo My New Alias",
-        name: "my-new-alias1"
-      }
-    ])
+    assert response == [%{visibility: "site",
+                          pipeline: "echo My New Alias",
+                          name: "my-new-alias"},
+                        %{visibility: "user",
+                          pipeline: "echo My New Alias",
+                          name: "my-new-alias1"}]
   end
 
   test "listing is the default", %{user: user} do
     send_message(user, "@bot: operable:alias create new-alias \"echo My New Alias\"")
     response = send_message(user, "@bot: operable:alias")
-    assert_payload(response, %{visibility: "user",
-                               pipeline: "echo My New Alias",
-                               name: "new-alias"})
+    assert response == [%{visibility: "user",
+                          pipeline: "echo My New Alias",
+                          name: "new-alias"}]
   end
 
   test "list all aliases with no matching aliases", %{user: user} do
-    [response] = send_message(user, "@bot: operable:alias list \"my-*\"")
+    response = send_message(user, "@bot: operable:alias list \"my-*\"")
     assert "Pipeline executed successfully, but no output was returned" = response
   end
 
   test "list all aliases with no aliases", %{user: user} do
-    [response] = send_message(user, "@bot: operable:alias list")
+    response = send_message(user, "@bot: operable:alias list")
     assert "Pipeline executed successfully, but no output was returned" = response
   end
 

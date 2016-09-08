@@ -1,0 +1,14 @@
+~each var=$results~
+```
+Name: ~$item.name~
+ID: ~$item.id~
+# TODO: space-delimited list here... good use for a join tag
+Roles: ~each var=$item.roles as=role~
+~$role.name~
+~end~
+# TODO: same here
+Members: ~each var=$item.members as=member~
+~$member.username~
+~end~
+```
+~end~

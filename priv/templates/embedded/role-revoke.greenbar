@@ -1,0 +1,3 @@
+~each var=$results~
+Revoked role '~$item.role.name~' from group '~$item.group.name~'
+~end~

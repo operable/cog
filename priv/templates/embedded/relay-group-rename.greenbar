@@ -1,0 +1,3 @@
+~each var=$results~
+Renamed relay group '~$item.old_name~' to '~$item.relay_group.name~'
+~end~

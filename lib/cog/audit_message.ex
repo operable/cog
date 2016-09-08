@@ -16,7 +16,7 @@ defmodule Cog.AuditMessage do
     "Error preparing to execute command pipeline '#{request.text}': #{msg}"
   end
   def render({:denied, {_rule, current_invocation}}, request),
-    do: "User #{request.sender["handle"]} denied access to '#{current_invocation}'"
+    do: "User #{request.sender.handle} denied access to '#{current_invocation}'"
   def render({:no_relays, bundle_name}, _request),
     do: ErrorResponse.render({:no_relays, bundle_name}) # Uses same user message for now
   def render({:disabled_bundle, %Bundle{name: name}}, _request),

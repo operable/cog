@@ -1,0 +1,12 @@
+~each var=$results~
+```
+ID: ~$item.id~
+Name: ~$item.name~
+Description: ~$item.description~
+Enabled?: ~$item.enabled~
+Pipeline: ~$item.pipeline~
+As User: ~$item.as_user~
+Timeout (sec): ~$item.timeout_sec~
+Invocation URL: ~$item.invocation_url~
+```
+~end~
