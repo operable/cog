@@ -1,1 +1,3 @@
-Bundle "~$results[0].name~" version "~$results[0].version~" has been enabled.
+~each var=$results~
+Bundle "~$item.name~" version "~$item.version~" has been enabled.
+~end~

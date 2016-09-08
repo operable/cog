@@ -1,4 +1,4 @@
-defmodule Cog.Chat.Slack.Templates.Embedded.PermissionTest do
+defmodule Cog.Chat.Slack.Templates.Embedded.PermissionGrantTest do
   use Cog.TemplateCase
 
   test "permission-grant template" do
