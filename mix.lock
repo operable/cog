@@ -61,7 +61,7 @@
   "probe": {:git, "https://github.com/operable/probe.git", "f2197509f01922a28219ab47af4e5c6324f47ac6", []},
   "ranch": {:hex, :ranch, "1.2.1", "a6fb992c10f2187b46ffd17ce398ddf8a54f691b81768f9ef5f461ea7e28c762", [:make], []},
   "slack": {:hex, :slack, "0.7.0", "f25c7b9153eafa9bc2d7175982871848388858501a9e2e696e5477b8a6b930f2", [:mix], [{:exjsx, "~> 3.2.0", [hex: :exjsx, optional: false]}, {:httpoison, "~> 0.8.0", [hex: :httpoison, optional: false]}]},
-  "spanner": {:git, "https://github.com/operable/spanner.git", "38da24857b77c9d37aecc0321c0a3adb4d53d522", []},
+  "spanner": {:git, "https://github.com/operable/spanner.git", "bd73a824b90cf176ab4fa37a1979424e9b1751b8", []},
   "ssl_verify_fun": {:hex, :ssl_verify_fun, "1.1.0", "edee20847c42e379bf91261db474ffbe373f8acb56e9079acb6038d4e0bf414f", [:rebar, :make], []},
   "table_rex": {:hex, :table_rex, "0.8.3", "1c68dfc6886d6f118f5047b0449d6402ae0ac5709064789e578c2f4659f4064b", [:mix], []},
   "uuid": {:hex, :uuid, "1.1.3", "06ca38801a1a95b751701ca40716bb97ddf76dfe7e26da0eec7dba636740d57a", [:mix], []},
