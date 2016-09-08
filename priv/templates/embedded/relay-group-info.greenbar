@@ -1,4 +1,6 @@
 # TODO: When we can do conditionals this can be probably be merged with relay-group-list
+~each var =$results~
 ```
-Name: ~$results[0].name~
+Name: ~$item.name~
 ```
+~end~

@@ -1,1 +1,3 @@
-Deleted rule ~$results[0].id~.
+~each var=$results~
+Deleted rule '~$item.id~'
+~end~

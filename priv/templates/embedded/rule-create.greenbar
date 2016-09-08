@@ -1,1 +1,3 @@
-Created rule ~$results[0].id~
+~each var=$results~
+Created rule '~$item.id~'
+~end~

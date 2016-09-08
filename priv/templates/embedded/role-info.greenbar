@@ -1,7 +1,9 @@
+~each var=$results~
 ```
-ID: ~$results[0].id~
-Name: ~$results[0].name~
-Permissions: ~each var=$results[0].permissions~
-~$item.bundle~:~$item.name~
+ID: ~$item.id~
+Name: ~$item.name~
+Permissions: ~each var=$item.permissions as=permission~
+~$permission.bundle~:~$permission.name~
 ~end~
 ```
+~end~

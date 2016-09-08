@@ -1,16 +1,16 @@
-defmodule Cog.Chat.Slack.Templates.Embedded.PermissionGrantTest do
+defmodule Cog.Chat.Slack.Templates.Embedded.PermissionRevokeTest do
   use Cog.TemplateCase
 
-  test "permission-grant template" do
+  test "permission-revoke template" do
     data = %{"results" => [%{"permission" => %{"bundle" => "site",
                                                "name" => "foo"},
                              "role" => %{"name" => "ops"}}]}
 
-    expected = "Granted permission 'site:foo' to role 'ops'"
-    assert_rendered_template(:embedded, "permission-grant", data, expected)
+    expected = "Revoked permission 'site:foo' from role 'ops'"
+    assert_rendered_template(:embedded, "permission-revoke", data, expected)
   end
 
-  test "permission-grant template with multiple inputs" do
+  test "permission-revoke template with multiple inputs" do
     data = %{"results" => [%{"permission" => %{"bundle" => "site", "name" => "foo"},
                              "role" => %{"name" => "ops"}},
                            %{"permission" => %{"bundle" => "site", "name" => "bar"},
@@ -19,14 +19,12 @@ defmodule Cog.Chat.Slack.Templates.Embedded.PermissionGrantTest do
                              "role" => %{"name" => "sec"}}]}
 
     expected = """
-    Granted permission 'site:foo' to role 'ops'
-    Granted permission 'site:bar' to role 'dev'
-    Granted permission 'site:baz' to role 'sec'
+    Revoked permission 'site:foo' from role 'ops'
+    Revoked permission 'site:bar' from role 'dev'
+    Revoked permission 'site:baz' from role 'sec'
     """ |> String.strip
 
-    assert_rendered_template(:embedded, "permission-grant", data, expected)
+    assert_rendered_template(:embedded, "permission-revoke", data, expected)
   end
-
-
 
 end

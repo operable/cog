@@ -1,12 +1,3 @@
-~each var=$results as=trigger~
-```
-ID: ~$trigger.id~
-Name: ~$trigger.name~
-Description: ~$trigger.description~
-Enabled?: ~$trigger.enabled~
-Pipeline: ~$trigger.pipeline~
-As User: ~$trigger.as_user~
-Timeout (sec): ~$trigger.timeout_sec~
-Invocation URL: ~$trigger.invocation_url~
-```
-~end~
+| ID | Name | Description | Enabled? | Pipeline | As User | Timeout | Invocation URL |
+|----|------|-------------|----------|----------|---------|---------|----------------|
+~each var=$results~|~$item.id~|~$item.name~|~if cond=$item.description bound?~~$item.description~~end~|~$item.enabled~|~$item.pipeline~|~if cond=$item.as_user~~$item.as_user~~end~|~$item.timeout_sec~|~$item.invocation_url~|~end~

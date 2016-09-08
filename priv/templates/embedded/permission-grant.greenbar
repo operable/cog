@@ -1,1 +1,3 @@
-Granted permission `~$results[0].permission.bundle~:~$results[0].permission.name~` to role `~$results[0].role.name~`
+~each var=$results~
+Granted permission '~$item.permission.bundle~:~$item.permission.name~' to role '~$item.role.name~'
+~end~

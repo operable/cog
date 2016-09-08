@@ -1,5 +1,7 @@
+~each var=$results~
 ```
-ID: ~$results[0].id~
-Bundle: ~$results[0].bundle~
-Name: ~$results[0].name~
+ID: ~$item.id~
+Bundle: ~$item.bundle~
+Name: ~$item.name~
 ```
+~end~

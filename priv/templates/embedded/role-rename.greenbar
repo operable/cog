@@ -1,1 +1,3 @@
-Renamed role `~$results[0].old_name~` to `~$results[0].name~`
+~each var=$results~
+Renamed role '~$item.old_name~' to '~$item.name~'
+~end~

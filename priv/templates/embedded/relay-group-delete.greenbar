@@ -1,1 +1,3 @@
-Deleted relay group `~$results[0].name~`.
+~each var=$results~
+Deleted relay-group '~$item.name~'
+~end~

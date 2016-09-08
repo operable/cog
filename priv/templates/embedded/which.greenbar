@@ -1,1 +1,8 @@
-~$results[0].type~ - ~$results[0].scope~:~$results[0].name~ -> `~$results[0].pipeline~`
+~each var=$results~
+~if cond=$item.type == alias~
+~$item.type~ - ~$item.scope~:~$item.name~ -> `~$item.pipeline~`
+~end~
+~if cond=$item.type == command~
+~$item.type~ - ~$item.scope~:~$item.name~
+~end~
+~end~

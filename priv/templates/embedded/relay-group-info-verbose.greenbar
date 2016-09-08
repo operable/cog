@@ -1,12 +1,14 @@
+~each var=$results~
 ```
-ID: ~$results[0].id~
-Name: ~$results[0].name~
-Created at: ~$results[0].created_at~
+ID: ~$item.id~
+Name: ~$item.name~
+Created at: ~$item.created_at~
 # TODO: need a "join" tag; these were originally space-delimited lists
-Relays: ~each var=$results[0].relays~
-~$item.name~
+Relays: ~each var=$item.relays as=relay~
+~$relay.name~
 ~end~
-Bundles: ~each var=$results[0].bundles~
-~$item.name~
+Bundles: ~each var=$item.bundles as=bundle~
+~$bundle.name~
 ~end~
 ```
+~end~

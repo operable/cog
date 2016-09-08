@@ -1,1 +1,3 @@
-Granted role `~$results[0].role.name~` to group `~$results[0].group.name~`
+~each var=$results~
+Granted role '~$item.role.name~' to group '~$item.group.name~'
+~end~

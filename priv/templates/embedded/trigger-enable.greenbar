@@ -1,1 +1,3 @@
-Enabled trigger `~$results[0].name~`.
+~each var=$results~
+Enabled trigger '~$item.name~'
+~end~

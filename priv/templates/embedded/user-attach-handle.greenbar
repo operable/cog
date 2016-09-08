@@ -1,2 +1,4 @@
 # TODO: Needs to be a mention name, not a handle, if we're going to have the "@" there
-Attached `~$results[0].chat_provider.name~` handle @~$results[0].handle~ to Cog user `~$results[0].username~`
+~each var=$results~
+Attached ~$item.chat_provider.name~ handle @~$item.handle~ to Cog user '~$item.username~'
+~end~

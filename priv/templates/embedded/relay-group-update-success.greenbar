@@ -1,1 +1,3 @@
-Relay group `~$results[0].name~` was successfully updated.
+~each var=$results~
+Relay group `~$item.name~` was successfully updated.
+~end~

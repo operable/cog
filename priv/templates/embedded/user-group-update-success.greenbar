@@ -1,1 +1,3 @@
-User group `~$results[0].name~` was successfully updated.
+~each var=$results~
+User group '~$item.name~' was successfully updated
+~end~

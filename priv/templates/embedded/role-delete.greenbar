@@ -1,1 +1,3 @@
-Deleted role `~$results[0].name~`
+~each var=$results~
+Deleted role '~$item.name~'
+~end~

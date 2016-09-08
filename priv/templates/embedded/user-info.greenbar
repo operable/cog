@@ -1,14 +1,16 @@
+~each var=$results~
 ```
-Username: ~$results[0].username~
-First Name: ~$results[0].first_name~
-Last Name: ~$results[0].last_name~
-Email Address: ~$results[0].email_address~
+Username: ~$item.username~
+First Name: ~$item.first_name~
+Last Name: ~$item.last_name~
+Email Address: ~$item.email_address~
 Groups:
-~each var=$results[0].groups~
-  ~$item.name~
+~each var=$item.groups as=group~
+  ~$group.name~
 ~end~
 Chat Handles:
-~each var=$results[0].chat_handles~
-  ~$item.chat_provider.name~: ~$item.handle~
+~each var=$item.chat_handles as=handle~
+  ~$handle.chat_provider.name~: ~$handle.handle~
 ~end~
 ```
+~end~

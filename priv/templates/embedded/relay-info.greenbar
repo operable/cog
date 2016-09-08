@@ -1,10 +1,12 @@
+~each var=$results~
 ```
-ID: ~$results[0].id~
-Created: ~$results[0].created_at~
-Name: ~$results[0].name~
-Status: ~$results[0].status~
+ID: ~$item.id~
+Created: ~$item.created_at~
+Name: ~$item.name~
+Status: ~$item.status~
 # TODO if _show_groups is true
-Relay Groups: ~each var=$results[0].relay_groups~
-~$item~
+Relay Groups: ~each var=$item.relay_groups as=group~
+~$group~
 ~end~
 ```
+~end~

@@ -1,1 +1,3 @@
-Created permission `~$results[0].bundle~:~$results[0].name~`
+~each var=$results~
+Created permission '~$item.bundle~:~$item.name~'
+~end~

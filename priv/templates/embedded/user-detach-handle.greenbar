@@ -1,1 +1,3 @@
-Removed `~$results[0].chat_provider.name~` handle from Cog user `~$results[0].username~`
+~each var=$results~
+Removed ~$item.chat_provider.name~ handle from Cog user '~$item.username~'
+~end~

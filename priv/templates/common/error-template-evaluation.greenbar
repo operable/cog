@@ -3,7 +3,7 @@ An error rendering the `~$template~` template occurred!
 The template source is:
 
 ```
-~$source.wut~
+~$source~
 ```
 
 The error is:
