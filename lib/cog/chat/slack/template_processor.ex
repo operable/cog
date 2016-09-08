@@ -23,8 +23,19 @@ defmodule Cog.Chat.Slack.TemplateProcessor do
     do: "*#{text}*"
   defp process_directive(%{"name" => "fixed_width", "text" => text}, _),
     do: "```#{text}```"
-  defp process_directive(%{"name" => "table", "columns" => columns, "rows" => rows}, _),
-    do: "```#{TableRex.quick_render!(rows, columns)}```"
+  defp process_directive(%{"name" => "table", "children" => children}, _) do
+    table = case children do
+              [%{"name" => "table_header", "children" => header} | rows] ->
+                TableRex.quick_render!(map(rows), map(header))
+              _ ->
+                TableRex.quick_render!(map(children))
+            end
+    "```#{table}```"
+  end
+  defp process_directive(%{"name" => "table_row", "children" => children}, _),
+    do: map(children)
+  defp process_directive(%{"name" => "table_cell", "children" => children}, _),
+    do: Enum.map_join(children, &process_directive/1)
   defp process_directive(%{"name" => "newline"}, _),
     do: "\n"
   defp process_directive(%{"name" => "unordered_list", "children" => children}, _),
@@ -46,5 +57,10 @@ defmodule Cog.Chat.Slack.TemplateProcessor do
     Logger.warn("Unrecognized directive; #{inspect directive}")
     "\nUnrecognized directive: #{name}\n"
   end
+
+  # Shortcut for processing a list of directives without additional
+  # context, since it's so common
+  defp map(directives),
+    do: Enum.map(directives, &process_directive/1)
 
 end

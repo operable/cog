@@ -7,7 +7,7 @@ defmodule Cog.Chat.Slack.TemplateProcessorTest do
     directives = [
       %{"name" => "text",
         "text" => "This is a rendering test. First, let's try italics: "},
-      %{"name" => "italic",
+      %{"name" => "italics",
         "text" => "I'm italic text!"},
       %{"name" => "text",
         "text" => "\nThat was fun; now let's do bold: "},
@@ -20,10 +20,46 @@ defmodule Cog.Chat.Slack.TemplateProcessorTest do
       %{"name" => "text",
         "text" => "\nWow, good stuff. And now... AN ASCII TABLE!\n\n"},
       %{"name" => "table",
-        "columns" => ["Member", "Instrument"],
-        "rows" => [["Geddy Lee", "Vocals, Bass, Keyboards"],
-                   ["Alex Lifeson", "Guitar"],
-                   ["Neal Peart", "Drums, Percussion"]]},
+        "children" => [%{"name" => "table_header",
+                         "children" => [
+                           %{"name" => "table_cell",
+                             "children" => [
+                               %{"name" => "text",
+                                 "text" => "Member"}]},
+                           %{"name" => "table_cell",
+                             "children" => [
+                               %{"name" => "text",
+                                 "text" => "Instrument"}]}]},
+                       %{"name" => "table_row",
+                         "children" => [
+                           %{"name" => "table_cell",
+                             "children" => [
+                               %{"name" => "text",
+                                 "text" => "Geddy Lee"}]},
+                           %{"name" => "table_cell",
+                             "children" => [
+                               %{"name" => "text",
+                                 "text" => "Vocals, Bass, Keyboards"}]}]},
+                       %{"name" => "table_row",
+                         "children" => [
+                           %{"name" => "table_cell",
+                             "children" => [
+                               %{"name" => "text",
+                                 "text" => "Alex Lifeson"}]},
+                           %{"name" => "table_cell",
+                             "children" => [
+                               %{"name" => "text",
+                                 "text" => "Guitar"}]}]},
+                       %{"name" => "table_row",
+                         "children" => [
+                           %{"name" => "table_cell",
+                             "children" => [
+                               %{"name" => "text",
+                                 "text" => "Neal Peart"}]},
+                           %{"name" => "table_cell",
+                             "children" => [
+                               %{"name" => "text",
+                                 "text" => "Drums, Percussion"}]}]}]},
       %{"name" => "text",
         "text" => "\nHow do you like them apples?"}]
 
