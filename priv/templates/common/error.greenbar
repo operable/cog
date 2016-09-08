@@ -1,4 +1,4 @@
-Damn, dude; an error has occurred!
+An error has occurred!
 
 At ~$results[0].started~, ~$results[0].initiator~ initiated the following pipeline, assigned the unique ID ~$results[0].id~:
 

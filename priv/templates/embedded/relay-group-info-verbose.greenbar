@@ -1,0 +1,12 @@
+```
+ID: ~$results[0].id~
+Name: ~$results[0].name~
+Created at: ~$results[0].created_at~
+# TODO: need a "join" tag; these were originally space-delimited lists
+Relays: ~each var=$results[0].relays~
+~$item.name~
+~end~
+Bundles: ~each var=$results[0].bundles~
+~$item.name~
+~end~
+```

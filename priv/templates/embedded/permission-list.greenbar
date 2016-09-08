@@ -1,0 +1,3 @@
+~each var=$results as=permission~
+~$permission.bundle~:~$permission.name~
+~end~

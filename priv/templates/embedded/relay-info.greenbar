@@ -1,0 +1,10 @@
+```
+ID: ~$results[0].id~
+Created: ~$results[0].created_at~
+Name: ~$results[0].name~
+Status: ~$results[0].status~
+# TODO if _show_groups is true
+Relay Groups: ~each var=$results[0].relay_groups~
+~$item~
+~end~
+```
