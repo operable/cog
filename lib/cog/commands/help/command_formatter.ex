@@ -74,10 +74,20 @@ defmodule Cog.Commands.Help.CommandFormatter do
   defp render_synopsis_options([]),
     do: nil
   defp render_synopsis_options(options) do
-    options
-    |> Enum.sort_by(&(&1.required))
-    |> Enum.reverse
-    |> Enum.map(&render_synopsis_option/1)
+    required_options = Enum.filter(options, &(&1.required))
+    optional_options = Enum.reject(options, &(&1.required))
+
+    required_options = Enum.map(required_options, &render_synopsis_option/1)
+
+    optional_options = case optional_options do
+      optional_options when length(optional_options) > 5 ->
+        "[options]"
+      optional_options ->
+        Enum.map(optional_options, &render_synopsis_option/1)
+    end
+
+    [required_options, optional_options]
+    |> List.flatten
     |> Enum.join(" ")
   end
 
@@ -101,7 +111,7 @@ defmodule Cog.Commands.Help.CommandFormatter do
       required_options ->
         required_options = required_options
         |> Enum.map(&render_option/1)
-        |> Enum.join("\n")
+        |> Enum.join("\n\n")
 
         """
         REQUIRED OPTIONS
@@ -119,7 +129,7 @@ defmodule Cog.Commands.Help.CommandFormatter do
       optional_options ->
         optional_options = optional_options
         |> Enum.map(&render_option/1)
-        |> Enum.join("\n")
+        |> Enum.join("\n\n")
 
         """
         OPTIONS
@@ -128,15 +138,15 @@ defmodule Cog.Commands.Help.CommandFormatter do
     end
   end
 
-  defp render_option(%CommandOption{name: name, long_flag: long_flag, desc: desc, option_type: %CommandOptionType{name: type}}) do
-    desc = case desc do
+  defp render_option(%CommandOption{name: name, long_flag: long_flag, description: description, option_type: %CommandOptionType{name: type}}) do
+    description = case description do
       nil ->
         nil
-      desc ->
-        indent(desc)
+      description ->
+        indent(description)
     end
 
-    [render_flag(long_flag, name, type), desc]
+    [render_flag(long_flag, name, type), description]
     |> Enum.reject(&is_nil/1)
     |> Enum.join("\n")
   end
