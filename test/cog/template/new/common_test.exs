@@ -22,19 +22,19 @@ defmodule Cog.Template.New.CommonTest do
                        %{"name" => "text", "text" => "At some time in the past, somebody initiated the following pipeline, assigned the unique ID deadbeef:"},
                        %{"name" => "newline"},
                        %{"name" => "newline"},
-                       %{"name" => "fixed_width", "text" => "\necho foo\n"},
+                       %{"name" => "fixed_width", "text" => "echo foo\n"},
                        %{"name" => "newline"},
                        %{"name" => "newline"},
                        %{"name" => "text", "text" => "The pipeline failed planning the invocation:"},
                        %{"name" => "newline"},
                        %{"name" => "newline"},
-                       %{"name" => "fixed_width", "text" => "\nI can't plan this!\n"},
+                       %{"name" => "fixed_width", "text" => "I can't plan this!\n"},
                        %{"name" => "newline"},
                        %{"name" => "newline"},
                        %{"name" => "text", "text" => "The specific error was:"},
                        %{"name" => "newline"},
                        %{"name" => "newline"},
-                       %{"name" => "fixed_width", "text" => "\nbad stuff happened\n"}])
+                       %{"name" => "fixed_width", "text" => "bad stuff happened\n"}])
   end
 
   test "error template directives; execution failure" do
@@ -51,19 +51,19 @@ defmodule Cog.Template.New.CommonTest do
                        %{"name" => "text", "text" => "At some time in the past, somebody initiated the following pipeline, assigned the unique ID deadbeef:"},
                        %{"name" => "newline"},
                        %{"name" => "newline"},
-                       %{"name" => "fixed_width", "text" => "\necho foo\n"},
+                       %{"name" => "fixed_width", "text" => "echo foo\n"},
                        %{"name" => "newline"},
                        %{"name" => "newline"},
                        %{"name" => "text", "text" => "The pipeline failed executing the command:"},
                        %{"name" => "newline"},
                        %{"name" => "newline"},
-                       %{"name" => "fixed_width", "text" => "\nI can't execute this!\n"},
+                       %{"name" => "fixed_width", "text" => "I can't execute this!\n"},
                        %{"name" => "newline"},
                        %{"name" => "newline"},
                        %{"name" => "text", "text" => "The specific error was:"},
                        %{"name" => "newline"},
                        %{"name" => "newline"},
-                       %{"name" => "fixed_width", "text" => "\nbad stuff happened\n"}])
+                       %{"name" => "fixed_width", "text" => "bad stuff happened\n"}])
     end
 
 end
