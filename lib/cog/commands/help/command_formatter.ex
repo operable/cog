@@ -1,5 +1,5 @@
 defmodule Cog.Commands.Help.CommandFormatter do
-  alias Cog.Models.{BundleVersion, CommandOption, CommandVersion}
+  alias Cog.Models.{BundleVersion, CommandOption, CommandOptionType, CommandVersion}
 
   def format(%CommandVersion{bundle_version: %BundleVersion{config_file: %{"cog_bundle_version" => version}}, documentation: documentation})
       when version < 4 do
@@ -81,14 +81,14 @@ defmodule Cog.Commands.Help.CommandFormatter do
     |> Enum.join(" ")
   end
 
-  defp render_synopsis_option(%CommandOption{name: name, long_flag: long_flag, required: required}) do
-    option = "--#{long_flag} <#{name}>"
+  defp render_synopsis_option(%CommandOption{name: name, long_flag: long_flag, required: required, option_type: %CommandOptionType{name: type}}) do
+    flag = render_flag(long_flag, name, type)
 
     case required do
       true ->
-        option
+        flag
       false ->
-        "[#{option}]"
+        "[#{flag}]"
     end
   end
 
@@ -128,7 +128,7 @@ defmodule Cog.Commands.Help.CommandFormatter do
     end
   end
 
-  defp render_option(%CommandOption{name: name, long_flag: long_flag, desc: desc}) do
+  defp render_option(%CommandOption{name: name, long_flag: long_flag, desc: desc, option_type: %CommandOptionType{name: type}}) do
     desc = case desc do
       nil ->
         nil
@@ -136,10 +136,15 @@ defmodule Cog.Commands.Help.CommandFormatter do
         indent(desc)
     end
 
-    ["--#{long_flag} <#{name}>", desc]
+    [render_flag(long_flag, name, type), desc]
     |> Enum.reject(&is_nil/1)
     |> Enum.join("\n")
   end
+
+  defp render_flag(long_flag, _name, "bool"),
+    do: "--#{long_flag}"
+  defp render_flag(long_flag, name, _type),
+    do: "--#{long_flag} <#{name}>"
 
   defp render_subcommands(%CommandVersion{subcommands: nil}),
     do: nil

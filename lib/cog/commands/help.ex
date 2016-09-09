@@ -55,7 +55,7 @@ defmodule Cog.Commands.Help do
 
         command_version = full_command_name
         |> Commands.with_status_by_any_name
-        |> Repo.preload([:bundle_version, :options])
+        |> Repo.preload([:bundle_version, options: :option_type])
 
         case command_version do
           [] ->
