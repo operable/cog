@@ -101,7 +101,7 @@ defmodule Cog.Commands.Help.CommandFormatter do
       required_options ->
         required_options = required_options
         |> Enum.map(&render_option/1)
-        |> Enum.join("\n")
+        |> Enum.join("\n\n")
 
         """
         REQUIRED OPTIONS
@@ -119,7 +119,7 @@ defmodule Cog.Commands.Help.CommandFormatter do
       optional_options ->
         optional_options = optional_options
         |> Enum.map(&render_option/1)
-        |> Enum.join("\n")
+        |> Enum.join("\n\n")
 
         """
         OPTIONS
@@ -128,15 +128,15 @@ defmodule Cog.Commands.Help.CommandFormatter do
     end
   end
 
-  defp render_option(%CommandOption{name: name, long_flag: long_flag, desc: desc, option_type: %CommandOptionType{name: type}}) do
-    desc = case desc do
+  defp render_option(%CommandOption{name: name, long_flag: long_flag, description: description, option_type: %CommandOptionType{name: type}}) do
+    description = case description do
       nil ->
         nil
-      desc ->
-        indent(desc)
+      description ->
+        indent(description)
     end
 
-    [render_flag(long_flag, name, type), desc]
+    [render_flag(long_flag, name, type), description]
     |> Enum.reject(&is_nil/1)
     |> Enum.join("\n")
   end
