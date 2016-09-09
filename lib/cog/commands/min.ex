@@ -3,28 +3,20 @@ defmodule Cog.Commands.Min do
     bundle: Cog.Util.Misc.embedded_bundle
 
   alias Cog.Command.Service.MemoryClient
-  require Logger
 
   @description "Return the minimum value in the input list"
 
-  @moduledoc """
-  #{@description}
+  @arguments "[path]"
 
-  USAGE
-    min [path]
+  @examples """
+  seed '[{"a": 2}, {"a": -1}, {"a": 3}]' | min
+  > {"a": -1}
 
-  ARGS
-    path  JSON path used in determining the minimum
+  seed '[{"a": 2}, {"a": -1}, {"a": 3}]' | min a
+  > {"a": -1}
 
-  EXAMPLES
-    seed '[{"a": 2}, {"a": -1}, {"a": 3}]' | min
-    > {"a": -1}
-
-    seed '[{"a": 2}, {"a": -1}, {"a": 3}]' | min a
-    > {"a": -1}
-
-    seed '[{"a": {"b": 2}}, {"a": {"b": -1}}, {"a": {"b": 3}}]' | min a.b
-    > {"a": {"b": -1}}
+  seed '[{"a": {"b": 2}}, {"a": {"b": -1}}, {"a": {"b": 3}}]' | min a.b
+  > {"a": {"b": -1}}
   """
 
   rule "when command is #{Cog.Util.Misc.embedded_bundle}:min allow"

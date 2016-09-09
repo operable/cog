@@ -6,29 +6,21 @@ defmodule Cog.Commands.Sort do
 
   @description "Sort inputs by field"
 
-  @moduledoc """
-  #{@description}
+  @long_description """
+  Fields are used to pick which values to sort by. If two keys have the same
+  value the values of the next key are compared and so on. If no fields are
+  provided, items are intellegently sorted based on their contents.
+  """
 
-  USAGE
-    sort [flags] [fields...]
+  @examples """
+  seed '[{"a": 1}, {"a": 3}, {"a": 2}]' | sort
+  > [{"a": 1}, {"a": 2}, {"a": 3}]
 
-    Fields are used to pick which values to sort by. If two keys have the same
-    value the values of the next key are compared and so on. If no fields are
-    provided, items are intellegently sorted based on their contents.
+  seed '[{"a": 1}, {"a": 3}, {"a": 2}]' | sort --desc
+  > [{"a": 3}, {"a": 2}, {"a": 1}]
 
-  FLAGS
-    -a, --asc   sort in ascending order (default)
-    -d, --desc  sort in descending order
-
-  EXAMPLES
-    seed '[{"a": 1}, {"a": 3}, {"a": 2}]' | sort
-    > [{"a": 1}, {"a": 2}, {"a": 3}]
-
-    seed '[{"a": 1}, {"a": 3}, {"a": 2}]' | sort --desc
-    > [{"a": 3}, {"a": 2}, {"a": 1}]
-
-    seed '[{"a": 3, "b": 4}, {"a": 1, "b": 4}, {"a": 2, "b": 6}]' | sort b a
-    > [{"a": 1, "b": 4}, {"a: 3, "b": 4}, {"a": 2, "b": 6}]
+  seed '[{"a": 3, "b": 4}, {"a": 1, "b": 4}, {"a": 2, "b": 6}]' | sort b a
+  > [{"a": 1, "b": 4}, {"a: 3, "b": 4}, {"a": 2, "b": 6}]
   """
 
   rule "when command is #{Cog.Util.Misc.embedded_bundle}:sort allow"

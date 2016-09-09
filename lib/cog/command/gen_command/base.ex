@@ -130,6 +130,11 @@ defmodule Cog.Command.GenCommand.Base do
       Module.register_attribute(__MODULE__, :bundle_name, accumulate: false, persist: true)
       Module.register_attribute(__MODULE__, :command_name, accumulate: false, persist: true)
       Module.register_attribute(__MODULE__, :description, accumulate: false, persist: true)
+      Module.register_attribute(__MODULE__, :long_description, accumulate: false, persist: true)
+      Module.register_attribute(__MODULE__, :examples, accumulate: false, persist: true)
+      Module.register_attribute(__MODULE__, :notes, accumulate: false, persist: true)
+      Module.register_attribute(__MODULE__, :arguments, accumulate: false, persist: true)
+      Module.register_attribute(__MODULE__, :subcommands, accumulate: false, persist: true)
       Module.register_attribute(__MODULE__, :options, accumulate: true, persist: true)
       Module.register_attribute(__MODULE__, :permissions, accumulate: true, persist: true)
       Module.register_attribute(__MODULE__, :raw_rules, accumulate: true, persist: false)
@@ -173,8 +178,10 @@ defmodule Cog.Command.GenCommand.Base do
     attr_value(module, :command_name)
   end
 
-  def description(module),
-    do: attr_value(module, :description)
+  for attr <- [:description, :long_description, :examples, :notes, :arguments, :subcommands] do
+    def unquote(attr)(module),
+      do: attr_value(module, unquote(attr))
+  end
 
   @doc """
   Return descriptors for all the options a command declares.

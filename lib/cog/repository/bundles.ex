@@ -304,7 +304,8 @@ defmodule Cog.Repository.Bundles do
     query = from bv in BundleVersion,
             left_join: e in "enabled_bundle_versions",
               on: bv.bundle_id == e.bundle_id and bv.version == e.version,
-            where: is_nil(e.bundle_id),
+            join: b in assoc(bv, :bundle),
+            where: is_nil(e.bundle_id) and b.name != "site",
             distinct: bv.bundle_id,
             order_by: [desc: bv.version]
 
@@ -621,6 +622,8 @@ defmodule Cog.Repository.Bundles do
   end
 
   defp new_version!(bundle, params) do
+    params = Map.merge(params, Map.take(params["config_file"], ["author", "homepage"]))
+
     bundle
     |> Ecto.build_assoc(:versions)
     |> BundleVersion.changeset(params)

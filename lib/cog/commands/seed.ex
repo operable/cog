@@ -6,9 +6,7 @@ defmodule Cog.Command.Seed do
 
   @description "Seed a pipeline with arbitrary data"
 
-  @moduledoc """
-  #{@description}
-
+  @long_description """
   Accepts a single string argument, which must be valid JSON for
   either a map or a list of maps.
 
@@ -16,18 +14,15 @@ defmodule Cog.Command.Seed do
   it is highly recommended to single-quote your entire string.
 
   Best used for debugging and experimentation.
+  """
 
-  USAGE
-    seed [ARGS]
+  @examples """
+  seed '{"thing":"stuff"}' | echo $thing
+  > stuff
 
-  EXAMPLE
-    seed '{"thing":"stuff"}' | echo $thing
-    > stuff
-
-    seed '[{"thing":"stuff"},{"thing":"more stuff"}]' | echo $thing
-    > stuff
-    > more stuff
-
+  seed '[{"thing":"stuff"},{"thing":"more stuff"}]' | echo $thing
+  > stuff
+  > more stuff
   """
 
   rule "when command is #{Cog.Util.Misc.embedded_bundle}:seed allow"

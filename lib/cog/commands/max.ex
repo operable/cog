@@ -3,28 +3,20 @@ defmodule Cog.Commands.Max do
     bundle: Cog.Util.Misc.embedded_bundle
 
   alias Cog.Command.Service.MemoryClient
-  require Logger
 
   @description "Return the maximum value in the input list"
 
-  @moduledoc """
-  #{@description}
+  @arguments "[path]"
 
-  USAGE
-    max [path]
+  @examples """
+  seed '[{"a": 2}, {"a": -1}, {"a": 3}]' | max
+  > {"a": 3}
 
-  ARGS
-    path  JSON path used in determining the maximum
+  seed '[{"a": 2}, {"a": -1}, {"a": 3}]' | max a
+  > {"a": 3}
 
-  EXAMPLES
-    seed '[{"a": 2}, {"a": -1}, {"a": 3}]' | max
-    > {"a": 3}
-
-    seed '[{"a": 2}, {"a": -1}, {"a": 3}]' | max a
-    > {"a": 3}
-
-    seed '[{"a": {"b": 2}}, {"a": {"b": -1}}, {"a": {"b": 3}}]' | max a.b
-    > {"a": {"b": 3}}
+  seed '[{"a": {"b": 2}}, {"a": {"b": -1}}, {"a": {"b": 3}}]' | max a.b
+  > {"a": {"b": 3}}
   """
 
   rule "when command is #{Cog.Util.Misc.embedded_bundle}:max allow"

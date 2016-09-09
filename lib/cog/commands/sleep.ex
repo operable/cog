@@ -6,17 +6,13 @@ defmodule Cog.Commands.Sleep do
 
   @description "Pauses pipeline execution for a given number of seconds"
 
-  @moduledoc """
-  #{@description}
-
+  @long_description """
   Mainly useful for debugging and testing.
+  """
 
-  USAGE
-    sleep <duration>
-
-  EXAMPLES
-    sleep 2400 | echo "Lasagna is done cooking!" > me
-    > Lasagna is done cooking!
+  @examples """
+  sleep 2400 | echo "Lasagna is done cooking!" > me
+  > Lasagna is done cooking!
   """
 
   rule "when command is #{Cog.Util.Misc.embedded_bundle}:sleep allow"

@@ -17,20 +17,17 @@ defmodule Cog.Chat.Slack.Templates.Common.ErrorTest do
     An error has occurred!
     At some time in the past, somebody initiated the following pipeline, assigned the unique ID deadbeef:
 
-    ```
-    echo foo
+    ```echo foo
     ```
 
     The pipeline failed planning the invocation:
 
-    ```
-    I can't plan this!
+    ```I can't plan this!
     ```
 
     The specific error was:
 
-    ```
-    bad stuff happened
+    ```bad stuff happened
     ```
     """ |> String.strip == rendered
   end
@@ -50,20 +47,17 @@ defmodule Cog.Chat.Slack.Templates.Common.ErrorTest do
     An error has occurred!
     At some time in the past, somebody initiated the following pipeline, assigned the unique ID deadbeef:
 
-    ```
-    echo foo
+    ```echo foo
     ```
 
     The pipeline failed executing the command:
 
-    ```
-    I can't execute this!
+    ```I can't execute this!
     ```
 
     The specific error was:
 
-    ```
-    bad stuff happened
+    ```bad stuff happened
     ```
     """ |> String.strip  == rendered
   end
