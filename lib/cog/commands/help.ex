@@ -31,7 +31,7 @@ defmodule Cog.Commands.Help do
     grouped_bundles = %{enabled: Repo.preload(Bundles.enabled, :bundle),
                         disabled: Repo.preload(Bundles.highest_disabled_versions, :bundle)}
     formatted_bundles = BundlesFormatter.format(grouped_bundles)
-    {:reply, req.reply_to, "text", [%{body: formatted_bundles}], state}
+    {:reply, req.reply_to, formatted_bundles, state}
   end
 
   def handle_message(%{args: [bundle_or_command]} = req, state) do
@@ -67,7 +67,7 @@ defmodule Cog.Commands.Help do
 
     case response do
       {:ok, body} ->
-        {:reply, req.reply_to, "text", [%{body: body}], state}
+        {:reply, req.reply_to, body, state}
       {:error, error} ->
         {:error, req.reply_to, error, state}
     end
