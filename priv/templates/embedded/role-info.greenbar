@@ -1,9 +1,12 @@
-~each var=$results~
-```
-ID: ~$item.id~
-Name: ~$item.name~
-Permissions: ~each var=$item.permissions as=permission~
-~$permission.bundle~:~$permission.name~
+~if cond=length($results) == 1~
+**ID**: ~$results[0].id~
+**Name**: ~$results[0].name~
+**Permissions**: ~join var=$results[0].permissions as=p~~$p.bundle~:~$p.name~~end~
 ~end~
-```
+~if cond=length($results) > 1~
+| Name | ID | Permissions |
+|------|----|-------------|
+~each var=$results~
+|~$item.name~|~$item.id~|~join var=$item.permissions as=p~~$p.bundle~:~$p.name~~end~|
+~end~
 ~end~

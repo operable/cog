@@ -1,7 +1,12 @@
+~if cond=length($results) == 1~
+**ID**: ~$results[0].id~
+**Bundle**: ~$results[0].bundle~
+**Name**: ~$results[0].name~
+~end~
+~if cond=length($results) > 1~
+| Bundle | Name | ID |
+|--------|------|----|
 ~each var=$results~
-```
-ID: ~$item.id~
-Bundle: ~$item.bundle~
-Name: ~$item.name~
-```
+|~$item.bundle~|~$item.name~|~$item.id~|
+~end~
 ~end~

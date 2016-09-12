@@ -1,16 +1,16 @@
+~if cond=length($results) == 1~
+**Username**: ~$results[0].username~
+**First Name**: ~$results[0].first_name~
+**Last Name**: ~$results[0].last_name~
+**Email**: ~$results[0].email_address~
+**Groups**: ~join var=$results[0].groups as=g~~$g.name~~end~
+
+**Handles**: ~join var=$results[0].chat_handles as=h~~$h.handle~ (~$h.chat_provider.name~)~end~
+~end~
+~if cond=length($results) > 1~
+| Username | First Name | Last Name | Email | Groups | Handles |
+|----------|------------|-----------|-------|--------|---------|
 ~each var=$results~
-```
-Username: ~$item.username~
-First Name: ~$item.first_name~
-Last Name: ~$item.last_name~
-Email Address: ~$item.email_address~
-Groups:
-~each var=$item.groups as=group~
-  ~$group.name~
+|~$item.username~|~$item.first_name~|~$item.last_name~|~$item.email_address~|~join var=$item.groups as=g~~$g.name~~end~|~join var=$item.chat_handles as=h~~$h.handle~ (~$h.chat_provider.name~)~end~|
 ~end~
-Chat Handles:
-~each var=$item.chat_handles as=handle~
-  ~$handle.chat_provider.name~: ~$handle.handle~
-~end~
-```
 ~end~
