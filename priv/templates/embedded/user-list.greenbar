@@ -1,8 +1,4 @@
-~each var=$results~
-```
-Username: ~$item.username~
-First Name: ~$item.first_name~
-Last Name: ~$item.last_name~
-Email Address: ~$item.email_address~
-```
+| Username | First Name | Last Name | Email |
+|----------|------------|-----------|-------|
+~each var=$results~|~$item.username~|~if cond=$item.first_name bound?~~$item.first_name~~end~|~if cond=$item.last_name~~$item.last_name~~end~|~$item.email_address~|
 ~end~

@@ -1,8 +1,4 @@
-Here are all the versions of the ~$results[0].name~ bundle:
-
-~each var=$results as=bv~
-ID: ~$bv.id~
-Name: ~$bv.name~
-Version: ~$bv.version~
-Enabled?: ~$bv.enabled~
+| Version | Enabled? |
+|---------|----------|
+~each var=$results~|~$item.version~|~$item.enabled~|
 ~end~

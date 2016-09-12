@@ -1,6 +1,10 @@
-# TODO: When we can do conditionals this can be probably be merged with relay-group-list
-~each var =$results~
-```
-Name: ~$item.name~
-```
+~if cond=length($results) == 1~
+**Name**: ~$results[0].name~
+~end~
+~if cond=length($results) > 1~
+| Name |
+|------|
+~each var=$results~
+|~$item.name~|
+~end~
 ~end~
