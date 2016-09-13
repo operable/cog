@@ -13,7 +13,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.RelayGroupInfoTest do
     *Name*: foo
     """ |> String.strip
 
-    assert_rendered_template(:embedded, "relay-group-info", data, expected)
+    assert_rendered_template(:slack, :embedded, "relay-group-info", data, expected)
   end
 
   test "relay-group-info template with multiple inputs" do
@@ -47,7 +47,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.RelayGroupInfoTest do
     ```
     """ |> String.strip
 
-    assert_rendered_template(:embedded, "relay-group-info", data, expected)
+    assert_rendered_template(:slack, :embedded, "relay-group-info", data, expected)
   end
 
 end

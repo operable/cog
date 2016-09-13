@@ -5,7 +5,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.RelayGroupRenameTest do
     data = %{"results" => [%{"old_name" => "foo",
                              "relay_group" => %{"name" => "bar"}}]}
     expected = "Renamed relay group 'foo' to 'bar'"
-    assert_rendered_template(:embedded, "relay-group-rename", data, expected)
+    assert_rendered_template(:slack, :embedded, "relay-group-rename", data, expected)
   end
 
   test "relay-group-rename template with multiple inputs" do
@@ -21,7 +21,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.RelayGroupRenameTest do
     Renamed relay group 'mario' to 'luigi'
     """ |> String.strip
 
-    assert_rendered_template(:embedded, "relay-group-rename", data, expected)
+    assert_rendered_template(:slack, :embedded, "relay-group-rename", data, expected)
   end
 
 end

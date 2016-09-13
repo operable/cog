@@ -27,7 +27,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.AliasListTest do
     Pipeline: ```echo 'wow, neat!'```
     """ |> String.strip
 
-    assert_rendered_template(:embedded, "alias-list", data, expected)
+    assert_rendered_template(:slack, :embedded, "alias-list", data, expected)
   end
 
 end

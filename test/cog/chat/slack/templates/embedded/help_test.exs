@@ -14,6 +14,6 @@ defmodule Cog.Chat.Slack.Templates.Embedded.HelpTest do
 
     Have a nice day!
     """ |> String.strip
-    assert_rendered_template(:embedded, "help", data, expected)
+    assert_rendered_template(:slack, :embedded, "help", data, expected)
   end
 end

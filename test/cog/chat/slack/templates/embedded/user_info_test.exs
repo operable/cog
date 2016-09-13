@@ -20,7 +20,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.UserInfoTest do
     *Handles*: the_cog (Slack)
     """ |> String.strip
 
-    assert_rendered_template(:embedded, "user-info", data, expected)
+    assert_rendered_template(:slack, :embedded, "user-info", data, expected)
   end
 
   test "user-info template with multiple inputs" do
@@ -54,6 +54,6 @@ defmodule Cog.Chat.Slack.Templates.Embedded.UserInfoTest do
     ```
     """ |> String.strip
 
-    assert_rendered_template(:embedded, "user-info", data, expected)
+    assert_rendered_template(:slack, :embedded, "user-info", data, expected)
   end
 end

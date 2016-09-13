@@ -4,7 +4,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.AliasDeleteTest do
   test "alias-delete template" do
     data = %{"results" => [%{"visibility" => "user", "name" => "awesome_alias"}]}
     expected = "Deleted 'user:awesome_alias'"
-    assert_rendered_template(:embedded, "alias-delete", data, expected)
+    assert_rendered_template(:slack, :embedded, "alias-delete", data, expected)
   end
 
   test "alias-delete with multiple inputs" do
@@ -17,7 +17,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.AliasDeleteTest do
     Deleted 'site:wow_neat'
     """ |> String.strip
 
-    assert_rendered_template(:embedded, "alias-delete", data, expected)
+    assert_rendered_template(:slack, :embedded, "alias-delete", data, expected)
   end
 
 end

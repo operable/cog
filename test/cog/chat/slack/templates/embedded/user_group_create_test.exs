@@ -4,7 +4,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.UserGroupCreateTest do
   test "user-group-create template" do
     data = %{"results" => [%{"name" => "foo"}]}
     expected = "Created user group 'foo'"
-    assert_rendered_template(:embedded, "user-group-create", data, expected)
+    assert_rendered_template(:slack, :embedded, "user-group-create", data, expected)
   end
 
   test "user-group-create template with multiple inputs" do
@@ -17,7 +17,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.UserGroupCreateTest do
     Created user group 'baz'
     """ |> String.strip
 
-    assert_rendered_template(:embedded, "user-group-create", data, expected)
+    assert_rendered_template(:slack, :embedded, "user-group-create", data, expected)
   end
 
 end

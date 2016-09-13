@@ -17,7 +17,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.RelayInfoTest do
     *Relay Groups*: prod, preprod, dev
     """ |> String.strip
 
-    assert_rendered_template(:embedded, "relay-info", data, expected)
+    assert_rendered_template(:slack, :embedded, "relay-info", data, expected)
   end
 
   test "relay-info template with one item without relay groups" do
@@ -32,7 +32,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.RelayInfoTest do
     *Status*: enabled
     """ |> String.strip
 
-    assert_rendered_template(:embedded, "relay-info", data, expected)
+    assert_rendered_template(:slack, :embedded, "relay-info", data, expected)
   end
 
   test "relay-info with multiple results with relay groups" do
@@ -65,7 +65,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.RelayInfoTest do
     ```
     """ |> String.strip
 
-    assert_rendered_template(:embedded, "relay-info", data, expected)
+    assert_rendered_template(:slack, :embedded, "relay-info", data, expected)
   end
 
   test "relay-info with multiple results without relay groups" do
@@ -93,7 +93,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.RelayInfoTest do
     ```
     """ |> String.strip
 
-    assert_rendered_template(:embedded, "relay-info", data, expected)
+    assert_rendered_template(:slack, :embedded, "relay-info", data, expected)
   end
 
 end

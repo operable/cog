@@ -4,7 +4,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.TriggerDeleteTest do
   test "trigger-delete template" do
     data = %{"results" => [%{"name" => "foo"}]}
     expected = "Deleted trigger 'foo'"
-    assert_rendered_template(:embedded, "trigger-delete", data, expected)
+    assert_rendered_template(:slack, :embedded, "trigger-delete", data, expected)
   end
 
   test "trigger-delete template with multiple inputs" do
@@ -17,7 +17,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.TriggerDeleteTest do
     Deleted trigger 'baz'
     """ |> String.strip
 
-    assert_rendered_template(:embedded, "trigger-delete", data, expected)
+    assert_rendered_template(:slack, :embedded, "trigger-delete", data, expected)
   end
 
 end

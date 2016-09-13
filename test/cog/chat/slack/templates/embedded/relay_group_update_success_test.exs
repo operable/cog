@@ -4,7 +4,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.RelayGroupUpdateSuccessTest do
   test "relay-group-update-success template with one input" do
     data = %{"results" => [%{"name" => "foo"}]}
     expected = "Relay group 'foo' was successfully updated"
-    assert_rendered_template(:embedded, "relay-group-update-success", data, expected)
+    assert_rendered_template(:slack, :embedded, "relay-group-update-success", data, expected)
   end
 
   test "relay-group-update-success template with multiple inputs" do
@@ -17,7 +17,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.RelayGroupUpdateSuccessTest do
     Relay group 'baz' was successfully updated
     """ |> String.strip
 
-    assert_rendered_template(:embedded, "relay-group-update-success", data, expected)
+    assert_rendered_template(:slack, :embedded, "relay-group-update-success", data, expected)
   end
 
 end

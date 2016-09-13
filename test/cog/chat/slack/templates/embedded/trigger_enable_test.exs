@@ -4,7 +4,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.TriggerEnableTest do
   test "trigger-enable template" do
     data = %{"results" => [%{"name" => "foo"}]}
     expected = "Enabled trigger 'foo'"
-    assert_rendered_template(:embedded, "trigger-enable", data, expected)
+    assert_rendered_template(:slack, :embedded, "trigger-enable", data, expected)
   end
 
   test "trigger-enable template with multiple inputs" do
@@ -17,7 +17,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.TriggerEnableTest do
     Enabled trigger 'baz'
     """ |> String.strip
 
-    assert_rendered_template(:embedded, "trigger-enable", data, expected)
+    assert_rendered_template(:slack, :embedded, "trigger-enable", data, expected)
   end
 
 end

@@ -1,8 +1,18 @@
 defmodule Cog.Chat.Slack.TemplateProcessor do
   require Logger
 
-  def render(directives),
-    do: Enum.map_join(directives, &process_directive/1)
+  alias Cog.Util.Colors
+
+  @markdown_fields ["author", "text", "title", "pretext"]
+
+  def render(directives) do
+    {text, attachments} = directives
+                          |> Enum.map(&process_directive/1) # Convert all Greenbar directives into their Slack forms
+                          |> List.flatten                   # Flatten nested lists into a single list
+                          |> consolidate_outputs({"", []})  # Separate message text and attachments into separate lists
+    attachments = Enum.map(attachments, &finalize_attachment/1) # Final attachment post-processing for Slack
+    {text, attachments}
+  end
 
   ########################################################################
 
@@ -15,6 +25,20 @@ defmodule Cog.Chat.Slack.TemplateProcessor do
   defp process_directive(directive),
     do: process_directive(directive, [])
 
+  defp process_directive(%{"name" => "attachment", "children" => children}=attachment, _) do
+    # Nested attachments are ignored
+    {attachment_text, _} = render(children)
+    attachment = if Map.get(attachment, "fields") == [] do
+      Map.delete(attachment, "fields")
+    else
+      attachment
+    end
+    attachment
+    |> Map.delete("children")
+    |> Map.put("text", attachment_text)
+    |> Map.put("fallback", attachment_text)
+    |> Map.update("color", Colors.name_to_hex("blue"), &(Colors.name_to_hex(&1)))
+  end
   defp process_directive(%{"name" => "text", "text" => text}, _),
     do: text
   defp process_directive(%{"name" => "italics", "text" => text}, _),
@@ -62,5 +86,22 @@ defmodule Cog.Chat.Slack.TemplateProcessor do
   # context, since it's so common
   defp map(directives),
     do: Enum.map(directives, &process_directive/1)
+
+  defp consolidate_outputs([], acc), do: acc
+  defp consolidate_outputs([h|t], {"", attachments}) when is_binary(h) do
+    consolidate_outputs(t, {h, attachments})
+  end
+  defp consolidate_outputs([h|t], {text, attachments}) when is_binary(h) and is_binary(text) do
+    consolidate_outputs(t, {:erlang.list_to_binary([text, h]), attachments})
+  end
+  defp consolidate_outputs([%{"name" => "attachment"}=attachment|t], {text, attachments}) do
+    consolidate_outputs(t, {text, [attachment|attachments]})
+  end
+
+  defp finalize_attachment(attachment) do
+    attachment
+    |> Map.delete("name")
+    |> Map.put("mrkdwn_in", Enum.filter(Map.keys(attachment), &(&1 in @markdown_fields)))
+  end
 
 end

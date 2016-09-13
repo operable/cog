@@ -6,7 +6,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.RoleGrantTest do
                              "group" => %{"name" => "ops"}}]}
 
     expected = "Granted role 'admin' to group 'ops'"
-    assert_rendered_template(:embedded, "role-grant", data, expected)
+    assert_rendered_template(:slack, :embedded, "role-grant", data, expected)
   end
 
   test "role-grant template with multiple inputs" do
@@ -23,7 +23,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.RoleGrantTest do
     Granted role 'heroku-admin' to group 'developers'
     """ |> String.strip
 
-    assert_rendered_template(:embedded, "role-grant", data, expected)
+    assert_rendered_template(:slack, :embedded, "role-grant", data, expected)
   end
 
 

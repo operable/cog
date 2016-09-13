@@ -19,7 +19,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.UserListHandlesTest do
     ```
     """ |> String.strip
 
-    assert_rendered_template(:embedded, "user-list-handles", data, expected)
+    assert_rendered_template(:slack, :embedded, "user-list-handles", data, expected)
   end
 
 end

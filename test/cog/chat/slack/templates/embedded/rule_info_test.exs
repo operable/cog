@@ -11,7 +11,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.RuleInfoTest do
     *Rule*: when command is foo:foo allow
     """ |> String.strip
 
-    assert_rendered_template(:embedded, "rule-info", data, expected)
+    assert_rendered_template(:slack, :embedded, "rule-info", data, expected)
   end
 
   test "rule-info template with multiple rules" do
@@ -35,7 +35,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.RuleInfoTest do
     ```
     """ |> String.strip
 
-    assert_rendered_template(:embedded, "rule-info", data, expected)
+    assert_rendered_template(:slack, :embedded, "rule-info", data, expected)
   end
 
 

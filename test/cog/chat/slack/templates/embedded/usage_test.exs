@@ -9,7 +9,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.UsageTest do
 
     Do this instead...
     """ |> String.strip
-    assert_rendered_template(:embedded, "usage", data, expected)
+    assert_rendered_template(:slack, :embedded, "usage", data, expected)
   end
 
   test "usage template - without error" do
@@ -17,7 +17,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.UsageTest do
     expected = """
     Do this instead...
     """ |> String.strip
-    assert_rendered_template(:embedded, "usage", data, expected)
+    assert_rendered_template(:slack, :embedded, "usage", data, expected)
   end
 
 end

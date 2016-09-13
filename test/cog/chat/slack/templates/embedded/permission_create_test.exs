@@ -4,7 +4,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.PermissionCreateTest do
   test "permission-create template" do
     data = %{"results" => [%{"bundle" => "site", "name" => "foo"}]}
     expected = "Created permission 'site:foo'"
-    assert_rendered_template(:embedded, "permission-create", data, expected)
+    assert_rendered_template(:slack, :embedded, "permission-create", data, expected)
   end
 
   test "permission-create template with multiple inputs" do
@@ -17,7 +17,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.PermissionCreateTest do
     Created permission 'site:baz'
     """ |> String.strip
 
-    assert_rendered_template(:embedded, "permission-create", data, expected)
+    assert_rendered_template(:slack, :embedded, "permission-create", data, expected)
   end
 
 end

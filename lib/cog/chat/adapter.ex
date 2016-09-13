@@ -206,9 +206,6 @@ defmodule Cog.Chat.Adapter do
     case with_provider(provider, state, :send_message, [target, message]) do
       :ok ->
         :ok
-      {:ok, sent_message} ->
-        Logger.info("Sent #{:erlang.size(sent_message)} bytes via provider #{provider}.")
-        :ok
       {:error, :not_implemented} ->
         Logger.error("send_message function not implemented for provider '#{provider}'! No message sent")
       {:error, reason} ->

@@ -17,7 +17,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.RelayGroupListTest do
     ```
     """ |> String.strip
 
-    assert_rendered_template(:embedded, "relay-group-list", data, expected)
+    assert_rendered_template(:slack, :embedded, "relay-group-list", data, expected)
   end
 
 end

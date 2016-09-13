@@ -6,7 +6,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.RoleRevokeTest do
                              "group" => %{"name" => "ops"}}]}
 
     expected = "Revoked role 'admin' from group 'ops'"
-    assert_rendered_template(:embedded, "role-revoke", data, expected)
+    assert_rendered_template(:slack, :embedded, "role-revoke", data, expected)
   end
 
   test "role-revoke template with multiple inputs" do
@@ -23,7 +23,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.RoleRevokeTest do
     Revoked role 'heroku-admin' from group 'developers'
     """ |> String.strip
 
-    assert_rendered_template(:embedded, "role-revoke", data, expected)
+    assert_rendered_template(:slack, :embedded, "role-revoke", data, expected)
   end
 
 

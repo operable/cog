@@ -5,7 +5,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.UserDetachHandleTest do
     data = %{"results" => [%{"chat_provider" => %{"name" => "Slack"},
                              "username" => "cog"}]}
     expected = "Removed Slack handle from Cog user 'cog'"
-    assert_rendered_template(:embedded, "user-detach-handle", data, expected)
+    assert_rendered_template(:slack, :embedded, "user-detach-handle", data, expected)
   end
 
   test "user-detach-handle template with multiple inputs" do
@@ -21,7 +21,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.UserDetachHandleTest do
     Removed Slack handle from Cog user 'herman'
     """ |> String.strip
 
-    assert_rendered_template(:embedded, "user-detach-handle", data, expected)
+    assert_rendered_template(:slack, :embedded, "user-detach-handle", data, expected)
   end
 
 end

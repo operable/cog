@@ -28,7 +28,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.TriggerListTest do
     ```
     """ |> String.strip
 
-    assert_rendered_template(:embedded, "trigger-list", data, expected)
+    assert_rendered_template(:slack, :embedded, "trigger-list", data, expected)
   end
 
   test "handles null description, user" do
@@ -56,7 +56,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.TriggerListTest do
     ```
     """ |> String.strip
 
-    assert_rendered_template(:embedded, "trigger-list", data, expected)
+    assert_rendered_template(:slack, :embedded, "trigger-list", data, expected)
 
 
 

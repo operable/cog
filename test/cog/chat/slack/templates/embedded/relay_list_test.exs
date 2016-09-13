@@ -25,7 +25,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.RelayListTest do
     ```
     """ |> String.strip
 
-    assert_rendered_template(:embedded, "relay-list", data, expected)
+    assert_rendered_template(:slack, :embedded, "relay-list", data, expected)
   end
 
   test "relay-list template without relay groups" do
@@ -47,7 +47,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.RelayListTest do
     ```
     """ |> String.strip
 
-    assert_rendered_template(:embedded, "relay-list", data, expected)
+    assert_rendered_template(:slack, :embedded, "relay-list", data, expected)
   end
 
 

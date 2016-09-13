@@ -5,7 +5,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.RoleRenameTest do
     data = %{"results" => [%{"old_name" => "foo",
                              "name" => "bar"}]}
     expected = "Renamed role 'foo' to 'bar'"
-    assert_rendered_template(:embedded, "role-rename", data, expected)
+    assert_rendered_template(:slack, :embedded, "role-rename", data, expected)
   end
 
   test "role-rename template with multiple inputs" do
@@ -21,7 +21,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.RoleRenameTest do
     Renamed role 'mario' to 'luigi'
     """ |> String.strip
 
-    assert_rendered_template(:embedded, "role-rename", data, expected)
+    assert_rendered_template(:slack, :embedded, "role-rename", data, expected)
   end
 
 end
