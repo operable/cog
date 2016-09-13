@@ -66,13 +66,25 @@ defmodule Cog.Chat.Slack.Connector do
     send(sender, {ref, result})
     :ok
   end
-  def handle_info({{ref, sender}, {:send_message, %{token: token, target: target,
-                                                    message: message}}}, _state) do
-    message_size = :erlang.size(message)
-    unless message_size < 15000 do
-      Logger.info("WARNING: Large message (#{message_size} bytes) detected. Slack might truncate or drop it entirely.")
-    end
-    result = Slack.Web.Chat.post_message(target, message, %{token: token, as_user: true})
+  def handle_info({{ref, sender}, {:send_message, %{token: token, target: target}=args}}, _state) do
+    message = %{token: token, as_user: true}
+    message = case Map.get(args, :message) do
+                nil ->
+                  message
+                text ->
+                  text_size = :erlang.size(text)
+                  unless text_size < 15000 do
+                    Logger.info("WARNING: Large message (#{text_size} bytes) detected. Slack might truncate or drop it entirely.")
+                  end
+                  Map.put(message, :text, text)
+              end
+    message = case Map.get(args, :attachments) do
+                nil ->
+                  message
+                attachments ->
+                  Map.put(message, :attachments, Poison.encode!(attachments))
+              end
+    result = Slack.Web.Chat.post_message(target, message)
     send(sender, {ref, result})
     :ok
   end

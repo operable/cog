@@ -75,19 +75,23 @@ defmodule Cog.Chat.Slack.Provider do
         {reply, {:error, reply["error"]}, state}
     end
   end
-  def handle_call({:send_message, target, message}, _from, %__MODULE__{connector: connector, token: token}=state) do
-    message = if is_binary(message) do
-      # Old template processing
-      message
-    else
-      # New template processing
-      Cog.Chat.Slack.TemplateProcessor.render(message)
-    end
-
+  # Old template processing
+  def handle_call({:send_message, target, message}, _from, %__MODULE__{connector: connector, token: token}=state) when is_binary(message) do
     result = Connector.call(connector, token, :send_message, %{target: target, message: message})
     case result["ok"] do
       true ->
         {:reply, {:ok, message}, state}
+      false ->
+        {:reply, {:error, result["error"]}, state}
+    end
+  end
+  # New template processing
+  def handle_call({:send_message, target, message}, _from, %__MODULE__{connector: connector, token: token}=state) do
+    {text, attachments} = Cog.Chat.Slack.TemplateProcessor.render(message)
+    result = Connector.call(connector, token, :send_message, %{target: target, message: text, attachments: attachments})
+    case result["ok"] do
+      true ->
+        {:reply, :ok, state}
       false ->
         {:reply, {:error, result["error"]}, state}
     end
