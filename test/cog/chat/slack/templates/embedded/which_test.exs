@@ -7,7 +7,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.WhichTest do
                              "name" => "foo",
                              "pipeline" => "echo 'foo'"}]}
     expected = "alias - site:foo -> ```echo 'foo'```"
-    assert_rendered_template(:embedded, "which", data, expected)
+    assert_rendered_template(:slack, :embedded, "which", data, expected)
   end
 
   test "which template - command result" do
@@ -15,7 +15,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.WhichTest do
                              "scope" => "operable",
                              "name" => "alias"}]}
     expected = "command - operable:alias"
-    assert_rendered_template(:embedded, "which", data, expected)
+    assert_rendered_template(:slack, :embedded, "which", data, expected)
   end
 
   test "which template - multiple inputs" do
@@ -36,7 +36,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.WhichTest do
     command - operable:alias
     alias - user:bar -> ```echo 'bar'```
     """ |> String.strip
-    assert_rendered_template(:embedded, "which", data, expected)
+    assert_rendered_template(:slack, :embedded, "which", data, expected)
 
   end
 

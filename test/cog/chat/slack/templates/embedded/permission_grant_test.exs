@@ -7,7 +7,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.PermissionGrantTest do
                              "role" => %{"name" => "ops"}}]}
 
     expected = "Granted permission 'site:foo' to role 'ops'"
-    assert_rendered_template(:embedded, "permission-grant", data, expected)
+    assert_rendered_template(:slack, :embedded, "permission-grant", data, expected)
   end
 
   test "permission-grant template with multiple inputs" do
@@ -24,7 +24,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.PermissionGrantTest do
     Granted permission 'site:baz' to role 'sec'
     """ |> String.strip
 
-    assert_rendered_template(:embedded, "permission-grant", data, expected)
+    assert_rendered_template(:slack, :embedded, "permission-grant", data, expected)
   end
 
 

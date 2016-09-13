@@ -10,7 +10,7 @@ defmodule Cog.Chat.Slack.Templates.Common.RawTest do
       }
     ]```
     """ |> String.strip
-    assert_rendered_template(:common, "raw", data, expected)
+    assert_rendered_template(:slack, :common, "raw", data, expected)
   end
 
 end

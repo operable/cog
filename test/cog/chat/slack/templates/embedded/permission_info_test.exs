@@ -10,7 +10,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.PermissionInfoTest do
     *Name*: foo
     """ |> String.strip
 
-    assert_rendered_template(:embedded, "permission-info", data, expected)
+    assert_rendered_template(:slack, :embedded, "permission-info", data, expected)
   end
 
   test "permission-info template with multiple inputs" do
@@ -29,7 +29,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.PermissionInfoTest do
     ```
     """ |> String.strip
 
-    assert_rendered_template(:embedded, "permission-info", data, expected)
+    assert_rendered_template(:slack, :embedded, "permission-info", data, expected)
   end
 
 

@@ -11,7 +11,7 @@ defmodule Cog.Chat.Slack.Templates.Common.ErrorTest do
              "execution_failure" => false}
 
     directives = directives_for_template(:common, "error", data)
-    rendered = Cog.Chat.Slack.TemplateProcessor.render(directives)
+    {rendered, _} = Cog.Chat.Slack.TemplateProcessor.render(directives)
 
     assert """
     An error has occurred!
@@ -42,7 +42,7 @@ defmodule Cog.Chat.Slack.Templates.Common.ErrorTest do
              "planning_failure" => false,
              "execution_failure" => "I can't execute this!"}
     directives = directives_for_template(:common, "error", data)
-    rendered = Cog.Chat.Slack.TemplateProcessor.render(directives)
+    {rendered, _} = Cog.Chat.Slack.TemplateProcessor.render(directives)
     assert """
     An error has occurred!
     At some time in the past, somebody initiated the following pipeline, assigned the unique ID deadbeef:

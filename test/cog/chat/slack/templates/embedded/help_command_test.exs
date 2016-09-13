@@ -7,7 +7,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.HelpCommandTest do
     ```big ol' doc string
     ```
     """ |> String.strip
-    assert_rendered_template(:embedded, "help-command", data, expected)
+    assert_rendered_template(:slack, :embedded, "help-command", data, expected)
   end
 
   # TODO: Can a command ever not have documentation? If so, the

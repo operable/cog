@@ -4,7 +4,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.UserGroupUpdateSuccessTest do
   test "user-group-update-success template" do
     data = %{"results" => [%{"name" => "foo"}]}
     expected = "User group 'foo' was successfully updated"
-    assert_rendered_template(:embedded, "user-group-update-success", data, expected)
+    assert_rendered_template(:slack, :embedded, "user-group-update-success", data, expected)
   end
 
   test "user-group-update-success template with multiple inputs" do
@@ -17,7 +17,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.UserGroupUpdateSuccessTest do
     User group 'baz' was successfully updated
     """ |> String.strip
 
-    assert_rendered_template(:embedded, "user-group-update-success", data, expected)
+    assert_rendered_template(:slack, :embedded, "user-group-update-success", data, expected)
   end
 
 end

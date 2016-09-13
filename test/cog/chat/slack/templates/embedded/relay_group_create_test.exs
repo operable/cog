@@ -4,7 +4,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.RelayGroupCreateTest do
   test "relay-group-create template" do
     data = %{"results" => [%{"name" => "foo"}]}
     expected = "Created relay-group 'foo'"
-    assert_rendered_template(:embedded, "relay-group-create", data, expected)
+    assert_rendered_template(:slack, :embedded, "relay-group-create", data, expected)
   end
 
   test "relay-group-create template with multiple inputs" do
@@ -17,7 +17,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.RelayGroupCreateTest do
     Created relay-group 'baz'
     """ |> String.strip
 
-    assert_rendered_template(:embedded, "relay-group-create", data, expected)
+    assert_rendered_template(:slack, :embedded, "relay-group-create", data, expected)
   end
 
 end

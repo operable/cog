@@ -4,7 +4,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.UserGroupDeleteTest do
   test "user-group-delete template" do
     data = %{"results" => [%{"name" => "foo"}]}
     expected = "Deleted user group 'foo'"
-    assert_rendered_template(:embedded, "user-group-delete", data, expected)
+    assert_rendered_template(:slack, :embedded, "user-group-delete", data, expected)
   end
 
   test "user-group-delete template with multiple inputs" do
@@ -17,7 +17,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.UserGroupDeleteTest do
     Deleted user group 'baz'
     """ |> String.strip
 
-    assert_rendered_template(:embedded, "user-group-delete", data, expected)
+    assert_rendered_template(:slack, :embedded, "user-group-delete", data, expected)
   end
 
 end

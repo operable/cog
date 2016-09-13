@@ -17,7 +17,7 @@ defmodule Cog.Chat.Slack.Templates.Common.UnregisteredUserTest do
     @moe
     @curly
     """ |> String.strip
-    assert_rendered_template(:common, "unregistered-user", data, expected)
+    assert_rendered_template(:slack, :common, "unregistered-user", data, expected)
   end
 
   test "unregistered_user renders properly without user creators" do
@@ -30,7 +30,7 @@ defmodule Cog.Chat.Slack.Templates.Common.UnregisteredUserTest do
 
     You'll need to ask a Cog administrator to fix this situation and to register your Slack handle.
     """ |> String.strip
-    assert_rendered_template(:common, "unregistered-user", data, expected)
+    assert_rendered_template(:slack, :common, "unregistered-user", data, expected)
   end
 
 

@@ -7,7 +7,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.PermissionRevokeTest do
                              "role" => %{"name" => "ops"}}]}
 
     expected = "Revoked permission 'site:foo' from role 'ops'"
-    assert_rendered_template(:embedded, "permission-revoke", data, expected)
+    assert_rendered_template(:slack, :embedded, "permission-revoke", data, expected)
   end
 
   test "permission-revoke template with multiple inputs" do
@@ -24,7 +24,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.PermissionRevokeTest do
     Revoked permission 'site:baz' from role 'sec'
     """ |> String.strip
 
-    assert_rendered_template(:embedded, "permission-revoke", data, expected)
+    assert_rendered_template(:slack, :embedded, "permission-revoke", data, expected)
   end
 
 end

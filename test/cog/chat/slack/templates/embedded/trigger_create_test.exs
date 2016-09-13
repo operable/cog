@@ -4,7 +4,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.TriggerCreateTest do
   test "trigger-create template" do
     data = %{"results" => [%{"id" => "12345"}]}
     expected = "Created trigger '12345'"
-    assert_rendered_template(:embedded, "trigger-create", data, expected)
+    assert_rendered_template(:slack, :embedded, "trigger-create", data, expected)
   end
 
   test "trigger-create template with multiple inputs" do
@@ -17,7 +17,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.TriggerCreateTest do
     Created trigger '11111'
     """ |> String.strip
 
-    assert_rendered_template(:embedded, "trigger-create", data, expected)
+    assert_rendered_template(:slack, :embedded, "trigger-create", data, expected)
   end
 
 end

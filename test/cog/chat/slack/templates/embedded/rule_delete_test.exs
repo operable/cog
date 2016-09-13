@@ -4,7 +4,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.RuleDeleteTest do
   test "rule-delete template" do
     data = %{"results" => [%{"id" => "12345"}]}
     expected = "Deleted rule '12345'"
-    assert_rendered_template(:embedded, "rule-delete", data, expected)
+    assert_rendered_template(:slack, :embedded, "rule-delete", data, expected)
   end
 
   test "rule-delete template with multiple inputs" do
@@ -17,7 +17,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.RuleDeleteTest do
     Deleted rule '11111'
     """ |> String.strip
 
-    assert_rendered_template(:embedded, "rule-delete", data, expected)
+    assert_rendered_template(:slack, :embedded, "rule-delete", data, expected)
   end
 
 end

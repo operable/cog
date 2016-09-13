@@ -6,7 +6,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.UserAttachHandleTest do
                              "handle" => "cog",
                              "username" => "cog"}]}
     expected = "Attached Slack handle @cog to Cog user 'cog'"
-    assert_rendered_template(:embedded, "user-attach-handle", data, expected)
+    assert_rendered_template(:slack, :embedded, "user-attach-handle", data, expected)
   end
 
   test "user-attach-handle template with multiple inputs" do
@@ -25,7 +25,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.UserAttachHandleTest do
     Attached Slack handle @gear to Cog user 'herman'
     """ |> String.strip
 
-    assert_rendered_template(:embedded, "user-attach-handle", data, expected)
+    assert_rendered_template(:slack, :embedded, "user-attach-handle", data, expected)
   end
 
 end

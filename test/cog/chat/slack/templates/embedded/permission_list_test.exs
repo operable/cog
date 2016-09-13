@@ -17,7 +17,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.PermissionListTest do
     ```
     """ |> String.strip
 
-    assert_rendered_template(:embedded, "permission-list", data, expected)
+    assert_rendered_template(:slack, :embedded, "permission-list", data, expected)
   end
 
 end

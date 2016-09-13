@@ -4,7 +4,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.RuleCreateTest do
   test "rule-create template" do
     data = %{"results" => [%{"id" => "12345"}]}
     expected = "Created rule '12345'"
-    assert_rendered_template(:embedded, "rule-create", data, expected)
+    assert_rendered_template(:slack, :embedded, "rule-create", data, expected)
   end
 
   test "rule-create template with multiple inputs" do
@@ -17,7 +17,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.RuleCreateTest do
     Created rule '11111'
     """ |> String.strip
 
-    assert_rendered_template(:embedded, "rule-create", data, expected)
+    assert_rendered_template(:slack, :embedded, "rule-create", data, expected)
   end
 
 end

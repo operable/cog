@@ -4,7 +4,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.AliasCreateTest do
   test "alias-create template" do
     data = %{"results" => [%{"name" => "awesome_alias"}]}
     expected = "Alias 'user:awesome_alias' has been created"
-    assert_rendered_template(:embedded, "alias-create", data, expected)
+    assert_rendered_template(:slack, :embedded, "alias-create", data, expected)
   end
 
   test "alias-create with multiple inputs" do
@@ -17,6 +17,6 @@ defmodule Cog.Chat.Slack.Templates.Embedded.AliasCreateTest do
     Alias 'user:wow_neat' has been created
     """ |> String.strip
 
-    assert_rendered_template(:embedded, "alias-create", data, expected)
+    assert_rendered_template(:slack, :embedded, "alias-create", data, expected)
   end
 end

@@ -4,7 +4,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.PermissionDeleteTest do
   test "permission-delete template" do
     data = %{"results" => [%{"bundle" => "site", "name" => "foo"}]}
     expected = "Deleted permission 'site:foo'"
-    assert_rendered_template(:embedded, "permission-delete", data, expected)
+    assert_rendered_template(:slack, :embedded, "permission-delete", data, expected)
   end
 
   test "permission-delete template with multiple inputs" do
@@ -17,7 +17,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.PermissionDeleteTest do
     Deleted permission 'site:baz'
     """ |> String.strip
 
-    assert_rendered_template(:embedded, "permission-delete", data, expected)
+    assert_rendered_template(:slack, :embedded, "permission-delete", data, expected)
   end
 
 end

@@ -10,8 +10,12 @@ defmodule Cog.TemplateCase do
     end
   end
 
-  # TODO: HARD CODED FOR SLACK
-  def assert_rendered_template(bundle, template_name, data, expected) do
+  def assert_rendered_template(:slack, bundle, template_name, data, expected) when is_binary(expected) do
+    directives = directives_for_template(bundle, template_name, data)
+    {rendered, _} = Cog.Chat.Slack.TemplateProcessor.render(directives)
+    assert expected == rendered
+  end
+  def assert_rendered_template(:slack, bundle, template_name, data, expected) when is_tuple(expected) do
     directives = directives_for_template(bundle, template_name, data)
     rendered = Cog.Chat.Slack.TemplateProcessor.render(directives)
     assert expected == rendered

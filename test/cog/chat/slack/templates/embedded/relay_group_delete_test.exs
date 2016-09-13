@@ -4,7 +4,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.RelayGroupDeleteTest do
   test "relay-group-delete template" do
     data = %{"results" => [%{"name" => "foo"}]}
     expected = "Deleted relay-group 'foo'"
-    assert_rendered_template(:embedded, "relay-group-delete", data, expected)
+    assert_rendered_template(:slack, :embedded, "relay-group-delete", data, expected)
   end
 
   test "relay-group-delete template with multiple inputs" do
@@ -17,7 +17,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.RelayGroupDeleteTest do
     Deleted relay-group 'baz'
     """ |> String.strip
 
-    assert_rendered_template(:embedded, "relay-group-delete", data, expected)
+    assert_rendered_template(:slack, :embedded, "relay-group-delete", data, expected)
   end
 
 end

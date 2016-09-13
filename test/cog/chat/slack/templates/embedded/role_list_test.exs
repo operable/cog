@@ -17,7 +17,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.RoleListTest do
     ```
     """ |> String.strip
 
-    assert_rendered_template(:embedded, "role-list", data, expected)
+    assert_rendered_template(:slack, :embedded, "role-list", data, expected)
   end
 
 end

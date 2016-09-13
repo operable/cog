@@ -21,7 +21,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.BundleInfoTest do
     prod
     """ |> String.strip
 
-    assert_rendered_template(:embedded, "bundle-info", data, expected)
+    assert_rendered_template(:slack, :embedded, "bundle-info", data, expected)
   end
 
 end

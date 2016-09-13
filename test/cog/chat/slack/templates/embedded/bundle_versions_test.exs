@@ -26,7 +26,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.BundleVersionsTest do
     ```
     """ |> String.strip
 
-    assert_rendered_template(:embedded, "bundle-versions", data, expected)
+    assert_rendered_template(:slack, :embedded, "bundle-versions", data, expected)
   end
 
 end

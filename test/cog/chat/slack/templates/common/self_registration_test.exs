@@ -8,7 +8,7 @@ defmodule Cog.Chat.Slack.Templates.Common.SelfRegistrationTest do
     expected = """
     @cog: Hello Cog! It's great to meet you! You're the proud owner of a shiny new Cog account named 'cog'.
     """ |> String.strip
-    assert_rendered_template(:common, "self-registration-success", data, expected)
+    assert_rendered_template(:slack, :common, "self-registration-success", data, expected)
   end
 
   test "self_registration_failed renders properly" do
@@ -19,7 +19,7 @@ defmodule Cog.Chat.Slack.Templates.Common.SelfRegistrationTest do
 
     You'll need to ask a Cog administrator to investigate the situation and set up your account.
     """ |> String.strip
-    assert_rendered_template(:common, "self-registration-failed", data, expected)
+    assert_rendered_template(:slack, :common, "self-registration-failed", data, expected)
   end
 
 end
