@@ -80,7 +80,7 @@ defmodule Cog.Chat.Slack.Provider do
     result = Connector.call(connector, token, :send_message, %{target: target, message: message})
     case result["ok"] do
       true ->
-        {:reply, {:ok, message}, state}
+        {:reply, :ok, state}
       false ->
         {:reply, {:error, result["error"]}, state}
     end
