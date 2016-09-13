@@ -303,7 +303,7 @@ defmodule Cog.Repository.Bundles do
   def highest_disabled_versions do
     query = from bv in BundleVersion,
             left_join: e in "enabled_bundle_versions",
-              on: bv.bundle_id == e.bundle_id and bv.version == e.version,
+              on: bv.bundle_id == e.bundle_id,
             join: b in assoc(bv, :bundle),
             where: is_nil(e.bundle_id) and b.name != "site",
             distinct: bv.bundle_id,
