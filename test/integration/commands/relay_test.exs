@@ -65,7 +65,7 @@ defmodule Integration.Commands.RelayTest do
 
   test "getting information on a relay requires a relay name", %{user: user} do
     response = send_message(user, "@bot: operable:relay info")
-    assert_error_message_contains(response, " Not enough args. Arguments required: exactly 1.")
+    assert_error_message_contains(response, "Not enough args. Arguments required: exactly 1.")
   end
 
   test "getting information on more than one relay fails", %{user: user} do
@@ -82,7 +82,7 @@ defmodule Integration.Commands.RelayTest do
 
   test "passing an unknown subcommand fails", %{user: user} do
     response = send_message(user, "@bot: operable:relay not-a-subcommand")
-    assert_error_message_contains(response, "Whoops! An error occurred. Unknown subcommand 'not-a-subcommand'")
+    assert_error_message_contains(response, "Unknown subcommand 'not-a-subcommand'")
   end
 
 end

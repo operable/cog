@@ -15,13 +15,13 @@ defmodule Integration.Commands.GroupTest do
 
   test "adding and removing users to groups", %{user: user} do
     response = send_message(user, "@bot: operable:group member add elves #{user.username}")
-    assert_error_message_contains(response, "Whoops! An error occurred. Could not find 'user group' with the name 'elves'")
+    assert_error_message_contains(response, "Could not find 'user group' with the name 'elves'")
 
     [response] = send_message(user, "@bot: operable:group create elves")
     assert response.name == "elves"
 
     response = send_message(user, "@bot: operable:group member add elves papa_elf")
-    assert_error_message_contains(response, "Whoops! An error occurred. Could not find 'user' with the name 'papa_elf'")
+    assert_error_message_contains(response, "Could not find 'user' with the name 'papa_elf'")
 
     [response] = send_message(user, "@bot: operable:group member add elves")
     assert response.error == "Missing required args. At a minimum you must include the user group and at least one user name to add"
@@ -89,7 +89,7 @@ defmodule Integration.Commands.GroupTest do
     assert response.name == "cheer"
 
     response = send_message(user, "@bot: operable:group member remove cheer belf")
-    assert_error_message_contains(response, "Whoops! An error occurred. Could not find 'user group' with the name 'cheer'")
+    assert_error_message_contains(response, "Could not find 'user group' with the name 'cheer'")
   end
 
   test "listing group", %{user: user} do
@@ -168,7 +168,7 @@ defmodule Integration.Commands.GroupTest do
 
   test "passing an unknown subcommand fails", %{user: user} do
     response = send_message(user, "@bot: operable:group not-a-subcommand")
-    assert_error_message_contains(response, "Whoops! An error occurred. Unknown subcommand 'not-a-subcommand'")
+    assert_error_message_contains(response, "Unknown subcommand 'not-a-subcommand'")
   end
 
 end

@@ -17,24 +17,25 @@ defmodule Cog.Template.New.CommonTest do
                         "error_message" => "bad stuff happened",
                         "planning_failure" => "I can't plan this!",
                         "execution_failure" => false},
-                      [%{"name" => "text", "text" => "An error has occurred!"},
-                       %{"name" => "newline"},
-                       %{"name" => "text", "text" => "At some time in the past, somebody initiated the following pipeline, assigned the unique ID deadbeef:"},
-                       %{"name" => "newline"},
-                       %{"name" => "newline"},
-                       %{"name" => "fixed_width", "text" => "echo foo\n"},
-                       %{"name" => "newline"},
-                       %{"name" => "newline"},
-                       %{"name" => "text", "text" => "The pipeline failed planning the invocation:"},
-                       %{"name" => "newline"},
-                       %{"name" => "newline"},
-                       %{"name" => "fixed_width", "text" => "I can't plan this!\n"},
-                       %{"name" => "newline"},
-                       %{"name" => "newline"},
-                       %{"name" => "text", "text" => "The specific error was:"},
-                       %{"name" => "newline"},
-                       %{"name" => "newline"},
-                       %{"name" => "fixed_width", "text" => "bad stuff happened\n"}])
+      [%{"name" => "attachment", "children" => [
+          %{"name" => "text", "text" => "The pipeline failed planning the invocation:"}, %{"name" => "newline"},
+          %{"name" => "newline"},
+          %{"name" => "fixed_width", "text" => "I can't plan this!\n"},
+          %{"name" => "newline"},
+          %{"name" => "newline"},
+          %{"name" => "text", "text" => "The specific error was:"},
+          %{"name" => "newline"},
+          %{"name" => "newline"},
+          %{"name" => "fixed_width", "text" => "bad stuff happened\n"}
+        ],
+         "color" => "#ff3333",
+         "fields" => [
+           %{"short" => false, "title" => "Started", "value" => "some time in the past"},
+           %{"short" => false, "title" => "PipelineID", "value" => "deadbeef"},
+           %{"short" => false, "title" => "Pipeline", "value" => "echo foo"},
+           %{"short" => false, "title" => "Caller", "value" => "somebody"}
+         ],
+         "title" => "Command Error"}])
   end
 
   test "error template directives; execution failure" do
@@ -46,24 +47,23 @@ defmodule Cog.Template.New.CommonTest do
                         "error_message" => "bad stuff happened",
                         "planning_failure" => false,
                         "execution_failure" => "I can't execute this!"},
-                      [%{"name" => "text", "text" => "An error has occurred!"},
-                       %{"name" => "newline"},
-                       %{"name" => "text", "text" => "At some time in the past, somebody initiated the following pipeline, assigned the unique ID deadbeef:"},
-                       %{"name" => "newline"},
-                       %{"name" => "newline"},
-                       %{"name" => "fixed_width", "text" => "echo foo\n"},
-                       %{"name" => "newline"},
-                       %{"name" => "newline"},
-                       %{"name" => "text", "text" => "The pipeline failed executing the command:"},
-                       %{"name" => "newline"},
-                       %{"name" => "newline"},
-                       %{"name" => "fixed_width", "text" => "I can't execute this!\n"},
-                       %{"name" => "newline"},
-                       %{"name" => "newline"},
-                       %{"name" => "text", "text" => "The specific error was:"},
-                       %{"name" => "newline"},
-                       %{"name" => "newline"},
-                       %{"name" => "fixed_width", "text" => "bad stuff happened\n"}])
-    end
+      [%{"name" => "attachment",
+        "children" => [
+          %{"name" => "text", "text" => "The pipeline failed executing the command:"},
+          %{"name" => "newline"},
+          %{"name" => "newline"},
+          %{"name" => "fixed_width", "text" => "I can't execute this!\n"},
+          %{"name" => "newline"},
+          %{"name" => "newline"},
+          %{"name" => "text", "text" => "The specific error was:"},
+          %{"name" => "newline"},
+          %{"name" => "newline"},
+          %{"name" => "fixed_width", "text" => "bad stuff happened\n"}], "color" => "#ff3333", "fields" => [
+          %{"short" => false, "title" => "Started", "value" => "some time in the past"},
+          %{"short" => false, "title" => "PipelineID", "value" => "deadbeef"},
+          %{"short" => false, "title" => "Pipeline", "value" => "echo foo"},
+          %{"short" => false, "title" => "Caller", "value" => "somebody"}],
+        "title" => "Command Error"}])
+  end
 
 end

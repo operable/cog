@@ -147,6 +147,13 @@ defmodule Cog.Snoop do
     do: text
   defp render_directive(%{"name" => "newline"}),
     do: "\n"
+  defp render_directive(%{"name" => "attachment", "children" => children}) do
+      Enum.map(children, &render_directive/1)
+  end
+  # Let's make it a little easier to diagnose failing tests
+  defp render_directive(d) do
+    raise RuntimeError, message: "Unknown render directive: #{inspect d, pretty: true}"
+  end
 
   ########################################################################
   # Message processing functions

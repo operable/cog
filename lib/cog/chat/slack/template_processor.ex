@@ -4,6 +4,7 @@ defmodule Cog.Chat.Slack.TemplateProcessor do
   alias Cog.Util.Colors
 
   @markdown_fields ["author", "text", "title", "pretext"]
+  @too_long_for_message 256
 
   def render(directives) do
     {text, attachments} = directives
@@ -11,7 +12,13 @@ defmodule Cog.Chat.Slack.TemplateProcessor do
                           |> List.flatten                   # Flatten nested lists into a single list
                           |> consolidate_outputs({"", []})  # Separate message text and attachments into separate lists
     attachments = Enum.map(attachments, &finalize_attachment/1) # Final attachment post-processing for Slack
-    {text, attachments}
+    # Message is too long convert it to an attachment
+    if String.length(text) > @too_long_for_message do
+      {"", [%{"text" => text, "fallback" => text, "color" => Colors.name_to_hex("operableblue"), # Operable blue :)
+              "title" => "Pipeline Result", "mrkdwn_in" => ["text", "title"]}]}
+    else
+      {text, attachments}
+    end
   end
 
   ########################################################################

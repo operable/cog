@@ -1,5 +1,5 @@
-An error occurred! Couldn't find a `~$template~` template!
-
+~attachment title="Template Not Found" color="#ff3333" Template=$template~
 The raw data generated was:
 
 ~json var=$data~
+~end~

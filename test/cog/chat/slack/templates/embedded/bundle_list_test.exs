@@ -23,7 +23,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.BundleListTest do
     ```
     """ |> String.strip
 
-    assert_rendered_template(:slack, :embedded, "bundle-list", data, expected)
+    assert_rendered_template(:slack, :embedded, "bundle-list", data, {"", expected})
   end
 
   test "handles disabled bundles properly" do
@@ -42,7 +42,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.BundleListTest do
     ```
     """ |> String.strip
 
-    assert_rendered_template(:slack, :embedded, "bundle-list", data, expected)
+    assert_rendered_template(:slack, :embedded, "bundle-list", data, {expected, []})
 
 
 

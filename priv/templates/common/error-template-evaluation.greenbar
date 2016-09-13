@@ -1,17 +1,6 @@
-An error rendering the `~$template~` template occurred!
-
-The template source is:
-
-```
-~$source~
-```
-
-The error is:
-
-```
-~$error~
-```
+~attachment title="Render Error" color="#ff3333" TemplateName=$template Source=$source Error=$error~
 
 The raw data generated was:
 
 ~json var=$data~
+~end~

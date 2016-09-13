@@ -1,11 +1,4 @@
-An error has occurred!
-At ~$started~, ~$initiator~ initiated the following pipeline, assigned the unique ID ~$id~:
-~br~
-```
-~$pipeline_text~
-```
-~br~
-~br~
+~attachment title="Command Error" color="#ff3333" Caller=$initiator Pipeline=$pipeline_text PipelineID=$id Started=$started~
 ~if cond=$planning_failure ~
 The pipeline failed planning the invocation:
 ~br~
@@ -27,3 +20,4 @@ The specific error was:
 ```
 ~$error_message~
 ```
+~end~

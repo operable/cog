@@ -58,7 +58,6 @@ defmodule Integration.SlackTest do
     message = send_message(~s(@#{@bot}: operable:echo foo > am_i_user_or_room))
 
     expected_response = """
-    Whoops! An error occurred.
     No commands were executed because the following redirects are invalid:
 
     am_i_user_or_room

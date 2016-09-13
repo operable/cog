@@ -140,7 +140,7 @@ defmodule Integration.Commands.RelayGroupTest do
 
   test "passing an unknown subcommand fails", %{user: user} do
     response = send_message(user, "@bot: operable:relay-group not-a-subcommand")
-    assert_error_message_contains(response, "Whoops! An error occurred. Unknown subcommand 'not-a-subcommand'")
+    assert_error_message_contains(response, "Unknown subcommand 'not-a-subcommand'")
   end
 
 end

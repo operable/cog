@@ -33,7 +33,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.UserGroupListVerboseTest do
     ```
     """ |> String.strip
 
-    assert_rendered_template(:slack, :embedded, "user-group-list-verbose", data, expected)
+    assert_rendered_template(:slack, :embedded, "user-group-list-verbose", data, {"", expected})
   end
 
 end

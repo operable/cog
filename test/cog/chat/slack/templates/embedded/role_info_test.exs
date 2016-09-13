@@ -12,7 +12,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.RoleInfoTest do
     *Permissions*: site:foo
     """ |> String.strip
 
-    assert_rendered_template(:slack, :embedded, "role-info", data, expected)
+    assert_rendered_template(:slack, :embedded, "role-info", data, {expected, []})
   end
 
   test "role-info template with multiple inputs" do
@@ -40,7 +40,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.RoleInfoTest do
     ```
     """ |> String.strip
 
-    assert_rendered_template(:slack, :embedded, "role-info", data, expected)
+    assert_rendered_template(:slack, :embedded, "role-info", data, {"", expected})
   end
 
 
