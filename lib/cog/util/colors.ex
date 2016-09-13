@@ -1,5 +1,8 @@
 defmodule Cog.Util.Colors do
-  hex_codes = File.read!("priv/css-color-names.json") |> Poison.decode!
+
+  @external_resource "priv/css-color-names.json"
+
+  hex_codes = File.read!(@external_resource) |> Poison.decode!
   names = Enum.reduce(hex_codes, %{}, fn({name, code}, acc) -> Map.put(acc, code, name) end)
 
   def name_to_hex(<<?#, _::binary>>=color), do: color
