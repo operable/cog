@@ -3,13 +3,15 @@ defmodule Cog.Chat.Slack.TemplateProcessor do
 
   alias Cog.Util.Colors
 
+  @markdown_fields ["author", "text", "title", "pretext"]
+
   def render(directives) do
     {text, attachments} = directives
-                          |> Enum.map(&process_directive/1)
-                          |> List.flatten
-                          |> consolidate_outputs({"", []})
-  {text, Enum.map(attachments, fn(attachment) -> updated = Map.delete(attachment, "name")
-      Map.put(updated, "mrkdwn_in", Map.keys(updated)) end)}
+                          |> Enum.map(&process_directive/1) # Convert all Greenbar directives into their Slack forms
+                          |> List.flatten                   # Flatten nested lists into a single list
+                          |> consolidate_outputs({"", []})  # Separate message text and attachments into separate lists
+    attachments = Enum.map(attachments, &finalize_attachment/1) # Final attachment post-processing for Slack
+    {text, attachments}
   end
 
   ########################################################################
@@ -34,6 +36,7 @@ defmodule Cog.Chat.Slack.TemplateProcessor do
     attachment
     |> Map.delete("children")
     |> Map.put("text", attachment_text)
+    |> Map.put("fallback", attachment_text)
     |> Map.update("color", Colors.name_to_hex("blue"), &(Colors.name_to_hex(&1)))
   end
   defp process_directive(%{"name" => "text", "text" => text}, _),
@@ -93,6 +96,12 @@ defmodule Cog.Chat.Slack.TemplateProcessor do
   end
   defp consolidate_outputs([%{"name" => "attachment"}=attachment|t], {text, attachments}) do
     consolidate_outputs(t, {text, [attachment|attachments]})
+  end
+
+  defp finalize_attachment(attachment) do
+    attachment
+    |> Map.delete("name")
+    |> Map.put("mrkdwn_in", Enum.filter(Map.keys(attachment), &(&1 in @markdown_fields)))
   end
 
 end
