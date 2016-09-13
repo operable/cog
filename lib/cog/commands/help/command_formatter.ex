@@ -91,8 +91,8 @@ defmodule Cog.Commands.Help.CommandFormatter do
     |> Enum.join(" ")
   end
 
-  defp render_synopsis_option(%CommandOption{name: name, long_flag: long_flag, required: required, option_type: %CommandOptionType{name: type}}) do
-    flag = render_flag(long_flag, name, type)
+  defp render_synopsis_option(%CommandOption{required: required} = command_option) do
+    flag = render_flag(%{command_option | short_flag: nil})
 
     case required do
       true ->
@@ -138,7 +138,7 @@ defmodule Cog.Commands.Help.CommandFormatter do
     end
   end
 
-  defp render_option(%CommandOption{name: name, long_flag: long_flag, description: description, option_type: %CommandOptionType{name: type}}) do
+  defp render_option(%CommandOption{description: description} = command_option) do
     description = case description do
       nil ->
         nil
@@ -146,14 +146,27 @@ defmodule Cog.Commands.Help.CommandFormatter do
         indent(description)
     end
 
-    [render_flag(long_flag, name, type), description]
+    [render_flag(command_option), description]
     |> Enum.reject(&is_nil/1)
     |> Enum.join("\n")
   end
 
-  defp render_flag(long_flag, _name, "bool"),
+  defp render_flag(command_option) do
+    [render_short_flag(command_option), render_long_flag(command_option)]
+    |> Enum.reject(&is_nil/1)
+    |> Enum.join(", ")
+  end
+
+  defp render_short_flag(%CommandOption{short_flag: nil}),
+    do: nil
+  defp render_short_flag(%CommandOption{short_flag: short_flag, option_type: %CommandOptionType{name: "bool"}}),
+    do: "-#{short_flag}"
+  defp render_short_flag(%CommandOption{short_flag: short_flag, name: name}),
+    do: "-#{short_flag} <#{name}>"
+
+  defp render_long_flag(%CommandOption{long_flag: long_flag, option_type: %CommandOptionType{name: "bool"}}),
     do: "--#{long_flag}"
-  defp render_flag(long_flag, name, _type),
+  defp render_long_flag(%CommandOption{long_flag: long_flag, name: name}),
     do: "--#{long_flag} <#{name}>"
 
   defp render_subcommands(%CommandVersion{subcommands: nil}),
