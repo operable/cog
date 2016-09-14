@@ -6,20 +6,19 @@ defmodule Cog.Chat.Slack.TemplateProcessor do
   @markdown_fields ["author", "text", "title", "pretext"]
   @too_long_for_message 256
 
-  def render(directives, convert_long_text \\ true)
-
-  def render(directives, true) do
+  def render(directives, opts \\ []) do
     {text, attachments} = render_directives(directives)
-    # Message is too long convert it to an attachment
-    if String.length(text) > @too_long_for_message do
-      {"", [%{"text" => text, "fallback" => text, "color" => Colors.name_to_hex("operableblue"),
-              "title" => "Pipeline Result", "mrkdwn_in" => ["text", "title"]}]}
+    if Keyword.get(opts, :convert_long_text, true) do
+      # Message is too long convert it to an attachment
+      if String.length(text) > @too_long_for_message do
+        {"", [%{"text" => text, "fallback" => text, "color" => Colors.name_to_hex("operableblue"),
+                "title" => "Pipeline Result", "mrkdwn_in" => ["text", "title"]}|attachments]}
       else
         {text, attachments}
       end
-  end
-  def render(directives, false) do
-    render_directives(directives)
+    else
+      {text, attachments}
+    end
   end
 
   ########################################################################
@@ -35,8 +34,8 @@ defmodule Cog.Chat.Slack.TemplateProcessor do
 
   defp process_directive(%{"name" => "attachment", "children" => children}=attachment, _) do
     # Nested attachments are ignored
-    {attachment_text, _} = render(children, false)
-    attachment = if Map.get(attachment, "fields") == [] do
+    {attachment_text, _} = render(children, convert_long_text: false)
+    attachment = if Map.get(attachment, "fields", []) == [] do
       Map.delete(attachment, "fields")
     else
       attachment
