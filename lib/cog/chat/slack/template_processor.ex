@@ -6,13 +6,20 @@ defmodule Cog.Chat.Slack.TemplateProcessor do
   @markdown_fields ["author", "text", "title", "pretext"]
   @too_long_for_message 256
 
-  def render(directives) do
-    {text, attachments} = directives
-                          |> Enum.map(&process_directive/1) # Convert all Greenbar directives into their Slack forms
-                          |> List.flatten                   # Flatten nested lists into a single list
-                          |> consolidate_outputs({"", []})  # Separate message text and attachments into separate lists
-    attachments = Enum.map(attachments, &finalize_attachment/1) # Final attachment post-processing for Slack
-    {text, attachments}
+  def render(directives, convert_long_text \\ true)
+
+  def render(directives, true) do
+    {text, attachments} = render_directives(directives)
+    # Message is too long convert it to an attachment
+    if String.length(text) > @too_long_for_message do
+      {"", [%{"text" => text, "fallback" => text, "color" => Colors.name_to_hex("operableblue"),
+              "title" => "Pipeline Result", "mrkdwn_in" => ["text", "title"]}]}
+      else
+        {text, attachments}
+      end
+  end
+  def render(directives, false) do
+    render_directives(directives)
   end
 
   ########################################################################
@@ -28,7 +35,7 @@ defmodule Cog.Chat.Slack.TemplateProcessor do
 
   defp process_directive(%{"name" => "attachment", "children" => children}=attachment, _) do
     # Nested attachments are ignored
-    {attachment_text, _} = render(children)
+    {attachment_text, _} = render(children, false)
     attachment = if Map.get(attachment, "fields") == [] do
       Map.delete(attachment, "fields")
     else
@@ -97,6 +104,15 @@ defmodule Cog.Chat.Slack.TemplateProcessor do
   end
   defp consolidate_outputs([%{"name" => "attachment"}=attachment|t], {text, attachments}) do
     consolidate_outputs(t, {text, [attachment|attachments]})
+  end
+
+  defp render_directives(directives) do
+    {text, attachments} = directives
+                          |> Enum.map(&process_directive/1) # Convert all Greenbar directives into their Slack forms
+                          |> List.flatten                   # Flatten nested lists into a single list
+                          |> consolidate_outputs({"", []})  # Separate message text and attachments into separate lists
+    attachments = Enum.map(attachments, &finalize_attachment/1) # Final attachment post-processing for Slack
+    {text, attachments}
   end
 
   defp finalize_attachment(attachment) do
