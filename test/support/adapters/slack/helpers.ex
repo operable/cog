@@ -1,6 +1,7 @@
 defmodule Cog.Adapters.Slack.Helpers do
   alias Cog.Assertions
 
+  require Logger
   @bot_handle "deckard"
   @room "ci_bot_testing"
   @interval 1000 # 1 second
@@ -116,7 +117,8 @@ defmodule Cog.Adapters.Slack.Helpers do
           # for; we'll take just as many as we expected to get
           formatted = Enum.sort(messages, &(&1["ts"] < &2["ts"]))
           |> Enum.take(expected_count)
-          |> Enum.map_join("\n", &(&1["text"]))
+          |> Enum.map(&extract_message/1)
+          |> Enum.join("\n")
           {:ok, formatted}
         end
     end
@@ -127,4 +129,28 @@ defmodule Cog.Adapters.Slack.Helpers do
   defp token do
     System.get_env("SLACK_USER_API_TOKEN")
   end
+
+  defp extract_message(%{"attachments" => [%{"text" => message}]})
+  when is_binary(message) and message != "",
+    do: message
+  defp extract_message(%{"attachments" => attachments}=message)
+  when attachments != [] do
+    Logger.warn("""
+
+    Received a message with more than one attachment, or one
+    attachment with an empty "text" field. This testing infrastructure
+    currently assumes at most one attachment, with a non-empty "text"
+    field.
+
+    If you see this message, this assumption has been violated.
+
+    Message:
+    #{inspect message, pretty: true}
+
+    """)
+    raise "bad attachment"
+  end
+  defp extract_message(%{"text" => message}) when is_binary(message),
+    do: message
+
 end
