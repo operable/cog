@@ -15,7 +15,7 @@ defmodule Cog.Chat.Slack.TemplateProcessor do
     # Message is too long convert it to an attachment
     if String.length(text) > @too_long_for_message do
       {"", [%{"text" => text, "fallback" => text, "color" => Colors.name_to_hex("operableblue"), # Operable blue :)
-              "title" => "Pipeline Result", "mrkdwn_in" => ["text", "title"]}]}
+              "title" => "Pipeline Result", "mrkdwn_in" => ["text", "title"]}|attachments]}
     else
       {text, attachments}
     end
