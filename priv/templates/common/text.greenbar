@@ -1,4 +1,5 @@
 ~each var=$results~
-# # TODO: Need to have a join tag for this; body is a list
-~$item.body[0]~
+~each var=$item.body as=line~
+~$line~
+~end~
 ~end~
