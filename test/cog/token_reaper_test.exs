@@ -20,7 +20,9 @@ defmodule Cog.TokenReaper.Test do
     pre_reap = user |> Repo.preload(:tokens)
     assert length(pre_reap.tokens) == 3
 
-    :timer.sleep(@reap_period + 1000) # let reaper kick in
+    :timer.sleep(@reap_period + 5000) # let tokens age out
+    Cog.TokenReaper.force_reap!()
+    :timer.sleep(500) # give reaper a chance to run
 
     post_reap = user |> Repo.preload(:tokens)
     assert length(post_reap.tokens) == 0

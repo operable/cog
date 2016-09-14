@@ -15,6 +15,9 @@ defmodule Cog.TokenReaper do
   defstruct period: nil, # integer; milliseconds
             ttl: nil     # integer; seconds
 
+  @hour_in_ms 60 * 60 * 1000
+  @min_in_ms 60 * 1000
+
   # TODO: Info tracking
   #       Last reaped at XXX; deleted XXX tokens
   # TODO: Explicit `reap` function that can be called interactively
@@ -32,6 +35,17 @@ defmodule Cog.TokenReaper do
     GenServer.start_link(__MODULE__, [period, ttl], name: __MODULE__)
   end
 
+  @doc "Forces immediate reap to occur"
+  def force_reap!() do
+    case :erlang.whereis(__MODULE__) do
+      :undefined ->
+        raise RuntimeError, message: "Process #{__MODULE__} not found"
+      pid ->
+        Logger.debug("Forcing TokenReaper run")
+        send(pid, :reap)
+    end
+  end
+
   @doc """
   Arguments:
 
@@ -40,7 +54,7 @@ defmodule Cog.TokenReaper do
   - ttl: the age at which a token is considered expired, in seconds
   """
   def init([period, ttl]) do
-    schedule_next_reaping(1000)
+    schedule_next_reaping(5000)
     {:ok, %__MODULE__{period: period,
                       ttl: ttl}}
   end
@@ -52,7 +66,8 @@ defmodule Cog.TokenReaper do
   end
 
   defp schedule_next_reaping(period) do
-    Logger.info ("Scheduling next expired token reaping for approximately #{ms_to_hours(period)} hours from now")
+    {time, unit} = translate_period(period)
+    Logger.info ("Scheduling next expired token reaping for approximately #{time} #{unit} from now")
     :erlang.send_after(period, self(), :reap)
   end
 
@@ -77,4 +92,23 @@ defmodule Cog.TokenReaper do
   defp ms_to_hours(ms) do
     ms / 1000 / 60 / 60 |> Float.floor |> trunc
   end
+
+  defp ms_to_minutes(ms) do
+    ms / 1000 / 60 |> Float.floor |> trunc
+  end
+
+  defp ms_to_seconds(ms) do
+    ms / 1000 |> Float.floor |> trunc
+  end
+
+  defp translate_period(period) when period >= @hour_in_ms do
+    {ms_to_hours(period), "hours"}
+  end
+  defp translate_period(period) when period >= @min_in_ms do
+    {ms_to_minutes(period), "minutes"}
+  end
+  defp translate_period(period) do
+    {ms_to_seconds(period), "seconds"}
+  end
+
 end
