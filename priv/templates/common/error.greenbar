@@ -1,4 +1,4 @@
-~attachment title="Command Error" color="#ff3333" Caller=$initiator Pipeline=$pipeline_text PipelineID=$id Started=$started~
+~attachment title="Command Error" color="#ff3333" Caller=$initiator Pipeline=$pipeline_text "Pipeline ID"=$id Started=$started~
 ~if cond=$planning_failure ~
 The pipeline failed planning the invocation:
 ~br~

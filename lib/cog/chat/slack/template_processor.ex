@@ -111,7 +111,7 @@ defmodule Cog.Chat.Slack.TemplateProcessor do
                           |> List.flatten                   # Flatten nested lists into a single list
                           |> consolidate_outputs({"", []})  # Separate message text and attachments into separate lists
     attachments = Enum.map(attachments, &finalize_attachment/1) # Final attachment post-processing for Slack
-    {text, attachments}
+    {text, Enum.reverse(attachments)}
   end
 
   defp finalize_attachment(attachment) do

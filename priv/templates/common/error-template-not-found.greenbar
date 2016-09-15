@@ -1,4 +1,4 @@
-~attachment title="Template Not Found" color="#ff3333" Template=$template~
+~attachment title="Template Not Found" color="#ff3333" "Template Name"=$template~
 The raw data generated was:
 
 ~json var=$data~

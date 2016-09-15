@@ -1,4 +1,4 @@
-~attachment title="Render Error" color="#ff3333" TemplateName=$template Source=$source Error=$error~
+~attachment title="Render Error" color="#ff3333" "Template Name"=$template Source=$source Error=$error~
 
 The raw data generated was:
 

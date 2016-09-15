@@ -31,7 +31,7 @@ defmodule Cog.Template.New.CommonTest do
          "color" => "#ff3333",
          "fields" => [
            %{"short" => false, "title" => "Started", "value" => "some time in the past"},
-           %{"short" => false, "title" => "PipelineID", "value" => "deadbeef"},
+           %{"short" => false, "title" => "Pipeline ID", "value" => "deadbeef"},
            %{"short" => false, "title" => "Pipeline", "value" => "echo foo"},
            %{"short" => false, "title" => "Caller", "value" => "somebody"}
          ],
@@ -60,7 +60,7 @@ defmodule Cog.Template.New.CommonTest do
           %{"name" => "newline"},
           %{"name" => "fixed_width", "text" => "bad stuff happened\n"}], "color" => "#ff3333", "fields" => [
           %{"short" => false, "title" => "Started", "value" => "some time in the past"},
-          %{"short" => false, "title" => "PipelineID", "value" => "deadbeef"},
+          %{"short" => false, "title" => "Pipeline ID", "value" => "deadbeef"},
           %{"short" => false, "title" => "Pipeline", "value" => "echo foo"},
           %{"short" => false, "title" => "Caller", "value" => "somebody"}],
         "title" => "Command Error"}])
