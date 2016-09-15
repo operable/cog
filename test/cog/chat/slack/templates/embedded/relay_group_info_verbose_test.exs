@@ -16,7 +16,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.RelayGroupInfoVerboseTest do
     *Bundles*: foo, bar, baz
     """ |> String.strip
 
-    assert_rendered_template(:slack, :embedded, "relay-group-info-verbose", data, expected)
+    assert_rendered_template(:slack, :embedded, "relay-group-info-verbose", data, {expected, []})
   end
 
   test "relay-group-info-verbose template with multiple inputs" do
@@ -50,7 +50,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.RelayGroupInfoVerboseTest do
     ```
     """ |> String.strip
 
-    assert_rendered_template(:slack, :embedded, "relay-group-info-verbose", data, expected)
+    assert_rendered_template(:slack, :embedded, "relay-group-info-verbose", data, {"", expected})
   end
 
 end

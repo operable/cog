@@ -17,7 +17,7 @@ defmodule Integration.CommandTest do
   test "running a command with a required option missing", %{user: user} do
     response = send_message(user, "@bot: operable:req-opt")
 
-    assert_error_message_contains(response, "Whoops! An error occurred. Looks like you forgot to include some required options: 'req'")
+    assert_error_message_contains(response, "Looks like you forgot to include some required options: 'req'")
   end
 
   test "running a command with a 'string' option", %{user: user} do
@@ -58,7 +58,7 @@ defmodule Integration.CommandTest do
   test "running a command with an invalid 'int' option", %{user: user} do
     response = send_message(user, "@bot: operable:type-test --int=\"this is a string\"")
 
-    assert_error_message_contains(response, "Whoops! An error occurred. Type Error: `\"this is a string\"` is not of type `int`")
+    assert_error_message_contains(response, "Type Error: `\"this is a string\"` is not of type `int`")
   end
 
   test "running a command with a 'float' option", %{user: user} do
@@ -70,7 +70,7 @@ defmodule Integration.CommandTest do
   test "running a command with an invalid 'float' option", %{user: user} do
     response = send_message(user, "@bot: operable:type-test --float=\"This is a string\"")
 
-    assert_error_message_contains(response, "Whoops! An error occurred. Type Error: `\"This is a string\"` is not of type `float`")
+    assert_error_message_contains(response, "Type Error: `\"This is a string\"` is not of type `float`")
   end
 
   test "running a command with an 'incr' option", %{user: user} do
@@ -156,13 +156,13 @@ defmodule Integration.CommandTest do
   test "returning an error if matches is not a valid string", %{user: user} do
     response = send_message(user, ~s(@bot: seed '{"foo":{"bar":{"baz":"stuff"}}}' | operable:filter --path="foo.bar.baz" --matches="st[uff"))
 
-    assert_error_message_contains(response, "Whoops! An error occurred. \n* The regular expression in '--matches' does not compile correctly.")
+    assert_error_message_contains(response, "\n* The regular expression in '--matches' does not compile correctly.")
   end
 
   test "returning an error if matches is used without a path", %{user: user} do
     response = send_message(user, ~s(@bot: seed '{"foo":{"bar":{"baz":"stuff"}}}' | operable:filter --matches="stuff"))
 
-    assert_error_message_contains(response, "Whoops! An error occurred. \n* Must specify '--path' with the '--matches' option.")
+    assert_error_message_contains(response, "\n* Must specify '--path' with the '--matches' option.")
   end
 
   test "an empty response from the filter command single input item", %{user: user} do

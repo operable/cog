@@ -28,7 +28,7 @@ defmodule Integration.Commands.RuleTest do
 
   test "error when listing rules for an unrecognized command", %{user: user} do
     assert_error(user, "@bot: rule -c not_really:a_command",
-                 ~s(Whoops! An error occurred. Command "not_really:a_command" could not be found))
+                 ~s(Command "not_really:a_command" could not be found))
   end
 
   test "listing rules for a disabled command fails", %{user: user} do
@@ -42,7 +42,7 @@ defmodule Integration.Commands.RuleTest do
           "commands" => %{"hola" => %{"rules" => ["when command is test-bundle:hola allow"]}}}})
 
     assert_error(user, "@bot: rule -c test-bundle:hola",
-              ~s(Whoops! An error occurred. test-bundle:hola is not enabled. Enable a bundle version and try again))
+              ~s(test-bundle:hola is not enabled. Enable a bundle version and try again))
   end
 
   ########################################################################
@@ -60,13 +60,13 @@ defmodule Integration.Commands.RuleTest do
 
   test "error when specifying too many arguments for manual rule creation", %{user: user} do
     assert_error(user, ~s(@bot: rule create "blah" "blah" "blah"),
-                 "Whoops! An error occurred. Invalid args. Please pass between 1 and 2 arguments.")
+                 "Invalid args. Please pass between 1 and 2 arguments.")
   end
 
   test "error when creating rule for an unrecognized command", %{user: user} do
     permission("site:permission")
     assert_error(user, ~s(@bot: rule create "not_really:a_command" "site:permission"),
-                 ~s(Whoops! An error occurred. Could not create rule: Unrecognized command "not_really:a_command"))
+                 ~s(Could not create rule: Unrecognized command "not_really:a_command"))
   end
 
   test "error when creating rule with an unrecognized permission", %{user: user} do
@@ -77,12 +77,12 @@ defmodule Integration.Commands.RuleTest do
   test "error when creating a rule specifying a permission from an unacceptable namespace", %{user: user} do
     permission("foo:bar")
     assert_error(user, ~s(@bot: rule create "operable:st-echo" "foo:bar"),
-                 ~s(Whoops! An error occurred. Could not create rule with permission outside of command bundle or the \"site\" namespace))
+                 ~s(Could not create rule with permission outside of command bundle or the \"site\" namespace))
   end
 
   test "error when manually creating a rule with invalid syntax", %{user: user} do
     assert_error(user, ~s(@bot: rule create "this is totally not a valid rule"),
-                 ~s{Whoops! An error occurred. Could not create rule: \"(Line: 1, Col: 0) syntax error before: \\"this\\".})
+                 ~s{Could not create rule: \"(Line: 1, Col: 0) syntax error before: \\"this\\".})
   end
 
   ########################################################################
@@ -105,12 +105,12 @@ defmodule Integration.Commands.RuleTest do
 
   test "error when dropping rule with non-UUID string id", %{user: user} do
     assert_error(user, "@bot: rule delete not-a-uuid",
-                 ~s(Whoops! An error occurred. Invalid UUID "not-a-uuid"))
+                 ~s(Invalid UUID "not-a-uuid"))
   end
 
   test "error when dropping rule with unknown id", %{user: user} do
     assert_error(user, "@bot: rule delete #{@bad_uuid}",
-                 ~s(Whoops! An error occurred. Rule "#{@bad_uuid}" could not be found))
+                 ~s(Rule "#{@bad_uuid}" could not be found))
   end
 
   ########################################################################
@@ -154,7 +154,7 @@ defmodule Integration.Commands.RuleTest do
 
   test "passing an unknown subcommand fails", %{user: user} do
     response = send_message(user, "@bot: operable:rule not-a-subcommand")
-    assert_error_message_contains(response, "Whoops! An error occurred. Unknown subcommand 'not-a-subcommand'")
+    assert_error_message_contains(response, "Unknown subcommand 'not-a-subcommand'")
   end
 
   ########################################################################

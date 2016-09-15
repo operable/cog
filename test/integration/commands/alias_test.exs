@@ -32,7 +32,7 @@ defmodule Integration.Commands.AliasTest do
 
     response = send_message(user, "@bot: operable:alias create my-new-alias \"echo My New Alias\"")
 
-    assert_error_message_contains(response, "Whoops! An error occurred. name: The alias name is already in use.")
+    assert_error_message_contains(response, "name: The alias name is already in use.")
   end
 
   test "removing an alias", %{user: user} do
@@ -52,7 +52,7 @@ defmodule Integration.Commands.AliasTest do
   test "removing an alias that does not exist", %{user: user} do
     response = send_message(user, "@bot: operable:alias delete my-new-alias")
 
-    assert_error_message_contains(response, "Whoops! An error occurred. I can't find 'my-new-alias'. Please try again")
+    assert_error_message_contains(response, "I can't find 'my-new-alias'. Please try again")
   end
 
   test "moving an alias to site using full visibility syntax", %{user: user} do
@@ -258,7 +258,7 @@ defmodule Integration.Commands.AliasTest do
 
     response = send_message(user, "@bot: operable:alias move user:my-new-alias site")
 
-    assert_error_message_contains(response, "Whoops! An error occurred. name: The alias name is already in use.")
+    assert_error_message_contains(response, "name: The alias name is already in use.")
   end
 
   test "moving an alias to user when an alias with that name already exists in user", %{user: user} do
@@ -268,7 +268,7 @@ defmodule Integration.Commands.AliasTest do
 
     response = send_message(user, "@bot: operable:alias move site:my-new-alias user")
 
-    assert_error_message_contains(response, "Whoops! An error occurred. name: The alias name is already in use.")
+    assert_error_message_contains(response, "name: The alias name is already in use.")
   end
 
   test "list all aliases", %{user: user} do
@@ -332,37 +332,37 @@ defmodule Integration.Commands.AliasTest do
   test "list aliases with an invalid pattern", %{user: user} do
     response = send_message(user, "@bot: operable:alias list \"% &my#-*\"")
 
-    assert_error_message_contains(response, "Whoops! An error occurred. Invalid alias name. Only emoji, letters, numbers, and the following special characters are allowed: *, -, _")
+    assert_error_message_contains(response, "Invalid alias name. Only emoji, letters, numbers, and the following special characters are allowed: *, -, _")
   end
 
   test "list aliases with too many wildcards", %{user: user} do
     response = send_message(user, "@bot: operable:alias list \"*my-*\"")
 
-    assert_error_message_contains(response, "Whoops! An error occurred. Too many wildcards. You can only include one wildcard in a query")
+    assert_error_message_contains(response, "Too many wildcards. You can only include one wildcard in a query")
   end
 
   test "list aliases with a bad pattern and too many wildcards", %{user: user} do
     response = send_message(user, "@bot: operable:alias list \"*m++%y-*\"")
 
-    assert_error_message_contains(response, "Whoops! An error occurred. Too many wildcards. You can only include one wildcard in a query\nInvalid alias name. Only emoji, letters, numbers, and the following special characters are allowed: *, -, _")
+    assert_error_message_contains(response, "Too many wildcards. You can only include one wildcard in a query\nInvalid alias name. Only emoji, letters, numbers, and the following special characters are allowed: *, -, _")
   end
 
   test "passing too many args", %{user: user} do
     response = send_message(user, "@bot: operable:alias create my-invalid-alias \"echo foo\" invalid-arg")
 
-    assert_error_message_contains(response, "Whoops! An error occurred. Too many args. Arguments required: exactly 2.")
+    assert_error_message_contains(response, "Too many args. Arguments required: exactly 2.")
   end
 
   test "passing too few args", %{user: user} do
     response = send_message(user, "@bot: operable:alias create my-invalid-alias")
 
-    assert_error_message_contains(response, "Whoops! An error occurred. Not enough args. Arguments required: exactly 2.")
+    assert_error_message_contains(response, "Not enough args. Arguments required: exactly 2.")
   end
 
   test "passing an unknown subcommand", %{user: user} do
     response = send_message(user, "@bot: operable:alias foo")
 
-    assert_error_message_contains(response, "Whoops! An error occurred. Unknown subcommand 'foo'")
+    assert_error_message_contains(response, "Unknown subcommand 'foo'")
   end
 
 end

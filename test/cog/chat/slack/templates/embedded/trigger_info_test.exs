@@ -21,7 +21,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.TriggerInfoTest do
     *Invocation URL*: https://cog.mycompany.com/invoke_stuff
     """ |> String.strip
 
-    assert_rendered_template(:slack, :embedded, "trigger-info", data, expected)
+    assert_rendered_template(:slack, :embedded, "trigger-info", data, {expected, []})
   end
 
   test "handles null description, user" do
@@ -40,7 +40,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.TriggerInfoTest do
     *Invocation URL*: https://cog.mycompany.com/invoke_stuff
     """ |> String.strip
 
-    assert_rendered_template(:slack, :embedded, "trigger-info", data, expected)
+    assert_rendered_template(:slack, :embedded, "trigger-info", data, {expected, []})
   end
 
   test "multiple inputs" do
@@ -68,7 +68,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.TriggerInfoTest do
     ```
     """ |> String.strip
 
-    assert_rendered_template(:slack, :embedded, "trigger-info", data, expected)
+    assert_rendered_template(:slack, :embedded, "trigger-info", data, {"", expected})
   end
 
 end

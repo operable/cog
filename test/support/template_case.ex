@@ -15,10 +15,20 @@ defmodule Cog.TemplateCase do
     {rendered, _} = Cog.Chat.Slack.TemplateProcessor.render(directives)
     assert expected == rendered
   end
-  def assert_rendered_template(:slack, bundle, template_name, data, expected) when is_tuple(expected) do
+  def assert_rendered_template(:slack, bundle, template_name, data, {text, attachments}) do
     directives = directives_for_template(bundle, template_name, data)
-    rendered = Cog.Chat.Slack.TemplateProcessor.render(directives)
-    assert expected == rendered
+    {message, rendered} = Cog.Chat.Slack.TemplateProcessor.render(directives)
+    assert text == message
+    cond do
+      is_binary(attachments) ->
+        assert attachments == Enum.at(rendered, 0) |> Map.get("text")
+      length(attachments) == 0 ->
+        assert attachments == rendered
+      attachments ->
+        attachments
+        |> Enum.with_index
+        |> Enum.each(fn({attachment, index}) -> assert attachment == Enum.at(rendered, index) |> Map.get("text") end)
+    end
   end
 
   def assert_directives({bundle, template_name}, data, expected),

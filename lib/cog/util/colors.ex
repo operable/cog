@@ -7,6 +7,10 @@ defmodule Cog.Util.Colors do
 
   def name_to_hex(<<?#, _::binary>>=color), do: color
   Enum.each(hex_codes, fn({name, value}) ->
+    unless String.starts_with?(value, "#") do
+      raise CompileError, description: "Hex color values must begin with '#': #{inspect value}",
+      file: __ENV__.file, line: __ENV__.line
+    end
     def name_to_hex(unquote(name)), do: unquote(value)
   end)
   def name_to_hex(_), do: :unknown_color
