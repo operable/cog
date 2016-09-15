@@ -41,6 +41,7 @@ defmodule Cog.Chat.Slack.TemplateProcessor do
       attachment
     end
     attachment
+    |> rename_key("title_url", "title_link")
     |> Map.delete("children")
     |> Map.put("text", attachment_text)
     |> Map.put("fallback", attachment_text)
@@ -87,6 +88,15 @@ defmodule Cog.Chat.Slack.TemplateProcessor do
   defp process_directive(%{"name" => name}=directive, _) do
     Logger.warn("Unrecognized directive; #{inspect directive}")
     "\nUnrecognized directive: #{name}\n"
+  end
+
+  defp rename_key(map, old_key, new_key) do
+    {value, map} = Map.pop(map, old_key, :undefined)
+    if value == :undefined do
+      map
+    else
+      Map.put(map, new_key, value)
+    end
   end
 
   # Shortcut for processing a list of directives without additional
