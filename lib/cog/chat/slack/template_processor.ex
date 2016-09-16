@@ -55,14 +55,21 @@ defmodule Cog.Chat.Slack.TemplateProcessor do
     do: "*#{text}*"
   defp process_directive(%{"name" => "fixed_width", "text" => text}, _),
     do: "```#{text}```"
-  defp process_directive(%{"name" => "table", "children" => children}, _) do
-    table = case children do
-              [%{"name" => "table_header", "children" => header} | rows] ->
-                TableRex.quick_render!(map(rows), map(header))
-              _ ->
-                TableRex.quick_render!(map(children))
-            end
-    "```#{table}```"
+
+  # Tables _have_ to have a header
+  defp process_directive(%{"name" => "table",
+                           "children" => [%{"name" => "table_header",
+                                            "children" => header}|rows]}, _) do
+    headers = map(header)
+    case map(rows) do
+      [] ->
+        # TableRex doesn't currently like tables without
+        # rows for some reason... so we get to render an
+        # empty table ourselves :/
+        "```#{render_empty_table(headers)}```"
+      rows ->
+        "```#{TableRex.quick_render!(rows, headers)}```"
+    end
   end
   defp process_directive(%{"name" => "table_row", "children" => children}, _),
     do: map(children)
@@ -129,5 +136,26 @@ defmodule Cog.Chat.Slack.TemplateProcessor do
     |> Map.delete("name")
     |> Map.put("mrkdwn_in", Enum.filter(Map.keys(attachment), &(&1 in @markdown_fields)))
   end
+
+  # This replicates the default TableRex style we use above
+  #
+  # Example:
+  #
+  #    +--------+------+
+  #    | Bundle | Name |
+  #    +--------+------+
+  #
+  defp render_empty_table(headers) do
+    separator_row = "+-#{Enum.map_join(headers, "-+-", &to_hyphens/1)}-+"
+
+    """
+    #{separator_row}
+    | #{Enum.join(headers, " | ")} |
+    #{separator_row}
+    """ |> String.strip
+  end
+
+  defp to_hyphens(name),
+    do: String.duplicate("-", String.length(name))
 
 end
