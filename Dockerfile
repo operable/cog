@@ -41,7 +41,7 @@ RUN chown -R operable /home/operable && \
 # possible image.
 USER root
 RUN apk update -U && \
-    apk add expat-dev gcc g++ make && \
+    apk add expat-dev gcc g++ libstdc++ make && \
     # build cog and cogctl \
     su operable - -c /home/operable/cog/scripts/docker-build && \
     # install cogctl and delete source directory \
