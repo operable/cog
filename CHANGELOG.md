@@ -1,5 +1,34 @@
 #  Changelog
 
+## 0.14.0
+
+### Enhancements
+
+- New Template Engine [#876](https://github.com/operable/cog/issues/876)
+
+  - Cog's previous Mustache-based template engine, [fumanchu](https://github.com/operable/fumanchu), has been deprecated and replaced
+    by [greenbar](https://github.com/operable/greenbar). The combination of Cog's new chat API (released in 0.13) and Greenbar allows
+    Cog to render a single template across multiple providers and preserve the majority of formatting.
+
+- Added a `-dev` flag to Relay's CLI [#950](https://github.com/operable/cog/issues/950)
+
+  - We've added a development mode to Relay to simplify bundle development. Starting a Relay with `-dev` causes Relay to
+    re-pull any Docker images associated with installed command bundles on each pipeline execution. This should simplify
+    iterating command development.
+
+- Improved presentation of bundle and command help [#658](https://github.com/operable/cog/issues/658)
+
+- Introduced new bundle config version 4 which adds documentation structure
+  used by help command and reorganized template definitions. Also bundle
+  descriptions are now required. [spanner #76](https://github.com/operable/spanner/pull/76/files)
+
+### Bug Fixes
+
+- Return better error message for invalid dynamic configurations [#867](https://github.com/operable/cog/issues/867)
+- Update Docker installation documentation [#932](https://github.com/operable/cog/issues/932)
+- Documented Relay's backoff & retry behavior when disconnected [#935](https://github.com/operable/cog/issues/935)
+
+
 ## 0.13.0
 
 ### Enhancements
