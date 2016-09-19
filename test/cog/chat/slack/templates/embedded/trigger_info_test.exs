@@ -68,7 +68,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.TriggerInfoTest do
     ```
     """ |> String.strip
 
-    assert_rendered_template(:slack, :embedded, "trigger-info", data, {"", expected})
+    assert_rendered_template(:slack, :embedded, "trigger-info", data, expected)
   end
 
 end
