@@ -560,7 +560,7 @@ defmodule Cog.Repository.Bundles do
   Creates a new dynamic configuration for a given bundle.
   Will overwrite previous config.
   """
-  def create_dynamic_config_for_bundle(%Bundle{id: bundle_id}=bundle, %{"layer" => layer, "name" => name, "config" => config}) do
+  def create_dynamic_config_for_bundle!(%Bundle{id: bundle_id}=bundle, %{"layer" => layer, "name" => name, "config" => config}) do
     Repo.transaction(fn ->
       delete_dynamic_config_for_bundle(bundle, layer, name)
 
