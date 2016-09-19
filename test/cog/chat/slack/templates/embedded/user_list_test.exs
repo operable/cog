@@ -25,7 +25,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.UserListTest do
     ```
     """ |> String.strip
 
-    assert_rendered_template(:slack, :embedded, "user-list", data, {"", expected})
+    assert_rendered_template(:slack, :embedded, "user-list", data, expected)
   end
 
   test "handle when names aren't specified" do
@@ -48,6 +48,6 @@ defmodule Cog.Chat.Slack.Templates.Embedded.UserListTest do
     ```
     """ |> String.strip
 
-    assert_rendered_template(:slack, :embedded, "user-list", data, {"", expected})
+    assert_rendered_template(:slack, :embedded, "user-list", data, expected)
   end
 end

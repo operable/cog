@@ -63,7 +63,7 @@ defmodule Cog.Chat.Slack.TemplateProcessorTest do
       %{"name" => "text",
         "text" => "\nHow do you like them apples?"}]
 
-    {"", [rendered]} = TemplateProcessor.render(directives)
+    {rendered, []} = TemplateProcessor.render(directives)
     expected = """
     This is a rendering test. First, let's try italics: _I'm italic text!_
     That was fun; now let's do bold: *BEHOLD! BOLD!*
@@ -80,7 +80,7 @@ defmodule Cog.Chat.Slack.TemplateProcessorTest do
     ```
     How do you like them apples?
     """ |> String.trim
-    assert expected == Map.get(rendered, "text")
+    assert expected == rendered
   end
 
 
