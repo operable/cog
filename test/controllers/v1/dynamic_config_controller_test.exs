@@ -309,10 +309,10 @@ defmodule Cog.V1.DynamicConfigControllerTest do
   ########################################################################
 
   defp set_config(bundle, layer, name, config) do
-    {:ok, dynamic_config} = Bundles.create_dynamic_config_for_bundle(bundle, %{"bundle_id" => bundle.id,
-                                                                               "layer" => layer,
-                                                                               "name" => name,
-                                                                               "config" => config})
+    {:ok, dynamic_config} = Bundles.create_dynamic_config_for_bundle!(bundle, %{"bundle_id" => bundle.id,
+                                                                                "layer" => layer,
+                                                                                "name" => name,
+                                                                                "config" => config})
     dynamic_config
   end
 

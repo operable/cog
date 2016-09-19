@@ -76,27 +76,34 @@ defmodule Cog.V1.BundleDynamicConfigController do
       nil ->
         not_found(conn, "Bundle #{bundle_id} not found")
       bundle ->
-        case Bundles.create_dynamic_config_for_bundle(bundle, params) do
-          {:ok, dyn_config} ->
-            location = case Map.get(params, "layer") do
-                         "base" ->
-                           Helpers.bundle_dynamic_config_path(conn, :show_layer,
-                                                              dyn_config.bundle_id,
-                                                              dyn_config.layer, %{})
-                         _ ->
-                           Helpers.bundle_dynamic_config_path(conn, :show_layer,
-                                                              dyn_config.bundle_id,
-                                                              dyn_config.layer,
-                                                              dyn_config.name, %{})
-                       end
-            conn
-            |> put_status(:created)
-            |> put_resp_header("location", location)
-            |> render("show.json", dynamic_config: dyn_config)
-          {:error, changeset} ->
+        try do
+          case Bundles.create_dynamic_config_for_bundle!(bundle, params) do
+            {:ok, dyn_config} ->
+              location = case Map.get(params, "layer") do
+                           "base" ->
+                             Helpers.bundle_dynamic_config_path(conn, :show_layer,
+                               dyn_config.bundle_id,
+                               dyn_config.layer, %{})
+                           _ ->
+                             Helpers.bundle_dynamic_config_path(conn, :show_layer,
+                               dyn_config.bundle_id,
+                               dyn_config.layer,
+                               dyn_config.name, %{})
+                         end
+              conn
+              |> put_status(:created)
+              |> put_resp_header("location", location)
+              |> render("show.json", dynamic_config: dyn_config)
+            {:error, changeset} ->
+              conn
+              |> put_status(:unprocessable_entity)
+              |> render(Cog.ChangesetView, "error.json", changeset: changeset)
+          end
+        rescue
+          e in Ecto.InvalidChangesetError ->
             conn
             |> put_status(:unprocessable_entity)
-            |> render(Cog.ChangesetView, "error.json", changeset: changeset)
+            |> render(Cog.ChangesetView, "error.json", changeset: e.changeset)
         end
     end
   end
