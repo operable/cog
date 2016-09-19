@@ -2,6 +2,12 @@ use Mix.Config
 import Cog.Config.Helpers
 
 # ========================================================================
+# Set this to :unenforcing to globally disable all access rules.
+# NOTE: This is a global setting.
+# ========================================================================
+config :cog, :access_rules, :unenforcing
+
+# ========================================================================
 # Embedded Command Bundle Version (for built-in commands)
 # NOTE: Do not change this value unless you know what you're doing.
 # ========================================================================

@@ -1,4 +1,7 @@
 defmodule Cog.Command.Pipeline.Planner do
+
+  require Logger
+
   alias Cog.Command.OptionInterpreter
   alias Cog.Command.PermissionInterpreter
   alias Cog.Command.Pipeline.Binder
@@ -33,10 +36,11 @@ defmodule Cog.Command.Pipeline.Planner do
   end
 
   defp create_plan(invocation, binding_map, cog_env, permissions, step) do
+    perm_mode = Application.get_env(:cog, :access_rules, :enforcing)
     try do
       with {:ok, bound} <- Binder.bind(invocation, binding_map),
            {:ok, options, args} <- OptionInterpreter.initialize(bound),
-             :allowed <- PermissionInterpreter.check(invocation.meta, options, args, permissions),
+             :allowed <- enforce_permissions(perm_mode, invocation.meta, options, args, permissions),
         do: %Plan{parser_meta: invocation.meta,
                   options: options,
                   args: args,
@@ -48,6 +52,15 @@ defmodule Cog.Command.Pipeline.Planner do
       e in BadValueError ->
         {:error, BadValueError.message(e)}
     end
+  end
+
+  defp enforce_permissions(:unenforcing, _meta, _options, _args, _permissions), do: :allowed
+  defp enforce_permissions(:enforcing, meta, options, args, permissions) do
+    PermissionInterpreter.check(meta, options, args, permissions)
+  end
+  defp enforce_permissions(unknown_mode, meta, options, args, permissions) do
+    Logger.warn("Ignoring unknown :access_rules mode \"#{inspect unknown_mode}\".")
+    enforce_permissions(:enforcing, meta, options, args, permissions)
   end
 
 end

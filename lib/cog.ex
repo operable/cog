@@ -5,6 +5,7 @@ defmodule Cog do
   import Supervisor.Spec, warn: false
 
   def start(_type, _args) do
+    maybe_display_unenforcing_warning()
     children = [worker(Cog.BusDriver, [], shutdown: 1000),
                 worker(Cog.Repo, []),
                 supervisor(Cog.CoreSup, [])]
@@ -81,6 +82,15 @@ defmodule Cog do
       :ok
     else
       {:error, latest_applied_migration, latest_migration}
+    end
+  end
+
+  defp maybe_display_unenforcing_warning() do
+    case Application.get_env(:cog, :access_rules) do
+      :unenforcing ->
+        Logger.warn("Access rule enforcement has been GLOBALLY disabled. ALL command invocations will be permitted.")
+      _ ->
+        :ok
     end
   end
 
