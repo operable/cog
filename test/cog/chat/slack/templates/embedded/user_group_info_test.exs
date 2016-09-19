@@ -52,7 +52,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.UserGroupInfoTest do
     ```
     """ |> String.strip
 
-    assert_rendered_template(:slack, :embedded, "user-group-info", data, {"", expected})
+    assert_rendered_template(:slack, :embedded, "user-group-info", data, expected)
   end
 
 end

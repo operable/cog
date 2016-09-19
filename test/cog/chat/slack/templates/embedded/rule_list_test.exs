@@ -22,7 +22,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.RuleListTest do
     ```
     """ |> String.strip
 
-    assert_rendered_template(:slack, :embedded, "rule-list", data, {"", expected})
+    assert_rendered_template(:slack, :embedded, "rule-list", data, expected)
   end
 
 end
