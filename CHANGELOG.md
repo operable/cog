@@ -18,6 +18,10 @@
 
 - Improved presentation of bundle and command help [#658](https://github.com/operable/cog/issues/658)
 
+- Introduced new bundle config version 4 which adds documentation structure
+  used by help command and reorganized template definitions. Also bundle
+  descriptions are now required. [spanner #76](https://github.com/operable/spanner/pull/76/files)
+
 ### Bug Fixes
 
 - Return better error message for invalid dynamic configurations [#867](https://github.com/operable/cog/issues/867)
