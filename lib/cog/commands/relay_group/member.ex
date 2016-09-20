@@ -1,8 +1,8 @@
 defmodule Cog.Commands.RelayGroup.Member do
-  alias Cog.Commands.Helpers
+  require Cog.Commands.Helpers, as: Helpers
   alias Cog.Commands.RelayGroup.Member
 
-  @moduldoc """
+  Helpers.usage """
   Manages relay and bundle assignments to relay groups.
 
   USAGE
@@ -49,7 +49,4 @@ defmodule Cog.Commands.RelayGroup.Member do
     "Invalid subcommand '#{invalid}' for 'member'. Please specify 'add', 'remove', 'assign' or 'unassign'."
   end
 
-  defp show_usage(error \\ nil) do
-    {:ok, "usage", %{usage: @moduldoc, error: error}}
-  end
 end

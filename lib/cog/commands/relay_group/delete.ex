@@ -1,9 +1,9 @@
 defmodule Cog.Commands.RelayGroup.Delete do
-  alias Cog.Commands.Helpers
+  require Cog.Commands.Helpers, as: Helpers
   alias Cog.Repository.RelayGroups
   alias Cog.Commands.RelayGroup
 
-  @moduledoc """
+  Helpers.usage """
   Deletes relay groups
 
   USAGE
@@ -48,7 +48,4 @@ defmodule Cog.Commands.RelayGroup.Delete do
     end
   end
 
-  def show_usage(error \\ nil) do
-    {:ok, "usage", %{usage: @moduledoc, error: error}}
-  end
 end
