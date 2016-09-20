@@ -1,9 +1,9 @@
 defmodule Cog.Commands.RelayGroup.Member.Assign do
-  alias Cog.Commands.Helpers
+  require Cog.Commands.Helpers, as: Helpers
   alias Cog.Repository.RelayGroups
   alias Cog.Commands.RelayGroup
 
-  @moduledoc """
+  Helpers.usage """
   Assigns bundles to relay groups.
 
   USAGE
@@ -57,7 +57,4 @@ defmodule Cog.Commands.RelayGroup.Member.Assign do
     "Missing required args. At a minimum you must include the relay group name and at least one bundle name"
   end
 
-  defp show_usage(error \\ nil) do
-    {:ok, "usage", %{usage: @moduledoc, error: error}}
-  end
 end
