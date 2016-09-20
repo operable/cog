@@ -14,7 +14,12 @@ defmodule Cog.Chat.Slack.Provider do
   def display_name, do: "Slack"
 
   def start_link(config) do
-    GenServer.start_link(__MODULE__, [config], name: __MODULE__)
+    case Application.ensure_all_started(:slack) do
+      {:ok, _} ->
+        GenServer.start_link(__MODULE__, [config], name: __MODULE__)
+      error ->
+        error
+    end
   end
 
   def mention_name(handle) do

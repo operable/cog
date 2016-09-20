@@ -12,11 +12,13 @@ endif
 
 DOCKER_IMAGE      ?= operable/cog:0.5-dev
 
+ifeq ($(wildcard NO_CI),)
 ci: export DATABASE_URL = $(TEST_DATABASE_URL)
 ci: export MIX_ENV = test
 ci: ci-setup test-all ci-cleanup
 
 ci-reset:
+	@echo $(IS_WIP)
 	@echo "Resetting build environment"
 	@rm -rf _build
 
@@ -27,6 +29,11 @@ ci-setup: ci-reset
 
 ci-cleanup:
 	mix ecto.drop
+else
+ci:
+	@echo "NO_CI file found. CI build targets skipped."
+	@exit 0
+endif
 
 setup:
 	mix deps.get
@@ -37,6 +44,7 @@ setup:
 # you're actively using. If this is your first time, run `make
 # reset-db` before executing this recipe.
 run:
+	echo "$(IS_WIP)"
 	iex -S mix phoenix.server
 
 reset-db:
