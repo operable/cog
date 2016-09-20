@@ -5,7 +5,7 @@ import Cog.Config.Helpers
 # Set this to :unenforcing to globally disable all access rules.
 # NOTE: This is a global setting.
 # ========================================================================
-config :cog, :access_rules, :unenforcing
+config :cog, :access_rules, :enforcing
 
 # ========================================================================
 # Embedded Command Bundle Version (for built-in commands)
