@@ -1,9 +1,9 @@
 defmodule Cog.Commands.RelayGroup.Info do
-  alias Cog.Commands.Helpers
+  require Cog.Commands.Helpers, as: Helpers
   alias Cog.Repository.RelayGroups
   alias Cog.Commands.RelayGroup
 
-  @moduledoc """
+  Helpers.usage """
   Get info on one or more relay groups.
 
   USAGE
@@ -42,7 +42,4 @@ defmodule Cog.Commands.RelayGroup.Info do
     end
   end
 
-  defp show_usage do
-    {:ok, "usage", %{usage: @moduledoc}}
-  end
 end

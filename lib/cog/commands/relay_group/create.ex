@@ -1,9 +1,9 @@
 defmodule Cog.Commands.RelayGroup.Create do
-  alias Cog.Commands.Helpers
+  require Cog.Commands.Helpers, as: Helpers
   alias Cog.Repository.RelayGroups
   alias Cog.Commands.RelayGroup
 
-  @moduledoc """
+  Helpers.usage """
   Creates relay groups
 
   USAGE
@@ -39,7 +39,4 @@ defmodule Cog.Commands.RelayGroup.Create do
     end
   end
 
-  defp show_usage(error \\ nil) do
-    {:ok, "usage", %{usage: @moduledoc, error: error}}
-  end
 end

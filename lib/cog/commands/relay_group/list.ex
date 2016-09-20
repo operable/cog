@@ -1,9 +1,9 @@
 defmodule Cog.Commands.RelayGroup.List do
-  alias Cog.Commands.Helpers
+  require Cog.Commands.Helpers, as: Helpers
   alias Cog.Repository.RelayGroups
   alias Cog.Commands.RelayGroup
 
-  @moduledoc """
+  Helpers.usage """
   List all relay groups
 
   USAGE
@@ -24,7 +24,4 @@ defmodule Cog.Commands.RelayGroup.List do
   defp generate_response(relay_groups),
     do: Enum.map(relay_groups, &RelayGroup.json/1)
 
-  defp show_usage do
-    {:ok, "usage", %{usage: @moduledoc}}
-  end
 end
