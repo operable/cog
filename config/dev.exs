@@ -13,8 +13,15 @@ config :cog,
   :template_cache_ttl, {1, :sec}
 
 config :cog, Cog.Chat.Adapter,
-  providers: [slack: Cog.Chat.Slack.Provider],
+  providers: [slack: Cog.Chat.Slack.Provider,
+              hipchat: Cog.Chat.HipChat.Provider],
   chat: :slack
+
+config :cog, Cog.Chat.HipChat.Provider,
+  api_token: System.get_env("HIPCHAT_API_TOKEN"),
+  nickname: System.get_env("HIPCHAT_NICKNAME"),
+  jabber_id: System.get_env("HIPCHAT_JABBER_ID"),
+  jabber_password: System.get_env("HIPCHAT_JABBER_PASSWORD")
 
 config :cog, Cog.Endpoint,
   debug_errors: true,
