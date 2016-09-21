@@ -60,7 +60,7 @@
   "postgrex": {:hex, :postgrex, "0.11.2", "139755c1359d3c5c6d6e8b1ea72556d39e2746f61c6ddfb442813c91f53487e8", [:mix], [{:connection, "~> 1.0", [hex: :connection, optional: false]}, {:db_connection, "~> 1.0-rc", [hex: :db_connection, optional: false]}, {:decimal, "~> 1.0", [hex: :decimal, optional: false]}]},
   "probe": {:git, "https://github.com/operable/probe.git", "f2197509f01922a28219ab47af4e5c6324f47ac6", []},
   "ranch": {:hex, :ranch, "1.2.1", "a6fb992c10f2187b46ffd17ce398ddf8a54f691b81768f9ef5f461ea7e28c762", [:make], []},
-  "slack": {:git, "https://github.com/operable/Elixir-Slack.git", "a0dae7d46a10f9d7e7924a1c8fe5cef17b7cfb82", [branch: "allow-attachments"]},
+  "slack": {:git, "https://github.com/operable/Elixir-Slack.git", "6a972a7898172ca68b0115efba82c5005a39e6d2", [branch: "allow-attachments"]},
   "spanner": {:git, "https://github.com/operable/spanner.git", "bd73a824b90cf176ab4fa37a1979424e9b1751b8", []},
   "ssl_verify_fun": {:hex, :ssl_verify_fun, "1.1.0", "edee20847c42e379bf91261db474ffbe373f8acb56e9079acb6038d4e0bf414f", [:rebar, :make], []},
   "table_rex": {:hex, :table_rex, "0.8.3", "1c68dfc6886d6f118f5047b0449d6402ae0ac5709064789e578c2f4659f4064b", [:mix], []},
