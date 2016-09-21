@@ -245,34 +245,25 @@ defmodule Cog.Chat.Slack.Connector do
   end
  defp annotate(_, _), do: :ignore
 
- defp annotate_message(%{channel: << <<"C">>, _::binary >>=channel, user: userid, text: text}, state) do
+ defp annotate_message(%{channel: channel, user: userid, text: text}, state) do
    text = Formatter.unescape(text, state)
    user = lookup_user(userid, state.users, by: :id)
+
    if user == nil do
      Logger.info("Failed looking up user '#{userid}'.")
      :ignore
    else
-     room = lookup_room(channel, state.channels, by: :id)
-     if room == nil do
-       Logger.info("Failed looking up room '#{channel}'.")
-       :ignore
-     else
-       {:chat_message, %Message{id: Cog.Events.Util.unique_id,
-                                room: room, user: user, text: text, provider: @provider_name,
-                                bot_name: "@#{state.me.name}", edited: false}}
+     room = case channel_type(channel) do
+       :room ->
+         lookup_room(channel, state.channels, by: :id)
+       :group ->
+         lookup_room(channel, state.groups, by: :id)
+       :dm ->
+         lookup_dm(userid, state.users)
      end
-   end
- end
- defp annotate_message(%{channel: << <<"D">>, _::binary >>=channel, user: userid, text: text}, state) do
-   text = Formatter.unescape(text, state)
-   user = lookup_user(userid, state.users, by: :id)
-   if user == nil do
-     Logger.info("Failed looking up user '#{userid}'.")
-     :ignore
-   else
-     room = lookup_dm(channel, state.ims)
+
      if room == nil do
-       Logger.info("Failed looking up direct message session '#{channel}'.")
+       Logger.info("Failed looking up channel '#{channel}'.")
        :ignore
      else
          {:chat_message, %Message{id: Cog.Events.Util.unique_id,
@@ -281,6 +272,13 @@ defmodule Cog.Chat.Slack.Connector do
      end
    end
  end
+
+ defp channel_type(<<"C", _ :: binary>>),
+   do: :room
+ defp channel_type(<<"G", _ :: binary>>),
+   do: :group
+ defp channel_type(<<"D", _ :: binary>>),
+   do: :dm
 
  # Strip off any enclosing angle brackets (Slack processes strings
  # like "#channel_name" and "@user_name" to their internal identifiers
