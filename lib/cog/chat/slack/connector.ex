@@ -126,8 +126,16 @@ defmodule Cog.Chat.Slack.Connector do
   #
   # They're not Cog.Chat.Rooms!
   defp joined_channels(state) do
-    Enum.filter(state.channels,
-      fn({_, info}) -> info.is_member == true and info.is_archived == false end)
+    channels = Map.merge(state.channels, state.groups)
+
+    Enum.filter(channels, fn
+      {_, %{is_channel: true, is_member: true, is_archived: false}} ->
+        true
+      {_, %{is_group: true, members: members, is_archived: false}} ->
+        state.me.id in members
+      _ ->
+        false
+    end)
   end
 
   defp lookup_room(value, rooms, [by: :name]) do
@@ -241,7 +249,7 @@ defmodule Cog.Chat.Slack.Connector do
       annotate_message(message, state)
     end
   end
- defp annotate(%{type: type, user: user, presence: presence}, state) when type in ["presence_change", "manual_presence_change"] do
+  defp annotate(%{type: type, user: user, presence: presence}, state) when type in ["presence_change", "manual_presence_change"] do
     if user == state.me.id do
       :ignore
     else
@@ -249,70 +257,77 @@ defmodule Cog.Chat.Slack.Connector do
       {:chat_event, %{type: "presence_change", user: user, presence: presence, provider: "slack"}}
     end
   end
- defp annotate(_, _), do: :ignore
+  defp annotate(_, _), do: :ignore
 
- defp annotate_message(%{channel: channel, user: userid, text: text}, state) do
-   text = Formatter.unescape(text, state)
-   user = lookup_user(userid, state.users, by: :id)
+  defp annotate_message(%{channel: channel, user: userid, text: text}, state) do
+    text = Formatter.unescape(text, state)
+    user = lookup_user(userid, state.users, by: :id)
 
-   if user == nil do
-     Logger.info("Failed looking up user '#{userid}'.")
-     :ignore
-   else
-     room = case channel_type(channel) do
-       :room ->
-         lookup_room(channel, state.channels, by: :id)
-       :group ->
-         lookup_room(channel, state.groups, by: :id)
-       :dm ->
-         lookup_dm(userid, state.users)
-     end
+    if user == nil do
+      Logger.info("Failed looking up user '#{userid}'.")
+      :ignore
+    else
+      room = case channel_type(channel) do
+        :room ->
+          lookup_room(channel, state.channels, by: :id)
+        :group ->
+          lookup_room(channel, state.groups, by: :id)
+        :dm ->
+          lookup_dm(userid, state.users)
+      end
 
-     if room == nil do
-       Logger.info("Failed looking up channel '#{channel}'.")
-       :ignore
-     else
-         {:chat_message, %Message{id: Cog.Events.Util.unique_id,
-                                  room: room, user: user, text: text, provider: @provider_name,
-                                  bot_name: "@#{state.me.name}", edited: false}}
-     end
-   end
- end
+      if room == nil do
+        Logger.info("Failed looking up channel '#{channel}'.")
+        :ignore
+      else
+        {:chat_message, %Message{id: Cog.Events.Util.unique_id,
+            room: room, user: user, text: text, provider: @provider_name,
+            bot_name: "@#{state.me.name}", edited: false}}
+      end
+    end
+  end
 
- defp channel_type(<<"C", _ :: binary>>),
-   do: :room
- defp channel_type(<<"G", _ :: binary>>),
-   do: :group
- defp channel_type(<<"D", _ :: binary>>),
-   do: :dm
+  defp channel_type(<<"C", _ :: binary>>),
+    do: :room
+  defp channel_type(<<"G", _ :: binary>>),
+    do: :group
+  defp channel_type(<<"D", _ :: binary>>),
+    do: :dm
 
- # Strip off any enclosing angle brackets (Slack processes strings
- # like "#channel_name" and "@user_name" to their internal identifiers
- # like "<#C1234567>" and "<@U1234567>".)
- defp classify_id(id, slack),
-   do: id |> String.replace(~r/(^<|>$)/, "") |> do_classify_id(slack)
+  # Strip off any enclosing angle brackets (Slack processes strings
+  # like "#channel_name" and "@user_name" to their internal identifiers
+  # like "<#C1234567>" and "<@U1234567>".)
+  defp classify_id(id, slack),
+    do: id |> String.replace(~r/(^<|>$)/, "") |> do_classify_id(slack)
 
- # TODO: use Slack.Lookups to verify the "C" and "U" cases here, to
- # guard against bare user / room names that start with those letters
- defp do_classify_id(<<"#C", id::binary>>, _), do: {:channel, "C#{id}"}
- defp do_classify_id(<<"C", id::binary>>, _), do: {:channel, "C#{id}"}
- defp do_classify_id(<<"@U", id::binary>>, _), do: {:user, "U#{id}"}
- defp do_classify_id(<<"U", id::binary>>, _), do: {:user, "U#{id}"}
- defp do_classify_id(other, slack) do
+  # TODO: use Slack.Lookups to verify the "C" and "U" cases here, to
+  # guard against bare user / room names that start with those letters
+  defp do_classify_id(<<"#C", id::binary>>, _), do: {:channel, "C#{id}"}
+  defp do_classify_id(<<"C", id::binary>>, _), do: {:channel, "C#{id}"}
+  defp do_classify_id(<<"@U", id::binary>>, _), do: {:user, "U#{id}"}
+  defp do_classify_id(<<"U", id::binary>>, _), do: {:user, "U#{id}"}
+  defp do_classify_id(other, slack) do
 
-   # Try it as a channel name as last resort; this is just for tests
-   # to work right now, and should probably go away
+    # Try it as a channel name as last resort; this is just for tests
+    # to work right now, and should probably go away
 
-   try do
-     id = Slack.Lookups.lookup_channel_id("##{other}", slack)
-     {:channel, id}
-   rescue
-     BadMapError ->
-       # TODO: this is a workaround for a too-permissive library call;
-       # that should really be fixed. In the meantime...
-       Logger.warn("Could not classify Slack identifier '#{other}'")
-       :error
-   end
- end
+    try do
+      id = lookup_channel_id_by_name("##{other}", slack)
+      {:channel, id}
+    rescue
+      BadMapError ->
+        # TODO: this is a workaround for a too-permissive library call;
+        # that should really be fixed. In the meantime...
+        Logger.warn("Could not classify Slack identifier '#{other}'")
+        :error
+    end
+  end
 
+  defp lookup_channel_id_by_name("#" <> channel_name, slack) do
+    slack.channels
+    |> Map.merge(slack.groups)
+    |> Map.values
+    |> Enum.find(fn channel -> channel.name == channel_name end)
+    |> Map.get(:id)
+  end
 end
