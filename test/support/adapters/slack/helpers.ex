@@ -12,7 +12,7 @@ defmodule Cog.Adapters.Slack.Helpers do
   #          responses that came in after this one. Required argument.
   #   count: the number of messages you want to retrieve and assert
   #          against. Optional, defaulting to 1
-  def assert_response(message, opts) do
+  def assert_response(message, opts, room \\ @room) do
 
     %{"ts" => ts} = Keyword.fetch!(opts, :after)
     expected_count = Keyword.get(opts, :count, 1)
@@ -20,7 +20,7 @@ defmodule Cog.Adapters.Slack.Helpers do
     :timer.sleep(@interval)
 
     last_message_func = fn ->
-      {:ok, last_message} = retrieve_last_message(room: @room, oldest: ts, count: expected_count)
+      {:ok, last_message} = retrieve_last_message(room: room, oldest: ts, count: expected_count)
       last_message
     end
 
@@ -32,14 +32,14 @@ defmodule Cog.Adapters.Slack.Helpers do
   #          responses that came in after this one. Required argument.
   #   count: the number of messages you want to retrieve and assert
   #          against. Optional, defaulting to 1
-  def assert_response_contains(message, opts) do
+  def assert_response_contains(message, opts, room \\ @room) do
     %{"ts" => ts} = Keyword.fetch!(opts, :after)
     expected_count = Keyword.get(opts, :count, 1)
 
     :timer.sleep(@interval)
 
     last_message_func = fn ->
-      {:ok, last_message} = retrieve_last_message(room: @room, oldest: ts, count: expected_count)
+      {:ok, last_message} = retrieve_last_message(room: room, oldest: ts, count: expected_count)
       last_message
     end
 
@@ -54,7 +54,13 @@ defmodule Cog.Adapters.Slack.Helpers do
   def retrieve_last_message(room: room, oldest: oldest, count: count) do
     {:ok, %{id: channel}} = Cog.Chat.Adapter.lookup_room("slack", room)
 
-    url = "https://slack.com/api/channels.history"
+    url = case channel do
+      "C" <> _ ->
+        "https://slack.com/api/channels.history"
+      "G" <> _ ->
+        "https://slack.com/api/groups.history"
+    end
+
     params = %{channel: channel, oldest: oldest, count: count, token: token}
     query = URI.encode_query(params)
 
@@ -62,8 +68,8 @@ defmodule Cog.Adapters.Slack.Helpers do
     maybe_consume_messages(Poison.decode!(response.body), count)
   end
 
-  def send_message(message) do
-    {:ok, %{id: channel}} = Cog.Chat.Adapter.lookup_room("slack", @room)
+  def send_message(message, room \\ @room) do
+    {:ok, %{id: channel}} = Cog.Chat.Adapter.lookup_room("slack", room)
 
     url = "https://slack.com/api/chat.postMessage"
     params = %{channel: channel, text: message, as_user: true,

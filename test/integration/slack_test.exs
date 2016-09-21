@@ -54,4 +54,11 @@ defmodule Integration.SlackTest do
     assert_response_contains "Sorry, you aren't allowed to execute 'operable:st-thorn $body' :(\n You will need at least one of the following permissions to run this command: 'operable:st-thorn'", after: message
   end
 
+  test "sending a message to a group", %{user: user} do
+    user |> with_permission("operable:echo")
+    private_channel = "group_ci_bot_testing"
+
+    message = send_message("@#{@bot}: operable:echo blah", private_channel)
+    assert_response "blah", [after: message], private_channel
+  end
 end
