@@ -231,6 +231,7 @@ defmodule Cog.Chat.Adapter do
     {:noreply, state}
   end
   def handle_cast(conn, @incoming_topic, "message", message, state) do
+    Logger.debug("Received: #{inspect message, pretty: true}")
     state = case Message.from_map(message) do
               {:ok, message} ->
                 case is_pipeline?(message) do
@@ -246,8 +247,8 @@ defmodule Cog.Chat.Adapter do
                   false ->
                     state
                 end
-              _error ->
-                Logger.error("Ignoring invalid chat message: #{inspect message, pretty: true}")
+              error ->
+                Logger.error("Error decoding chat message: #{inspect error}   #{inspect message, pretty: true}")
                 state
             end
     {:noreply, state}
@@ -336,8 +337,14 @@ defmodule Cog.Chat.Adapter do
    if updated != text do
       Regex.replace(~r/^:/, updated, "")
       |> String.trim
-    else
-      nil
+   else
+     updated = Regex.replace(~r/^#{Regex.escape(String.downcase(bot_name))}/, text, "")
+     if updated != text do
+       Regex.replace(~r/^:/, updated, "")
+       |> String.trim
+     else
+       nil
+     end
     end
   end
 

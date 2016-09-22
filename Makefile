@@ -18,7 +18,6 @@ ci: export MIX_ENV = test
 ci: ci-setup test-all ci-cleanup
 
 ci-reset:
-	@echo $(IS_WIP)
 	@echo "Resetting build environment"
 	@rm -rf _build
 
@@ -44,7 +43,6 @@ setup:
 # you're actively using. If this is your first time, run `make
 # reset-db` before executing this recipe.
 run:
-	echo "$(IS_WIP)"
 	iex -S mix phoenix.server
 
 reset-db:

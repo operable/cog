@@ -11,7 +11,27 @@ defmodule Cog.Chat.HipChat.Provider do
 
   defstruct [:token, :jabber_id, :jabber_password, :nickname, :mbus, :xmpp, :incoming]
 
-  def display_name, do: "Slack"
+  def display_name, do: "HipChat"
+
+  def lookup_user(handle) do
+    GenServer.call(__MODULE__, {:call_connector, {:lookup_user, handle}}, :infinity)
+  end
+
+  def lookup_room(name) do
+    if String.match?(name, ~r/.+@.+/) do
+      GenServer.call(__MODULE__, {:call_connector, {:lookup_room_jid, name}}, :infinity)
+    else
+      GenServer.call(__MODULE__, {:call_connector, {:lookup_room_name, name}}, :infinity)
+    end
+  end
+
+  def list_joined_rooms() do
+    GenServer.call(__MODULE__, {:call_connector, :list_joined_rooms}, :infinity)
+  end
+
+  def send_message(target, message) do
+    GenServer.call(__MODULE__, {:call_connector, {:send_message, target, message}}, :infinity)
+  end
 
   def start_link(config) do
     case Application.ensure_all_started(:romeo) do
@@ -29,7 +49,7 @@ defmodule Cog.Chat.HipChat.Provider do
     jabber_password = Keyword.fetch!(config, :jabber_password)
     nickname = Keyword.fetch!(config, :nickname)
     use_ssl = Keyword.get(config, :ssl, true)
-    case HipChat.Connector.start_link("chat.hipchat.com", jabber_id, jabber_password, nickname, use_ssl) do
+    case HipChat.Connector.start_link("chat.hipchat.com", jabber_id, jabber_password, nickname, use_ssl, token) do
       {:ok, xmpp_conn} ->
         {:ok, mbus} = Connection.connect()
         {:ok, %__MODULE__{token: token, incoming: incoming, mbus: mbus, xmpp: xmpp_conn,
@@ -40,8 +60,16 @@ defmodule Cog.Chat.HipChat.Provider do
     end
   end
 
+  def handle_call({:call_connector, connector_message}, _from, state) do
+    {:reply, GenServer.call(state.xmpp, connector_message, :infinity), state}
+  end
+
   def handle_cast({:chat_event, event}, state) do
     GenMqtt.cast(state.mbus, state.incoming, "event", event)
+    {:noreply, state}
+  end
+  def handle_cast({:chat_message, msg}, state) do
+    GenMqtt.cast(state.mbus, state.incoming, "message", msg)
     {:noreply, state}
   end
 
