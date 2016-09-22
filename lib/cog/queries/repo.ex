@@ -1,5 +1,6 @@
 defmodule Cog.Queries.Repo do
-  use Cog.Queries
+
+  import Ecto.Query, only: [from: 2]
 
   def count_by_id(model, id) do
     from m in model,

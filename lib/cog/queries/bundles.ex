@@ -1,6 +1,6 @@
 defmodule Cog.Queries.Bundles do
 
-  use Cog.Queries
+  import Ecto.Query, only: [from: 2, where: 3]
 
   alias Cog.Models.Bundle
 

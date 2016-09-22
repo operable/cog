@@ -1,6 +1,11 @@
 defmodule Cog.Models.Bundle do
   use Cog.Model
-  use Cog.Models
+
+  alias Cog.Models.BundleVersion
+  alias Cog.Models.Command
+  alias Cog.Models.EnabledBundleVersionRegistration
+  alias Cog.Models.Permission
+  alias Cog.Models.RelayGroupAssignment
 
   schema "bundles" do
     field :name, :string
@@ -12,7 +17,7 @@ defmodule Cog.Models.Bundle do
     has_many :group_assignments, RelayGroupAssignment
     has_many :relay_groups, through: [:group_assignments, :group]
 
-    has_one :enabled_version_registration, Cog.Models.EnabledBundleVersionRegistration
+    has_one :enabled_version_registration, EnabledBundleVersionRegistration
     has_one :enabled_version, through: [:enabled_version_registration, :bundle_version]
 
     timestamps

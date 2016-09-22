@@ -1,6 +1,10 @@
 defmodule Cog.Models.CommandVersion do
   use Cog.Model
-  use Cog.Models
+
+  alias Cog.Models.BundleVersion
+  alias Cog.Models.Command
+  alias Cog.Models.CommandOption
+  alias Cog.Models.CommandVersion
 
   require Logger
 
@@ -47,7 +51,7 @@ defmodule Cog.Models.CommandVersion do
     |> foreign_key_constraint(:command_id)
   end
 
-  def full_name(%Cog.Models.CommandVersion{}=cv),
+  def full_name(%CommandVersion{}=cv),
     do: "#{cv.command.bundle.name}:#{cv.command.name}"
 end
 

@@ -2,15 +2,18 @@ defmodule Cog.Models.Role do
   use Cog.Model
   use Cog.Models.EctoJson
 
+  alias Cog.Models.GroupRole
+  alias Cog.Models.RolePermission
+  alias Cog.Models.UserRole
   alias Ecto.Changeset
 
   schema "roles" do
     field :name, :string
 
-    has_many :user_grants, Cog.Models.UserRole
-    has_many :group_grants, Cog.Models.GroupRole
+    has_many :user_grants, UserRole
+    has_many :group_grants, GroupRole
 
-    has_many :permission_grants, Cog.Models.RolePermission
+    has_many :permission_grants, RolePermission
     has_many :permissions, through: [:permission_grants, :permission]
   end
 

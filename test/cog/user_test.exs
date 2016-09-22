@@ -1,6 +1,7 @@
 defmodule UserTest do
   use Cog.ModelCase
-  use Cog.Models
+
+  alias Cog.Models.User
   alias Cog.Repo
 
   setup do

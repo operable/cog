@@ -1,6 +1,12 @@
 defmodule Cog.Models.BundleVersion do
   use Cog.Model
-  use Cog.Models
+
+  alias Cog.Models.Bundle
+  alias Cog.Models.CommandVersion
+  alias Cog.Models.PermissionBundleVersion
+  alias Cog.Models.RuleBundleVersion
+  alias Cog.Models.EnabledBundleVersionRegistration
+  alias Cog.Models.Template
 
   schema "bundle_versions" do
     field :version, VersionTriple
@@ -16,13 +22,13 @@ defmodule Cog.Models.BundleVersion do
     has_many :commands, CommandVersion # TODO: or `:command_versions`?
     has_many :templates, Template
 
-    has_many :permission_registration, Cog.Models.PermissionBundleVersion
+    has_many :permission_registration, PermissionBundleVersion
     has_many :permissions, through: [:permission_registration, :permission]
 
-    has_many :rule_registration, Cog.Models.RuleBundleVersion
+    has_many :rule_registration, RuleBundleVersion
     has_many :rules, through: [:rule_registration, :rule]
 
-    has_one :enabled_version_registration, Cog.Models.EnabledBundleVersionRegistration, foreign_key: :bundle_version_id
+    has_one :enabled_version_registration, EnabledBundleVersionRegistration, foreign_key: :bundle_version_id
 
     timestamps
   end

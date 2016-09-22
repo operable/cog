@@ -2,8 +2,9 @@ defmodule Cog.Commands.Help do
   use Cog.Command.GenCommand.Base,
     bundle: Cog.Util.Misc.embedded_bundle
 
-  use Cog.Models
   alias Cog.Repo
+  alias Cog.Models.BundleVersion
+  alias Cog.Models.CommandVersion
   alias Cog.Repository.{Bundles, Commands}
   alias Cog.Commands.Help.{BundlesFormatter, BundleFormatter, CommandFormatter}
 

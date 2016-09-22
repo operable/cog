@@ -1,5 +1,9 @@
 defmodule Cog.Queries.User do
-  use Cog.Queries
+
+  import Ecto.Query, only: [from: 2, where: 3]
+
+  alias Cog.Models.Permission
+  alias Cog.Models.User
 
   @doc """
   Given a `token`, find the User it belongs to. `ttl_in_seconds` is
