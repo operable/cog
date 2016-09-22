@@ -103,7 +103,7 @@ defmodule Cog.Mixfile do
       {:slack, github: "operable/Elixir-Slack", branch: "allow-attachments"},
       {:table_rex, "~> 0.8"},
       {:uuid, "~> 1.1.3"},
-      {:romeo, github: "scrogson/romeo", branch: "master"},
+      {:romeo, github: "operable/romeo", branch: "iq-bodies"},
       # The Slack library depends on this Github repo, and not the
       # version in Hex. Thus, we need to declare it manually :(
       {:websocket_client, github: "jeremyong/websocket_client"},
