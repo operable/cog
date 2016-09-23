@@ -61,4 +61,26 @@ defmodule Integration.SlackTest do
     message = send_message("@#{@bot}: operable:echo blah", private_channel)
     assert_response "blah", [after: message], private_channel
   end
+
+  test "redirecting from a private channel", %{user: user} do
+    user |> with_permission("operable:echo")
+    private_channel = "group_ci_bot_testing"
+
+    message = send_message("@#{@bot}: operable:echo blah > #ci_bot_testing", private_channel)
+    assert_response "blah", [after: message]
+  end
+
+  test "redirecting to 'here'", %{user: user} do
+    user |> with_permission("operable:echo")
+
+    message = send_message("@#{@bot}: operable:echo blah > here")
+    assert_response "blah", [after: message]
+  end
+
+  test "redirecting to a user", %{user: user} do
+    user |> with_permission("operable:echo")
+
+    message = send_message("@#{@bot}: operable:echo blah > @peck")
+    assert_response "blah", [after: message]
+  end
 end
