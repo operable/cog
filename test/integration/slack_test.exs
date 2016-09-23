@@ -65,9 +65,19 @@ defmodule Integration.SlackTest do
   test "redirecting from a private channel", %{user: user} do
     user |> with_permission("operable:echo")
     private_channel = "group_ci_bot_testing"
+    marker = send_message("Redirect test starts here")
 
-    message = send_message("@#{@bot}: operable:echo blah > #ci_bot_testing", private_channel)
-    assert_response "blah", [after: message]
+    send_message("@#{@bot}: operable:echo blah > #ci_bot_testing", private_channel)
+    assert_response "blah", [after: marker]
+  end
+
+  test "redirecting to a private channel", %{user: user} do
+    user |> with_permission("operable:echo")
+    private_channel = "group_ci_bot_testing"
+    marker = send_message("Redirect test starts here", private_channel)
+
+    send_message("@#{@bot}: operable:echo blah > ##{private_channel}")
+    assert_response "blah", [after: marker], private_channel
   end
 
   test "redirecting to 'here'", %{user: user} do
@@ -77,10 +87,32 @@ defmodule Integration.SlackTest do
     assert_response "blah", [after: message]
   end
 
-  test "redirecting to a user", %{user: user} do
+  test "redirecting to 'me'", %{user: user} do
     user |> with_permission("operable:echo")
+    marker = send_message("echo here", "@#{@user}")
 
-    message = send_message("@#{@bot}: operable:echo blah > @peck")
-    assert_response "blah", [after: message]
+    send_message("@#{@bot}: operable:echo blah > me")
+    # Since Cog responds when direct messaging it we have to assert
+    # that both our marker text and message test exist.
+    assert_response "here\nblah", [after: marker, count: 2], "@#{@user}"
+  end
+
+  test "redirecting to a specific user", %{user: user} do
+    user |> with_permission("operable:echo")
+    marker = send_message("echo here", "@#{@user}")
+
+    send_message("@#{@bot}: operable:echo blah > @#{@user}")
+    # Since Cog responds when direct messaging it we have to assert
+    # that both our marker text and message test exist.
+    assert_response "here\nblah", [after: marker, count: 2], "@#{@user}"
+  end
+
+  test "redirecting to another channel", %{user: user} do
+    user |> with_permission("operable:echo")
+    redirect_channel = "ci_bot_redirect_tests"
+    marker = send_message("echo here", redirect_channel)
+
+    send_message("@#{@bot}: operable:echo blah > ##{redirect_channel}")
+    assert_response "blah", [after: marker], redirect_channel
   end
 end
