@@ -38,7 +38,7 @@ defmodule Cog.Command.Pipeline.Initializer do
     # and the incoming request is from Slack.
     #
     # TODO: should only do this if the adapter is a chat adapter
-    self_register_flag = Application.get_env(:cog, :self_registration, false) and payload.adapter == "slack"
+    self_register_flag = Application.get_env(:cog, :self_registration, false) and payload.adapter != "http"
     case self_register_user(payload, self_register_flag, state) do
       :ok ->
         # TODO: should only do history check if the adapter is a chat

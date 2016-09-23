@@ -14,7 +14,6 @@ defmodule Cog.Chat.HipChat.Util do
       false ->
         cond do
           message.type == "groupchat" ->
-            IO.inspect message, pretty: true
             case parse_jid(message.from.full) do
               nil ->
                 :ignore

@@ -18,7 +18,11 @@ defmodule Cog.Chat.HipChat.Provider do
   end
 
   def lookup_room(name) do
-    GenServer.call(__MODULE__, {:call_connector, {:lookup_room, name}}, :infinity)
+    if String.match?(name, ~r/.+@.+/) do
+      GenServer.call(__MODULE__, {:call_connector, {:lookup_room_jid, name}}, :infinity)
+    else
+      GenServer.call(__MODULE__, {:call_connector, {:lookup_room_name, name}}, :infinity)
+    end
   end
 
   def list_joined_rooms() do
@@ -45,7 +49,7 @@ defmodule Cog.Chat.HipChat.Provider do
     jabber_password = Keyword.fetch!(config, :jabber_password)
     nickname = Keyword.fetch!(config, :nickname)
     use_ssl = Keyword.get(config, :ssl, true)
-    case HipChat.Connector.start_link("chat.hipchat.com", jabber_id, jabber_password, nickname, use_ssl) do
+    case HipChat.Connector.start_link("chat.hipchat.com", jabber_id, jabber_password, nickname, use_ssl, token) do
       {:ok, xmpp_conn} ->
         {:ok, mbus} = Connection.connect()
         {:ok, %__MODULE__{token: token, incoming: incoming, mbus: mbus, xmpp: xmpp_conn,

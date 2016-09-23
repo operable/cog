@@ -4,37 +4,42 @@ defmodule Cog.Chat.HipChat.Connector do
 
   use GenServer
 
+  alias Cog.Chat.HipChat.Users
   alias Cog.Chat.HipChat.Provider
+  alias Cog.Chat.HipChat.Rooms
+  alias Cog.Chat.HipChat.TemplateProcessor
   alias Cog.Chat.HipChat.Util
   alias Romeo.Connection
-  alias Romeo.Roster
   alias Romeo.Stanza
 
 
   @provider_name "hipchat"
   @xmpp_timeout 5000
-  @roster_refresh_interval 5000
+  @room_refresh_interval 5000
   @heartbeat_interval 30000
+  @hipchat_api_root "https://api.hipchat.com/v2"
 
-  defstruct [:provider, :xmpp_conn, :hipchat_org, :me, :mention_name, :roster, :last_roster_update, :rooms, :fatal_error]
+  defstruct [:provider, :xmpp_conn, :hipchat_org, :api_token, :me, :mention_name, :users, :rooms]
 
-  def start_link(host, user, password, nickname, use_ssl) do
+  def start_link(host, user, password, nickname, use_ssl, token) do
     opts = [jid: user,
             password: password,
             host: host,
             mention_name: nickname,
-            require_tls: use_ssl]
+            require_tls: use_ssl,
+            api_token: token]
     GenServer.start_link(__MODULE__, [opts, self()], name: __MODULE__)
   end
 
   def init([opts, provider]) do
     [user_name|_] = String.split(Keyword.fetch!(opts, :jid), "@", parts: 2)
     [hipchat_org|_] = String.split(user_name, "_", parts: 2)
+    api_token = Keyword.fetch!(opts, :api_token)
     case Connection.start_link(opts) do
       {:ok, conn} ->
-        state = %__MODULE__{xmpp_conn: conn, hipchat_org: hipchat_org, rooms: %{},
-                            me: Keyword.fetch!(opts, :jid), provider: provider, last_roster_update: 0,
-                            mention_name: Keyword.fetch!(opts, :mention_name)}
+        state = %__MODULE__{xmpp_conn: conn, hipchat_org: hipchat_org, rooms: %{}, users: %Users{},
+                            rooms: Rooms.new(api_token), me: Keyword.fetch!(opts, :jid), provider: provider,
+                            api_token: api_token, mention_name: Keyword.fetch!(opts, :mention_name)}
         case Connection.send(conn, Stanza.presence) do
           :ok ->
             Logger.info("Successfully connected to HipChat organization #{hipchat_org} as '#{state.mention_name}'")
@@ -48,7 +53,7 @@ defmodule Cog.Chat.HipChat.Connector do
   end
 
   def handle_call({:lookup_user, handle}, _from, state) do
-    {result, state} = lookup_user(handle, state)
+    {result, state} = lookup_user(state, handle)
     case result do
       {:ok, _} ->
         {:reply, result, state}
@@ -56,35 +61,37 @@ defmodule Cog.Chat.HipChat.Connector do
         {:reply, {:error, :lookup_failed}, state}
     end
   end
-  def handle_call({:lookup_room, name}, _from, state) do
-    {:reply, {:ok, Map.get(state.rooms, name)}, state}
+  def handle_call({:lookup_room_jid, room_jid}, _from, state) do
+    {result, rooms} = Rooms.lookup(state.rooms, state.xmpp_conn, jid: room_jid)
+    {:reply, {:ok, result}, %{state | rooms: rooms}}
+  end
+  def handle_call({:lookup_room_name, room_name}, _from, state) do
+    {result, rooms} = Rooms.lookup(state.rooms, state.xmpp_conn, name: room_name)
+    {:reply, {:ok, result}, %{state | rooms: rooms}}
   end
   def handle_call(:list_joined_rooms, _from, state) do
-    {:reply, {:ok, Map.values(state.rooms)}, state}
+    {:reply, {:ok, Rooms.all(state.rooms)}, state}
   end
   def handle_call({:send_message, target, message}, _from, state) do
-    type = case Map.get(state.rooms, target) do
-             nil ->
-               "chat"
-             _ ->
-               "groupchat"
-           end
-    message = Enum.map(message, fn(%{"name" => "text", "text" => text}) -> text
-                                  (%{"name" => "newline"}) -> "\n" end) |> Enum.join("")
-    Connection.send(state.xmpp_conn, %Stanza.Message{to: target, type: type, body: message})
-    {:reply, :ok, state}
+    message = TemplateProcessor.render(message)
+    case Users.quick_lookup(state.users, target) do
+      nil ->
+        case Rooms.quick_lookup(state.rooms, target) do
+          nil ->
+            Logger.warn("Unknown message target '#{target}'. Message NOT sent.")
+            {:reply, :ok, state}
+          room ->
+            send_room_message(room, message, state)
+        end
+      user ->
+        send_user_message(user, message, state)
+    end
   end
-
 
   # Should only happen when we connect
   def handle_info(:connection_ready, state) do
     :timer.send_interval(@heartbeat_interval, :heartbeat)
-    case rebuild_roster(state) do
-      {:ok, state} ->
-        {:noreply, state}
-      _error ->
-        {:noreply, state}
-    end
+    {:noreply, state}
   end
   # Send heartbeat
   def handle_info(:heartbeat, state) do
@@ -123,12 +130,6 @@ defmodule Cog.Chat.HipChat.Connector do
   end
   def handle_info(_msg, state) do
     {:noreply, state}
-  end
-
-  # Error states
-  def pending_error(:timeout, state) do
-    Logger.error("Error handling HipChat message: #{inspect state.fatal_error}")
-    {:stop, :shutdown, state}
   end
 
   def terminate(_, _, _), do: :ok
@@ -181,33 +182,29 @@ defmodule Cog.Chat.HipChat.Connector do
   end
 
   defp lookup_user(state, name) do
-    case Map.get(state.roster, name) do
-      nil ->
-        case rebuild_roster(state) do
-          {:ok, state} ->
-            {{:ok, Map.get(state.roster, name)}, state}
-          _error ->
-            {{:error, :lookup_failed}, state}
-        end
-      user ->
-        {{:ok, user}, state}
+    case Users.lookup(state.users, name, state.xmpp_conn) do
+      {:error, _} ->
+        {{:error, :lookup_failed}, state}
+      {result, users} ->
+        {{:ok, result}, %{state | users: users}}
     end
   end
-
 
   defp handle_groupchat(room_jid, sender, body, state) do
     case room_from_jid(room_jid, state) do
       nil ->
         state
       {room, state} ->
-        case Map.get(state.roster, sender) do
-          nil ->
+        case lookup_user(state, sender) do
+          {{:ok, nil}, state} ->
             Logger.debug("Roster miss for #{inspect sender}")
             state
-          user ->
+          {{:ok, user}, state} ->
             GenServer.cast(state.provider, {:chat_message, %Cog.Chat.Message{id: Cog.Events.Util.unique_id,
                                                                              room: room, user: user, text: body, provider: @provider_name,
                                                                              bot_name: "@#{state.mention_name}", edited: false}})
+            state
+          _error ->
             state
         end
     end
@@ -229,31 +226,36 @@ defmodule Cog.Chat.HipChat.Connector do
     end
   end
 
-  defp rebuild_roster(state) do
-    ri = System.system_time() - state.last_roster_update
-    if ri > @roster_refresh_interval do
-      try do
-        roster = Enum.reduce(Roster.items(state.xmpp_conn), %{},
-          fn(item, roster) ->
-            entry = Util.user_from_roster(item, @provider_name)
-            roster = if entry.handle != "" do
-              Map.put(roster, entry.handle, entry)
-            else
-              roster
-            end
-            roster
-            |> Map.put("#{entry.first_name} #{entry.last_name}", entry)
-            |> Map.put(entry.id, entry)
-          end)
-        {:ok, %{state | roster: roster, last_roster_update: System.system_time()}}
-      catch
-        e ->
-        Logger.error("Refreshing HipChat roster failed: #{inspect e}")
-        {:error, :roster_failed}
-      end
-    else
-      {:ok, state}
+  defp send_room_message(room, message, state) do
+    body = Poison.encode!(%{message_format: "html",
+                            color: "gray",
+                            notify: true,
+                            message: message})
+    url = Enum.join([@hipchat_api_root, "room", room.id, "notification"], "/") <> "?token=#{state.api_token}"
+    response = HTTPotion.post(url, headers: ["Content-Type": "application/json",
+                                             "Accepts": "application/json",
+                                             "Authorization": "Bearer #{state.api_token}"],
+      body: body)
+    unless HTTPotion.Response.success?(response) do
+      Logger.error("Sending message to room '#{room.name}' failed: #{response.body}")
     end
+    {:reply, :ok, state}
+  end
+
+  defp send_user_message(user, message, state) do
+    body = Poison.encode!(%{notify: true,
+                            message_format: "html",
+                            message: message})
+    url = Enum.join([@hipchat_api_root, "user", user.email, "message"], "/")
+    IO.puts "#{url}"
+    response = HTTPotion.post(url, headers: ["Content-Type": "application/json",
+                                             "Accepts": "application/json",
+                                             "Authorization": "Bearer #{state.api_token}"],
+      body: body)
+    unless HTTPotion.Response.success?(response) do
+      Logger.error("Sending message to user '#{user.handle}' failed: #{response.body}")
+    end
+    {:reply, :ok, state}
   end
 
 end
