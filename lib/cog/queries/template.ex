@@ -1,5 +1,6 @@
 defmodule Cog.Queries.Template do
-  use Cog.Queries
+
+  import Ecto.Query, only: [from: 2]
   alias Cog.Models.Template
 
   def template_source(adapter, nil, name) do

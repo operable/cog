@@ -1,5 +1,6 @@
 defmodule Cog.Repository.Commands do
-  use Cog.Queries
+  import Ecto.Query, only: [from: 2]
+
   alias Cog.Models.CommandVersion
   alias Cog.Repo
   alias Cog.Repository.Bundles

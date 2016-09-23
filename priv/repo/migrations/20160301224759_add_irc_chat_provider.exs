@@ -1,6 +1,7 @@
 defmodule Cog.Repo.Migrations.AddIrcChatProvider do
   use Ecto.Migration
-  use Cog.Queries
+
+  import Ecto.Query, only: [from: 2]
   alias Cog.Repo
   alias Cog.Models.ChatProvider
 
