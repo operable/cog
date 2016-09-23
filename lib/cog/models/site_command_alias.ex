@@ -1,6 +1,5 @@
 defmodule Cog.Models.SiteCommandAlias do
   use Cog.Model
-  use Cog.Models
 
   require Logger
 

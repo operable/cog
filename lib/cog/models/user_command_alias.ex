@@ -1,6 +1,5 @@
 defmodule Cog.Models.UserCommandAlias do
   use Cog.Model
-  use Cog.Models
 
   schema "user_command_aliases" do
     field :name, :string

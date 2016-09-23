@@ -1,7 +1,10 @@
 defmodule Cog.Models.Command do
   use Cog.Model
-  use Cog.Models
+
   alias Cog.Queries
+  alias Cog.Models.Bundle
+  alias Cog.Models.CommandVersion
+  alias Cog.Models.Rule
   require Logger
 
   schema "commands" do

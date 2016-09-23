@@ -1,6 +1,7 @@
 defmodule Cog.Models.Permission do
   use Cog.Model
-  use Cog.Models
+
+  alias Cog.Models.Bundle
   alias Ecto.Changeset
 
   schema "permissions" do

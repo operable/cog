@@ -1,5 +1,7 @@
 defmodule Cog.Queries.Relay do
-  use Cog.Queries
+
+  import Ecto.Query, only: [from: 2, where: 3]
+  alias Cog.Models.Relay
 
   def all() do
     from r in Relay,

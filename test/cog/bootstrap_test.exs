@@ -1,6 +1,10 @@
 defmodule Cog.Bootstrap.Test do
   use Cog.ModelCase
-  use Cog.Models
+
+  alias Cog.Models.Bundle
+  alias Cog.Models.BundleVersion
+  alias Cog.Models.Group
+  alias Cog.Models.Role
 
   @admin_user %{
     "username" => "test-admin",

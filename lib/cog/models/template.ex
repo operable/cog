@@ -1,6 +1,7 @@
 defmodule Cog.Models.Template do
   use Cog.Model
-  use Cog.Models
+
+  alias Cog.Models.BundleVersion
 
   schema "templates" do
     field :adapter, :string

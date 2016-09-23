@@ -1,13 +1,15 @@
 defmodule Cog.Models.ChatHandle do
   use Cog.Model
-  use Cog.Models
   use Cog.Models.EctoJson
+
+  alias Cog.Models.ChatProvider
+  alias Cog.Models.User
 
   schema "chat_handles" do
     field :handle, :string
     field :chat_provider_user_id, :string
-    belongs_to :user, Cog.Models.User
-    belongs_to :chat_provider, Cog.Models.ChatProvider, foreign_key: :provider_id, type: :integer
+    belongs_to :user, User
+    belongs_to :chat_provider, ChatProvider, foreign_key: :provider_id, type: :integer
 
     timestamps
   end

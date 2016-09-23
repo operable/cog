@@ -1,5 +1,7 @@
 defmodule Cog.Queries.BundleVersions do
-  use Cog.Queries
+
+  import Ecto.Query, only: [from: 2]
+
   alias Cog.Models.BundleVersion
 
   def with_bundle_name(bundle_name) do

@@ -41,7 +41,21 @@ defmodule Cog.Support.ModelUtilities do
   code!
   """
 
-  use Cog.Models
+  alias Cog.Models.Bundle
+  alias Cog.Models.BundleVersion
+  alias Cog.Models.ChatHandle
+  alias Cog.Models.ChatProvider
+  alias Cog.Models.Command
+  alias Cog.Models.CommandVersion
+  alias Cog.Models.Group
+  alias Cog.Models.Permission
+  alias Cog.Models.Relay
+  alias Cog.Models.RelayGroup
+  alias Cog.Models.RelayGroupAssignment
+  alias Cog.Models.RelayGroupMembership
+  alias Cog.Models.Role
+  alias Cog.Models.Token
+  alias Cog.Models.User
   alias Cog.Repo
   require Logger
 

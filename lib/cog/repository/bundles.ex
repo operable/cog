@@ -651,7 +651,9 @@ defmodule Cog.Repository.Bundles do
   #
   ########################################################################
 
-  use Cog.Models
+  alias Cog.Models.Command
+  alias Cog.Models.CommandOption
+  alias Cog.Models.Permission
 
   defp install_bundle(bundle_params) do
     Repo.transaction(fn ->
