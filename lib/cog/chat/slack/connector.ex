@@ -300,6 +300,9 @@ defmodule Cog.Chat.Slack.Connector do
   defp classify_id(id, slack),
     do: id |> String.replace(~r/(^<|>$)/, "") |> do_classify_id(slack)
 
+  # We could get an actual id, U1234567, or the user, @username, or the
+  # channel, #channelname, reference. So we check for everything and
+  # return a normalized id.
   defp do_classify_id(<<"#C", id::binary>>, slack),
     do: normalize_channel_id(:by_id, "C#{id}", slack)
   defp do_classify_id(<<"C", id::binary>>, slack),
@@ -336,7 +339,11 @@ defmodule Cog.Chat.Slack.Connector do
     end
   end
   defp normalize_channel_id(:by_name, name, slack) do
-    channels = Map.values(slack.channels)
+    # Private groups and channels are both noted with the '#' but they are
+    # tracked separately. So we have to merge the two lists before searching.
+    channels = slack.channels
+    |> Map.merge(slack.groups)
+    |> Map.values
     case Enum.find(channels, &(&1.name == name)) do
       nil -> classify_error(name)
       channel -> {:channel, channel.id}
