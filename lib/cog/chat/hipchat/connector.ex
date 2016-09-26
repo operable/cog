@@ -9,6 +9,7 @@ defmodule Cog.Chat.HipChat.Connector do
   alias Cog.Chat.HipChat.Rooms
   alias Cog.Chat.HipChat.TemplateProcessor
   alias Cog.Chat.HipChat.Util
+  alias Cog.Repository.ChatProviders
   alias Romeo.Connection
   alias Romeo.Stanza
 
@@ -90,12 +91,17 @@ defmodule Cog.Chat.HipChat.Connector do
 
   # Should only happen when we connect
   def handle_info(:connection_ready, state) do
-    :timer.send_interval(@heartbeat_interval, :heartbeat)
-    {:noreply, state}
+    case rejoin_rooms(state) do
+      {:ok, state} ->
+        :timer.send_interval(@heartbeat_interval, :heartbeat)
+        {:noreply, state}
+      _error ->
+        {:stop, :init_error, state}
+    end
   end
   # Send heartbeat
   def handle_info(:heartbeat, state) do
-    case Connection.send(state.xmpp_conn, Stanza.chat(state.me, "//hb\\")) do
+    case Connection.send(state.xmpp_conn, Stanza.chat(state.me, " ")) do
       :ok ->
         :ok
       error ->
@@ -111,13 +117,7 @@ defmodule Cog.Chat.HipChat.Connector do
     state = case Util.classify_message(message) do
               {:invite, room_name} ->
                 Logger.info("Received an invite to MUC room '#{room_name}'")
-                muc_name = "#{state.hipchat_org}_#{room_name}@conf.hipchat.com"
-                case Connection.send(state.xmpp_conn, Stanza.join(muc_name, state.mention_name)) do
-                  :ok ->
-                    Logger.info("Successfully joined MUC room '#{room_name}'")
-                  error ->
-                    Logger.error("Failed to join MUC room '#{room_name}': #{inspect error}")
-                end
+                join_room(room_name, state, save: true)
                 state
               {:groupchat, room_jid, sender, body} ->
                 handle_groupchat(room_jid, sender, body, state)
@@ -256,6 +256,51 @@ defmodule Cog.Chat.HipChat.Connector do
       Logger.error("Sending message to user '#{user.handle}' failed: #{response.body}")
     end
     {:reply, :ok, state}
+  end
+
+  defp rejoin_rooms(state) do
+    case ChatProviders.get_provider_state(@provider_name) do
+      nil ->
+        {:ok, state}
+      pstate ->
+        IO.inspect pstate
+        case Enum.reduce_while(Map.get(pstate, "rooms", []), :ok,
+              fn(room_name, acc) ->
+                case join_room(room_name, state) do
+                  :ok ->
+                    {:cont, acc}
+                  :error ->
+                    {:halt, :error}
+                end end) do
+          :ok ->
+            {:ok, state}
+          _ ->
+            :error
+        end
+    end
+  end
+
+  defp join_room(room_name, state, opts \\ [save: false]) do
+    muc_name = "#{state.hipchat_org}_#{room_name}@conf.hipchat.com"
+    case Connection.send(state.xmpp_conn, Stanza.join(muc_name, state.mention_name)) do
+      :ok ->
+        Logger.info("Successfully joined MUC room '#{room_name}'")
+        unless Keyword.get(opts, :save, false) == false do
+          pstate = ChatProviders.get_provider_state(@provider_name)
+          updated = Map.update(pstate, "rooms", [room_name], &([room_name|&1]))
+          case ChatProviders.set_provider_state(@provider_name, updated) do
+            {:ok, _} ->
+              :ok
+            error ->
+              Logger.error("Failed to save joined room to persistent state: #{inspect error}")
+              :ok
+          end
+        end
+        :ok
+      error ->
+        Logger.error("Failed to join MUC room '#{room_name}': #{inspect error}")
+        :error
+    end
   end
 
 end

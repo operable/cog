@@ -4,6 +4,14 @@ defmodule Cog do
 
   import Supervisor.Spec, warn: false
 
+  def restart() do
+    Logger.debug("Stopping Cog...")
+    :ok = Application.stop(:cog)
+    Logger.debug("Cog stopped. Restarting...")
+    {:ok, _}  =  Application.ensure_all_started(:cog)
+    Logger.debug("Cog restarted.")
+  end
+
   def start(_type, _args) do
     maybe_display_unenforcing_warning()
     children = [worker(Cog.BusDriver, [], shutdown: 1000),
