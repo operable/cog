@@ -59,6 +59,8 @@ defmodule Cog.Adapters.Slack.Helpers do
         "https://slack.com/api/channels.history"
       "G" <> _ ->
         "https://slack.com/api/groups.history"
+      "D" <> _ ->
+        "https://slack.com/api/im.history"
     end
 
     params = %{channel: channel, oldest: oldest, count: count, token: token}

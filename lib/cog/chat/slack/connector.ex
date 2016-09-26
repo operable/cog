@@ -294,12 +294,21 @@ defmodule Cog.Chat.Slack.Connector do
   defp classify_id(id, slack),
     do: id |> String.replace(~r/(^<|>$)/, "") |> do_classify_id(slack)
 
-  # TODO: use Slack.Lookups to verify the "C" and "U" cases here, to
-  # guard against bare user / room names that start with those letters
-  defp do_classify_id(<<"#C", id::binary>>, _), do: {:channel, "C#{id}"}
-  defp do_classify_id(<<"C", id::binary>>, _), do: {:channel, "C#{id}"}
-  defp do_classify_id(<<"@U", id::binary>>, _), do: {:user, "U#{id}"}
-  defp do_classify_id(<<"U", id::binary>>, _), do: {:user, "U#{id}"}
+  # We could get an actual id, U1234567, or the user, @username, or the
+  # channel, #channelname, reference. So we check for everything and
+  # return a normalized id.
+  defp do_classify_id(<<"#C", id::binary>>, slack),
+    do: normalize_channel_id(:by_id, "C#{id}", slack)
+  defp do_classify_id(<<"C", id::binary>>, slack),
+    do: normalize_channel_id(:by_id, "C#{id}", slack)
+  defp do_classify_id(<<"#", name::binary>>, slack),
+    do: normalize_channel_id(:by_name, name, slack)
+  defp do_classify_id(<<"@U", id::binary>>, slack),
+    do: normalize_user_id(:by_id, "U#{id}", slack)
+  defp do_classify_id(<<"U", id::binary>>, slack),
+    do: normalize_user_id(:by_id, "U#{id}", slack)
+  defp do_classify_id(<<"@", name::binary>>, slack),
+    do: normalize_user_id(:by_name, name, slack)
   defp do_classify_id(other, slack) do
 
     # Try it as a channel name as last resort; this is just for tests
@@ -315,6 +324,44 @@ defmodule Cog.Chat.Slack.Connector do
         Logger.warn("Could not classify Slack identifier '#{other}'")
         :error
     end
+  end
+
+  defp normalize_channel_id(:by_id, id = "C" <> _, slack) do
+    case slack.channels[id] do
+      nil -> classify_error(id)
+      _channel -> {:channel, id}
+    end
+  end
+  defp normalize_channel_id(:by_name, name, slack) do
+    # Private groups and channels are both noted with the '#' but they are
+    # tracked separately. So we have to merge the two lists before searching.
+    channels = slack.channels
+    |> Map.merge(slack.groups)
+    |> Map.values
+    case Enum.find(channels, &(&1.name == name)) do
+      nil -> classify_error(name)
+      channel -> {:channel, channel.id}
+    end
+  end
+
+  defp normalize_user_id(:by_id, id = "U" <> _, slack) do
+    case slack.users[id] do
+      nil -> classify_error(id)
+      _user -> {:user, id}
+    end
+  end
+  defp normalize_user_id(:by_name, name, slack) do
+    users = Map.values(slack.users)
+    case Enum.find(users, &(&1.name == name)) do
+      nil -> classify_error(name)
+      user ->
+        {:user, user.id}
+    end
+  end
+
+  defp classify_error(id) do
+    Logger.warn("Could not classify Slack identifier '#{id}'")
+    :error
   end
 
   defp lookup_channel_id_by_name("#" <> channel_name, slack) do
