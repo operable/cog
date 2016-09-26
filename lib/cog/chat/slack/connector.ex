@@ -193,26 +193,20 @@ defmodule Cog.Chat.Slack.Connector do
   end
 
   defp make_user(user) do
-    if user.is_bot do
+    # Slack doesn't set is_bot on slackbot messages :(
+    if user.is_bot or user.name == "slackbot" do
       %User{id: user.id,
-            first_name: user.name, #user.profile.first_name,
-            last_name: user.name, #user.profile.last_name,
+            first_name: user.name,
+            last_name: user.name,
             handle: user.name,
             provider: "slack"}
     else
-
-      # ACTUALLY IS BOT?!?!
-      #
-      # Is botci a bot or a user? If a user, do we just not have a
-      #name set?
-      #
-      # Does profile even have first_name / last_name, or just
-      #real_name, and real_name_normalized?
+      profile = user.profile
       %User{id: user.id,
-            first_name: user.name, #user.profile.first_name,
-            last_name: user.name, #user.profile.last_name,
+            first_name: Map.get(profile, :first_name, user.name),
+            last_name: Map.get(profile, :last_name, user.name),
             handle: user.name,
-            email: user.profile.email,
+            email: profile.email,
             provider: "slack"}
     end
   end
