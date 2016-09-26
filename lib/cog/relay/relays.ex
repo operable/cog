@@ -70,7 +70,7 @@ defmodule Cog.Relay.Relays do
         Logger.info("Starting")
         Messaging.Connection.subscribe(conn, @relays_discovery_topic)
         # Seed RNG so picking relays at random works
-        :random.seed(:os.timestamp())
+        :rand.seed(:exsplus, :os.timestamp())
         {:ok, %__MODULE__{tracker: Tracker.new(), mq_conn: conn}}
       error ->
         Logger.error("Error starting: #{inspect error}")
