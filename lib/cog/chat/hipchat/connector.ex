@@ -67,11 +67,11 @@ defmodule Cog.Chat.HipChat.Connector do
     end
   end
   def handle_call({:lookup_room_jid, room_jid}, _from, state) do
-    {result, state} = lookup_room(state, room_jid)
+    {result, state} = lookup_room(state, jid: room_jid)
     {:reply, result, state}
   end
   def handle_call({:lookup_room_name, room_name}, _from, state) do
-    {result, state} = lookup_room(state, room_name)
+    {result, state} = lookup_room(state, name: room_name)
     {:reply, result, state}
   end
   def handle_call(:list_joined_rooms, _from, state) do
@@ -157,8 +157,8 @@ defmodule Cog.Chat.HipChat.Connector do
     end
   end
 
-  defp lookup_room(state, name) do
-    case Rooms.lookup(state.rooms, state.xmpp_conn, name) do
+  defp lookup_room(state, opts) do
+    case Rooms.lookup(state.rooms, state.xmpp_conn, opts) do
       {:error, _} ->
         {{:error, :lookup_failed}, state}
       {result, rooms} ->
@@ -167,7 +167,7 @@ defmodule Cog.Chat.HipChat.Connector do
   end
 
   defp handle_groupchat(room_jid, sender, body, state) do
-    case lookup_room(state, room_jid) do
+    case lookup_room(state, jid: room_jid) do
       {{:ok, nil}, state} ->
         state
       {{:ok, room}, state} ->
@@ -208,7 +208,7 @@ defmodule Cog.Chat.HipChat.Connector do
   defp send_output(state, target, output) do
     case lookup_user(state, target) do
       {{:ok, nil}, state} ->
-        case lookup_room(state, target) do
+        case lookup_room(state, name: target) do
           {{:ok, nil}, state} ->
             Logger.warn("Unknown message target '#{target}'. Message NOT sent.")
             {:reply, :ok, state}
@@ -233,7 +233,7 @@ defmodule Cog.Chat.HipChat.Connector do
 
   defp send_room_message(room, message, state) do
     body = prepare_message(message)
-    url = Enum.join([api_root(state), "room", room.id, "notification"], "/") <> "?token=#{state.api_token}"
+    url = Enum.join([api_root(state), "room", room.secondary_id, "notification"], "/") <> "?token=#{state.api_token}"
     response = HTTPotion.post(url, headers: ["Content-Type": "application/json",
                                              "Accepts": "application/json",
                                              "Authorization": "Bearer #{state.api_token}"],
@@ -262,7 +262,6 @@ defmodule Cog.Chat.HipChat.Connector do
       nil ->
         {:ok, state}
       pstate ->
-        IO.inspect pstate
         case Enum.reduce_while(Map.get(pstate, "rooms", []), :ok,
               fn(room_name, acc) ->
                 case join_room(room_name, state) do
