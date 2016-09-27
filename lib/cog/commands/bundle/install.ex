@@ -1,6 +1,7 @@
 defmodule Cog.Commands.Bundle.Install do
   alias Cog.Repository.Bundles
   alias Cog.BundleRegistry
+  alias Cog.Models.BundleVersion
   require Cog.Commands.Helpers, as: Helpers
 
   Helpers.usage """
@@ -31,8 +32,10 @@ defmodule Cog.Commands.Bundle.Install do
                            "config_file" => config}
 
         case Bundles.install(revised_config) do
-          {:ok, bundle} ->
-            {:ok, "bundle-install", bundle}
+          {:ok, %BundleVersion{bundle: bundle} = bundle_version} ->
+            bundle = %{bundle | versions: [bundle_version]}
+            rendered = Cog.V1.BundlesView.render("show.json", %{bundle: bundle})
+            {:ok, "bundle-install", rendered[:bundle]}
           {:error, {:db_errors, [version: {"has already been taken", []}]}} ->
             {:error, {:already_installed, bundle, version}}
           {:error, error} ->

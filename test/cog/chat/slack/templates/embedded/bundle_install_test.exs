@@ -3,7 +3,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.BundleInstallTest do
 
   test "bundle-info template" do
     data = %{"results" => [%{"name" => "heroku",
-                             "version" => "0.0.4"}]}
+                             "versions" => [%{"version" => "0.0.4"}]}]}
 
     expected = "Bundle \"heroku\" version \"0.0.4\" installed."
 

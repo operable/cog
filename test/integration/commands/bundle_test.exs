@@ -63,6 +63,6 @@ defmodule Integration.Commands.BundleTest do
 
   test "installing a bundle", %{user: user} do
     [payload] = send_message(user, "@bot: operable:bundle install heroku 0.0.4")
-    assert %{name: "heroku", version: "0.0.4"} = payload
+    assert %{name: "heroku", versions: [%{version: "0.0.4"}]} = payload
   end
 end
