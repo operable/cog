@@ -12,4 +12,9 @@ defmodule Integration.Commands.EchoTest do
     response = send_message(user, "@bot: operable:echo this is nifty")
     assert response == "this is nifty"
   end
+
+  test "serializes json when it's passed", %{user: user} do
+    response = send_message(user, ~s(@bot: seed '{"foo": {"bar": "baz"}}' | echo $foo))
+    assert response == %{bar: "baz"}
+  end
 end
