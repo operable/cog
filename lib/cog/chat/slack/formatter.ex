@@ -1,16 +1,21 @@
 defmodule Cog.Chat.Slack.Formatter do
 
+  @redirect_symbol "&gt;"
+
   @channel ~r/<\#(C.*)(\|(.*))?>/U
   @user    ~r/<\@(U.*)(\|(.*))?>/U
   @command ~r/<\!(.*)(\|(.*))?>/U
   @link    ~r/<(.*)(\|(.*))?>/U
 
-  def unescape(message, slack) do
+  def unescape(original_message, slack) do
+    {message, redirects} = split_redirects(original_message)
+
     message
     |> unescape_channels(slack)
     |> unescape_users(slack)
     |> unescape_commands
     |> unescape_links
+    |> append_redirects(redirects)
   end
 
   defp unescape_channels(message, slack) do
@@ -70,4 +75,19 @@ defmodule Cog.Chat.Slack.Formatter do
         replace(left <> replacement <> right, regex, replace_fun)
     end
   end
+
+  defp split_redirects(message) do
+    case String.split(message, @redirect_symbol, parts: 2) do
+      [pipeline, redirects] ->
+        {pipeline, redirects}
+      [pipeline] ->
+        {pipeline, nil}
+    end
+  end
+
+  defp append_redirects(message, nil),
+    do: message
+  defp append_redirects(message, redirects),
+    do: Enum.join([message, redirects], @redirect_symbol)
+
 end
