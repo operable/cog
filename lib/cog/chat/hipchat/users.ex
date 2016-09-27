@@ -9,11 +9,7 @@ defmodule Cog.Chat.HipChat.Users do
 
   @roster_refresh_interval 60000
 
-  def quick_lookup(%__MODULE__{}=users, handle_or_id) do
-    Map.get(users.users, handle_or_id)
-  end
-
-  def lookup(%__MODULE__{}=users, handle_or_id, xmpp_conn) do
+  def lookup(%__MODULE__{}=users, xmpp_conn, handle_or_id) do
     case Map.get(users.users, handle_or_id) do
       nil ->
         case rebuild_users(users, xmpp_conn) do

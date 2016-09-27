@@ -2,12 +2,12 @@ defmodule Cog.Chat.HipChat.TemplateProcessor do
   require Logger
 
   def render(directives) do
-    IO.inspect directives, pretty: true
     render_directives(directives)
   end
 
-  defp process_directive(%{"name" => "attachment"}) do
-    Logger.warn("Skipping attachment directive")
+  defp process_directive(%{"name" => "attachment", "children" => children}) do
+    Logger.warn("Rendering attachment contents only")
+    render(children)
   end
   defp process_directive(%{"name" => "text", "text" => text}),
     do: text
@@ -19,18 +19,38 @@ defmodule Cog.Chat.HipChat.TemplateProcessor do
     do: "<pre>#{text}</pre>"
 
   defp process_directive(%{"name" => "newline"}), do: "<br/>"
+
   defp process_directive(%{"name" => "unordered_list", "children" => children}) do
     items = Enum.map_join(children, &process_directive/1)
     "<ul>#{items}</ul>"
   end
+
   defp process_directive(%{"name" => "ordered_list", "children" => children}) do
     items = Enum.map_join(children, &process_directive/1)
     "<ol>#{items}</ol>"
   end
+
   defp process_directive(%{"name" => "list_item", "children" => children}) do
     item = Enum.map_join(children, &process_directive/1)
     "<li>#{item}</li>"
   end
+
+  defp process_directive(%{"name" => "table", "children" => children}) do
+    "<table>\n#{render(children)}</table>\n"
+  end
+
+  defp process_directive(%{"name" => "table_header", "children" => children}) do
+    "<th>#{render(children)}</th>\n"
+  end
+
+  defp process_directive(%{"name" => "table_row", "children" => children}) do
+    "<tr>#{render(children)}</tr>\n"
+  end
+
+  defp process_directive(%{"name" => "table_cell", "children" => children}) do
+    "<td>#{render(children)}</td>"
+  end
+
   defp process_directive(%{"text" => text}=directive) do
     Logger.warn("Unrecognized directive; formatting as plain text: #{inspect directive}")
     text
