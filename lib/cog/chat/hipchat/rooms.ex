@@ -77,12 +77,12 @@ defmodule Cog.Chat.HipChat.Rooms do
       {:ok, result} ->
         if room == nil do
           {:ok, %Cog.Chat.Room{id: Map.get(result, "xmpp_jid"),
-                               secondary_id: Map.get(result, "id"),
+                               secondary_id: ensure_string(Map.get(result, "id")),
                                name: Map.get(result, "name"),
                                is_dm: false,
                                provider: "hipchat"}}
         else
-          {:ok, %{room | secondary_id: Map.get(result, "id")}}
+          {:ok, %{room | secondary_id: ensure_string(Map.get(result, "id"))}}
         end
       error ->
         Logger.error("Failed to retrieve details for room '#{name}' from HipChat's API: #{inspect error}")
@@ -90,4 +90,6 @@ defmodule Cog.Chat.HipChat.Rooms do
     end
   end
 
+  defp ensure_string(n) when is_integer(n), do: Integer.to_string(n)
+  defp ensure_string(n) when is_binary(n), do: n
 end
