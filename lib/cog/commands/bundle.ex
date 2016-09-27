@@ -74,9 +74,11 @@ defmodule Cog.Commands.Bundle do
   defp error({:already_disabled, %BundleVersion{bundle: %Bundle{name: bundle_name}}}),
     do: "Bundle #{inspect bundle_name} is already disabled."
   defp error(:invalid_invocation),
-    do: "That is not a valid invocation of the bundle command"
+    do: "That is not a valid invocation of the bundle command."
   defp error({:already_installed, bundle, version}),
     do: "Bundle #{inspect bundle} with version #{inspect version} already installed."
+  defp error(:registry_error),
+    do: "Bundle registry responded with an error."
   defp error(error),
     do: Helpers.error(error)
 

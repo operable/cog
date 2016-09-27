@@ -9,7 +9,14 @@ defmodule Cog.BundleRegistry do
       %HTTPotion.Response{status_code: 200, body: body} ->
         {:ok, Poison.decode!(body)}
       %HTTPotion.Response{status_code: 404} ->
-        {:error, "Bundle not found"}
+        case version do
+          "latest" ->
+            {:error, {:not_found, bundle}}
+          version ->
+            {:error, {:not_found, bundle, version}}
+        end
+      _ ->
+        {:error, :registry_error}
     end
   end
 end

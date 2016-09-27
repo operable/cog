@@ -38,13 +38,8 @@ defmodule Cog.Commands.Bundle.Install do
           {:error, error} ->
             {:error, error}
         end
-      {:error, _} ->
-        case version do
-          "latest" ->
-            {:error, {:not_found, bundle}}
-          version ->
-            {:error, {:not_found, bundle, version}}
-        end
+      {:error, error} ->
+        {:error, error}
     end
   end
 end
