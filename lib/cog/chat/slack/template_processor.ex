@@ -67,7 +67,7 @@ defmodule Cog.Chat.Slack.TemplateProcessor do
   defp process_directive(%{"name" => "newline"}, _),
     do: "\n"
   defp process_directive(%{"name" => "unordered_list", "children" => children}, _),
-    do: Enum.map_join(children, &process_directive(&1, bullet: "*"))
+    do: Enum.map_join(children, &process_directive(&1, bullet: "•"))
   defp process_directive(%{"name" => "ordered_list", "children" => children}, _) do
     {lines, _} = Enum.map_reduce(children, 1, fn(child, counter) ->
       line = process_directive(child, bullet: "#{counter}.")
