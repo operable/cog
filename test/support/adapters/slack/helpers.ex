@@ -3,7 +3,7 @@ defmodule Cog.Adapters.Slack.Helpers do
 
   require Logger
   @bot_handle "deckard"
-  @room "ci_bot_testing"
+  @room "#ci_bot_testing"
   @interval 1000 # 1 second
   @timeout 120000 # 2 minutes
 
@@ -52,13 +52,15 @@ defmodule Cog.Adapters.Slack.Helpers do
   def retrieve_last_message(room: room, oldest: oldest),
     do: retrieve_last_message(room: room, oldest: oldest, count: 1)
   def retrieve_last_message(room: room, oldest: oldest, count: count) do
-    {:ok, %{id: channel}} = Cog.Chat.Adapter.lookup_room("slack", room)
+    {:ok, %{id: channel}} = Cog.Chat.Adapter.lookup_room("slack", name: room)
 
     url = case channel do
       "C" <> _ ->
         "https://slack.com/api/channels.history"
       "G" <> _ ->
         "https://slack.com/api/groups.history"
+      "D" <> _ ->
+        "https://slack.com/api/im.history"
     end
 
     params = %{channel: channel, oldest: oldest, count: count, token: token}
@@ -69,7 +71,7 @@ defmodule Cog.Adapters.Slack.Helpers do
   end
 
   def send_message(message, room \\ @room) do
-    {:ok, %{id: channel}} = Cog.Chat.Adapter.lookup_room("slack", room)
+    {:ok, %{id: channel}} = Cog.Chat.Adapter.lookup_room("slack", name: room)
 
     url = "https://slack.com/api/chat.postMessage"
     params = %{channel: channel, text: message, as_user: true,
@@ -82,7 +84,7 @@ defmodule Cog.Adapters.Slack.Helpers do
   end
 
   def send_edited_message(message, initial_message \\ "FOO3rjha92") do
-    {:ok, %{id: channel}} = Cog.Chat.Adapter.lookup_room("slack", @room)
+    {:ok, %{id: channel}} = Cog.Chat.Adapter.lookup_room("slack", name: @room)
     initial_response = send_message(initial_message)
     url = "https://slack.com/api/chat.update"
     params = %{channel: channel, ts: initial_response["ts"], text: message, parse: "full", as_user: true, token: token}

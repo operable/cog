@@ -17,8 +17,10 @@ defmodule Cog.Chat.Slack.Provider do
     GenServer.start_link(__MODULE__, [config], name: __MODULE__)
   end
 
-  def lookup_room(id),
-    do: GenServer.call(__MODULE__, {:lookup_room, id}, :infinity)
+  def lookup_room({:id, id}),
+    do: GenServer.call(__MODULE__, {:lookup_room, {:id, id}}, :infinity)
+  def lookup_room({:name, name}),
+    do: GenServer.call(__MODULE__, {:lookup_room, {:name, name}}, :infinity)
 
   def lookup_user(handle) do
     GenServer.call(__MODULE__, {:lookup_user, handle}, :infinity)
@@ -49,8 +51,11 @@ defmodule Cog.Chat.Slack.Provider do
     {:ok, %__MODULE__{token: token, incoming: incoming, connector: pid, mbus: mbus}}
   end
 
-  def handle_call({:lookup_room, id}, _from, %__MODULE__{connector: connector, token: token}=state) do
+  def handle_call({:lookup_room, {:id, id}}, _from, %__MODULE__{connector: connector, token: token}=state) do
     {:reply, Connector.call(connector, token, :lookup_room, %{id: id}), state}
+  end
+  def handle_call({:lookup_room, {:name, name}}, _from, %__MODULE__{connector: connector, token: token}=state) do
+    {:reply, Connector.call(connector, token, :lookup_room, %{name: name}), state}
   end
 
   def handle_call({:lookup_user, handle}, _from, %__MODULE__{connector: connector, token: token}=state) do
