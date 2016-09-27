@@ -20,7 +20,7 @@ defmodule Cog.Commands.Bundle do
     "enable <bundle> [<version>]" => "Enable a specific version of an installed bundle",
     "disable <bundle>" => "Disable an installed bundle",
     "versions <bundle>" => "List all installed versions for a given bundle",
-    "install <bundle>[:<version>]" => "Install latest or specified version of bundle from registry"
+    "install <bundle> [<version>]" => "Install latest or specified version of bundle from registry"
   }
 
   permission "manage_commands"
