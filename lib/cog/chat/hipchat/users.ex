@@ -9,7 +9,17 @@ defmodule Cog.Chat.HipChat.Users do
 
   @roster_refresh_interval 60000
 
-  def lookup(%__MODULE__{}=users, xmpp_conn, handle_or_id) do
+  def lookup(%__MODULE__{}=users, xmpp_conn, jid: jid) do
+    find_user(users, xmpp_conn, jid)
+  end
+  def lookup(%__MODULE__{}=users, xmpp_conn, handle: handle) do
+    find_user(users, xmpp_conn, handle)
+  end
+  def lookup(users, _xc, _opts) do
+    {nil, users}
+  end
+
+  defp find_user(users, xmpp_conn, handle_or_id) do
     case Map.get(users.users, handle_or_id) do
       nil ->
         case rebuild_users(users, xmpp_conn) do
@@ -48,6 +58,17 @@ defmodule Cog.Chat.HipChat.Users do
     else
       {:ok, users}
     end
+  end
+
+end
+
+
+defimpl String.Chars, for: Cog.Chat.HipChat.Users do
+
+  alias Cog.Chat.HipChat.Users
+
+  def to_string(%Users{users: users, last_updated: lu}) do
+    "<Cog.Chat.HipChat.Users[users: #{length(Map.values(users))}, last_updated: #{lu}]>"
   end
 
 end

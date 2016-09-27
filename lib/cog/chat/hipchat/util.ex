@@ -72,7 +72,6 @@ defmodule Cog.Chat.HipChat.Util do
   defp extract_room(_, acc), do: {:cont, acc}
 
   defp parse_jid(jid) do
-    IO.puts "#{jid}"
     case String.split(jid, "/", parts: 2) do
       [_] ->
         nil

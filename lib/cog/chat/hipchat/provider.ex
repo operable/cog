@@ -14,7 +14,11 @@ defmodule Cog.Chat.HipChat.Provider do
   def display_name, do: "HipChat"
 
   def lookup_user(handle) do
-    GenServer.call(__MODULE__, {:call_connector, {:lookup_user, handle}}, :infinity)
+    if String.match?(handle, ~r/.+@.+/) do
+      GenServer.call(__MODULE__, {:call_connector, {:lookup_user_jid, handle}}, :infinity)
+    else
+      GenServer.call(__MODULE__, {:call_connector, {:lookup_user_handle, handle}}, :infinity)
+    end
   end
 
   def lookup_room(name) do
