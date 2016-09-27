@@ -57,22 +57,65 @@ defmodule Cog.Chat.HipChat.Connector do
     end
   end
 
-  def handle_call({:lookup_user, handle}, _from, state) do
-    {result, state} = lookup_user(state, handle)
+  def handle_call({:lookup_user_jid, jid}, _from, state) do
+    {result, state} = lookup_user(state, jid: jid)
     case result do
-      {:ok, _} ->
-        {:reply, result, state}
+      {:ok, nil} ->
+        {:reply, {:error, :not_found}, state}
+      {:ok, user} ->
+        {:reply, {:ok, user}, state}
+      _ ->
+        {:reply, {:error, :lookup_failed}, state}
+    end
+  end
+  def handle_call({:lookup_user_handle, handle}, _from, state) do
+    {result, state} = lookup_user(state, handle: handle)
+    case result do
+      {:ok, nil} ->
+        {:reply, {:error, :not_found}, state}
+      {:ok, user} ->
+        {:reply, {:ok, user}, state}
       _ ->
         {:reply, {:error, :lookup_failed}, state}
     end
   end
   def handle_call({:lookup_room_jid, room_jid}, _from, state) do
     {result, state} = lookup_room(state, jid: room_jid)
-    {:reply, result, state}
+    case result do
+      {:ok, nil} ->
+        # This might be an attempt to resolve the 'me' redirect target
+        # so let's try resolving the room jid as a user
+        {result, state} = lookup_user(state, jid: room_jid)
+        case result do
+          {:ok, nil} ->
+            {:reply, {:error, :not_found}, state}
+          # We found the user so let's construct a DM "room"
+          # usable as a redirect
+          {:ok, user} ->
+            room = %Cog.Chat.Room{id: user.id,
+                                  is_dm: true,
+                                  name: "direct",
+                                  provider: @provider_name}
+            {:reply, {:ok, room}, state}
+          _ ->
+            {:reply, {:error, :lookup_failed}, state}
+        end
+      {:ok, room} ->
+        {:reply, {:ok, room}, state}
+      _ ->
+        {:reply, {:error, :lookup_failed}, state}
+    end
   end
   def handle_call({:lookup_room_name, room_name}, _from, state) do
     {result, state} = lookup_room(state, name: room_name)
-    {:reply, result, state}
+    case result do
+      {:ok, nil} ->
+        {:reply, {:error, :not_found}, state}
+      {:ok, room} ->
+        {:reply, {:ok, room}, state}
+      _ ->
+        {:reply, {:error, :lookup_failed}, state}
+    end
   end
   def handle_call(:list_joined_rooms, _from, state) do
     {:reply, {:ok, Rooms.all(state.rooms)}, state}
@@ -127,7 +170,7 @@ defmodule Cog.Chat.HipChat.Connector do
   def terminate(_, _, _), do: :ok
 
   defp handle_presence(state, presence) do
-    case lookup_user(state, presence.from.user) do
+    case lookup_user(state, handle: presence.from.user) do
       {{:ok, nil}, state} ->
         {:ok, state}
       {{:ok, user}, state} ->
@@ -148,8 +191,16 @@ defmodule Cog.Chat.HipChat.Connector do
   defp presence_type("chat"), do: "active"
   defp presence_type(""), do: "active"
 
-  defp lookup_user(state, name) do
-    case Users.lookup(state.users, state.xmpp_conn, name) do
+  defp lookup_user(state, try_both: name_or_jid) do
+    case lookup_user(state, jid: name_or_jid) do
+      {{:ok, nil}, state} ->
+        lookup_user(state, name: name_or_jid)
+      results ->
+        results
+    end
+  end
+  defp lookup_user(state, opts) do
+    case Users.lookup(state.users, state.xmpp_conn, opts) do
       {:error, _} ->
         {{:error, :lookup_failed}, state}
       {result, users} ->
@@ -171,7 +222,7 @@ defmodule Cog.Chat.HipChat.Connector do
       {{:ok, nil}, state} ->
         state
       {{:ok, room}, state} ->
-        case lookup_user(state, sender) do
+        case lookup_user(state, jid: sender) do
           {{:ok, nil}, state} ->
             Logger.debug("Roster miss for #{inspect sender}")
             state
@@ -190,7 +241,7 @@ defmodule Cog.Chat.HipChat.Connector do
   end
 
   defp handle_dm(sender, body, state) do
-    case lookup_user(state, sender) do
+    case lookup_user(state, jid: sender) do
       {{:ok, nil}, state} ->
         state
       {{:ok, user}, state} ->
@@ -206,7 +257,7 @@ defmodule Cog.Chat.HipChat.Connector do
   end
 
   defp send_output(state, target, output) do
-    case lookup_user(state, target) do
+    case lookup_user(state, try_both: target) do
       {{:ok, nil}, state} ->
         case lookup_room(state, name: target) do
           {{:ok, nil}, state} ->
