@@ -57,11 +57,21 @@ defmodule Cog.Chat.Adapter do
     end
   end
 
-  def lookup_room(provider, room_identifier) do
+  # Declaring like this so we fail quickly if lookup_room
+  # is called with something other than a keyword list.
+  def lookup_room(provider, name: name),
+    do: do_lookup_room(provider, name: name)
+  def lookup_room(provider, id: id),
+    do: do_lookup_room(provider, id: id)
+
+  # room_identifier should come in as a keyword list with
+  # either [id: id] or [name: name]
+  defp do_lookup_room(provider, room_identifier) do
+    args = Enum.into(room_identifier, %{provider: provider})
     cache = get_cache
     case cache[{provider, :room, room_identifier}] do
       nil ->
-        case GenMqtt.call(@adapter_topic , "lookup_room", %{provider: provider, id: room_identifier} , :infinity) do
+        case GenMqtt.call(@adapter_topic , "lookup_room", args, :infinity) do
           {:ok, room} ->
             Room.from_map(room)
           {:error, _}=error ->
@@ -165,7 +175,10 @@ defmodule Cog.Chat.Adapter do
   # RPC calls
 
   def handle_call(_conn, @adapter_topic, _sender, "lookup_room", %{"provider" => provider, "id" => id}, state) do
-    {:reply, maybe_cache(with_provider(provider, state, :lookup_room, [id]), {provider, :room, id}, state), state}
+    {:reply, maybe_cache(with_provider(provider, state, :lookup_room, [id: id]), {provider, :room, id}, state), state}
+  end
+  def handle_call(_conn, @adapter_topic, _sender, "lookup_room", %{"provider" => provider, "name" => name}, state) do
+    {:reply, maybe_cache(with_provider(provider, state, :lookup_room, [name: name]), {provider, :room, name}, state), state}
   end
   def handle_call(_conn, @adapter_topic, _sender, "lookup_user", %{"provider" => provider,
                                                                    "handle" => handle}, state) do
