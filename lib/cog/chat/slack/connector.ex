@@ -89,30 +89,46 @@ defmodule Cog.Chat.Slack.Connector do
     :ok
   end
   def handle_info({{ref, sender}, {:lookup_room, %{id: id, token: token}}}, state) do
-    # Figure out what an internal Slack identifier actually points to
-    # (user, channel, DM, etc).
-    result = case classify_id(id, state) do
-               {:user, user_id} ->
-                 case Slack.Web.Im.open(user_id, %{token: token}) do
-                   %{"channel" => %{"id" => id}} ->
-                     {:ok, %Room{id: id,
-                                 name: "direct",
-                                 provider: @provider_name,
-                                 is_dm: true}}
-                   %{"error" => error} ->
-                     Logger.warn("Could not establish an IM with user #{Slack.Lookups.lookup_user_name(user_id, state)} (Slack ID: #{user_id}): #{inspect error}")
-                     {:error, :user_not_found}
-                 end
-               {:channel, channel_id} ->
-                 case lookup_room(channel_id, joined_channels(state), by: :id) do
-                   %Room{}=room ->
-                     {:ok, room}
-                   _ ->
-                     {:error, :not_a_member}
-                 end
-               :error ->
-                 {:error, :not_found}
-             end
+    result = case classify_id(id) do
+      :user ->
+        case open_dm(id, token) do
+          {:ok, room} ->
+            {:ok, room}
+          {:error, error} ->
+            Logger.warn("Could not establish an IM with user #{Slack.Lookups.lookup_user_name(id, state)} (Slack ID: #{id}): #{inspect error}")
+            {:error, :user_not_found}
+        end
+      :channel ->
+        case lookup_room(id, joined_channels(state), by: :id) do
+          %Room{}=room -> {:ok, room}
+          _ -> {:error, :not_a_member}
+        end
+      :error ->
+        {:error, :not_found}
+    end
+
+    send(sender, {ref, result})
+    :ok
+  end
+  def handle_info({{ref, sender}, {:lookup_room, %{name: name, token: token}}}, state) do
+    result = case classify_name(name) do
+      :user ->
+        case open_dm(Slack.Lookups.lookup_user_id(name, state), token) do
+          {:ok, room} ->
+            {:ok, room}
+          {:error, error} ->
+            Logger.warn("Could not establish an IM with user #{name} (Slack ID: #{Slack.Lookups.lookup_user_id(name, state)}): #{inspect error}")
+            {:error, :user_not_found}
+        end
+      :channel ->
+        case lookup_room(name, joined_channels(state), by: :name) do
+          %Room{}=room -> {:ok, room}
+          _ -> {:error, :not_a_member}
+        end
+      :error ->
+        {:error, :not_found}
+    end
+
     send(sender, {ref, result})
     :ok
   end
@@ -156,10 +172,22 @@ defmodule Cog.Chat.Slack.Connector do
     Enum.reduce_while(dms, nil, &(dm_by_id(value, &1, &2)))
   end
 
-  defp room_by_name(name, {_, room}, acc) do
+  defp open_dm(user_id, token) do
+    case Slack.Web.Im.open(user_id, %{token: token}) do
+      %{"channel" => %{"id" => id}} ->
+        {:ok, %Room{id: id,
+                    name: "direct",
+                    provider: @provider_name,
+                    is_dm: true}}
+      %{"error" => error} ->
+        {:error, error}
+    end
+  end
+
+  defp room_by_name("#" <> name, {_, room}, acc) do
     if room.name == name do
-      {:halt, %{"id" => room.id,
-               "name" => room.name}}
+      {:halt, make_room(%{id: room.id,
+                          name: room.name})}
     else
       {:cont, acc}
     end
@@ -288,40 +316,25 @@ defmodule Cog.Chat.Slack.Connector do
   defp channel_type(<<"D", _ :: binary>>),
     do: :dm
 
+  defp classify_name(<<"@", _::binary>>), do: :user
+  defp classify_name(<<"#", _::binary>>), do: :channel
+  defp classify_name(other) do
+    Logger.warn("Could not classify Slack name `#{other}`")
+    :error
+  end
+
   # Strip off any enclosing angle brackets (Slack processes strings
   # like "#channel_name" and "@user_name" to their internal identifiers
   # like "<#C1234567>" and "<@U1234567>".)
-  defp classify_id(id, slack),
-    do: id |> String.replace(~r/(^<|>$)/, "") |> do_classify_id(slack)
+  defp classify_id(id),
+    do: id |> String.replace(~r/(^<|>$)/, "") |> do_classify_id
 
-  # TODO: use Slack.Lookups to verify the "C" and "U" cases here, to
-  # guard against bare user / room names that start with those letters
-  defp do_classify_id(<<"#C", id::binary>>, _), do: {:channel, "C#{id}"}
-  defp do_classify_id(<<"C", id::binary>>, _), do: {:channel, "C#{id}"}
-  defp do_classify_id(<<"@U", id::binary>>, _), do: {:user, "U#{id}"}
-  defp do_classify_id(<<"U", id::binary>>, _), do: {:user, "U#{id}"}
-  defp do_classify_id(other, slack) do
-
-    # Try it as a channel name as last resort; this is just for tests
-    # to work right now, and should probably go away
-
-    try do
-      id = lookup_channel_id_by_name("##{other}", slack)
-      {:channel, id}
-    rescue
-      BadMapError ->
-        # TODO: this is a workaround for a too-permissive library call;
-        # that should really be fixed. In the meantime...
-        Logger.warn("Could not classify Slack identifier '#{other}'")
-        :error
-    end
-  end
-
-  defp lookup_channel_id_by_name("#" <> channel_name, slack) do
-    slack.channels
-    |> Map.merge(slack.groups)
-    |> Map.values
-    |> Enum.find(fn channel -> channel.name == channel_name end)
-    |> Map.get(:id)
+  defp do_classify_id(<<"#C", _::binary>>), do: :channel
+  defp do_classify_id(<<"C", _::binary>>), do: :channel
+  defp do_classify_id(<<"@U", _::binary>>), do: :user
+  defp do_classify_id(<<"U", _::binary>>), do: :user
+  defp do_classify_id(other) do
+    Logger.warn("Could not classify Slack id `#{other}`")
+    :error
   end
 end
