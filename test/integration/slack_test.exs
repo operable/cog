@@ -56,7 +56,7 @@ defmodule Integration.SlackTest do
 
   test "sending a message to a group", %{user: user} do
     user |> with_permission("operable:echo")
-    private_channel = "group_ci_bot_testing"
+    private_channel = "#group_ci_bot_testing"
 
     message = send_message("@#{@bot}: operable:echo blah", private_channel)
     assert_response "blah", [after: message], private_channel

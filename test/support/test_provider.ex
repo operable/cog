@@ -37,15 +37,21 @@ defmodule Cog.Chat.Test.Provider do
                    email: handle}
   end
 
-  def lookup_room("user1") do
+  def lookup_room({:id, "user1"}) do
     %Cog.Chat.Room{id: "user1_dm",
                    name: "user1",
                    provider: @provider_name,
                    is_dm: true}
   end
-  def lookup_room(identifier) do
-    %Cog.Chat.Room{id: identifier,
-                   name: identifier,
+  def lookup_room({:id, id}) do
+    %Cog.Chat.Room{id: id,
+                   name: id,
+                   provider: @provider_name,
+                   is_dm: false}
+  end
+  def lookup_room({:name, name}) do
+    %Cog.Chat.Room{id: name,
+                   name: name,
                    provider: @provider_name,
                    is_dm: false}
   end
