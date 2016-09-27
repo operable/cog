@@ -43,18 +43,11 @@ defmodule Cog.Chat.HipChat.Provider do
   end
 
   def init([config]) do
-    token = Keyword.fetch!(config, :api_token)
     incoming = Keyword.fetch!(config, :incoming_topic)
-    jabber_id = Keyword.fetch!(config, :jabber_id)
-    jabber_password = Keyword.fetch!(config, :jabber_password)
-    nickname = Keyword.fetch!(config, :nickname)
-    use_ssl = Keyword.get(config, :ssl, true)
-    case HipChat.Connector.start_link("chat.hipchat.com", jabber_id, jabber_password, nickname, use_ssl, token) do
+    case HipChat.Connector.start_link(config) do
       {:ok, xmpp_conn} ->
         {:ok, mbus} = Connection.connect()
-        {:ok, %__MODULE__{token: token, incoming: incoming, mbus: mbus, xmpp: xmpp_conn,
-                          jabber_id: jabber_id, jabber_password: jabber_password,
-                          nickname: nickname}}
+        {:ok, %__MODULE__{incoming: incoming, mbus: mbus, xmpp: xmpp_conn}}
       error ->
         error
     end
