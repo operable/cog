@@ -6,7 +6,7 @@ __Enabled Bundles__
 ~br~
 
 ~each var=$bundles.enabled as=bundle~
-* ~$bundle.name~ ~if cond=$bundle.description~ - ~$bundle.description~ ~end~
+* ~$bundle.name~~if cond=$bundle.description~ - ~$bundle.description~~end~
 
 ~end~
 
@@ -19,7 +19,7 @@ __Disabled Bundles__
 ~br~
 
 ~each var=$bundles.disabled as=bundle~
-* ~$bundle.name~ ~if cond=$bundle.description~ - ~$bundle.description~ ~end~
+* ~$bundle.name~~if cond=$bundle.description~ - ~$bundle.description~~end~
 
 ~end~
 ~end~

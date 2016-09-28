@@ -1,8 +1,13 @@
 ~each var=$results as=command~
 
+~if cond=$command.error~
+**~$command.error~**
+~br~
+~end~
+
 __Name__
 ~br~
-~$command.name~ ~if cond=$command.description~ - ~$command.description~ ~end~
+~$command.name~~if cond=$command.description~ - ~$command.description~~end~
 ~br~
 
 ~if cond=$command.long_description~

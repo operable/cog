@@ -2,7 +2,7 @@
 
 __Name__
 ~br~
-~$bundle.name~ ~if cond=$bundle.description~ - ~$bundle.description~ ~end~
+~$bundle.name~~if cond=$bundle.description~ - ~$bundle.description~~end~
 ~br~
 
 ~if cond=$bundle.long_description~
@@ -16,7 +16,7 @@ __Description__
 __Commands__
 ~br~
 ~each var=$bundle.commands as=command~
-* ~$command.name~ ~if cond=$command.description~ - ~$command.description~ ~end~
+* ~$command.name~~if cond=$command.description~ - ~$command.description~~end~
 
 ~end~
 ~br~
