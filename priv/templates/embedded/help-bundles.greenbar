@@ -1,0 +1,30 @@
+~each var=$results as=bundles~
+
+~if cond=$bundles.enabled not_empty?~
+__Enabled Bundles__
+
+~br~
+
+~each var=$bundles.enabled as=bundle~
+* ~$bundle.name~ ~if cond=$bundle.description~ - ~$bundle.description~ ~end~
+
+~end~
+
+~br~
+~end~
+
+~if cond=$bundles.disabled not_empty?~
+__Disabled Bundles__
+
+~br~
+
+~each var=$bundles.disabled as=bundle~
+* ~$bundle.name~ ~if cond=$bundle.description~ - ~$bundle.description~ ~end~
+
+~end~
+~end~
+
+~br~
+
+To learn more about a specific bundle and the commands available within it, you can use "operable:help <bundle>".
+~end~

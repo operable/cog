@@ -1,3 +1,81 @@
+~each var=$results as=command~
+
+__Name__
+~br~
+~$command.name~ ~if cond=$command.description~ - ~$command.description~ ~end~
+~br~
+
+~if cond=$command.long_description~
+__Description__
+~br~
+~$command.long_description~
+~br~
+~end~
+
+~if cond=$command.synopsis~
+__Synopsis__
+~br~
 ```
-~$results[0].documentation~
+~$command.synopsis~
 ```
+~br~
+~end~
+
+~if cond=$command.required_options not_empty?~
+__Required Options__
+~br~
+~each var=$command.required_options as=option~
+* ~$option.flag~ ~if cond=$option.description~ - ~$option.description~ ~end~
+
+~end~
+~br~
+~end~
+
+~if cond=$command.options not_empty?~
+__Options__
+~br~
+~each var=$command.options as=option~
+* ~$option.flag~ ~if cond=$option.description~ - ~$option.description~ ~end~
+
+~end~
+~br~
+~end~
+
+~if cond=$command.subcommands not_empty?~
+__Subcommands__
+~br~
+~each var=$command.subcommands as=subcommand~
+* ~$subcommand.command~ - ~$subcommand.description~
+
+~end~
+~br~
+~end~
+
+~if cond=$command.examples~
+__Examples__
+~br~
+~$command.examples~
+~br~
+~end~
+
+~if cond=$command.notes~
+__Notes__
+~br~
+~$command.notes~
+~br~
+~end~
+
+~if cond=$command.bundle.author~
+__Author__
+~br~
+~$command.bundle.author~
+~br~
+~end~
+
+~if cond=$command.bundle.homepage~
+__Homepage__
+~br~
+~$command.bundle.homepage~
+~end~
+
+~end~

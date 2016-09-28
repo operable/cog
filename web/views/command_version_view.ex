@@ -1,6 +1,8 @@
 defmodule Cog.V1.CommandVersionView do
   use Cog.Web, :view
 
+  alias Cog.Commands.Help.CommandFormatter
+
   def render("command_version.json", %{command_version: command_version}) do
     %{id: command_version.id,
       bundle: command_version.command.bundle.name,
@@ -9,6 +11,21 @@ defmodule Cog.V1.CommandVersionView do
       documentation: command_version.documentation}
     |> Map.merge(include(command_version, :rules))
     |> Map.merge(include(command_version, :options))
+  end
+
+  def render("command_version_help.json", %{command_version: command_version}) do
+    %{name: command_version.command.name,
+      description: command_version.description,
+      synopsis: CommandFormatter.render_synopsis(command_version),
+      required_options: CommandFormatter.render_required_options(command_version),
+      options: CommandFormatter.render_options(command_version),
+      subcommands: CommandFormatter.render_subcommands(command_version),
+      examples: command_version.examples,
+      notes: command_version.notes,
+      bundle: %{
+        author: command_version.bundle_version.author,
+        homepage: command_version.bundle_version.homepage
+      }}
   end
 
   defp include(command_version, :rules) do
