@@ -1,5 +1,5 @@
 defmodule Cog.Commands.Help.CommandFormatter do
-  alias Cog.Models.{BundleVersion, CommandOption, CommandOptionType, CommandVersion}
+  alias Cog.Models.{CommandOption, CommandOptionType, CommandVersion}
 
   def render_synopsis(%CommandVersion{options: options, arguments: arguments} = command_version) do
     name = CommandVersion.full_name(command_version)

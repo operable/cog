@@ -2,7 +2,6 @@ defmodule Cog.V1.CommandView do
   use Cog.Web, :view
 
   alias Cog.V1.RuleView
-  alias Cog.V1.BundleVersionView
 
   def render("command.json", %{command: command}=resource) do
     %{id: command.id,
