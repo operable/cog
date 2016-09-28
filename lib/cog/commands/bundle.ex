@@ -3,7 +3,7 @@ defmodule Cog.Commands.Bundle do
     bundle: Cog.Util.Misc.embedded_bundle
 
   alias Cog.Models.{Bundle, BundleVersion}
-  alias Cog.Commands.Bundle.{List, Versions, Info, Enable, Disable}
+  alias Cog.Commands.Bundle.{List, Versions, Info, Enable, Disable, Install}
 
   require Cog.Commands.Helpers, as: Helpers
   require Logger
@@ -19,13 +19,9 @@ defmodule Cog.Commands.Bundle do
     "info <bundle>" => "Detailed information on an installed bundle",
     "enable <bundle> [<version>]" => "Enable a specific version of an installed bundle",
     "disable <bundle>" => "Disable an installed bundle",
-    "versions <bundle>" => "List all installed versions for a given bundle"
+    "versions <bundle>" => "List all installed versions for a given bundle",
+    "install <bundle> [<version>]" => "Install latest or specified version of bundle from registry"
   }
-
-  @notes """
-  Installation and uninstallation of bundles cannot currently be done via
-  chat; please use `cogctl` for this functionality.
-  """
 
   permission "manage_commands"
 
@@ -40,6 +36,7 @@ defmodule Cog.Commands.Bundle do
                "info"     -> Info.info(req, args)
                "disable"  -> Disable.disable(req, args)
                "enable"   -> Enable.enable(req, args)
+               "install"  -> Install.install(req, args)
                nil ->
                  if Helpers.flag?(req.options, "help") do
                    show_usage
@@ -77,7 +74,11 @@ defmodule Cog.Commands.Bundle do
   defp error({:already_disabled, %BundleVersion{bundle: %Bundle{name: bundle_name}}}),
     do: "Bundle #{inspect bundle_name} is already disabled."
   defp error(:invalid_invocation),
-    do: "That is not a valid invocation of the bundle command"
+    do: "That is not a valid invocation of the bundle command."
+  defp error({:already_installed, bundle, version}),
+    do: "Bundle #{inspect bundle} with version #{inspect version} already installed."
+  defp error(:registry_error),
+    do: "Bundle registry responded with an error."
   defp error(error),
     do: Helpers.error(error)
 

@@ -1,0 +1,3 @@
+~each var=$results~
+Bundle "~$item.name~" version "~$item.versions[0].version~" installed.
+~end~

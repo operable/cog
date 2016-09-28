@@ -61,4 +61,8 @@ defmodule Integration.Commands.BundleTest do
     assert_error_message_contains(response, "Unknown subcommand 'not-a-subcommand'")
   end
 
+  test "installing a bundle", %{user: user} do
+    [payload] = send_message(user, "@bot: operable:bundle install heroku 0.0.4")
+    assert %{name: "heroku", versions: [%{version: "0.0.4"}]} = payload
+  end
 end
