@@ -252,16 +252,22 @@ defmodule Cog.Command.Pipeline.Executor do
     case topic do
       ^reply_topic ->
         resp = Cog.Messages.CommandResponse.decode!(message)
+
+        # If the status was "ok" or "abort", we still need to process
+        # the output and update the state in the same way, so we'll
+        # just encapsulate that logic here.
+        update_state = fn(resp, state) ->
+          collected_output = collect_output(resp, state.output)
+          %{state | output: collected_output,
+            template: resp.template,
+            template_version: state.current_plan.parser_meta.bundle_config_version}
+        end
+
         case resp.status do
           "ok" ->
-            collected_output = collect_output(resp, state.output)
-            {:next_state, :execute_plan, %{state | output: collected_output,
-                                           template: resp.template,
-                                           template_version: state.current_plan.parser_meta.bundle_config_version},
-             0}
+            {:next_state, :execute_plan, update_state.(resp, state), 0}
           "abort" ->
-            collected_output = collect_output(resp, state.output)
-            abort_pipeline(%{state | output: collected_output})
+            abort_pipeline(update_state.(resp, state))
           "error" ->
             fail_pipeline_with_error({:command_error, resp}, state)
         end
@@ -589,7 +595,7 @@ defmodule Cog.Command.Pipeline.Executor do
 
   defp abort_pipeline(%__MODULE__{current_plan: plan}=state) do
     respond(state)
-    audit_message = AuditMessage.render({:abort_pipeline, plan.parser_meta.full_command_name, state.id},
+    audit_message = AuditMessage.render({:abort_pipeline, plan.parser_meta.full_command_name},
                                         state.request)
     fail_pipeline(state, :aborted, audit_message)
   end
