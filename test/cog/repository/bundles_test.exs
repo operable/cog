@@ -145,6 +145,72 @@ defmodule Cog.Repository.BundlesTest do
     assert {:error, {:db_errors, [version: {"has already been taken", []}]}} = Bundles.install(%{"name" => "testing", "version" => "1.0.0", "config_file" => %{}})
   end
 
+  describe "forced bundle installation" do
+
+    setup [:forced_installation_configs]
+
+    test "installing the same version overwrites the original version", %{old_config: config}  do
+      {:ok, _version} = Bundles.install(%{"name" => config["name"], "version" => config["version"], "config_file" => config})
+
+      assert {:ok, _overwritten_version} = Bundles.install(:force, %{"name" => config["name"], "version" => config["version"], "config_file" => config})
+    end
+
+    test "different configs persist properly", %{old_config: old_config, new_config: new_config} do
+
+      {:ok, orig_version} = Bundles.install(%{"name" => old_config["name"],
+                                              "version" => old_config["version"],
+                                              "config_file" => old_config})
+
+      # Make sure the bundle installs
+      assert {:ok, new_version} = Bundles.install(:force, %{"name" => new_config["name"],
+                                                            "version" => new_config["version"],
+                                                            "config_file" => new_config})
+
+      new_version = Repo.preload(new_version, :templates)
+
+      # Make sure the bundle name and version didn't change
+      assert orig_version.bundle.name == new_version.bundle.name
+      assert orig_version.version == new_version.version
+
+      # Check the config file
+      assert new_version.config_file == new_config
+
+      # Check commands
+      expected_command_names = Map.keys(new_config["commands"]) |> Enum.sort
+      actual_command_names = Enum.map(new_version.commands, &(&1.command.name)) |> Enum.sort
+      assert actual_command_names == expected_command_names
+
+      # Check permissions
+      expected_permissions = new_config["permissions"] |> Enum.sort
+      actual_permissions = Enum.map(new_version.permissions, &("test_bundle:#{&1.name}")) |> Enum.sort
+      assert actual_permissions == expected_permissions
+
+      # Check templates
+      expected_template_names = Map.keys(new_config["templates"]) |> Enum.sort
+      actual_template_names = Enum.map(new_version.templates, &(&1.name)) |> Enum.sort
+      assert actual_template_names == expected_template_names
+
+      expected_templates = Enum.map(new_config["templates"], fn({_, source}) -> source["body"] end) |> Enum.sort
+      actual_templates = Enum.map(new_version.templates, &(&1.source)) |> Enum.sort
+      assert actual_templates == expected_templates
+    end
+
+    test "maintains enabled status", %{old_config: old_config, new_config: new_config} do
+      {:ok, orig_version} = Bundles.install(%{"name" => old_config["name"],
+                                              "version" => old_config["version"],
+                                              "config_file" => old_config})
+
+      :ok = Bundles.set_bundle_version_status(orig_version, :enabled)
+
+      {:ok, new_version} = Bundles.install(:force, %{"name" => new_config["name"],
+                                                     "version" => new_config["version"],
+                                                     "config_file" => new_config})
+
+      assert Bundles.enabled?(new_version)
+    end
+
+  end
+
   test "deleting the last version of a bundle deletes the bundle itself" do
     {:ok, version} = Bundles.install(%{"name" => "testing", "version" => "1.0.0", "config_file" => %{}})
 
@@ -402,6 +468,52 @@ defmodule Cog.Repository.BundlesTest do
   defp version(version_string) do
     {:ok, v} = Version.parse(version_string)
     v
+  end
+
+  # Setup function for testing forced bundle installations
+  defp forced_installation_configs(context) do
+    old_config =
+      %{"cog_bundle_version" => 4,
+        "name" => "test_bundle",
+        "description" => "A test bundle",
+        "version" => "0.1.0",
+        "permissions" => ["test_bundle:date", "test_bundle:time"],
+        "docker" => %{"image" => "operable-bundle/test_bundle",
+                      "tag" => "v0.1.0"},
+        "commands" => %{"date" => %{"executable" => "/usr/local/bin/date",
+                                    "options" => %{"option1" => %{"type" => "string",
+                                                                  "description" => "An option",
+                                                                  "required" => false,
+                                                                  "short_flag" => "o"}},
+                                    "rules" => ["when command is test_bundle:date must have test_bundle:date"]},
+                        "time" => %{"executable" => "/usr/local/bin/time",
+                                    "rules" => ["when command is test_bundle:time must have test_bundle:time"]}},
+        "templates" => %{"time" => %{"body" => "~$results[0].time~"},
+                         "date" => %{"body" => "~$results[0].date~"}}}
+
+    new_config =
+      %{"cog_bundle_version" => 4,
+        "name" => "test_bundle",
+        "description" => "An updated test bundle",
+        "version" => "0.1.0",
+        "permissions" => ["test_bundle:new_date", "test_bundle:new_time", "test_bundle:another_command"],
+        "docker" => %{"image" => "operable-bundle/test_bundle_update",
+                      "tag" => "v0.1.1"},
+        "commands" => %{"new_date" => %{"executable" => "/usr/local/bin/date",
+                                        "options" => %{"option1" => %{"type" => "string",
+                                                                      "description" => "An option",
+                                                                      "required" => false,
+                                                                      "short_flag" => "o"}},
+                                        "rules" => ["when command is test_bundle:date must have test_bundle:date"]},
+                        "new_time" => %{"executable" => "/usr/local/bin/time",
+                                        "rules" => ["when command is test_bundle:time must have test_bundle:time"]},
+                        "another_command" => %{"executable" => "/usr/local/bin/time",
+                                               "rules" => ["when command is test_bundle:time must have test_bundle:time"]}},
+        "templates" => %{"new_time" => %{"body" => "~$results[0].new_time~"},
+                         "new_date" => %{"body" => "~$results[0].new_date~"},
+                         "another" => %{"body" => "~$results[0].another~"}}}
+
+    Map.merge(context, %{old_config: old_config, new_config: new_config})
   end
 
 end

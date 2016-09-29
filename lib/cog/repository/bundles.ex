@@ -35,6 +35,9 @@ defmodule Cog.Repository.Bundles do
 
   @permanent_site_bundle_version "0.0.0"
 
+  @install_types [:normal, :force]
+  @default_install_type :normal
+
   ########################################################################
   # CRUD Operations
 
@@ -48,10 +51,11 @@ defmodule Cog.Repository.Bundles do
       #{inspect @reserved_bundle_names}
 
   """
-  def install(%{"name" => reserved}) when reserved in @reserved_bundle_names,
+  def install(install_type \\ @default_install_type, params)
+  def install(_, %{"name" => reserved}) when reserved in @reserved_bundle_names,
     do: {:error, {:reserved_bundle, reserved}}
-  def install(params),
-    do: __install(params)
+  def install(install_type, params) when install_type in @install_types,
+    do: __install(install_type, params)
 
   def install_from_registry(bundle, version) do
     case BundleRegistry.get_config(bundle, version) do
@@ -67,8 +71,12 @@ defmodule Cog.Repository.Bundles do
 
   # TODO: clean this up so we only need the config file part;
   # everything else is redundant
-  defp __install(%{"name" => _name, "version" => _version, "config_file" => _config}=params) do
-    case install_bundle(params) do
+  defp __install(install_type \\ @default_install_type, params)
+  defp __install(install_type, %{"name" => _name,
+                                 "version" => _version,
+                                 "config_file" => _config}=params)
+                             when install_type in @install_types do
+    case install_bundle(install_type, params) do
       {:ok, bundle_version} ->
         {:ok, preload(bundle_version)}
       {:error, _}=error ->
@@ -634,7 +642,7 @@ defmodule Cog.Repository.Bundles do
     Repo.preload(bundle, [:permissions, :commands])
   end
 
-  defp new_version!(bundle, params) do
+  defp new_version!(:normal, bundle, params) do
     params = Map.merge(params, Map.take(params["config_file"], ["description", "long_description", "author", "homepage"]))
 
     bundle
@@ -642,6 +650,32 @@ defmodule Cog.Repository.Bundles do
     |> BundleVersion.changeset(params)
     |> Repo.insert!
     |> preload
+  end
+  defp new_version!(:force, bundle, params) do
+    # If we are doing a force install we check to see if the version
+    # already exists.
+    version_num = params["config_file"]["version"]
+    result = Repo.one(from bv in BundleVersion,
+                      where: bv.bundle_id == ^bundle.id,
+                      where: bv.version == ^version_num)
+
+    # If there is an existing version we remove it before adding the
+    # new version.
+    case result do
+      nil ->
+        new_version!(:normal, bundle, params)
+      old_version ->
+        # If the old version was enabled we enable the new version
+        if enabled?(old_version) do
+          Repo.delete!(old_version)
+          new_version = new_version!(:normal, bundle, params)
+          set_bundle_version_status(new_version, :enabled)
+          new_version
+        else
+          Repo.delete!(old_version)
+          new_version!(:normal, bundle, params)
+        end
+    end
   end
 
   # Consolidate what we need to preload for various things so we stay
@@ -668,14 +702,14 @@ defmodule Cog.Repository.Bundles do
   alias Cog.Models.CommandOption
   alias Cog.Models.Permission
 
-  defp install_bundle(bundle_params) do
+  defp install_bundle(install_type, bundle_params) do
     Repo.transaction(fn ->
       try do
         # Create a bundle record if it doesn't exist yet
         bundle = find_or_create_bundle(bundle_params["name"])
 
-        # Create a new version record
-        version = new_version!(bundle, bundle_params)
+        # Create the new version
+        version = new_version!(install_type, bundle, bundle_params)
 
         # Add permissions, after deduping
         :ok = register_permissions_for_version(bundle, version)
