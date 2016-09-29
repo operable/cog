@@ -1,0 +1,21 @@
+defmodule Cog.Chat.HipChat.Templates.Embedded.RelayGroupDeleteTest do
+  use Cog.TemplateCase
+
+  test "relay-group-delete template" do
+    data = %{"results" => [%{"name" => "foo"}]}
+    expected = "Deleted relay-group 'foo'"
+    assert_rendered_template(:hipchat, :embedded, "relay-group-delete", data, expected)
+  end
+
+  test "relay-group-delete template with multiple inputs" do
+    data = %{"results" => [%{"name" => "foo"},
+                           %{"name" => "bar"},
+                           %{"name" => "baz"}]}
+    expected = "Deleted relay-group 'foo'<br/>" <>
+      "Deleted relay-group 'bar'<br/>" <>
+      "Deleted relay-group 'baz'"
+
+    assert_rendered_template(:hipchat, :embedded, "relay-group-delete", data, expected)
+  end
+
+end

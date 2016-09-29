@@ -7,7 +7,7 @@ defmodule Cog.Chat.HipChat.Users do
 
   defstruct [users: %{}, last_updated: 0]
 
-  @roster_refresh_interval 60000
+  @roster_refresh_interval 120000
 
   def lookup(%__MODULE__{}=users, xmpp_conn, jid: jid) do
     find_user(users, xmpp_conn, jid)
@@ -15,8 +15,8 @@ defmodule Cog.Chat.HipChat.Users do
   def lookup(%__MODULE__{}=users, xmpp_conn, handle: handle) do
     find_user(users, xmpp_conn, handle)
   end
-  def lookup(users, _xc, _opts) do
-    {nil, users}
+  def lookup(_users, _conn, args) do
+    raise RuntimeError, message: "Unknown arg: #{inspect args}"
   end
 
   defp find_user(users, xmpp_conn, handle_or_id) do
@@ -45,6 +45,12 @@ defmodule Cog.Chat.HipChat.Users do
             else
               roster
             end
+            roster = if entry.mention_name != "" do
+              Map.put(roster, entry.mention_name, entry)
+            else
+              roster
+            end
+
             roster
             |> Map.put("#{entry.first_name} #{entry.last_name}", entry)
             |> Map.put(entry.id, entry)
@@ -58,17 +64,6 @@ defmodule Cog.Chat.HipChat.Users do
     else
       {:ok, users}
     end
-  end
-
-end
-
-
-defimpl String.Chars, for: Cog.Chat.HipChat.Users do
-
-  alias Cog.Chat.HipChat.Users
-
-  def to_string(%Users{users: users, last_updated: lu}) do
-    "<Cog.Chat.HipChat.Users[users: #{length(Map.values(users))}, last_updated: #{lu}]>"
   end
 
 end

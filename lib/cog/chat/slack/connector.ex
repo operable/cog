@@ -235,6 +235,7 @@ defmodule Cog.Chat.Slack.Connector do
             first_name: user.name,
             last_name: user.name,
             handle: user.name,
+            mention_name: user.name,
             provider: "slack"}
     else
       profile = user.profile
@@ -242,6 +243,7 @@ defmodule Cog.Chat.Slack.Connector do
             first_name: Map.get(profile, :first_name, user.name),
             last_name: Map.get(profile, :last_name, user.name),
             handle: user.name,
+            mention_name: user.name,
             email: profile.email,
             provider: "slack"}
     end

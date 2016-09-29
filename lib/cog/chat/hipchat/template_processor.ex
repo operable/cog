@@ -35,6 +35,12 @@ defmodule Cog.Chat.HipChat.TemplateProcessor do
   end
 
   defp process_directive(%{"name" => "list_item", "children" => children}) do
+    children = case List.last(children) do
+                 %{"name" => "newline"} ->
+                   List.delete_at(children, -1)
+                 _  ->
+                   children
+               end
     item = Enum.map_join(children, &process_directive/1)
     "<li>#{item}</li>"
   end

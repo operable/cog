@@ -21,12 +21,26 @@ defmodule Cog.Chat.HipChat.Provider do
     end
   end
 
-  def lookup_room(name) do
-    if String.match?(name, ~r/.+@.+/) do
-      GenServer.call(__MODULE__, {:call_connector, {:lookup_room_jid, name}}, :infinity)
-    else
-      GenServer.call(__MODULE__, {:call_connector, {:lookup_room_name, name}}, :infinity)
+  def lookup_room({:name, name}) do
+    case GenServer.call(__MODULE__, {:call_connector, {:lookup_room_name, name}}, :infinity) do
+      {:error, :not_found} ->
+        # This might be a redirect so let's try looking up the "room"
+        # as a user
+        case lookup_user(name) do
+          {:ok, user} ->
+            {:ok, %Room{id: user.id,
+                        is_dm: true,
+                        provider: "hipchat",
+                        name: "direct"}}
+          error ->
+            error
+        end
+      result ->
+        result
     end
+  end
+  def lookup_room({:id, id}) do
+      GenServer.call(__MODULE__, {:call_connector, {:lookup_room_jid, id}}, :infinity)
   end
 
   def list_joined_rooms() do

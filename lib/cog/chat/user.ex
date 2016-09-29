@@ -8,5 +8,6 @@ defmodule Cog.Chat.User do
   field :first_name, :string, required: true
   field :last_name, :string, required: true
   field :handle, :string, required: true
+  field :mention_name, :string, required: false
 
 end

@@ -24,8 +24,7 @@ defmodule Cog.Chat.HipChat.Util do
             if message.body == nil or message.body == "" do
               :ignore
             else
-              {user, _} = parse_jid(message.from.full)
-              {:dm, user, message.body}
+              {:dm, message.from.full, message.body}
             end
           true ->
             :ignore
@@ -47,6 +46,7 @@ defmodule Cog.Chat.HipChat.Util do
           email: :proplists.get_value("email", attrs, ""),
           first_name: first_name,
           last_name: last_name,
+          mention_name: item.name,
           handle: :proplists.get_value("mention_name", attrs, "")}
   end
 
