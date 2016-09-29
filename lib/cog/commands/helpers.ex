@@ -21,7 +21,7 @@ defmodule Cog.Commands.Helpers do
 
         command_version = bundle_name <> ":" <> command_name
         |> Cog.Repository.Commands.with_status_by_any_name
-        |> Repo.preload([:command, :bundle_version, options: :option_type])
+        |> Cog.Repository.Commands.preloads_for_help
 
         rendered = Cog.V1.CommandVersionView.render("command_version_help.json", %{command_version: command_version})
         Map.merge(rendered, %{error: error})

@@ -52,7 +52,7 @@ defmodule Cog.Commands.Help do
 
         command_version = full_command_name
         |> Commands.with_status_by_any_name
-        |> Repo.preload([:command, :bundle_version, options: :option_type])
+        |> Commands.preloads_for_help
 
         case command_version do
           [] ->
