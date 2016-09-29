@@ -1,13 +1,17 @@
 defmodule Cog.Chat.HipChat.TemplateProcessor do
   require Logger
 
+  @attachment_fields ["footer", "children", "fields", "pretext", "author", "title"]
+
   def render(directives) do
     render_directives(directives)
   end
 
-  defp process_directive(%{"name" => "attachment", "children" => children}) do
-    Logger.warn("Rendering attachment contents only")
-    render(children)
+  defp process_directive(%{"name" => "attachment"}=attachment) do
+    @attachment_fields
+    |> Enum.reduce([], &(render_attachment(&1, &2, attachment)))
+    |> List.flatten
+    |> Enum.join
   end
   defp process_directive(%{"name" => "text", "text" => text}),
     do: text
@@ -57,12 +61,69 @@ defmodule Cog.Chat.HipChat.TemplateProcessor do
   end
   defp process_directive(%{"name" => name}=directive) do
     Logger.warn("Unrecognized directive; #{inspect directive}")
-    "\nUnrecognized directive: #{name}\n"
+    "<br/>Unrecognized directive: #{name}<br/>"
   end
 
   defp render_directives(directives) do
     directives
     |> Enum.map_join(&process_directive/1) # Convert all Greenbar directives into their HipChat forms
+  end
+
+  defp render_attachment("footer", acc, attachment) do
+    case Map.get(attachment, "footer") do
+      nil ->
+        acc
+      footer ->
+        ["<br/>#{footer}<br/>"|acc]
+    end
+  end
+  defp render_attachment("children", acc, attachment) do
+    case Map.get(attachment, "children") do
+      nil ->
+        acc
+      children ->
+        [render(children)|acc]
+    end
+  end
+  defp render_attachment("fields", acc, attachment) do
+    case Map.get(attachment, "fields") do
+      nil ->
+        acc
+      fields ->
+        rendered_fields = fields
+        |> Enum.map(fn(%{"title" => title, "value" => value}) -> "<strong>#{title}:</strong> #{value}<br/>" end)
+        |> Enum.join
+        [rendered_fields <> "<br/>"|acc]
+    end
+  end
+  defp render_attachment("pretext", acc, attachment) do
+    case Map.get(attachment, "pretext") do
+      nil ->
+        acc
+      pretext ->
+        ["#{pretext}<br/>"|acc]
+    end
+  end
+  defp render_attachment("author", acc, attachment) do
+    case Map.get(attachment, "author") do
+      nil ->
+        acc
+      author ->
+        ["<strong>Author:</strong> #{author}<br/>"|acc]
+    end
+  end
+  defp render_attachment("title", acc, attachment) do
+    case Map.get(attachment, "title") do
+      nil ->
+        acc
+      title ->
+        case Map.get(attachment, "title_url") do
+          nil ->
+            ["<strong>#{title}</strong><br/><br/>"|acc]
+          url ->
+            ["<a href=\"#{url}\">title</a><br/><br/>"|acc]
+        end
+    end
   end
 
 end
