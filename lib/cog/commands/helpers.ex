@@ -23,7 +23,7 @@ defmodule Cog.Commands.Helpers do
         |> Cog.Repository.Commands.with_status_by_any_name
         |> Cog.Repository.Commands.preloads_for_help
 
-        rendered = Cog.V1.CommandVersionView.render("command_version_help.json", %{command_version: command_version})
+        rendered = Cog.CommandVersionHelpView.render("command_version.json", %{command_version: command_version})
         Map.merge(rendered, %{error: error})
 
         {:ok, "help-command", rendered}

@@ -60,7 +60,7 @@ defmodule Cog.Commands.Help do
           [%CommandVersion{bundle_version: %BundleVersion{config_file: %{"cog_bundle_version" => version}}} = command] when version < 4 ->
             {:ok, {:documentation, command.documentation}}
           [%CommandVersion{} = command_version] ->
-            rendered = Cog.V1.CommandVersionView.render("command_version_help.json", %{command_version: command_version})
+            rendered = Cog.CommandVersionHelpView.render("command_version.json", %{command_version: command_version})
             {:ok, {:command, rendered}}
         end
     end

@@ -44,7 +44,7 @@ defmodule Integration.Commands.BundleTest do
 
   test "enable a bundle", %{user: user, bundle_version: bundle_version} do
     response = send_message(user, "@bot: bundle enable test_bundle")
-    assert response == [%{name: "test_bundle", status: "enabled", version: "0.1.0", description: nil}]
+    assert response == [%{name: "test_bundle", status: "enabled", version: "0.1.0"}]
     assert Bundles.enabled?(bundle_version)
   end
 
@@ -52,7 +52,7 @@ defmodule Integration.Commands.BundleTest do
     Bundles.set_bundle_version_status(bundle_version, :enabled)
 
     response = send_message(user, "@bot: bundle disable test_bundle")
-    assert response == [%{name: "test_bundle", status: "disabled", version: "0.1.0", description: nil}]
+    assert response == [%{name: "test_bundle", status: "disabled", version: "0.1.0"}]
     refute Bundles.enabled?(bundle_version)
   end
 

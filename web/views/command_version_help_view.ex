@@ -1,34 +1,30 @@
-defmodule Cog.Commands.Help.CommandFormatter do
-  alias Cog.Models.{CommandOption, CommandOptionType, CommandVersion}
+defmodule Cog.CommandVersionHelpView do
+  use Cog.Web, :view
 
-  def render_synopsis(%CommandVersion{options: options, arguments: arguments} = command_version) do
+  alias Cog.Models.{CommandVersion, CommandOption, CommandOptionType}
+
+  def render("command_version.json", %{command_version: command_version}) do
+    %{name: command_version.command.name,
+      description: command_version.description,
+      synopsis: render_synopsis(command_version),
+      required_options: render_required_options(command_version),
+      options: render_options(command_version),
+      subcommands: render_subcommands(command_version),
+      examples: command_version.examples,
+      notes: command_version.notes,
+      bundle: %{
+        author: command_version.bundle_version.author,
+        homepage: command_version.bundle_version.homepage
+      }}
+  end
+
+  defp render_synopsis(%CommandVersion{options: options, arguments: arguments} = command_version) do
     name = CommandVersion.full_name(command_version)
     options = render_synopsis_options(options)
 
     [name, options, arguments]
     |> Enum.reject(&is_nil/1)
     |> Enum.join(" ")
-  end
-
-  def render_required_options(%CommandVersion{options: options}) do
-    options
-    |> Enum.filter(&(&1.required))
-    |> Enum.map(&render_option/1)
-  end
-
-  def render_options(%CommandVersion{options: options}) do
-    options
-    |> Enum.reject(&(&1.required))
-    |> Enum.map(&render_option/1)
-  end
-
-  def render_subcommands(%CommandVersion{subcommands: nil}),
-    do: []
-  def render_subcommands(%CommandVersion{subcommands: subcommands}) do
-    Enum.map(subcommands, fn {command, description} ->
-      %{command: command,
-        description: description}
-    end)
   end
 
   defp render_synopsis_options([]),
@@ -62,6 +58,18 @@ defmodule Cog.Commands.Help.CommandFormatter do
     end
   end
 
+  defp render_required_options(%CommandVersion{options: options}) do
+    options
+    |> Enum.filter(&(&1.required))
+    |> Enum.map(&render_option/1)
+  end
+
+  defp render_options(%CommandVersion{options: options}) do
+    options
+    |> Enum.reject(&(&1.required))
+    |> Enum.map(&render_option/1)
+  end
+
   defp render_option(%CommandOption{description: description} = command_option) do
     %{flag: render_flag(command_option),
       description: description}
@@ -84,4 +92,13 @@ defmodule Cog.Commands.Help.CommandFormatter do
     do: "--#{long_flag}"
   defp render_long_flag(%CommandOption{long_flag: long_flag, name: name}),
     do: "--#{long_flag} <#{name}>"
+
+  def render_subcommands(%CommandVersion{subcommands: nil}),
+    do: []
+  def render_subcommands(%CommandVersion{subcommands: subcommands}) do
+    Enum.map(subcommands, fn {command, description} ->
+      %{command: command,
+        description: description}
+    end)
+  end
 end
