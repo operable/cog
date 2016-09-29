@@ -64,7 +64,7 @@ defmodule Cog.Mixfile do
       {:adz, github: "operable/adz"},
       {:conduit, github: "operable/conduit"},
       {:fumanchu, github: "operable/fumanchu"},
-      {:greenbar, github: "operable/greenbar"},
+      {:greenbar, github: "operable/greenbar", branch: "kevsmith/markdown-bug"},
       {:probe, github: "operable/probe"},
       {:spanner, github: "operable/spanner"},
 
