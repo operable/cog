@@ -19,13 +19,14 @@ defmodule Cog.Commands.Helpers do
         bundle_name = Cog.Util.Misc.embedded_bundle
         command_name = Cog.Command.GenCommand.Base.command_name(__MODULE__)
 
-        [command_version] = bundle_name <> ":" <> command_name
+        command_version = bundle_name <> ":" <> command_name
         |> Cog.Repository.Commands.with_status_by_any_name
-        |> Cog.Repo.preload([:bundle_version, :options])
+        |> Cog.Repository.Commands.preloads_for_help
 
-        usage = Cog.Commands.Help.CommandFormatter.format(command_version)
+        rendered = Cog.CommandVersionHelpView.render("command_version.json", %{command_version: command_version})
+        Map.merge(rendered, %{error: error})
 
-        {:ok, "usage", %{usage: usage, error: error}}
+        {:ok, "help-command", rendered}
       end
     end
   end

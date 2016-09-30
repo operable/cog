@@ -1,0 +1,38 @@
+~each var=$results as=bundle~
+
+__Name__
+~br~
+~$bundle.name~~if cond=$bundle.description~ - ~$bundle.description~~end~
+~br~
+
+~if cond=$bundle.long_description~
+__Description__
+~br~
+~$bundle.long_description~
+~br~
+~end~
+
+~if cond=$bundle.commands not_empty?~
+__Commands__
+~br~
+~each var=$bundle.commands as=command~
+* ~$command.name~~if cond=$command.description~ - ~$command.description~~end~
+
+~end~
+~br~
+~end~
+
+~if cond=$bundle.author~
+__Author__
+~br~
+~$bundle.author~
+~br~
+~end~
+
+~if cond=$bundle.homepage~
+__Homepage__
+~br~
+~$bundle.homepage~
+~end~
+
+~end~

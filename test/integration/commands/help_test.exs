@@ -12,18 +12,18 @@ defmodule Integration.Commands.HelpTest do
   test "listing bundles", %{user: user} do
     ModelUtilities.command("test-command")
 
-    response = send_message(user, "@bot: operable:help")
+    [response] = send_message(user, "@bot: operable:help")
 
-    assert String.contains?(response, "operable")
-    assert String.contains?(response, "test-bundle")
+    assert %{enabled: [%{name: "operable"}],
+             disabled: [%{name: "test-bundle"}]} = response
   end
 
   test "showing docs for a command", %{user: user} do
     ModelUtilities.command("test-command", %{description: "Does test command things", arguments: "[test-arg]"})
 
-    response = send_message(user, "@bot: operable:help test-bundle:test-command")
+    [response] = send_message(user, "@bot: operable:help test-bundle:test-command")
 
-    assert String.contains?(response, "Does test command things")
-    assert String.contains?(response, "test-bundle:test-command [test-arg]")
+    assert %{name: "test-command",
+             description: "Does test command things"} = response
   end
 end
