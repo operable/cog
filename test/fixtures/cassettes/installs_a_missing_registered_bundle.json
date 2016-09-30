@@ -1,0 +1,30 @@
+[
+  {
+    "request": {
+      "body": "",
+      "headers": {
+        "Accepts": "application/json"
+      },
+      "method": "get",
+      "options": [],
+      "request_body": "",
+      "url": "https://bundles.operable.io/api/bundles/herooku/0.0.4"
+    },
+    "response": {
+      "body": "\"Internal server error\"",
+      "headers": {
+        "Connection": "keep-alive",
+        "Server": "Cowboy",
+        "Date": "Fri, 30 Sep 2016 17:44:44 GMT",
+        "Content-Length": "23",
+        "Content-Type": "application/json; charset=utf-8",
+        "Cache-Control": "max-age=0, private, must-revalidate",
+        "Strict-Transport-Security": "max-age=31536000",
+        "X-Request-Id": "e3f4d96a-7861-4b1b-991b-af305198f932",
+        "Via": "1.1 vegur"
+      },
+      "status_code": 404,
+      "type": "ok"
+    }
+  }
+]
