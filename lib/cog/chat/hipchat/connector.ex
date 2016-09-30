@@ -152,7 +152,7 @@ defmodule Cog.Chat.HipChat.Connector do
     state = case Util.classify_message(message) do
               {:invite, room_name} ->
                 Logger.info("Received an invite to MUC room '#{room_name}'")
-                join_room(room_name, state, save: true)
+                join_room(room_name, state)
                 state
               {:groupchat, room_jid, sender, body} ->
                 handle_groupchat(room_jid, sender, body, state)
@@ -313,39 +313,53 @@ defmodule Cog.Chat.HipChat.Connector do
       nil ->
         {:ok, state}
       pstate ->
-        case Enum.reduce_while(Map.get(pstate, "rooms", []), :ok,
+        rooms = finalize_rooms(Map.get(pstate, "rooms", []), System.get_env("HIPCHAT_ROOMS"))
+        unless length(rooms) == 0 do
+          Logger.info("Rejoining #{Enum.join(rooms, ", ")}")
+        end
+        case Enum.reduce(rooms, [],
               fn(room_name, acc) ->
                 case join_room(room_name, state) do
                   :ok ->
-                    {:cont, acc}
+                    acc
                   :error ->
-                    {:halt, :error}
+                    [room_name|acc]
                 end end) do
-          :ok ->
+          [] ->
             {:ok, state}
-          _ ->
-            :error
+          errors ->
+            Logger.error("Failed to rejoin the following rooms: #{Enum.join(errors, ",")}")
+            {:ok, state}
         end
     end
   end
 
-  defp join_room(room_name, state, opts \\ [save: false]) do
-    muc_name = "#{state.hipchat_org}_#{room_name}@#{state.conf_host}"
+  defp finalize_rooms(pstate_rooms, nil), do: pstate_rooms
+  defp finalize_rooms(pstate_rooms, envvar_rooms) do
+    env_rooms = String.split(envvar_rooms, " ", trim: true)
+    Enum.uniq(pstate_rooms ++ env_rooms)
+  end
+
+  defp join_room(room_name, state) do
+    # If we were given a JID then use it, else build a JID
+    # using the hipchat org and conf_host
+    muc_name = if String.contains?(room_name, state.conf_host) do
+      room_name
+    else
+      "#{state.hipchat_org}_#{room_name}@#{state.conf_host}"
+    end
     case Connection.send(state.xmpp_conn, Stanza.join(muc_name, state.mention_name)) do
       :ok ->
         Logger.info("Successfully joined MUC room '#{room_name}'")
-        unless Keyword.get(opts, :save, false) == false do
-          pstate = ChatProviders.get_provider_state(@provider_name)
-          updated = Map.update(pstate, "rooms", [room_name], &([room_name|&1]))
-          case ChatProviders.set_provider_state(@provider_name, updated) do
-            {:ok, _} ->
-              :ok
-            error ->
-              Logger.error("Failed to save joined room to persistent state: #{inspect error}")
-              :ok
-          end
+        pstate = ChatProviders.get_provider_state(@provider_name)
+        updated = Map.update(pstate, "rooms", [room_name], &(Enum.uniq([room_name|&1])))
+        case ChatProviders.set_provider_state(@provider_name, updated) do
+          {:ok, _} ->
+            :ok
+          error ->
+            Logger.error("Failed to save joined room to persistent state: #{inspect error}")
+            :ok
         end
-        :ok
       error ->
         Logger.error("Failed to join MUC room '#{room_name}': #{inspect error}")
         :error
