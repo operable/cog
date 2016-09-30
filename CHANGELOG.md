@@ -1,5 +1,23 @@
 #  Changelog
 
+## 0.14.1
+
+### Bug Fixes
+
+- Relay left in zombie state when partially disconnected [#990](https://github.com/operable/cog/issues/990)
+  - Relay now halts whenever one of its message bus connections is lost. Users will need to ensure that Relay is properly run under supervision.
+- Support groups (private channels and group DMs) in the Slack adapter [#973](https://github.com/operable/cog/issues/973)
+  - A regression occurred when we rewrote the Slack chat adapter; Cog can once again interact with private channels
+- Fix how redirects are specified [#976](https://github.com/operable/cog/issues/976)
+  - Another regression with the new Slack chat adapter was fixed; redirects work again in Slack
+- Can't log from commands at anything but INFO levels [#980](https://github.com/operable/cog/issues/980)
+- Echo command crashes with non-string args [#981](https://github.com/operable/cog/issues/981)
+- Cog crashes processing slackbot messages [#982](https://github.com/operable/cog/issues/982)
+- values in json objects can only be referenced one level deep with the dot syntax [#993](https://github.com/operable/cog/issues/993)
+- Relay doesn't consider developer mode at startup [#997](https://github.com/operable/cog/issues/997)
+- Aborted commands crash the executor [#1003](https://github.com/operable/cog/issues/1003)
+- Unordered lists render incorrectly in Slack [#1004](https://github.com/operable/cog/issues/1004)
+
 ## 0.14.0
 
 ### Enhancements
