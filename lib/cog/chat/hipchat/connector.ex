@@ -19,14 +19,14 @@ defmodule Cog.Chat.HipChat.Connector do
   @room_refresh_interval 5000
   @heartbeat_interval 30000
 
-  defstruct [:provider, :xmpp_conn, :hipchat_org, :api_token, :api_host, :conf_host, :me, :mention_name, :users, :rooms]
+  defstruct [:provider, :xmpp_conn, :hipchat_org, :api_token, :api_root, :conf_host, :me, :mention_name, :users, :rooms]
 
   def start_link(config) do
     GenServer.start_link(__MODULE__, [config, self()], name: __MODULE__)
   end
 
   def init([config, provider]) do
-    api_host = Keyword.fetch!(config, :api_host)
+    api_root = Keyword.fetch!(config, :api_root)
     chat_host = Keyword.fetch!(config, :chat_host)
     conf_host = Keyword.fetch!(config, :conf_host)
     api_token = Keyword.fetch!(config, :api_token)
@@ -43,8 +43,8 @@ defmodule Cog.Chat.HipChat.Connector do
     case Connection.start_link(opts) do
       {:ok, conn} ->
         state = %__MODULE__{xmpp_conn: conn, hipchat_org: hipchat_org, users: %Users{},
-                            rooms: Rooms.new(api_token), me: Keyword.fetch!(opts, :jid), provider: provider,
-                            api_token: api_token, mention_name: nickname, api_host: api_host, conf_host: conf_host}
+                            rooms: Rooms.new(api_root, api_token), me: Keyword.fetch!(opts, :jid), provider: provider,
+                            api_token: api_token, mention_name: nickname, api_root: api_root, conf_host: conf_host}
         case Connection.send(conn, Stanza.presence) do
           :ok ->
             Logger.info("Successfully connected to HipChat organization #{hipchat_org} as '#{state.mention_name}'")
@@ -218,25 +218,29 @@ defmodule Cog.Chat.HipChat.Connector do
   end
 
   defp handle_groupchat(room_jid, sender, body, state) do
-    case lookup_room(state, jid: room_jid) do
-      {{:ok, nil}, state} ->
-        state
-      {{:ok, room}, state} ->
-        case lookup_user(state, jid: sender) do
-          {{:ok, nil}, state} ->
-            Logger.debug("Roster miss for #{inspect sender}")
-            state
-          {{:ok, user}, state} ->
-            GenServer.cast(state.provider, {:chat_message, %Cog.Chat.Message{id: Cog.Events.Util.unique_id,
-                                                                             room: room, user: user, text: body, provider: @provider_name,
-                                                                             bot_name: "@#{state.mention_name}", edited: false}})
-            state
-          error ->
-            Logger.error("Failed to lookup sender of groupchat message: #{inspect error}")
-            state
-        end
-      error ->
-        Logger.error("Failed to lookup room for groupchat message: #{inspect error}")
+    if sender != state.me and sender != state.mention_name do
+      case lookup_room(state, jid: room_jid) do
+        {{:ok, nil}, state} ->
+          state
+        {{:ok, room}, state} ->
+          case lookup_user(state, jid: sender) do
+            {{:ok, nil}, state} ->
+              Logger.debug("Roster miss for #{inspect sender}")
+              state
+            {{:ok, user}, state} ->
+              GenServer.cast(state.provider, {:chat_message, %Cog.Chat.Message{id: Cog.Events.Util.unique_id,
+                                                                               room: room, user: user, text: body, provider: @provider_name,
+                                                                               bot_name: "@#{state.mention_name}", edited: false}})
+              state
+            error ->
+              Logger.error("Failed to lookup sender of groupchat message: #{inspect error}")
+              state
+          end
+        error ->
+          Logger.error("Failed to lookup room for groupchat message: #{inspect error}")
+      end
+    else
+      state
     end
   end
 
@@ -284,7 +288,7 @@ defmodule Cog.Chat.HipChat.Connector do
 
   defp send_room_message(room, message, state) do
     body = prepare_message(message)
-    url = Enum.join([api_root(state), "room", room.secondary_id, "notification"], "/") <> "?token=#{state.api_token}"
+    url = Enum.join([state.api_root, "room", room.secondary_id, "notification"], "/") <> "?token=#{state.api_token}"
     response = HTTPotion.post(url, headers: ["Content-Type": "application/json",
                                              "Accepts": "application/json",
                                              "Authorization": "Bearer #{state.api_token}"],
@@ -297,7 +301,7 @@ defmodule Cog.Chat.HipChat.Connector do
 
   defp send_user_message(user, message, state) do
     body = prepare_message(message)
-    url = Enum.join([api_root(state), "user", user.email, "message"], "/")
+    url = Enum.join([state.api_root, "user", user.email, "message"], "/")
     response = HTTPotion.post(url, headers: ["Content-Type": "application/json",
                                              "Accepts": "application/json",
                                              "Authorization": "Bearer #{state.api_token}"],
@@ -364,10 +368,6 @@ defmodule Cog.Chat.HipChat.Connector do
         Logger.error("Failed to join MUC room '#{room_name}': #{inspect error}")
         :error
     end
-  end
-
-  defp api_root(state) do
-    "https://#{state.api_host}/v2"
   end
 
 end

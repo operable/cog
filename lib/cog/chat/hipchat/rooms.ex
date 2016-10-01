@@ -9,8 +9,8 @@ defmodule Cog.Chat.HipChat.Rooms do
 
   defstruct [:api_token, :hipchat_api_root, :rooms]
 
-  def new(api_token) do
-    %__MODULE__{api_token: api_token, hipchat_api_root: "https://api.hipchat.com/v2", rooms: %{}}
+  def new(api_root, api_token) do
+    %__MODULE__{api_token: api_token, hipchat_api_root: api_root, rooms: %{}}
   end
 
   def lookup(%__MODULE__{}=rooms, xmpp_conn, [jid: jid]) do
