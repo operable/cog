@@ -1,9 +1,7 @@
 defmodule Cog.V1.BundlesControllerTest do
-
-  require Logger
-
   use Cog.ModelCase
   use Cog.ConnCase
+  use ExVCR.Mock
 
   alias Cog.Repository.Bundles
 
@@ -143,6 +141,24 @@ defmodule Cog.V1.BundlesControllerTest do
 
     conn = api_request(requestor, :post, "/v1/bundles", body: %{"bundle" => %{"config" => config}})
     assert json_response(conn, 422)["errors"]
+  end
+
+  test "installs a registered bundle", %{authed: requestor} do
+    ExVCR.Config.cassette_library_dir("test/fixtures/cassettes")
+
+    use_cassette "installs_a_registered_bundle" do
+      conn = api_request(requestor, :post, "/v1/bundles/install/heroku/0.0.4")
+      assert json_response(conn, 201)
+    end
+  end
+
+  test "fails to install a missing registered bundle", %{authed: requestor} do
+    ExVCR.Config.cassette_library_dir("test/fixtures/cassettes")
+
+    use_cassette "installs_a_missing_registered_bundle" do
+      conn = api_request(requestor, :post, "/v1/bundles/install/herooku/0.0.4")
+      assert json_response(conn, 404)
+    end
   end
 
   test "shows disabled bundle", %{authed: requestor} do

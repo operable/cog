@@ -45,6 +45,7 @@ defmodule Cog.Router do
     # Bundles
 
     resources "/v1/bundles", V1.BundlesController, only: [:index, :create, :show, :delete]
+    post "/v1/bundles/install/:bundle/:version/", V1.BundlesController, :install
 
     resources "/v1/bundles/:bundle_id/versions/", V1.BundleVersionController, only: [:index, :show, :delete]
 

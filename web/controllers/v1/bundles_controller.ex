@@ -59,6 +59,18 @@ defmodule Cog.V1.BundlesController do
   def create(conn, _params),
     do: send_resp(conn, 400, "")
 
+  def install(conn, %{"bundle" => bundle, "version" => version}) do
+    case Repository.Bundles.install_from_registry(bundle, version) do
+      {:ok, bundle_version} ->
+        conn
+        |> put_status(:created)
+        |> put_resp_header("location", Cog.Router.Helpers.bundle_version_path(conn, :show, bundle_version.bundle.id, bundle_version.id))
+        |> render(Cog.V1.BundleVersionView, "show.json", %{bundle_version: bundle_version, warnings: []})
+      {:error, error} ->
+        send_failure(conn, error)
+    end
+  end
+
   ########################################################################
   # Bundle Creation Helpers
 
@@ -161,6 +173,14 @@ defmodule Cog.V1.BundlesController do
     msg = ["Could not save bundle."]
     errors = Enum.map(errors, fn({_, {message, []}}) -> message end)
     {:unprocessable_entity, %{errors: msg ++ errors}}
+  end
+  defp error({:not_found, bundle}) do
+    msg = ["Bundle #{inspect bundle} not found."]
+    {:not_found, %{errors: msg}}
+  end
+  defp error({:not_found, bundle, version}) do
+    msg = ["Bundle #{inspect bundle} version #{inspect version} not found."]
+    {:not_found, %{errors: msg}}
   end
   defp error(err) do
     msg = inspect(err)

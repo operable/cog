@@ -9,6 +9,7 @@ defmodule Cog.Repository.Bundles do
   alias Cog.Models.{Bundle, BundleVersion, BundleDynamicConfig, CommandVersion, Rule}
   alias Cog.Repository.Rules
   alias Cog.Queries
+  alias Cog.BundleRegistry
 
   alias Cog.Models.Types.VersionTriple
   alias Ecto.Adapters.SQL
@@ -51,6 +52,18 @@ defmodule Cog.Repository.Bundles do
     do: {:error, {:reserved_bundle, reserved}}
   def install(params),
     do: __install(params)
+
+  def install_from_registry(bundle, version) do
+    case BundleRegistry.get_config(bundle, version) do
+      {:ok, %{"name" => name, "version" => version} = config} ->
+        revised_config = %{"name" => name,
+                           "version" => version,
+                           "config_file" => config}
+        install(revised_config)
+      {:error, error} ->
+        {:error, error}
+    end
+  end
 
   # TODO: clean this up so we only need the config file part;
   # everything else is redundant
