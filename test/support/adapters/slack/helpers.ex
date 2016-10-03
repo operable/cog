@@ -7,6 +7,11 @@ defmodule Cog.Adapters.Slack.Helpers do
   @interval 1000 # 1 second
   @timeout 120000 # 2 minutes
 
+  def mention_name(handle) do
+    {:ok, mention_name} = Cog.Chat.Adapter.mention_name("slack", handle)
+    mention_name
+  end
+
   # keyword args:
   #   after: the last Slack message sent; you only want to look at
   #          responses that came in after this one. Required argument.

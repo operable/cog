@@ -23,7 +23,7 @@ defmodule Integration.SlackTest do
     user |> with_permission("operable:st-echo")
 
     message = send_edited_message("@#{@bot}: operable:st-echo test")
-    assert_edited_response "@#{@user} Executing edited command 'operable:st-echo test'\ntest", after: message
+    assert_edited_response "#{mention_name(@user)} Executing edited command 'operable:st-echo test'\ntest", after: message
   end
 
   test "running the st-echo command", %{user: user} do
