@@ -1,13 +1,13 @@
 defmodule Integration.SlackTest do
-  use Cog.AdapterCase, adapter: "slack"
+  use Cog.Test.Support.ProviderCase, provider: :slack
 
   @moduletag :slack
 
-  # Name of the Slack user we'll be interacting with the bot as
   @user "botci"
 
-  # Name of the bot we'll be operating as
   @bot "deckard"
+
+  @ci_room "ci_bot_testing"
 
   setup do
     # The user always interacts with the bot via the `@user` account
@@ -15,97 +15,145 @@ defmodule Integration.SlackTest do
     # Cog username and Slack handle
     user = user(@user)
     |> with_chat_handle_for("slack")
-
-    {:ok, %{user: user}}
+    case System.get_env("SLACK_USER_API_TOKEN") do
+      nil ->
+        raise RuntimeError, message: "$SLACK_USER_API_TOKEN not set!"
+      token ->
+        {:ok, client} = ChatClient.start_link(token)
+        :ok = ChatClient.initialize(client)
+        {:ok, %{user: user, client: client}}
+    end
   end
 
-  test "running the st-echo command", %{user: user} do
+  test "running the st-echo command", %{user: user, client: client} do
     user |> with_permission("operable:st-echo")
-
-    message = send_message("@#{@bot}: operable:st-echo test")
-    assert_response "test", after: message
+    {:ok, reply} = ChatClient.chat_wait!(client, [room: @ci_room, message: "@#{@bot} operable:st-echo test", reply_from: @bot])
+    assert reply.text == "test"
   end
 
-  test "running the st-echo command without permission" do
-    message = send_message("@#{@bot}: operable:st-echo test")
-    assert_response_contains "Sorry, you aren't allowed to execute 'operable:st-echo test' :(\n You will need at least one of the following permissions to run this command: 'operable:st-echo'", after: message
+  test "running the st-echo command without permission", %{client: client} do
+    message = "@#{@bot}: operable:st-echo test"
+    {:ok, reply} = ChatClient.chat_wait!(client, [room: @ci_room, message: message,
+                                                   reply_from: @bot])
+    expected = """
+    The pipeline failed executing the command:
+
+    ```operable:st-echo test
+    ```
+
+    The specific error was:
+
+    ```Sorry, you aren't allowed to execute 'operable:st-echo test' :(
+     You will need at least one of the following permissions to run this command: 'operable:st-echo'.
+    ```
+    """ |> String.strip
+    assert reply.text == expected
+    assert reply.location.type == :channel
+    assert reply.location.name == @ci_room
   end
 
-  test "running commands in a pipeline", %{user: user} do
+  test "running commands in a pipeline", %{user: user, client: client} do
     user
     |> with_permission("operable:echo")
     |> with_permission("operable:thorn")
 
-    message = send_message(~s(@#{@bot}: seed '[{"test": "blah"}]' | echo $test))
-    assert_response "blah", after: message
+    message = "@#{@bot}: seed '[{\"test\": \"blah\"}]' | echo $test"
+    {:ok, reply} = ChatClient.chat_wait!(client, [room: @ci_room, message: message, reply_from: @bot])
+    assert reply.text == "blah"
+    assert reply.location.type == :channel
+    assert reply.location.name == @ci_room
   end
 
-  test "running commands in a pipeline without permission", %{user: user} do
+  test "running commands in a pipeline without permission", %{user: user, client: client} do
     user |> with_permission("operable:st-echo")
 
-    message = send_message(~s(@#{@bot}: operable:st-echo "this is a test" | operable:st-thorn $body))
-    assert_response_contains "Sorry, you aren't allowed to execute 'operable:st-thorn $body' :(\n You will need at least one of the following permissions to run this command: 'operable:st-thorn'", after: message
+    message = "@#{@bot}: operable:st-echo \"this is a test\" | operable:st-thorn $body"
+    {:ok, reply} = ChatClient.chat_wait!(client, [room: @ci_room, message: message, reply_from: @bot])
+    expected = """
+    The pipeline failed executing the command:
+
+    ```operable:st-thorn $body
+    ```
+
+    The specific error was:
+
+    ```Sorry, you aren't allowed to execute 'operable:st-thorn $body' :(
+      You will need at least one of the following permissions to run this command: 'operable:st-thorn'.
+    ```
+     """ |> String.strip
+    assert reply.text == expected
+    assert reply.location.type == :channel
+    assert reply.location.name == @ci_room
   end
 
-  test "sending a message to a group", %{user: user} do
+  test "sending a message to a group", %{user: user, client: client} do
     user |> with_permission("operable:echo")
-    private_channel = "#group_ci_bot_testing"
+    private_group = "group_ci_bot_testing"
 
-    message = send_message("@#{@bot}: operable:echo blah", private_channel)
-    assert_response "blah", [after: message], private_channel
+    message = "@#{@bot}: operable:echo blah"
+    {:ok, reply} = ChatClient.chat_wait!(client, [room: private_group, message: message, reply_from: @bot])
+    assert reply.text == "blah"
+    assert reply.location.type == :group
+    assert reply.location.name == private_group
   end
 
-  test "redirecting from a private channel", %{user: user} do
+  test "redirecting from a private channel", %{user: user, client: client} do
     user |> with_permission("operable:echo")
-    private_channel = "#group_ci_bot_testing"
-    marker = send_message("Redirect test starts here")
-
-    send_message("@#{@bot}: operable:echo blah > #ci_bot_testing", private_channel)
-    assert_response "blah", [after: marker]
+    private_channel = "group_ci_bot_testing"
+    message = "@#{@bot}: operable:echo blah > ##{private_channel}"
+    {:ok, reply} = ChatClient.chat_wait!(client, [room: @ci_room, message: message, reply_from: @bot])
+    assert reply.location.type == :group
+    assert reply.location.name == private_channel
+    assert reply.text == "blah"
   end
 
-  test "redirecting to a private channel", %{user: user} do
+  test "redirecting to a private channel", %{user: user, client: client} do
     user |> with_permission("operable:echo")
-    private_channel = "#group_ci_bot_testing"
-    marker = send_message("Redirect test starts here", private_channel)
-
-    send_message("@#{@bot}: operable:echo blah > #{private_channel}")
-    assert_response "blah", [after: marker], private_channel
+    time = "#{System.os_time()}"
+    private_channel = "group_ci_bot_testing"
+    message = "@#{@bot}: operable:echo #{time} > ##{private_channel}"
+    {:ok, reply} = ChatClient.chat_wait!(client, [room: @ci_room, message: message, reply_from: @bot])
+    assert reply.location.type == :group
+    assert reply.location.name == private_channel
+    assert reply.text == time
   end
 
-  test "redirecting to 'here'", %{user: user} do
+ test "redirecting to 'here'", %{user: user, client: client} do
     user |> with_permission("operable:echo")
-
-    message = send_message("@#{@bot}: operable:echo blah > here")
-    assert_response "blah", [after: message]
+    message = "@#{@bot}: operable:echo blah > here"
+    {:ok, reply} = ChatClient.chat_wait!(client, [room: @ci_room, message: message, reply_from: @bot])
+    assert reply.text == "blah"
+    assert reply.location.type == :channel
+    assert reply.location.name == @ci_room
   end
 
-  test "redirecting to 'me'", %{user: user} do
+  test "redirecting to 'me'", %{user: user, client: client} do
     user |> with_permission("operable:echo")
-    marker = send_message("echo here", "@#{@user}")
 
-    send_message("@#{@bot}: operable:echo blah > me")
+    message = "@#{@bot}: operable:echo blah > me"
+    {:ok, reply} = ChatClient.chat_wait!(client, [room: @ci_room, message: message, reply_from: @bot])
+    assert reply.location.type == :im
     # Since Cog responds when direct messaging it we have to assert
     # that both our marker text and message test exist.
-    assert_response "here\nblah", [after: marker, count: 2], "@#{@user}"
+    #assert_response "here\nblah", [after: marker, count: 2], "@#{@user}"
   end
 
-  test "redirecting to a specific user", %{user: user} do
+  test "redirecting to a specific user", %{user: user, client: client} do
     user |> with_permission("operable:echo")
-    marker = send_message("echo here", "@#{@user}")
-
-    send_message("@#{@bot}: operable:echo blah > @#{@user}")
-    # Since Cog responds when direct messaging it we have to assert
-    # that both our marker text and message test exist.
-    assert_response "here\nblah", [after: marker, count: 2], "@#{@user}"
+    message = "@#{@bot}: operable:echo blah > @#{@user}"
+    {:ok, reply} = ChatClient.chat_wait!(client, [room: @ci_room, message: message, reply_from: @bot])
+    assert reply.text == "blah"
+    assert reply.location.type == :im
   end
 
-  test "redirecting to another channel", %{user: user} do
+  test "redirecting to another channel", %{user: user, client: client} do
     user |> with_permission("operable:echo")
-    redirect_channel = "#ci_bot_redirect_tests"
-    marker = send_message("echo here", redirect_channel)
-
-    send_message("@#{@bot}: operable:echo blah > #{redirect_channel}")
-    assert_response "blah", [after: marker], redirect_channel
+    redirect_channel = "ci_bot_redirect_tests"
+    message = "@#{@bot}: operable:echo blah > ##{redirect_channel}"
+    {:ok, reply} = ChatClient.chat_wait!(client, [room: @ci_room, message: message, reply_from: @bot])
+    assert reply.location.type == :channel
+    assert reply.location.name == redirect_channel
+    assert reply.text == "blah"
   end
+
 end
