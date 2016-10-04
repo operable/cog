@@ -17,6 +17,17 @@ defmodule Cog.Chat.Slack.Provider do
     GenServer.start_link(__MODULE__, [config], name: __MODULE__)
   end
 
+  def mention_name(handle) do
+    # Lookup the user and return the id properly formatted instead of just the
+    # handle. If we just return the handle slack doesn't always recognize the
+    # handle and alert the user. For example, when you return the mention name
+    # followed by a colon.
+    case lookup_user(handle) do
+      %Cog.Chat.User{id: id} -> "<@#{id}>"
+      _ -> super(handle)
+    end
+  end
+
   def lookup_room({:id, id}),
     do: GenServer.call(__MODULE__, {:lookup_room, {:id, id}}, :infinity)
   def lookup_room({:name, name}),
