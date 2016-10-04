@@ -76,9 +76,10 @@ defmodule Cog.V1.BundlesController do
 
   defp install_bundle(params) do
     with {:ok, config}                 <- parse_config(params),
+         {:ok, install_type}           <- install_type(params),
          {:ok, valid_config, warnings} <- validate_config(config),
          {:ok, params}                 <- merge_config(params, valid_config),
-         {:ok, bundle}                 <- Repository.Bundles.install(params) do
+         {:ok, bundle}                 <- Repository.Bundles.install(install_type, params) do
            {:ok, bundle, warnings}
     end
   end
@@ -91,6 +92,11 @@ defmodule Cog.V1.BundlesController do
   end
   defp parse_config(_),
     do: {:error, :no_config}
+
+  defp install_type(%{"force" => true}),
+    do: {:ok, :force}
+  defp install_type(_),
+    do: {:ok, :normal}
 
   # If we have a file, check to see if the filename has the correct extension
   defp validate_file_format(%Plug.Upload{filename: filename}) do

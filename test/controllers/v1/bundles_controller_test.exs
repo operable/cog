@@ -134,6 +134,14 @@ defmodule Cog.V1.BundlesControllerTest do
             "version has already been taken"] = json_response(conn, 409)["errors"]
   end
 
+  test "force enables installation of an already installed version", %{authed: requestor} do
+    config = config(:map)
+    {:ok, _orig_version3} = Bundles.install(%{"name" => config["name"], "version" => config["version"], "config_file" => config})
+
+    conn = api_request(requestor, :post, "/v1/bundles", body: %{"bundle" => %{"config" => config, "force" => true}})
+    assert response(conn, 201)
+  end
+
   test "fails to install with semantically invalid config", %{authed: requestor} do
     # The config includes rules that mention permissions; if we remove
     # those permissions, installation should fail
