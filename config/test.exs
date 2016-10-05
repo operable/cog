@@ -7,8 +7,7 @@ config :lager, :handlers,
   [{LagerLogger, [level: :error]}]
 
 config :cog, Cog.Chat.Adapter,
-  providers: [test: Cog.Chat.Test.Provider],
-  chat: :test
+  providers: [test: Cog.Chat.Test.Provider]
 
 config :cog, Cog.Chat.Test.Provider,
   verbose: true
@@ -47,13 +46,3 @@ config :ex_unit,
 config :cog, Cog.Mailer, adapter: Bamboo.TestAdapter
 config :cog, :email_from, "test@example.com"
 config :cog, :password_reset_base_url, "http://cog.localhost/reset-password"
-
-
-config :cog, Cog.Chat.HipChat.Provider,
-  api_root: System.get_env("HIPCHAT_API_ROOT") || "https://api.hipchat.com/v2",
-  chat_host: System.get_env("HIPCHAT_CHAT_HOST") || "chat.hipchat.com",
-  conf_host: System.get_env("HIPCHAT_CONF_HOST") || "conf.hipchat.com",
-  api_token: System.get_env("HIPCHAT_API_TOKEN"),
-  nickname: System.get_env("HIPCHAT_NICKNAME"),
-  jabber_id: System.get_env("HIPCHAT_JABBER_ID"),
-  jabber_password: System.get_env("HIPCHAT_JABBER_PASSWORD")
