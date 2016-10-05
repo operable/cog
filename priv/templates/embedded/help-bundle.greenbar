@@ -12,6 +12,22 @@ __Description__
 ~br~
 ~end~
 
+~if cond=$bundle.config_file.config~
+__Configuration__
+~br~
+
+~if cond=$bundle.config_file.config.notes~
+~$bundle.config_file.config.notes~
+~br~
+~end~
+
+~each var=$bundle.config_file.config.env as=env_var~
+* ~$env_var.var~~if cond=$env_var.description~ - ~$env_var.description~~end~
+
+~end~
+~br~
+~end~
+
 ~if cond=$bundle.commands not_empty?~
 __Commands__
 ~br~
