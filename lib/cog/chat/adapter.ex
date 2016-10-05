@@ -231,7 +231,6 @@ defmodule Cog.Chat.Adapter do
     {:noreply, state}
   end
   def handle_cast(conn, @incoming_topic, "message", message, state) do
-    Logger.debug("Received: #{inspect message, pretty: true}")
     state = case Message.from_map(message) do
               {:ok, message} ->
                 case is_pipeline?(message) do
@@ -333,20 +332,14 @@ defmodule Cog.Chat.Adapter do
 
  defp parse_mention(_text, nil), do: nil
  defp parse_mention(text, bot_name) do
-   updated = Regex.replace(~r/^#{Regex.escape(bot_name)}/, text, "")
+   updated = Regex.replace(~r/^#{Regex.escape(bot_name)}/i, text, "")
    if updated != text do
       Regex.replace(~r/^:/, updated, "")
       |> String.trim
    else
-     updated = Regex.replace(~r/^#{Regex.escape(String.downcase(bot_name))}/, text, "")
-     if updated != text do
-       Regex.replace(~r/^:/, updated, "")
-       |> String.trim
-     else
-       nil
-     end
-    end
-  end
+     nil
+   end
+ end
 
  defp prepare_target(target) do
    case Cog.Chat.Room.from_map(target) do
