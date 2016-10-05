@@ -86,6 +86,17 @@ defmodule Cog.Test.Support.SlackClient do
 
   alias Cog.Test.Support.SlackClientState
 
+  def new() do
+    case System.get_env("SLACK_USER_API_TOKEN") do
+      nil ->
+        raise RuntimeError, message: "$SLACK_USER_API_TOKEN not set!"
+      token ->
+        {:ok, client} = start_link(token)
+        :ok = initialize(client)
+        {:ok, client}
+    end
+  end
+
   def initialize(client, room \\ nil) do
     call(client, {:init, room})
   end

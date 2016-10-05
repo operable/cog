@@ -156,8 +156,14 @@ defmodule Cog.Chat.HipChat.Connector do
                 state
               {:groupchat, room_jid, sender, body} ->
                 handle_groupchat(room_jid, sender, body, state)
-              {:dm, sender, body} ->
-                handle_dm(sender, body, state)
+              {:dm, sender_jid, body} ->
+                case Users.lookup(state.users, state.xmpp_conn, jid: sender_jid) do
+                  {nil, users} ->
+                    %{state | users: users}
+                  {user, users} ->
+                    state = %{state | users: users}
+                    handle_dm(user.mention_name, body, state)
+                end
               :ignore ->
                 state
             end
@@ -194,7 +200,7 @@ defmodule Cog.Chat.HipChat.Connector do
   defp lookup_user(state, try_both: name_or_jid) do
     case lookup_user(state, jid: name_or_jid) do
       {{:ok, nil}, state} ->
-        lookup_user(state, name: name_or_jid)
+        lookup_user(state, handle: name_or_jid)
       results ->
         results
     end
@@ -282,7 +288,7 @@ defmodule Cog.Chat.HipChat.Connector do
   defp prepare_message(text) when is_binary(text) do
     Poison.encode!(%{message_format: "html",
                      color: "gray",
-                     notify: true,
+                     notify: false,
                      message: text})
   end
 
@@ -352,7 +358,9 @@ defmodule Cog.Chat.HipChat.Connector do
     else
       "#{state.hipchat_org}_#{room_name}@#{state.conf_host}"
     end
-    case Connection.send(state.xmpp_conn, Stanza.join(muc_name, state.mention_name)) do
+    {user, users} = Users.lookup(state.users, state.xmpp_conn, jid: state.me)
+    state = %{state | users: users}
+    case Connection.send(state.xmpp_conn, Stanza.join(muc_name, "#{user.first_name} #{user.last_name}")) do
       :ok ->
         Logger.info("Successfully joined MUC room '#{room_name}'")
         pstate = ChatProviders.get_provider_state(@provider_name)

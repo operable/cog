@@ -15,6 +15,9 @@ defmodule Cog.Test.Support.ProviderCase do
         raise RuntimeError, message: "Unknown chat provider #{provider}"
       client_mod ->
         quote do
+
+          @moduletag [unquote(provider)]
+
           require Logger
           use ExUnit.Case, async: false
 
@@ -93,8 +96,9 @@ defmodule Cog.Test.Support.ProviderCase do
     end
   end
 
-  defp provider_for(:test),  do: Cog.Chat.Test.Provider
   defp provider_for(:slack), do: Cog.Chat.Slack.Provider
+  defp provider_for(:hipchat), do: Cog.Chat.HipChat.Provider
+  defp provider_for(:test), do: Cog.Chat.Test.Provider
   defp provider_for(other),
     do: raise "I don't know what implements the #{other} provider yet!"
 
@@ -139,6 +143,7 @@ defmodule Cog.Test.Support.ProviderCase do
   end
 
   defp client_for_provider(:slack), do: Cog.Test.Support.SlackClient
+  defp client_for_provider(:hipchat), do: Cog.Test.Support.HipChatClient
   defp client_for_provider(_), do: nil
 
 end

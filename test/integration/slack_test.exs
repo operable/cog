@@ -1,8 +1,6 @@
 defmodule Integration.SlackTest do
   use Cog.Test.Support.ProviderCase, provider: :slack
 
-  @moduletag :slack
-
   @user "botci"
 
   @bot "deckard"
@@ -10,19 +8,18 @@ defmodule Integration.SlackTest do
   @ci_room "ci_bot_testing"
 
   setup do
+    # Wait random 1-3 second interval to avoid being throttled by Slack's API
+    interval = :random.uniform(3) * 1000
+    :timer.sleep(interval)
+
     # The user always interacts with the bot via the `@user` account
     # (see above). Our helper functions set up a user with the same
     # Cog username and Slack handle
     user = user(@user)
     |> with_chat_handle_for("slack")
-    case System.get_env("SLACK_USER_API_TOKEN") do
-      nil ->
-        raise RuntimeError, message: "$SLACK_USER_API_TOKEN not set!"
-      token ->
-        {:ok, client} = ChatClient.start_link(token)
-        :ok = ChatClient.initialize(client)
-        {:ok, %{user: user, client: client}}
-    end
+
+    {:ok, client} = ChatClient.new()
+    {:ok, %{user: user, client: client}}
   end
 
   test "running the st-echo command", %{user: user, client: client} do
