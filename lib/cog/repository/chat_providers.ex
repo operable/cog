@@ -11,7 +11,7 @@ defmodule Cog.Repository.ChatProviders do
 
   @spec get_provider_state(binary()) :: nil | map()
   def get_provider_state(name, default \\ %{}) when is_binary(name) do
-    case Repo.get_by!(ChatProvider, name: name) do
+    case Repo.get_by(ChatProvider, name: name) do
       nil ->
         nil
       provider ->
