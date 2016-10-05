@@ -302,11 +302,8 @@ defmodule Cog.Chat.HipChat.Connector do
 
   defp send_room_message(room, message, state) do
     body = prepare_message(message)
-    url = Enum.join([state.api_root, "room", room.secondary_id, "notification"], "/") <> "?token=#{state.api_token}"
-    response = HTTPotion.post(url, headers: ["Content-Type": "application/json",
-                                             "Accepts": "application/json",
-                                             "Authorization": "Bearer #{state.api_token}"],
-      body: body)
+    url = Enum.join(["room", room.secondary_id, "notification"], "/")
+    response = call_api(state, url, body)
     unless HTTPotion.Response.success?(response) do
       Logger.error("Sending message to room '#{room.name}' failed: #{response.body}")
     end
@@ -315,11 +312,8 @@ defmodule Cog.Chat.HipChat.Connector do
 
   defp send_user_message(user, message, state) do
     body = prepare_message(message)
-    url = Enum.join([state.api_root, "user", user.email, "message"], "/")
-    response = HTTPotion.post(url, headers: ["Content-Type": "application/json",
-                                             "Accepts": "application/json",
-                                             "Authorization": "Bearer #{state.api_token}"],
-      body: body)
+    url = Enum.join(["user", user.email, "message"], "/")
+    response = call_api(state, url, body)
     unless HTTPotion.Response.success?(response) do
       Logger.error("Sending message to user '#{user.handle}' failed: #{response.body}")
     end
@@ -382,6 +376,14 @@ defmodule Cog.Chat.HipChat.Connector do
         Logger.error("Failed to join MUC room '#{room_name}': #{inspect error}")
         :error
     end
+  end
+
+  defp call_api(state, url, body) do
+    url = Enum.join([state.api_root, url], "/")
+    HTTPotion.post(url, headers: ["Content-Type": "application/json",
+                                  "Accepts": "application/json",
+                                  "Authorization": "Bearer #{state.api_token}"],
+                        body: body)
   end
 
 end
