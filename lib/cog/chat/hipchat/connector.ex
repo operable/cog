@@ -19,7 +19,8 @@ defmodule Cog.Chat.HipChat.Connector do
   @room_refresh_interval 5000
   @heartbeat_interval 30000
 
-  defstruct [:provider, :xmpp_conn, :hipchat_org, :api_token, :api_root, :conf_host, :me, :mention_name, :users, :rooms]
+  defstruct [:provider, :xmpp_conn, :hipchat_org, :api_token, :api_root, :conf_host, :me, :mention_name,
+             :xmpp_name, :users, :rooms]
 
   def start_link(config) do
     GenServer.start_link(__MODULE__, [config, self()], name: __MODULE__)
@@ -42,18 +43,25 @@ defmodule Cog.Chat.HipChat.Connector do
             require_tls: use_ssl]
     case Connection.start_link(opts) do
       {:ok, conn} ->
-        state = %__MODULE__{xmpp_conn: conn, hipchat_org: hipchat_org, users: %Users{},
-                            rooms: Rooms.new(api_root, api_token), me: Keyword.fetch!(opts, :jid), provider: provider,
-                            api_token: api_token, mention_name: nickname, api_root: api_root, conf_host: conf_host}
-        case Connection.send(conn, Stanza.presence) do
-          :ok ->
-            Logger.info("Successfully connected to HipChat organization #{hipchat_org} as '#{state.mention_name}'")
-            {:ok, state}
+        users = %Users{}
+        case Users.lookup(users, conn, jid: jabber_id) do
+          {nil, _users} ->
+            {:error, "Cannot find HipChat user associated with bot JID #{jabber_id}"}
+          {user, users} ->
+            state = %__MODULE__{xmpp_conn: conn, hipchat_org: hipchat_org, users: users,
+                                rooms: Rooms.new(api_root, api_token), me: Keyword.fetch!(opts, :jid), provider: provider,
+                                api_token: api_token, mention_name: nickname, xmpp_name: user.mention_name,
+                                api_root: api_root, conf_host: conf_host}
+            case Connection.send(conn, Stanza.presence) do
+              :ok ->
+                Logger.info("Successfully connected to HipChat organization #{hipchat_org} as '#{state.mention_name}'")
+                {:ok, state}
+              error ->
+                error
+            end
           error ->
             error
         end
-      error ->
-        error
     end
   end
 
@@ -358,9 +366,7 @@ defmodule Cog.Chat.HipChat.Connector do
     else
       "#{state.hipchat_org}_#{room_name}@#{state.conf_host}"
     end
-    {user, users} = Users.lookup(state.users, state.xmpp_conn, jid: state.me)
-    state = %{state | users: users}
-    case Connection.send(state.xmpp_conn, Stanza.join(muc_name, "#{user.first_name} #{user.last_name}")) do
+    case Connection.send(state.xmpp_conn, Stanza.join(muc_name, state.xmpp_name)) do
       :ok ->
         Logger.info("Successfully joined MUC room '#{room_name}'")
         pstate = ChatProviders.get_provider_state(@provider_name)

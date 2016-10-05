@@ -32,7 +32,7 @@ defmodule Cog.Chat.HipChat.Util do
     end
   end
 
-  def user_from_roster(item, provider) do
+  def user_from_roster(item) do
     jid = item.jid.full
     [first_name, last_name] = case String.split(item.name, " ", parts: 2) do
                                 [name] ->
@@ -42,7 +42,7 @@ defmodule Cog.Chat.HipChat.Util do
                               end
     {:xmlel, "item", attrs, _} = item.xml
     %User{id: jid,
-          provider: provider,
+          provider: "hipchat",
           email: :proplists.get_value("email", attrs, ""),
           first_name: first_name,
           last_name: last_name,

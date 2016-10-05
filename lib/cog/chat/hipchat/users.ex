@@ -23,8 +23,10 @@ defmodule Cog.Chat.HipChat.Users do
     case Map.get(users.users, handle_or_id) do
       nil ->
         case rebuild_users(users, xmpp_conn) do
-          {:ok, users} ->
+          {true, users} ->
             {Map.get(users.users, handle_or_id), users}
+          {false, users} ->
+            {nil, users}
           error ->
             error
         end
@@ -39,7 +41,7 @@ defmodule Cog.Chat.HipChat.Users do
       try do
         roster = Enum.reduce(Roster.items(xmpp_conn), %{},
           fn(item, roster) ->
-            entry = Util.user_from_roster(item, "hipchat")
+            entry = Util.user_from_roster(item)
             roster = if entry.handle != "" do
               Map.put(roster, entry.handle, entry)
             else
@@ -55,14 +57,14 @@ defmodule Cog.Chat.HipChat.Users do
             |> Map.put("#{entry.first_name} #{entry.last_name}", entry)
             |> Map.put(entry.id, entry)
           end)
-        {:ok, %{users | users: roster, last_updated: System.system_time()}}
+        {true, %{users | users: roster, last_updated: System.system_time()}}
       catch
         e ->
         Logger.error("Refreshing HipChat roster failed: #{inspect e}")
         {:error, :roster_failed}
       end
     else
-      {:ok, users}
+      {false, users}
     end
   end
 
