@@ -12,13 +12,6 @@ config :cog, :enable_spoken_commands, ensure_boolean(System.get_env("ENABLE_SPOK
 config :cog,
   :template_cache_ttl, {1, :sec}
 
-config :cog, Cog.Chat.Adapter,
-  providers: [slack: Cog.Chat.Slack.Provider]
-
-# To enable HipChat
-# config :cog, Cog.Chat.Adapter,
-#  providers: [hipchat: Cog.Chat.HipChat.Provider]
-
 config :cog, Cog.Endpoint,
   debug_errors: true,
   code_reloader: true,
