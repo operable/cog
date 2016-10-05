@@ -247,23 +247,6 @@ defmodule Cog.Chat.Slack.Connector do
     end
   end
 
-  defp annotate(%{type: "message",
-                  subtype: "message_changed",
-                  channel: channel,
-                  message: %{type: "message", user: user}=message}, state) do
-    if user == state.me.id do
-      :ignore
-    else
-      # Edited "messages" don't have a channel key, so we'll pull it in
-      # from the outer "envelope"
-      case annotate_message(Map.put(message, :channel, channel), state) do
-        :ignore ->
-          :ignore
-        {:chat_message, annotated} ->
-          {:chat_message, %{annotated | edited: true}}
-      end
-    end
-  end
   defp annotate(%{type: "message", user: user}=message, state) do
     if user == state.me.id do
       :ignore
