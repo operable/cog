@@ -12,16 +12,16 @@ __Description__
 ~br~
 ~end~
 
-~if cond=$bundle.config_file.config~
+~if cond=$bundle.config~
 __Configuration__
 ~br~
 
-~if cond=$bundle.config_file.config.notes~
-~$bundle.config_file.config.notes~
+~if cond=$bundle.config.notes~
+~$bundle.config.notes~
 ~br~
 ~end~
 
-~each var=$bundle.config_file.config.env as=env_var~
+~each var=$bundle.config.env as=env_var~
 * ~$env_var.var~~if cond=$env_var.description~ - ~$env_var.description~~end~
 
 ~end~
