@@ -8,6 +8,13 @@ defmodule Cog.Chat.Slack.Templates.Embedded.HelpBundleTest do
                              "commands" => [%{"name" => "test-command",
                                               "description" => "does just one thing"}],
                              "author" => "vanstee",
+                             "config_file" => %{
+                               "config" => %{
+                                 "notes" => "Some notes about config",
+                                 "env" => [%{"var" => "VAR1", "description" => "description1"},
+                                           %{"var" => "VAR2"}]
+                               }
+                             },
                              "homepage" => "test-bundle.com"}]}
 
 
@@ -19,6 +26,13 @@ defmodule Cog.Chat.Slack.Templates.Embedded.HelpBundleTest do
     *Description*
 
     No really, it does a thing
+
+    *Configuration*
+
+    Some notes about config
+
+    • VAR1 - description1
+    • VAR2
 
     *Commands*
 
