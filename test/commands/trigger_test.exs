@@ -1,6 +1,8 @@
-defmodule Integration.Commands.TriggerTest do
+defmodule Cog.Test.Commands.TriggerTest do
   use Cog.AdapterCase, adapter: "test"
   require Logger
+
+  @moduletag :skip
 
   alias Cog.Models.Trigger
   alias Cog.Repository.Triggers

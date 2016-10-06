@@ -1,6 +1,7 @@
-defmodule Integration.Commands.SeedTest do
+defmodule Cog.Test.Commands.SeedTest do
   use Cog.AdapterCase, adapter: "test"
 
+  @moduletag :skip
 
   setup do
     user = user("jfrost", first_name: "Jim", last_name: "Frost")

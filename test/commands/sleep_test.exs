@@ -1,5 +1,7 @@
-defmodule Integration.Commands.SleepTest do
+defmodule Cog.Test.Commands.SleepTest do
   use Cog.AdapterCase, adapter: "test"
+
+  @moduletag :skip
 
   setup do
     user = user("jfrost", first_name: "Jim", last_name: "Frost")

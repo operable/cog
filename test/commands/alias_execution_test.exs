@@ -1,5 +1,7 @@
-defmodule Integration.AliasExecutionTest do
+defmodule Cog.Test.Commands.AliasExecutionTest do
   use Cog.AdapterCase, adapter: "test"
+
+  @moduletag :skip
 
   setup do
     user = user("vanstee", first_name: "Patrick", last_name: "Van Stee")

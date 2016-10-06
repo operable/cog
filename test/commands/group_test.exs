@@ -1,5 +1,7 @@
-defmodule Integration.Commands.GroupTest do
+defmodule Cog.Test.Commands.GroupTest do
   use Cog.AdapterCase, adapter: "test"
+
+  @moduletag :skip
 
   alias Cog.Models.Group
   alias Cog.Repository.Groups

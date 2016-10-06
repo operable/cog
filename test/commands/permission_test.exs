@@ -1,5 +1,7 @@
-defmodule Integration.Commands.PermissionTest do
+defmodule Cog.Test.Commands.PermissionTest do
   use Cog.AdapterCase, adapter: "test"
+
+  @moduletag :skip
 
   alias Cog.Repository.Permissions
 

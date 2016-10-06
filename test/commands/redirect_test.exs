@@ -1,5 +1,8 @@
 defmodule Integration.RedirectTest do
   use Cog.AdapterCase, adapter: "test"
+
+  @moduletag :skip
+
   alias Cog.Snoop
   require Logger
 

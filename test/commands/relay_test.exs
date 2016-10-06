@@ -1,8 +1,10 @@
-defmodule Integration.Commands.RelayTest do
+defmodule Cog.Test.Commands.RelayTest do
   use Cog.AdapterCase, adapter: "test"
   alias Cog.Support.ModelUtilities
   alias Cog.Models.Relay
   alias Cog.Repo
+
+  @moduletag :skip
 
   setup do
     user = user("vanstee", first_name: "Patrick", last_name: "Van Stee")

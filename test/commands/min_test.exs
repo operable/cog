@@ -1,5 +1,7 @@
-defmodule Integration.Commands.MinTest do
+defmodule Cog.Test.Commands.MinTest do
   use Cog.AdapterCase, adapter: "test"
+
+  @moduletag :skip
 
   setup do
     user = user("vanstee", first_name: "Patrick", last_name: "Van Stee")

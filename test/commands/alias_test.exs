@@ -1,5 +1,8 @@
-defmodule Integration.Commands.AliasTest do
+defmodule Cog.Test.Commands.AliasTest do
   use Cog.AdapterCase, adapter: "test"
+
+  @moduletag :skip
+
   alias Cog.Models.UserCommandAlias
   alias Cog.Models.SiteCommandAlias
   alias Cog.Repo

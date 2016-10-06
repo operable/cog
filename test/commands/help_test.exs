@@ -1,5 +1,8 @@
-defmodule Integration.Commands.HelpTest do
+defmodule Cog.Test.Commands.HelpTest do
   use Cog.AdapterCase, adapter: "test"
+
+  @moduletag :skip
+
   alias Cog.Support.ModelUtilities
 
   setup do

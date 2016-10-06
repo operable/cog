@@ -1,5 +1,7 @@
-defmodule Integration.Commands.UserTest do
+defmodule Cog.Test.Commands.UserTest do
   use Cog.AdapterCase, adapter: "test"
+
+  @moduletag :skip
 
   setup do
     user = user("tester")

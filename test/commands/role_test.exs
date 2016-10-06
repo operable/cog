@@ -1,10 +1,12 @@
-defmodule Integration.Commands.RoleTest do
+defmodule Cog.Test.Commands.RoleTest do
   use Cog.AdapterCase, adapter: "test"
 
   alias Cog.Repository.Roles
   alias Cog.Repository.Groups
 
   alias Cog.Models.Role
+
+  @moduletag :skip
 
   import DatabaseAssertions, only: [assert_role_is_granted: 2,
                                     refute_role_is_granted: 2]

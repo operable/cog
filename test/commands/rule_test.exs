@@ -1,10 +1,12 @@
-defmodule Integration.Commands.RuleTest do
+defmodule Cog.Test.Commands.RuleTest do
   use Cog.AdapterCase, adapter: "test"
 
   alias Cog.Models.Rule
   alias Cog.Repository.Rules
 
   require Ecto.Query
+
+  @moduletag :skip
 
   @bad_uuid "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
 

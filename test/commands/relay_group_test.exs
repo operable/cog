@@ -1,5 +1,8 @@
-defmodule Integration.Commands.RelayGroupTest do
+defmodule Cog.Test.Commands.RelayGroupTest do
   use Cog.AdapterCase, adapter: "test"
+
+  @moduletag :skip
+
   alias Cog.Support.ModelUtilities
   alias Cog.Models.RelayGroup
   alias Cog.Repo

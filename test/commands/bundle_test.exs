@@ -1,5 +1,8 @@
-defmodule Integration.Commands.BundleTest do
+defmodule Cog.Test.Commands.BundleTest do
   use Cog.AdapterCase, adapter: "test"
+
+  @moduletag :skip
+
   alias Cog.Repository.Bundles
   alias Cog.Support.ModelUtilities
 
