@@ -41,6 +41,8 @@ defmodule Cog.Chat.Slack.Connector do
       nil ->
         send(sender, {ref, {:error, :not_found}})
       room ->
+        # Avoids Slack throttling
+        jitter()
         send(sender, {ref, Slack.Web.Channels.join(room["id"], %{token: token})})
     end
     :ok
@@ -50,6 +52,8 @@ defmodule Cog.Chat.Slack.Connector do
       nil ->
         send(sender, {ref, {:error, :not_found}})
       room ->
+        # Avoids Slack throttling
+        jitter()
         send(sender, {ref, Slack.Web.Channels.leave(room["id"], %{token: token})})
     end
     :ok
@@ -84,28 +88,31 @@ defmodule Cog.Chat.Slack.Connector do
                 attachments ->
                   Map.put(message, :attachments, Poison.encode!(attachments))
               end
+    # Avoids Slack throttling
+    jitter()
     result = Slack.Web.Chat.post_message(target, message)
     send(sender, {ref, result})
     :ok
   end
   def handle_info({{ref, sender}, {:lookup_room, %{id: id, token: token}}}, state) do
     result = case classify_id(id) do
-      :user ->
-        case open_dm(id, token) do
-          {:ok, room} ->
-            {:ok, room}
-          {:error, error} ->
-            Logger.warn("Could not establish an IM with user #{Slack.Lookups.lookup_user_name(id, state)} (Slack ID: #{id}): #{inspect error}")
-            {:error, :user_not_found}
-        end
-      :channel ->
-        case lookup_room(id, joined_channels(state), by: :id) do
-          %Room{}=room -> {:ok, room}
-          _ -> {:error, :not_a_member}
-        end
-      :error ->
-        {:error, :not_found}
-    end
+               :user ->
+                 # Avoids Slack throttling
+                 case open_dm(id, token) do
+                   {:ok, room} ->
+                     {:ok, room}
+                   {:error, error} ->
+                     Logger.warn("Could not establish an IM with user #{Slack.Lookups.lookup_user_name(id, state)} (Slack ID: #{id}): #{inspect error}")
+                     {:error, :user_not_found}
+                 end
+               :channel ->
+                 case lookup_room(id, joined_channels(state), by: :id) do
+                   %Room{}=room -> {:ok, room}
+                   _ -> {:error, :not_a_member}
+                 end
+               :error ->
+                 {:error, :not_found}
+             end
 
     send(sender, {ref, result})
     :ok
@@ -173,6 +180,8 @@ defmodule Cog.Chat.Slack.Connector do
   end
 
   defp open_dm(user_id, token) do
+    # Avoids Slack throttling
+    jitter()
     case Slack.Web.Im.open(user_id, %{token: token}) do
       %{"channel" => %{"id" => id}} ->
         {:ok, %Room{id: id,
@@ -235,6 +244,7 @@ defmodule Cog.Chat.Slack.Connector do
             first_name: user.name,
             last_name: user.name,
             handle: user.name,
+            mention_name: user.name,
             provider: "slack"}
     else
       profile = user.profile
@@ -242,6 +252,7 @@ defmodule Cog.Chat.Slack.Connector do
             first_name: Map.get(profile, :first_name, user.name),
             last_name: Map.get(profile, :last_name, user.name),
             handle: user.name,
+            mention_name: user.name,
             email: profile.email,
             provider: "slack"}
     end
@@ -320,4 +331,10 @@ defmodule Cog.Chat.Slack.Connector do
     Logger.warn("Could not classify Slack id `#{other}`")
     :error
   end
+
+  defp jitter() do
+    n = :random.uniform(90) + 10
+    :timer.sleep((n * 10))
+  end
+
 end

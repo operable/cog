@@ -9,11 +9,10 @@ config :lager, :handlers,
 
 config :cog, :enable_spoken_commands, ensure_boolean(System.get_env("ENABLE_SPOKEN_COMMANDS")) || false
 
-config :cog,
-  :template_cache_ttl, {1, :sec}
-
 config :cog, Cog.Chat.Adapter,
-  providers: [slack: Cog.Chat.Slack.Provider],
+  providers: [slack: Cog.Chat.Slack.Provider,
+              http: Cog.Chat.Http.Provider],
+  cache_ttl: {1, :sec},
   chat: :slack
 
 config :cog, Cog.Endpoint,

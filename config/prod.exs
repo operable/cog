@@ -11,4 +11,5 @@ config :comeonin,
 
 config :cog, Cog.Chat.Adapter,
   providers: [slack: Cog.Chat.Slack.Provider],
-  chat: :slack
+  chat: :slack,
+  cache_ttl: {60, sec}

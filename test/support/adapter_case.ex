@@ -1,5 +1,4 @@
 defmodule Cog.AdapterCase do
-  alias ExUnit.CaptureLog
   alias Cog.Repo
   alias Cog.Bootstrap
 
@@ -29,10 +28,10 @@ defmodule Cog.AdapterCase do
       setup_all do
         case maybe_replace_chat_provider(unquote(adapter)) do
           {:ok, original_provider} ->
-            restart_application
+            reload_chat_adapter()
             on_exit(fn ->
               maybe_replace_chat_provider(original_provider)
-              restart_application
+              reload_chat_adapter()
             end)
           :no_change ->
             :ok
@@ -97,11 +96,14 @@ defmodule Cog.AdapterCase do
   defp provider_for(other),
     do: raise "I don't know what implements the #{other} provider yet!"
 
-  def restart_application do
-    CaptureLog.capture_log(fn ->
-      :ok = Application.stop(:cog)
-      :ok = Application.start(:cog)
-    end)
+  def reload_chat_adapter() do
+    case :erlang.whereis(Cog.Chat.Adapter) do
+      :undefined ->
+        Logger.error("Can't find Cog.Chat.Adapter process!")
+        :erlang.halt(4)
+      pid ->
+        :erlang.exit(pid, :kill)
+    end
   end
 
   def bootstrap do

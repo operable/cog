@@ -26,6 +26,30 @@ defmodule Cog.Chat.AllTemplatesTest do
     end
   end
 
+  test "all embedded templates have HipChat tests" do
+    {have_tests, no_tests} = tested_untested("hipchat")
+    if no_tests == [] do
+      :ok
+    else
+      flunk """
+      The following embedded bundle templates do not have Slack
+      rendering tests defined:
+
+      #{Enum.join(no_tests, "\n")}
+
+      Tests were found for the following templates, however:
+
+      #{Enum.join(have_tests, "\n")}
+
+      NOTE: This just tests for the presence of a dedicated test file
+      for each template; it does not make any claims to the
+      thoroughness of the tests within those files.
+
+      """
+    end
+  end
+
+
   def tested_untested(provider) do
     Enum.partition(embedded_template_names,
                    &test_file_exists?(provider, &1))

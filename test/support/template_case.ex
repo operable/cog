@@ -2,6 +2,8 @@ defmodule Cog.TemplateCase do
   use ExUnit.CaseTemplate, async: true
 
   alias Cog.Template.New
+  alias Cog.Chat.Slack.TemplateProcessor, as: SlackProcessor
+  alias Cog.Chat.HipChat.TemplateProcessor, as: HipChatProcessor
 
   using do
     quote do
@@ -10,14 +12,20 @@ defmodule Cog.TemplateCase do
     end
   end
 
+  def assert_rendered_template(:hipchat, bundle, template_name, data, expected) when is_binary(expected) do
+    directives = directives_for_template(bundle, template_name, data)
+    rendered = HipChatProcessor.render(directives)
+    assert expected == rendered
+  end
+
   def assert_rendered_template(:slack, bundle, template_name, data, expected) when is_binary(expected) do
     directives = directives_for_template(bundle, template_name, data)
-    {rendered, _} = Cog.Chat.Slack.TemplateProcessor.render(directives)
+    {rendered, _} = SlackProcessor.render(directives)
     assert expected == rendered
   end
   def assert_rendered_template(:slack, bundle, template_name, data, {text, attachments}) do
     directives = directives_for_template(bundle, template_name, data)
-    {message, rendered} = Cog.Chat.Slack.TemplateProcessor.render(directives)
+    {message, rendered} = SlackProcessor.render(directives)
     assert text == message
     cond do
       is_binary(attachments) ->
@@ -56,4 +64,5 @@ defmodule Cog.TemplateCase do
     |> Path.join("#{template_name}#{New.extension}")
     |> File.read!
   end
+
 end

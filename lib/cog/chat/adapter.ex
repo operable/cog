@@ -246,8 +246,8 @@ defmodule Cog.Chat.Adapter do
                   false ->
                     state
                 end
-              _error ->
-                Logger.error("Ignoring invalid chat message: #{inspect message, pretty: true}")
+              error ->
+                Logger.error("Error decoding chat message: #{inspect error}   #{inspect message, pretty: true}")
                 state
             end
     {:noreply, state}
@@ -332,14 +332,14 @@ defmodule Cog.Chat.Adapter do
 
  defp parse_mention(_text, nil), do: nil
  defp parse_mention(text, bot_name) do
-   updated = Regex.replace(~r/^#{Regex.escape(bot_name)}/, text, "")
+   updated = Regex.replace(~r/^#{Regex.escape(bot_name)}/i, text, "")
    if updated != text do
       Regex.replace(~r/^:/, updated, "")
       |> String.trim
-    else
-      nil
-    end
-  end
+   else
+     nil
+   end
+ end
 
  defp prepare_target(target) do
    case Cog.Chat.Room.from_map(target) do
