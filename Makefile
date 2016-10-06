@@ -19,7 +19,7 @@ ci: ci-setup test-all ci-cleanup
 
 ci-reset:
 	@echo "Resetting build environment"
-	@rm -rf _build
+#	@rm -rf _build
 
 ci-setup: ci-reset
 # Nuke mnesia dirs so we don't get borked on emqttd upgrades
@@ -57,8 +57,13 @@ test: reset-db
 	mix test $(TEST)
 
 test-all: export MIX_ENV = test
-test-all: reset-db
-	mix test
+test-all: unit-tests integration-tests
+
+unit-tests: reset-db
+	mix test --exclude=integration
+
+integration-tests: reset-db
+	mix test --only=integration
 
 test-watch: export MIX_ENV = test
 test-watch: reset-db
@@ -72,4 +77,4 @@ coverage:
 docker:
 	docker build --build-arg MIX_ENV=prod -t $(DOCKER_IMAGE) .
 
-.PHONY: ci ci-setup ci-cleanup test docker
+.PHONY: ci ci-setup ci-cleanup test docker unit-tests integration-tests
