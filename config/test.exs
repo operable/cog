@@ -7,7 +7,10 @@ config :lager, :handlers,
   [{LagerLogger, [level: :error]}]
 
 config :cog, Cog.Chat.Adapter,
-  providers: [test: Cog.Chat.Test.Provider]
+  providers: [test: Cog.Chat.Test.Provider,
+              http: Cog.Chat.Http.Provider],
+  cache_ttl: {1, :sec},
+  chat: :test
 
 config :cog, Cog.Chat.Test.Provider,
   verbose: true

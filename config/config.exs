@@ -22,12 +22,6 @@ config :cog, :embedded_bundle_version, "0.13.0"
 # Chat Adapters
 # ========================================================================
 
-config :cog, Cog.Chat.Adapter,
-  providers: [slack: Cog.Chat.Slack.Provider,
-              http: Cog.Chat.Http.Provider],
-  cache_ttl: {60, :sec},
-  chat: :slack
-
 config :cog, Cog.Chat.Http.Provider,
   foo: "blah"
 
