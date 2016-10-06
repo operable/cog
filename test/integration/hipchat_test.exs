@@ -7,7 +7,7 @@ defmodule Integration.HipChatTest do
   @bot_name "Rich Deckard"
 
   @ci_room "ci_bot_testing"
-  @timeout 10000
+  @timeout 30000
 
   setup do
     # The user always interacts with the bot via the `@user` account
