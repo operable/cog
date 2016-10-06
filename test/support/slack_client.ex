@@ -4,13 +4,20 @@ defmodule Cog.Test.Support.SlackClientState do
     Agent.start_link(fn -> fresh_state end, name: __MODULE__)
   end
 
-  def set_start_time() do
-    start_time = String.to_integer(String.slice("#{System.os_time}", 0, 10))
-    Agent.update(__MODULE__, &(Map.put(&1, :start_time, start_time)))
-  end
-
-  def get_start_time() do
-    Agent.get(__MODULE__, &(Map.get(&1, :start_time)))
+  def get_users(token) do
+    case Agent.get(__MODULE__, fn(state) -> Map.get(state, :users) end) do
+      nil ->
+        :timer.sleep(500)
+        result = Slack.Web.Users.list(%{token: token})
+        if Map.get(result, "ok") == true do
+          Agent.update(__MODULE__, fn(state) -> Map.put(state, :users, result["members"]) end)
+          result["members"]
+        else
+          {:error, result["error"]}
+        end
+      users ->
+        users
+    end
   end
 
   def store_message(sender, message) do
@@ -43,7 +50,6 @@ defmodule Cog.Test.Support.SlackClientState do
 
   def reset() do
     Agent.update(__MODULE__, fn(_) -> fresh_state end)
-    set_start_time()
   end
 
   def fresh_state() do
@@ -79,6 +85,9 @@ defmodule Cog.Test.Support.SlackClientState do
 end
 
 defmodule Cog.Test.Support.SlackClient do
+
+  # To avoid Slack throttling
+  @api_wait_interval 750
 
   @default_timeout 5000
 
@@ -150,7 +159,6 @@ defmodule Cog.Test.Support.SlackClient do
 
   def handle_info({{ref, sender}, {:init, room}}, state) do
     SlackClientState.start_link()
-    SlackClientState.set_start_time()
     reply = if room != nil do
       result = Slack.Web.Channels.join(room, %{token: state.token, as_user: true})
       if result["ok"] == true do
@@ -165,18 +173,20 @@ defmodule Cog.Test.Support.SlackClient do
     {:noreply, state}
   end
   def handle_info({{ref, sender}=caller, {:chat_and_wait, room, message, reply_from, nil}}, state) do
+    :timer.sleep(@api_wait_interval)
     result = Slack.Web.Chat.post_message(room, %{as_user: true, text: message, token: state.token, parse: :full})
     case result["ok"] do
       false ->
         send(sender, {ref, {:error, result["error"]}})
         {:noreply, state}
       true ->
-        user_id = find_user(reply_from, state)
+        user_id = find_user!(reply_from, state)
         SlackClientState.add_waiter(user_id, caller)
         {:noreply, state}
     end
   end
   def handle_info({{ref, sender}=caller, {:chat_and_wait, room, message, reply_from, edited}}, state) do
+    :timer.sleep(@api_wait_interval)
     result = Slack.Web.Chat.post_message(room, %{as_user: true, text: message, token: state.token})
     case result["ok"] do
       false ->
@@ -189,14 +199,14 @@ defmodule Cog.Test.Support.SlackClient do
             send(sender, {ref, {:error, result["error"]}})
             {:noreply, state}
           true ->
-            user_id = find_user(reply_from, state)
+            user_id = find_user!(reply_from, state)
             SlackClientState.add_waiter(user_id, caller)
             {:noreply, state}
         end
     end
   end
   def handle_info({{ref, sender}, {:get_messages, chat_user}}, state) do
-    user_id = find_user(chat_user, state)
+    user_id = find_user!(chat_user, state)
     messages = SlackClientState.get_messages(user_id)
     send(sender, {ref, {:ok, messages}})
     {:noreply, state}
@@ -219,9 +229,13 @@ defmodule Cog.Test.Support.SlackClient do
     end
   end
 
-  defp find_user(name, state) do
-    result = Slack.Web.Users.list(%{token: state.token})
-    Enum.find(result["members"], &(Map.get(&1, "name") == name)) |> Map.get("id")
+  defp find_user!(name, state) do
+    case SlackClientState.get_users(state.token) do
+      {:error, reason} ->
+        raise RuntimeError, message: "Failed fetching Slack users: #{inspect reason}"
+      users ->
+        Enum.find(users, &(Map.get(&1, "name") == name)) |> Map.get("id")
+    end
   end
 
   defp parse_message(%{attachments: [attachment|_], ts: ts}=message, state) do
