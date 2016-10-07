@@ -27,16 +27,20 @@ defmodule Cog.Config.Helpers do
   end
 
   # Returns a list containing the enabled chat provider and all other providers.
-  def provider_list,
-    do: [Enum.find(@chat_providers, &enabled_provider?/1)] ++ @other_providers
+  # Or nil if no provider is specified.
+  def provider_list do
+    case Enum.find(@chat_providers, &enabled_provider?/1) do
+      nil -> nil
+      provider -> List.wrap(provider) ++ @other_providers
+    end
+  end
 
   def enabled_chat_provider do
-    # I'm using filter here so we can give some feedback to the user if they don't
-    # specify a provider or they specify multiple providers.
+    # I'm using filter here so we can give some feedback to the user if they
+    # specify multiple providers.
     case Enum.filter(@chat_providers, &enabled_provider?/1) do
       [] ->
-        # No provider specified.
-        if Mix.env == :test, do: :test, else: raise("No chat provider specified.")
+        nil
       [{provider, _module}] ->
         provider
       _ ->
