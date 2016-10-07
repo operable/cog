@@ -42,10 +42,10 @@ defmodule Cog.Commands.Help do
         case bundle_version do
           nil ->
             {:error, "Bundle #{inspect(bundle_name)} not found"}
-          %BundleVersion{} = bundle_version ->
-            bundle_version = Repo.preload(bundle_version, :bundle)
-            rendered = Cog.V1.BundleVersionView.render("bundle_version.json", %{bundle_version: bundle_version})
-            {:ok, {:bundle, rendered}}
+          %BundleVersion{config_file: config_file} ->
+            commands =
+              Enum.map(config_file["commands"], fn({name, map}) -> Map.put(map, "name", name) end)
+            {:ok, {:bundle, %{config_file | "commands" => commands}}}
         end
       [bundle_name, command_name] ->
         full_command_name = bundle_name <> ":" <> command_name
@@ -66,8 +66,8 @@ defmodule Cog.Commands.Help do
     end
 
     case response do
-      {:ok, {:bundle, bundle}} ->
-        {:reply, req.reply_to, "help-bundle", bundle, state}
+      {:ok, {:bundle, bundle_config}} ->
+        {:reply, req.reply_to, "help-bundle", bundle_config, state}
       {:ok, {:command, command}} ->
         {:reply, req.reply_to, "help-command", command, state}
       {:ok, {:documentation, documentation}} ->
