@@ -60,11 +60,20 @@ defmodule Cog.Chat.Slack.Provider do
 
   def init([config]) do
     token = Keyword.fetch!(config, :api_token)
-    incoming = Keyword.fetch!(config, :incoming_topic)
+    if String.starts_with?(token, "xoxb") == false do
+      Logger.error("""
+      Incorrect Slack API token type detected.
+      Cog requires a Slack API bot token which begin with 'xoxb-'.
+      Current token is '#{token}'.
+      """)
+      {:stop, :bad_slack_token}
+    else
+      incoming = Keyword.fetch!(config, :incoming_topic)
 
-    {:ok, mbus} = Connection.connect()
-    {:ok, pid} = Connector.start_link(token)
-    {:ok, %__MODULE__{token: token, incoming: incoming, connector: pid, mbus: mbus}}
+      {:ok, mbus} = Connection.connect()
+      {:ok, pid} = Connector.start_link(token)
+      {:ok, %__MODULE__{token: token, incoming: incoming, connector: pid, mbus: mbus}}
+    end
   end
 
   def handle_call({:lookup_room, {:id, id}}, _from, %__MODULE__{connector: connector, token: token}=state) do
