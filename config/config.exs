@@ -25,6 +25,10 @@ config :cog, :embedded_bundle_version, "0.13.0"
 config :cog, Cog.Chat.Http.Provider,
   foo: "blah"
 
+config :cog, Cog.Chat.Adapter,
+  providers: provider_list(),
+  chat: enabled_chat_provider()
+
 config :cog, :enable_spoken_commands, ensure_boolean(System.get_env("ENABLE_SPOKEN_COMMANDS")) || true
 
 config :cog, :message_bus,
