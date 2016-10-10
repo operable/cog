@@ -159,11 +159,12 @@ defmodule Cog.Chat.Adapter do
     Logger.info("Starting")
     case Application.fetch_env(:cog, __MODULE__) do
       :error ->
-        {:error, :missing_chat_adapter_config}
+        {:stop, :missing_chat_adapter_config}
       {:ok, config} ->
         case Keyword.get(config, :providers) do
           nil ->
-            {:error, :missing_chat_providers}
+            Logger.error("Chat provider not specified. You must specify one of 'COG_SLACK_ENABLED' or 'COG_HIPCHAT_ENABLED' env variables")
+            {:stop, :missing_chat_providers}
           providers ->
             # TODO: validate that these providers actually implement
             # the proper behavior

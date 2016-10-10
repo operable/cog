@@ -125,6 +125,8 @@ defmodule Carrier.Messaging.GenMqtt do
       {:ok, conn} ->
         state = %__MODULE__{cb: cb, conn: conn}
         run_callback(:init, args, state)
+      {:stop, reason} ->
+        {:stop, reason}
       error ->
         {:stop, error}
     end
