@@ -37,6 +37,8 @@ postgres:
   environment:
     - POSTGRES_USER=cog
     - POSTGRES_PASSWORD=cog
+    - COG_SLACK_ENABLED=false
+    - COG_HIPCHAT_ENABLED=false
 
 cog:
   image: operable/cog:latest
