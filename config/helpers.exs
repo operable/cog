@@ -61,7 +61,6 @@ defmodule Cog.Config.Helpers do
     |> is_set?
   end
 
-  defp is_set?(nil), do: false
-  defp is_set?(_), do: true
+  defp is_set?(val), do: not(is_nil(val))
 
 end
