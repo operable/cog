@@ -58,7 +58,10 @@ defmodule Cog.Config.Helpers do
   defp enabled_provider?({provider, _module}) do
     provider_var(provider)
     |> System.get_env
-    |> ensure_boolean
+    |> is_set?
   end
+
+  defp is_set?(nil), do: false
+  defp is_set?(_), do: true
 
 end
