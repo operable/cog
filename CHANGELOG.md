@@ -4,19 +4,21 @@
 
 ### Enhancements
 
-- HipChat support [968](https://github.com/operable/cog/issues/968)
-- Add global switch to toggle access rule enforcment [977](https://github.com/operable/cog/issues/977)
-- Added a `--force` flag to cogctl for bundle installations [#969](https://github.com/operable/cog/issues/969)
-- Added an optional "config" section to bundle help [948](https://github.com/operable/cog/issues/948)
-- Remove re-execution of edited commands from Cog [1013](https://github.com/operable/cog/issues/1013)
-- Allowed bundle install command to install from registry [988](https://github.com/operable/cog/pull/988)
+- Restored HipChat support [#968](https://github.com/operable/cog/issues/968)
+- Added global switch to toggle access rule enforcment [#977](https://github.com/operable/cog/issues/977)
+- Added a `--force` flag to cogctl for bundle installations [##969](https://github.com/operable/cog/issues/969)
+- Added an optional "config" section to bundle help [#948](https://github.com/operable/cog/issues/948)
+- Allowed bundle installs from [Warehouse](https://bundles.operable.io) [#988](https://github.com/operable/cog/pull/988)
+- Validate Slack bot tokens during startup [#1021](https://github.com/operable/cog/issues/1021)
+- Documented SMTP and password reset environment variables [#910](https://github.com/operable/issues/910)
+- Improved cogctl documentation [#930](https://github.com/operable/issues/930)
 
 ### Bug Fixes
 
-- Slack connector crashes when a personal token is used [1021](https://github.com/operable/cog/issues/1021)
 - cogctl uses the "old" style templates when generating bundle configs for installation [#1000](https://github.com/operable/cog/issues/1000)
-- Cog should use user id references when responding to users [944](https://github.com/operable/cog/issues/944)
-- Allow Piper to handle datum dot datum/string as an argument or option value [1015](https://github.com/operable/cog/issues/1015)
+- Cog should use user id references when responding to users [#944](https://github.com/operable/cog/issues/944)
+- Allow Piper to handle datum dot datum/string as an argument or option value [#1015](https://github.com/operable/cog/issues/1015)
+- Removed re-execution of edited commands from Cog [#1013](https://github.com/operable/cog/issues/1013)
 
 ## 0.14.1
 
