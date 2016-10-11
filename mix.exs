@@ -60,12 +60,12 @@ defmodule Cog.Mixfile do
     [
       # Operable Code
       ########################################################################
-      {:adz, github: "operable/adz", branch: "v0.15.0"},
-      {:conduit, github: "operable/conduit", branch: "v0.15.0"},
+      {:adz, github: "operable/adz", tag: "release_testing/chris/0.15.0"},
+      {:conduit, github: "operable/conduit", tag: "release_testing/chris/0.15.0"},
       {:fumanchu, github: "operable/fumanchu"},
-      {:greenbar, github: "operable/greenbar", branch: "v0.15.0"},
-      {:probe, github: "operable/probe", branch: "v0.15.0"},
-      {:spanner, github: "operable/spanner", branch: "v0.15.0"},
+      {:greenbar, github: "operable/greenbar", tag: "release_testing/chris/0.15.0"},
+      {:probe, github: "operable/probe", tag: "release_testing/chris/0.15.0"},
+      {:spanner, github: "operable/spanner", tag: "release_testing/chris/0.15.0"},
 
       # MQTT-related
       ########################################################################
