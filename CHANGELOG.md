@@ -1,5 +1,11 @@
 #  Changelog
 
+## 0.15.1
+
+###
+
+- COG_<provider>_ENABLED vars are incorrect in the docker-compose.yaml [1037](https://github.com/operable/cog/issues/1037)
+
 ## 0.15.0
 
 ### Enhancements
