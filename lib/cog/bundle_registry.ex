@@ -1,5 +1,5 @@
 defmodule Cog.BundleRegistry do
-  @registry_url "https://bundles.operable.io"
+  @registry_url "https://warehouse.operable.io"
 
   def get_config(bundle, version) do
     headers = ["Accepts": "application/json"]
