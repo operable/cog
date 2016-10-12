@@ -1,6 +1,6 @@
 cog:
   environment:
-    - COG_SLACK_ENABLED=true
+    - COG_SLACK_ENABLED=1
     - SLACK_API_TOKEN=${SLACK_API_TOKEN}
     - COG_BOOTSTRAP_USERNAME=admin
     - COG_BOOTSTRAP_PASSWORD=changeme
