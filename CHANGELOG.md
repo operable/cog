@@ -1,5 +1,11 @@
 #  Changelog
 
+## 0.15.1
+
+### Bug Fixes
+
+- Removed `COG_HIPCHAT_ENABLED` and `COG_SLACK_ENABLED` from base `docker-compose.yml` [#1037](https://github.com/operable/cog/issues/1037)
+
 ## 0.15.0
 
 ### Enhancements
