@@ -8,19 +8,19 @@
       "method": "get",
       "options": [],
       "request_body": "",
-      "url": "https://bundles.operable.io/api/bundles/herooku/0.0.4"
+      "url": "https://warehouse.operable.io/api/bundles/herooku/0.0.4"
     },
     "response": {
       "body": "\"Internal server error\"",
       "headers": {
         "Connection": "keep-alive",
         "Server": "Cowboy",
-        "Date": "Fri, 30 Sep 2016 17:44:44 GMT",
+        "Date": "Wed, 12 Oct 2016 13:38:48 GMT",
         "Content-Length": "23",
         "Content-Type": "application/json; charset=utf-8",
         "Cache-Control": "max-age=0, private, must-revalidate",
         "Strict-Transport-Security": "max-age=31536000",
-        "X-Request-Id": "e3f4d96a-7861-4b1b-991b-af305198f932",
+        "X-Request-Id": "88555444-df8e-400f-9b29-9845acef04d7",
         "Via": "1.1 vegur"
       },
       "status_code": 404,
