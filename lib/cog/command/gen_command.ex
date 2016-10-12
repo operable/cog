@@ -127,7 +127,7 @@ defmodule Cog.Command.GenCommand do
     case Carrier.Messaging.Connection.connect do
       {:ok, conn} ->
         relay_id = Cog.Config.embedded_relay()
-        [topic, reply_topic] = topics = [command_topic(bundle, command, relay_id),
+        [topic, _reply_topic] = topics = [command_topic(bundle, command, relay_id),
                                          command_reply_topic(bundle, command, relay_id)]
         for topic <- topics do
           Logger.debug("#{inspect module}: Command subscribing to #{topic}")
