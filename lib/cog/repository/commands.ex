@@ -1,5 +1,6 @@
 defmodule Cog.Repository.Commands do
-  use Cog.Queries
+  import Ecto.Query, only: [from: 2]
+
   alias Cog.Models.CommandVersion
   alias Cog.Repo
   alias Cog.Repository.Bundles
@@ -49,5 +50,9 @@ defmodule Cog.Repository.Commands do
         |> Map.put(:status, "disabled")
         |> Repo.preload(command: :bundle)
     end)
+  end
+
+  def preloads_for_help(command_versions) do
+    Repo.preload(command_versions, [:command, :bundle_version, options: :option_type])
   end
 end

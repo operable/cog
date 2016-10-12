@@ -62,8 +62,7 @@ defmodule Cog.Command.CommandResolver do
             {:ok, rules} = Rules.rules_for_command(result.command)
             Cog.Command.Pipeline.ParserMeta.new(result.command.bundle.name,
                                                 result.command.name,
-                                                result.bundle_version.version,
-                                                result.bundle_version.id,
+                                                result.bundle_version,
                                                 result.options,
                                                 rules)
         end

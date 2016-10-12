@@ -1,34 +1,24 @@
 defmodule Cog.Commands.RelayGroup do
   use Cog.Command.GenCommand.Base, bundle: Cog.Util.Misc.embedded_bundle, name: "relay-group"
   alias Cog.Commands.RelayGroup
-  alias Cog.Commands.Helpers
+  require Cog.Commands.Helpers, as: Helpers
 
   @description "Manage relay groups"
 
-  @moduledoc """
-  #{@description}
-
-  USAGE
-    relay-group <SUBCOMMAND>
-
-  FLAGS
-    -h, --help      Display this usage info
-
-  SUBCOMMANDS
-    create    Creates a relay group
-    delete    Deletes a relay group
-    info      Get info about one or more relay groups
-    list      List relay groups
-    member    Managers relay and bundle assignments
-    rename    Renames a relay group
-  """
+  @subcommands %{
+    "list" => "List relay groups (default)",
+    "info <relay-group>" => "Get info about one or more relay groups",
+    "create <relay-group>" => "Creates a relay group",
+    "delete <relay-group>" => "Deletes a relay group",
+    "member <subcommand>" => "Managers relay and bundle assignments",
+    "rename <relay-group> <new-relay-group>" => "Renames a relay group"
+  }
 
   permission "manage_relays"
 
   rule "when command is #{Cog.Util.Misc.embedded_bundle}:relay-group must have #{Cog.Util.Misc.embedded_bundle}:manage_relays"
 
-  # general options
-  option "help", type: "bool", short: "h"
+  Helpers.usage(:root)
 
   # list options
   option "verbose", type: "bool", short: "v"
@@ -82,17 +72,7 @@ defmodule Cog.Commands.RelayGroup do
   end
 
   defp bundle_json(bundle) do
-    %{"name" => bundle.name}#,
-#      "version" => bundle.version,
-   #   "status" => bundle_status(bundle)}
+    %{"name" => bundle.name}
   end
 
-  # defp bundle_status(%{enabled: true}),
-  #   do: :enabled
-  # defp bundle_status(%{enabled: false}),
-  #   do: :disabled
-
-  defp show_usage(error \\ nil) do
-    {:ok, "usage", %{usage: @moduledoc, error: error}}
-  end
 end

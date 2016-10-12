@@ -4,7 +4,16 @@ defmodule Cog do
 
   import Supervisor.Spec, warn: false
 
+  def restart() do
+    Logger.debug("Stopping Cog...")
+    :ok = Application.stop(:cog)
+    Logger.debug("Cog stopped. Restarting...")
+    {:ok, _}  =  Application.ensure_all_started(:cog)
+    Logger.debug("Cog restarted.")
+  end
+
   def start(_type, _args) do
+    maybe_display_unenforcing_warning()
     children = [worker(Cog.BusDriver, [], shutdown: 1000),
                 worker(Cog.Repo, []),
                 supervisor(Cog.CoreSup, [])]
@@ -29,6 +38,15 @@ defmodule Cog do
         # necessary environment variables are set and Cog is not already
         # bootstrapped.
         Cog.Bootstrap.maybe_bootstrap
+
+        # In the absence of persistent tracking of the previous
+        # vs. current Cog version running, we'll just ensure at
+        # startup that the common templates in the database mirror the
+        # template files currently in Cog's priv directory. If we did
+        # track previous vs. current Cog version, then we could just
+        # do this when Cog was upgraded.
+        Logger.info("Ensuring common templates are up-to-date")
+        Cog.Repository.Templates.refresh_common_templates!
 
         {:ok, top_sup}
       error ->
@@ -72,6 +90,15 @@ defmodule Cog do
       :ok
     else
       {:error, latest_applied_migration, latest_migration}
+    end
+  end
+
+  defp maybe_display_unenforcing_warning() do
+    case Application.get_env(:cog, :access_rules) do
+      :unenforcing ->
+        Logger.warn("Access rule enforcement has been GLOBALLY disabled. ALL command invocations will be permitted.")
+      _ ->
+        :ok
     end
   end
 

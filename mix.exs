@@ -5,7 +5,7 @@ defmodule Cog.Mixfile do
 
   def project do
     [app: :cog,
-     version: "0.14.0",
+     version: "0.16.0",
      elixir: "~> 1.3.1",
      erlc_paths: ["emqttd_plugins"],
      erlc_options: [:debug_info, :warnings_as_errors],
@@ -27,7 +27,7 @@ defmodule Cog.Mixfile do
 
   def application do
     [applications: started_applications,
-     included_applications: [:emqttd],
+     included_applications: [:emqttd, :slack, :romeo],
      mod: {Cog, []}]
   end
 
@@ -40,7 +40,6 @@ defmodule Cog.Mixfile do
             :httpotion,
             :gproc,
             :esockd,
-            :slack,
             :cowboy,
             :phoenix,
             :phoenix_ecto,
@@ -48,7 +47,8 @@ defmodule Cog.Mixfile do
             :phoenix_html,
             :comeonin,
             :spanner,
-            :bamboo]
+            :bamboo,
+            :table_rex]
     if System.get_env("COG_SASL_LOG") != nil do
       [:sasl|apps]
     else
@@ -63,6 +63,7 @@ defmodule Cog.Mixfile do
       {:adz, github: "operable/adz"},
       {:conduit, github: "operable/conduit"},
       {:fumanchu, github: "operable/fumanchu"},
+      {:greenbar, github: "operable/greenbar"},
       {:probe, github: "operable/probe"},
       {:spanner, github: "operable/spanner"},
 
@@ -99,8 +100,10 @@ defmodule Cog.Mixfile do
       {:phoenix_html, "~> 2.6"},
       {:poison, "~> 2.0"},
       {:postgrex, "~> 0.11.2"},
-      {:slack, "~> 0.7.0"},
+      {:slack, github: "operable/Elixir-Slack", branch: "allow-attachments"},
+      {:table_rex, "~> 0.8"},
       {:uuid, "~> 1.1.3"},
+      {:romeo, github: "operable/romeo", branch: "iq-bodies"},
       # The Slack library depends on this Github repo, and not the
       # version in Hex. Thus, we need to declare it manually :(
       {:websocket_client, github: "jeremyong/websocket_client"},

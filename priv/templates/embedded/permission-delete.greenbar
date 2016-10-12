@@ -1,0 +1,3 @@
+~each var=$results~
+Deleted permission '~$item.bundle~:~$item.name~'
+~end~

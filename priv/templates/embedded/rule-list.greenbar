@@ -1,0 +1,4 @@
+| Command | Rule | ID |
+|---------|------|----|
+~each var=$results~|~$item.command~|~$item.rule~|~$item.id~|
+~end~

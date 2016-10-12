@@ -1,5 +1,8 @@
 defmodule Cog.Queries.Command do
-  use Cog.Queries
+
+  import Ecto.Query, only: [from: 2]
+
+  alias Cog.Models.Command
 
   def names do
     from c in Command,

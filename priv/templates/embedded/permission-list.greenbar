@@ -1,0 +1,4 @@
+| Bundle | Name |
+|--------|------|
+~each var=$results~|~$item.bundle~|~$item.name~|
+~end~

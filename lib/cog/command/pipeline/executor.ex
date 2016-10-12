@@ -6,7 +6,6 @@ defmodule Cog.Command.Pipeline.Executor do
   alias Cog.Command.CommandResolver
   alias Cog.Command.PermissionsCache
   alias Cog.Command.Pipeline.Destination
-  alias Cog.Command.Pipeline.ParserMeta
   alias Cog.Command.Pipeline.Plan
   alias Cog.Command.ReplyHelper
   alias Cog.ErrorResponse
@@ -15,10 +14,16 @@ defmodule Cog.Command.Pipeline.Executor do
   alias Cog.Relay.Relays
   alias Cog.Repo
   alias Cog.ServiceEndpoint
-  alias Cog.Template
+  alias Cog.Template.New, as: NewTemplate
+  alias Cog.Template.New.Evaluator
   alias Piper.Command.Ast
   alias Piper.Command.Parser
   alias Piper.Command.ParserOptions
+
+  # Last bundle configuration version that accepts the old
+  # Mustache-based templates; later versions are processed
+  # differently.
+  @old_template_version 3
 
   @type adapter_name :: String.t
 
@@ -41,6 +46,13 @@ defmodule Cog.Command.Pipeline.Executor do
   * `:output` - The accumulated output of the execution plans executed
     so far for the current command invocation. This will feed into
     subsequent pipeline stages as the "context"
+  * `:template` - The single template to render a response for bundles
+    v4 and higher. This is defined as the last template received from
+    a command response. Not used for v3 bundles and earlier.
+  * `:template_version` - ONLY used until v3 bundles and earlier are
+    phased out. This is the version of the bundle from which the
+    template in `:template` comes from; we need to know in order to
+    figure out how to do the final processing.
   * `:user` - the Cog User model for the invoker of the pipeline
   * `:user_permissions` - a list of the fully-qualified names of all
     permissions that `user` has (recursively). Used for permission
@@ -64,6 +76,8 @@ defmodule Cog.Command.Pipeline.Executor do
     current_plan: Cog.Command.Pipeline.Plan.t,
     plans: [Cog.Command.Pipeline.Plan.t],
     output: [{Map.t, String.t}], # {output, template}
+    template: String.t, # Only used for bundles v4 and higher
+    template_version: integer(), # ONLY used until v3 and earlier are phased out!
     user: %Cog.Models.User{},
     user_permissions: [String.t],
     service_token: String.t,
@@ -80,6 +94,8 @@ defmodule Cog.Command.Pipeline.Executor do
     invocations: [],
     current_plan: nil,
     plans: [],
+    template: nil,
+    template_version: nil,
     output: [],
     started: nil,
     user: nil,
@@ -125,7 +141,11 @@ defmodule Cog.Command.Pipeline.Executor do
             initialization_event(loop_data)
             {:ok, :parse, loop_data, 0}
           {:error, :not_found} ->
-            alert_unregistered_user(%__MODULE__{id: id, mq_conn: conn, request: request})
+            ReplyHelper.send("unregistered-user",
+                             unregistered_user_data(request),
+                             request.room,
+                             request.adapter,
+                             conn)
             :ignore
         end
       :error ->
@@ -168,6 +188,7 @@ defmodule Cog.Command.Pipeline.Executor do
     # any templating information, because the current command now
     # controls how the output will be presented
     context = strip_templates(previous_output)
+    state = %{state | template: nil, template_version: nil}
 
     case Cog.Command.Pipeline.Planner.plan(current_invocation, context, permissions) do
       {:ok, plans} ->
@@ -231,13 +252,22 @@ defmodule Cog.Command.Pipeline.Executor do
     case topic do
       ^reply_topic ->
         resp = Cog.Messages.CommandResponse.decode!(message)
+
+        # If the status was "ok" or "abort", we still need to process
+        # the output and update the state in the same way, so we'll
+        # just encapsulate that logic here.
+        update_state = fn(resp, state) ->
+          collected_output = collect_output(resp, state.output)
+          %{state | output: collected_output,
+            template: resp.template,
+            template_version: state.current_plan.parser_meta.bundle_config_version}
+        end
+
         case resp.status do
           "ok" ->
-            collected_output = collect_output(resp, state.output)
-            {:next_state, :execute_plan, %{state | output: collected_output}, 0}
+            {:next_state, :execute_plan, update_state.(resp, state), 0}
           "abort" ->
-            collected_output = collect_output(resp, state.output)
-            abort_pipeline(%{state | output: collected_output})
+            abort_pipeline(update_state.(resp, state))
           "error" ->
             fail_pipeline_with_error({:command_error, resp}, state)
         end
@@ -292,7 +322,12 @@ defmodule Cog.Command.Pipeline.Executor do
 
   # Given pipeline output, apply templating as appropriate for each
   # adapter/destination it is to be sent to, and send it to each.
-  defp respond(%__MODULE__{}=state) do
+  defp respond(%__MODULE__{template_version: version}=state)
+  when is_integer(version) and version <= @old_template_version do
+    ########################################################################
+    # THIS IS THE OLD TEMPLATE PROCESSING
+    ########################################################################
+
     output = state.output
     parser_meta = state.current_plan.parser_meta
     by_output_level = Enum.group_by(state.destinations, &(&1.output_level))
@@ -301,7 +336,7 @@ defmodule Cog.Command.Pipeline.Executor do
     full = Map.get(by_output_level, :full, [])
     adapters = full |> Enum.map(&(&1.adapter)) |> Enum.uniq
 
-    case render_for_adapters(adapters, parser_meta, output) do
+    case Cog.Template.Old.Renderer.render_for_adapters(adapters, parser_meta, output) do
       {:error, {error, template, adapter}} ->
         # TODO: need to send error, THEN fail at the end, since we may
         # need to do it for status-only destinations
@@ -318,17 +353,46 @@ defmodule Cog.Command.Pipeline.Executor do
     by_output_level
     |> Map.get(:status_only, [])
     |> Enum.each(fn(dest) ->
+      publish_response("ok", dest.room, dest.adapter, state)
+    end)
+  end
+  defp respond(%__MODULE__{template_version: version}=state) when is_integer(version) do
+    ########################################################################
+    # NEW TEMPLATE PROCESSING
+    ########################################################################
+    template_name = state.template
+    output        = strip_templates(state.output)
+    parser_meta   = state.current_plan.parser_meta
+    by_output_level = Enum.group_by(state.destinations, &(&1.output_level))
 
+    # Render full output first
+    full = Map.get(by_output_level, :full, [])
+
+    directives = Evaluator.evaluate(parser_meta.bundle_version_id,
+                                    template_name,
+                                    NewTemplate.with_envelope(output))
+
+    Enum.each(full, fn(dest) ->
+      # TODO: Might want to push this iteration into the provider
+      # itself. Otherwise, we have to pull the provider logic into
+      # here to render the directives once.
+
+      payload = ReplyHelper.choose_payload(dest.adapter, directives, output)
+      publish_response(payload, dest.room, dest.adapter, state)
+    end)
+
+    # Now for status only
+    by_output_level
+    |> Map.get(:status_only, [])
+    |> Enum.each(fn(dest) ->
       # TODO: For the mesasge typing to work out, this has to be a
       # bare string... let's find a less hacky way to address things
       publish_response("ok", dest.room, dest.adapter, state)
     end)
-
   end
 
   defp succeed_with_response(state) do
     respond(state)
-    # TODO: what happens if we fail due to a template error?
     {:stop, :shutdown, state}
   end
 
@@ -350,76 +414,21 @@ defmodule Cog.Command.Pipeline.Executor do
       state.destinations
       |> Enum.reject(&(ChatAdapter.is_chat_provider?(&1.adapter)))
     end
-    succeed_with_response(%{state |
-                            destinations: filtered_destinations,
-                            output: [{"Pipeline executed successfully, but no output was returned", nil}]})
-  end
 
-  # Return a map of adapter -> rendered message
-  @spec render_for_adapters([adapter_name], %ParserMeta{}, List.t) ::
-                           %{adapter_name => String.t} |
-                           {:error, {term, term, term}} # {error, template, adapter}
-  defp render_for_adapters(adapters, parser_meta, output) do
-    Enum.reduce_while(adapters, %{}, fn(adapter, acc) ->
-      case render_templates(adapter, parser_meta, output) do
-        {:error, _}=error ->
-          {:halt, error}
-        message ->
-          {:cont, Map.put(acc, adapter, message)}
-      end
-    end)
-  end
-
-  # For a specific adapter, render each output, concatenating all
-  # results into a single response string
-  defp render_templates(adapter, parser_meta, output) do
-    rendered_templates = Enum.reduce_while(output, [], fn({context, template}, acc) ->
-      case render_template(adapter, parser_meta, template, context) do
-        {:ok, result} ->
-          {:cont, [result|acc]}
-        {:error, error} ->
-          {:halt, {:error, {error, template, adapter}}}
-      end
+    # TODO: We're not going through the normal "respond" path here, because
+    # we're explicitly setting a common template... if "respond" gets
+    # the smarts to deal with that, then this can just call
+    # succeed_with_response again... might want to wait until the old
+    # template support is removed to do that.
+    Enum.each(filtered_destinations, fn(d) ->
+      ReplyHelper.send("early-exit", %{}, d.room, d.adapter, state.mq_conn)
     end)
 
-    case rendered_templates do
-      {:error, error} ->
-        {:error, error}
-      messages ->
-        messages
-        |> Enum.reverse
-        |> Enum.join("\n")
-    end
+    {:stop, :shutdown, state}
   end
 
-  defp render_template(adapter, parser_meta, template, context) do
-    case Template.render(adapter, parser_meta.bundle_version_id, template, context) do
-      {:ok, output} ->
-        {:ok, output}
-      {:error, :template_not_found} ->
-        Logger.warn("The template `#{template}` was not found for adapter `#{adapter}` in bundle `#{parser_meta.bundle_name} #{parser_meta.version}`; falling back to the json template")
-        Template.render(adapter, "json", context)
-      {:error, error} ->
-        {:error, error}
-    end
-  end
-
-  defp publish_response(message, room, adapter, state) do
-    #response = %Cog.Messages.SendMessage{response: message,
-    #                                     id: state.id,
-    #                                     room: room}
-    ChatAdapter.send(state.mq_conn, adapter, room, message)
-
-    # Slack has a limit of 16kb (https://api.slack.com/rtm#limits),
-    # while HipChat has 10,000 characters
-    # (https://developer.atlassian.com/hipchat/guide/sending-messages). Eventually,
-    # over-long messages will need adapter-specific customization
-    # (breaking into multiple messages, using alternative formats
-    # (e.g. Slack attachments), etc.). For now, though, we can at the
-    # very least tell Carrier to emit a warning when we get a message
-    # that looks like it is potentially too big.
-    #Connection.publish(state.mq_conn, response, routed_by: reply_topic, threshold: 10000)
-  end
+  defp publish_response(message, room, adapter, state),
+    do: ReplyHelper.publish(state.mq_conn, adapter, room, message)
 
   ########################################################################
   # Event Logging Functions
@@ -469,24 +478,19 @@ defmodule Cog.Command.Pipeline.Executor do
   ########################################################################
   # Unregistered User Functions
 
-  defp alert_unregistered_user(state) do
-    request = state.request
-    handle = request.sender.handle
+  defp unregistered_user_data(request) do
+    handle   = request.sender.handle
     creators = user_creator_handles(request)
 
-    {:ok, mention_name} = Cog.Chat.Adapter.mention_name(state.request.adapter, handle)
-    {:ok, display_name} = Cog.Chat.Adapter.display_name(state.request.adapter)
+    {:ok, mention_name} = Cog.Chat.Adapter.mention_name(request.adapter, handle)
+    {:ok, display_name} = Cog.Chat.Adapter.display_name(request.adapter)
 
-    context = %{
-      handle: handle,
-      mention_name: mention_name,
-      display_name: display_name,
-      user_creators: creators,
-      user_creators?: Enum.any?(creators)
-    }
-
-    ReplyHelper.send_template(state.request, "unregistered_user", context, state.mq_conn)
+    %{"handle" => handle,
+      "mention_name" => mention_name,
+      "display_name" => display_name,
+      "user_creators" => creators}
   end
+
   # Returns a list of adapter-appropriate "mention names" of all Cog
   # users with registered handles for the adapter that currently have
   # the permissions required to create and manipulate new Cog user
@@ -580,22 +584,18 @@ defmodule Cog.Command.Pipeline.Executor do
         {false, false}
     end
 
-    context = %{
-      id: id,
-      started: started,
-      initiator: initiator,
-      pipeline_text: pipeline_text,
-      error_message: error_message,
-      planning_failure: planning_failure,
-      execution_failure: execution_failure
-    }
-
-    Template.render("any", "error", context)
+    %{"id" => id,
+      "started" => started,
+      "initiator" => initiator,
+      "pipeline_text" => pipeline_text,
+      "error_message" => error_message,
+      "planning_failure" => planning_failure,
+      "execution_failure" => execution_failure}
   end
 
   defp abort_pipeline(%__MODULE__{current_plan: plan}=state) do
     respond(state)
-    audit_message = AuditMessage.render({:abort_pipeline, plan.parser_meta.full_command_name, state.id},
+    audit_message = AuditMessage.render({:abort_pipeline, plan.parser_meta.full_command_name},
                                         state.request)
     fail_pipeline(state, :aborted, audit_message)
   end
@@ -603,11 +603,13 @@ defmodule Cog.Command.Pipeline.Executor do
   # Catch-all function that sends an error message back to the user,
   # emits a pipeline failure audit event, and terminates the pipeline.
   defp fail_pipeline_with_error({reason, _detail}=error, state) do
-    {:ok, user_message} = user_error(error, state)
-    publish_response(user_message,
+    data = user_error(error, state)
+
+    ReplyHelper.send("error",
+                     data,
                      state.request.room,
                      state.request.adapter,
-                     state)
+                     state.mq_conn)
 
     audit_message = AuditMessage.render(error, state.request)
     fail_pipeline(state, reason, audit_message)

@@ -3,31 +3,23 @@ defmodule Cog.Commands.Filter do
 
   @description "Filter elements of a collection"
 
-  @moduledoc """
-  #{@description}
-
+  @long_description """
   Filters a collection where the `path` equals the `matches`.
   The `path` option is the key that you would like to focus on;
   The `matches` option is the value that you are searching for.
+  """
 
-  USAGE
-    filter [OPTIONS]
+  @examples """
+  rule --list --for-command="permissions" | filter --path="rule" --matches="/manage_users/"
+  > { "id": "91edb472-04cf-4bca-ba05-e51b63f26758",
+      "rule": "operable:manage_users",
+      "command": "operable:permissions" }
 
-  OPTIONS
-    -m, --matches    The value to search for
-    -p, --path       The key to focus on
+  seed '[{"foo":{"bar.qux":{"baz":"stuff"}}}, {"foo": {"bar":{"baz":"me"}}}]' | filter --path="foo.bar.baz""
+  > [ {"foo": {"bar.qux": {"baz": "stuff"} } }, {"foo": {"bar": {"baz": "me"} } } ]
 
-  EXAMPLES
-    rule --list --for-command="permissions" | filter --path="rule" --matches="/manage_users/"
-    > { "id": "91edb472-04cf-4bca-ba05-e51b63f26758",
-        "rule": "operable:manage_users",
-        "command": "operable:permissions" }
-
-    seed '[{"foo":{"bar.qux":{"baz":"stuff"}}}, {"foo": {"bar":{"baz":"me"}}}]' | filter --path="foo.bar.baz""
-    > [ {"foo": {"bar.qux": {"baz": "stuff"} } }, {"foo": {"bar": {"baz": "me"} } } ]
-
-    seed '[{"foo":{"bar.qux":{"baz":"stuff"}}}, {"foo": {"bar":{"baz":"me"}}}]' | filter --path="foo.\\"bar.qux\\".baz""
-    > { "foo": {"bar.qux": {"baz": "stuff"} } }
+  seed '[{"foo":{"bar.qux":{"baz":"stuff"}}}, {"foo": {"bar":{"baz":"me"}}}]' | filter --path="foo.\\"bar.qux\\".baz""
+  > { "foo": {"bar.qux": {"baz": "stuff"} } }
   """
 
   rule "when command is #{Cog.Util.Misc.embedded_bundle}:filter allow"
@@ -108,9 +100,9 @@ defmodule Cog.Commands.Filter do
     do: Map.update!(input, :errors, &Enum.concat(&1, List.wrap(error_or_errors)))
 
   defp translate_error(:missing_path),
-    do: "Must specify `--path` with the `--matches` option."
+    do: "Must specify '--path' with the '--matches' option."
   defp translate_error(:bad_match),
-    do: "The regular expression in `--matches` does not compile correctly."
+    do: "The regular expression in '--matches' does not compile correctly."
 
   # Helper functions for the filter command
   defp build_path(path) do

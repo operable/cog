@@ -1,9 +1,9 @@
 defmodule Cog.Commands.RelayGroup.Rename do
-  alias Cog.Commands.Helpers
+  require Cog.Commands.Helpers, as: Helpers
   alias Cog.Repository.RelayGroups
   alias Cog.Commands.RelayGroup
 
-  @moduledoc """
+  Helpers.usage """
   Renames relay groups
 
   USAGE
@@ -51,7 +51,4 @@ defmodule Cog.Commands.RelayGroup.Rename do
     end
   end
 
-  def show_usage(error \\ nil) do
-    {:ok, "usage", %{usage: @moduledoc, error: error}}
-  end
 end

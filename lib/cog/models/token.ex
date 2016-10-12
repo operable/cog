@@ -43,7 +43,7 @@ defmodule Cog.Models.Token do
   """
   def generate do
     @token_bytes
-    |> :crypto.rand_bytes
+    |> :crypto.strong_rand_bytes
     |> Base.encode64
   end
 

@@ -1,5 +1,8 @@
 defmodule Cog.MessageTranslations do
-  use Cog.Models
+
+  alias Cog.Models.User
+  alias Cog.Models.Group
+  alias Cog.Models.Role
 
   defstruct req: nil, action: nil, entity: nil, classification: nil, errors: []
 

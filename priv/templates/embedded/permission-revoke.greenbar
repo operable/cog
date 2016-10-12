@@ -1,0 +1,3 @@
+~each var=$results~
+Revoked permission '~$item.permission.bundle~:~$item.permission.name~' from role '~$item.role.name~'
+~end~

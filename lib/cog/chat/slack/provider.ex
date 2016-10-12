@@ -14,11 +14,29 @@ defmodule Cog.Chat.Slack.Provider do
   def display_name, do: "Slack"
 
   def start_link(config) do
-    GenServer.start_link(__MODULE__, [config], name: __MODULE__)
+    case Application.ensure_all_started(:slack) do
+      {:ok, _} ->
+        GenServer.start_link(__MODULE__, [config], name: __MODULE__)
+      error ->
+        error
+    end
   end
 
-  def lookup_room(id),
-    do: GenServer.call(__MODULE__, {:lookup_room, id}, :infinity)
+  def mention_name(handle) do
+    # Lookup the user and return the id properly formatted instead of just the
+    # handle. If we just return the handle slack doesn't always recognize the
+    # handle and alert the user. For example, when you return the mention name
+    # followed by a colon.
+    case lookup_user(handle) do
+      %Cog.Chat.User{id: id} -> "<@#{id}>"
+      _ -> super(handle)
+    end
+  end
+
+  def lookup_room({:id, id}),
+    do: GenServer.call(__MODULE__, {:lookup_room, {:id, id}}, :infinity)
+  def lookup_room({:name, name}),
+    do: GenServer.call(__MODULE__, {:lookup_room, {:name, name}}, :infinity)
 
   def lookup_user(handle) do
     GenServer.call(__MODULE__, {:lookup_user, handle}, :infinity)
@@ -42,15 +60,27 @@ defmodule Cog.Chat.Slack.Provider do
 
   def init([config]) do
     token = Keyword.fetch!(config, :api_token)
-    incoming = Keyword.fetch!(config, :incoming_topic)
+    if String.starts_with?(token, "xoxb") == false do
+      Logger.error("""
+      Incorrect Slack API token type detected.
+      Cog requires a Slack API bot token which begin with 'xoxb-'.
+      Current token is '#{token}'.
+      """)
+      {:stop, :bad_slack_token}
+    else
+      incoming = Keyword.fetch!(config, :incoming_topic)
 
-    {:ok, mbus} = Connection.connect()
-    {:ok, pid} = Connector.start_link(token)
-    {:ok, %__MODULE__{token: token, incoming: incoming, connector: pid, mbus: mbus}}
+      {:ok, mbus} = Connection.connect()
+      {:ok, pid} = Connector.start_link(token)
+      {:ok, %__MODULE__{token: token, incoming: incoming, connector: pid, mbus: mbus}}
+    end
   end
 
-  def handle_call({:lookup_room, id}, _from, %__MODULE__{connector: connector, token: token}=state) do
+  def handle_call({:lookup_room, {:id, id}}, _from, %__MODULE__{connector: connector, token: token}=state) do
     {:reply, Connector.call(connector, token, :lookup_room, %{id: id}), state}
+  end
+  def handle_call({:lookup_room, {:name, name}}, _from, %__MODULE__{connector: connector, token: token}=state) do
+    {:reply, Connector.call(connector, token, :lookup_room, %{name: name}), state}
   end
 
   def handle_call({:lookup_user, handle}, _from, %__MODULE__{connector: connector, token: token}=state) do
@@ -75,8 +105,20 @@ defmodule Cog.Chat.Slack.Provider do
         {reply, {:error, reply["error"]}, state}
     end
   end
-  def handle_call({:send_message, target, message}, _from, %__MODULE__{connector: connector, token: token}=state) do
+  # Old template processing
+  def handle_call({:send_message, target, message}, _from, %__MODULE__{connector: connector, token: token}=state) when is_binary(message) do
     result = Connector.call(connector, token, :send_message, %{target: target, message: message})
+    case result["ok"] do
+      true ->
+        {:reply, :ok, state}
+      false ->
+        {:reply, {:error, result["error"]}, state}
+    end
+  end
+  # New template processing
+  def handle_call({:send_message, target, message}, _from, %__MODULE__{connector: connector, token: token}=state) do
+    {text, attachments} = Cog.Chat.Slack.TemplateProcessor.render(message)
+    result = Connector.call(connector, token, :send_message, %{target: target, message: text, attachments: attachments})
     case result["ok"] do
       true ->
         {:reply, :ok, state}

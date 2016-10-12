@@ -66,7 +66,7 @@ defmodule Cog.Assertions do
           :timer.sleep(interval)
           do_polling_assert_in(expected, actual_func, try_until, interval)
         actual ->
-          String.contains?(actual, expected)
+          assert String.contains?(actual, expected)
       end
     else
       adapter = current_chat_adapter

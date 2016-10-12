@@ -1,0 +1,3 @@
+~each var=$results~
+Disabled trigger '~$item.name~'
+~end~

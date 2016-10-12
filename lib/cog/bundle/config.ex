@@ -1,67 +1,10 @@
 defmodule Cog.Bundle.Config do
-  @moduledoc """
-  Interact with and generate bundle configurations.
-
-  A bundle configuration is a map that contains the following information:
-
-  - The bundle name
-  - A list of all commands in the bundle, including the command's
-    invocation name, the Elixir module that implements it, and the
-    various options the command may take
-  - A list of permissions the bundle will create
-  - A list of initial rules for the commands in the bundle, using the
-    bundle permissions.
-
-  ## Example
-
-      %{bundle: %{name: "foo"},
-        commands: [%{module: "Cog.Commands.AddRule",
-                     name: "add-rule",
-                     options: []},
-                   %{module: "Cog.Commands.Admin",
-                     name: "admin",
-                     options: [%{name: "add", required: false, type: "bool"},
-                               %{name: "list", required: false, type: "bool"},
-                               %{name: "drop", required: false, type: "bool"},
-                               %{name: "id", required: false, type: "string"},
-                               %{name: "arg0", required: false, type: "string"},
-                               %{name: "permission", required: false, type: "string"},
-                               %{name: "for-command", required: false, type: "string"}]},
-                   %{module: "Cog.Commands.Builds",
-                     name: "builds",
-                     options: [%{name: "state", required: true, type: "string"}]},
-                   %{module: "Cog.Commands.Echo",
-                     name: "echo",
-                     options: []},
-                   %{module: "Cog.Commands.Giphy",
-                     name: "giphy",
-                     options: []},
-                   %{module: "Cog.Commands.Grant",
-                     name: "grant",
-                     options: [%{name: "command", required: true, type: "string"},
-                               %{name: "permission", required: true, type: "string"},
-                               %{name: "to", required: true, type: "string"}]},
-                   %{module: "Cog.Commands.Greet",
-                     name: "greet",
-                     options: []},
-                   %{module: "Cog.Commands.Math",
-                     name: "math",
-                     options: []},
-                   %{module: "Cog.Commands.Stackoverflow",
-                     name: "stackoverflow",
-                     options: []},
-        permissions: ["foo:admin", "foo:read", "foo:write"],
-        rules: ["when command is foo:add-rule must have foo:admin",
-                "when command is foo:grant must have foo:admin"]}
-
-  """
-
-  # TODO: Worthwhile creating structs for this?
 
   require Logger
   alias Cog.Command.GenCommand
 
-  def commands(config), do: process_args(config, "commands")
+  def commands(config),
+    do: process_args(config, "commands")
 
   # TODO: Scope these to avoid conflicts with pre-existing modules
   # TODO: Pass each command process config from the bundle config
@@ -94,11 +37,12 @@ defmodule Cog.Bundle.Config do
   - `modules`: a list of modules to be included in the bundle
 
   """
-  def gen_config(name, description, version, modules, template_dir) do
+  def gen_config(name, description, version, author, homepage, modules, template_dir) do
     # We create single key/value pair maps for each
     # top-level key in the overall configuration, and then merge all
     # those maps together.
-    Enum.reduce([gen_bundle(name, description, version),
+    Enum.reduce([%{"cog_bundle_version" => Spanner.Config.current_config_version},
+                 gen_bundle(name, description, version, author, homepage),
                  gen_commands(modules),
                  gen_permissions(name, modules),
                  gen_templates(template_dir)],
@@ -106,11 +50,13 @@ defmodule Cog.Bundle.Config do
   end
 
   # Generate top-level bundle configuration
-  defp gen_bundle(name, description, version) do
+  defp gen_bundle(name, description, version, author, homepage) do
     %{"name" => name,
       "description" => description,
       "type" => "elixir",
-      "version" => version}
+      "version" => version,
+      "author" => author,
+      "homepage" => homepage}
   end
 
   # Generate the union of all permissions required by commands in the
@@ -130,22 +76,8 @@ defmodule Cog.Bundle.Config do
   defp namespace_permission(bundle_name, permission_name),
     do: "#{bundle_name}:#{permission_name}"
 
-  defp gen_templates(template_dir) do
-    paths = Path.wildcard("#{template_dir}/*/*.mustache")
-
-    templates = Enum.reduce(paths, %{}, fn(path, acc) ->
-      relative_path = Path.relative_to(path, template_dir)
-      [provider, file] = Path.split(relative_path)
-      name = Path.basename(file, ".mustache")
-      contents = File.read!(path)
-
-      Map.update(acc, name, %{provider => contents}, fn(val) ->
-        Map.merge(val, %{provider => contents})
-      end)
-    end)
-
-    %{"templates" => templates}
-  end
+  defp gen_templates(template_dir),
+    do: %{"templates" => Cog.Repository.Templates.templates_from_files(template_dir)}
 
   # Extract all commands from `modules` and generate configuration
   # maps for them
@@ -161,6 +93,11 @@ defmodule Cog.Bundle.Config do
       %{"options" => GenCommand.Base.options(module),
         "rules" => GenCommand.Base.rules(module) |> Enum.sort,
         "description" => GenCommand.Base.description(module),
+        "long_description" => GenCommand.Base.long_description(module),
+        "examples" => GenCommand.Base.examples(module),
+        "notes" => GenCommand.Base.notes(module),
+        "arguments" => GenCommand.Base.arguments(module),
+        "subcommands" => GenCommand.Base.subcommands(module),
         "documentation" => case Code.get_docs(module, :moduledoc) do
                              {_line, doc} ->
                                # If a module doesn't have a module doc,

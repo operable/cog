@@ -1,0 +1,14 @@
+~if cond=length($results) == 1~
+**Name**: ~$results[0].name~
+**Created At**: ~$results[0].created_at~
+**Relays**: ~join var=$results[0].relays as=r~~$r.name~~end~
+
+**Bundles**: ~join var=$results[0].bundles as=b~~$b.name~~end~
+~end~
+~if cond=length($results) > 1~
+| Name | Relays | Bundles | Created At |
+|------|--------|---------|------------|
+~each var=$results~
+|~$item.name~|~join var=$item.relays as=r~~$r.name~~end~|~join var=$item.bundles as=b~~$b.name~~end~|~$item.created_at~|
+~end~
+~end~

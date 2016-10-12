@@ -12,7 +12,8 @@ defmodule Cog.Chat.Provider do
 
   @callback lookup_user(name :: String.t) :: {:ok, %User{}} | {:error, term}
 
-  @callback lookup_room(name :: String.t) :: {:ok, %Room{}} | {:error, term}
+  @callback lookup_room([name: String.t]) :: {:ok, %Room{}} | {:error, term}
+  @callback lookup_room([id: String.t]) :: {:ok, %Room{}} | {:error, term}
 
   @callback list_joined_rooms :: {:ok, [%Room{}] | []} | {:error, term}
 
@@ -20,7 +21,7 @@ defmodule Cog.Chat.Provider do
 
   @callback leave(room :: String.t) :: :ok | {:error, term}
 
-  @callback send_message(target :: String.t, message :: String.t) :: :ok | {:error, term}
+  @callback send_message(target :: String.t, message :: String.t | List.t) :: :ok | {:ok, sent_message ::String.t} | {:error, term}
 
   @callback mention_name(handle :: String.t) :: String.t
 

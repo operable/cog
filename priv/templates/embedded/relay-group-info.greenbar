@@ -1,0 +1,10 @@
+~if cond=length($results) == 1~
+**Name**: ~$results[0].name~
+~end~
+~if cond=length($results) > 1~
+| Name |
+|------|
+~each var=$results~
+|~$item.name~|
+~end~
+~end~

@@ -41,7 +41,21 @@ defmodule Cog.Support.ModelUtilities do
   code!
   """
 
-  use Cog.Models
+  alias Cog.Models.Bundle
+  alias Cog.Models.BundleVersion
+  alias Cog.Models.ChatHandle
+  alias Cog.Models.ChatProvider
+  alias Cog.Models.Command
+  alias Cog.Models.CommandVersion
+  alias Cog.Models.Group
+  alias Cog.Models.Permission
+  alias Cog.Models.Relay
+  alias Cog.Models.RelayGroup
+  alias Cog.Models.RelayGroupAssignment
+  alias Cog.Models.RelayGroupMembership
+  alias Cog.Models.Role
+  alias Cog.Models.Token
+  alias Cog.Models.User
   alias Cog.Repo
   require Logger
 
@@ -190,7 +204,7 @@ defmodule Cog.Support.ModelUtilities do
   @doc """
   Create a command with the given name
   """
-  def command(name) do
+  def command(name, params \\ %{}) do
     bundle_version = bundle_version("test-bundle")
     bundle = bundle_version.bundle
 
@@ -199,7 +213,7 @@ defmodule Cog.Support.ModelUtilities do
     |> Repo.insert!
 
     %CommandVersion{}
-    |> CommandVersion.changeset(%{command_id: command.id, bundle_version_id: bundle_version.id})
+    |> CommandVersion.changeset(Map.merge(%{command_id: command.id, bundle_version_id: bundle_version.id}, params))
     |> Repo.insert!
 
     bundle = Map.put(bundle, :bundle_versions, [bundle_version])
@@ -215,7 +229,7 @@ defmodule Cog.Support.ModelUtilities do
     bundle_template = %{
       "name" => name,
       "version" => "0.1.0",
-      "cog_bundle_version" => 2,
+      "cog_bundle_version" => 4,
       "commands" => %{}
     }
 

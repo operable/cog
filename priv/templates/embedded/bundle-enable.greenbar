@@ -1,0 +1,3 @@
+~each var=$results~
+Bundle "~$item.name~" version "~$item.version~" has been enabled.
+~end~

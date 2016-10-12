@@ -1,0 +1,4 @@
+| Name | Enabled Version |
+|------|-----------------|
+~each var=$results~|~$item.name~|~if cond=$item.enabled_version bound?~~$item.enabled_version.version~~end~|
+~end~

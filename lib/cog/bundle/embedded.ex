@@ -63,8 +63,10 @@ defmodule Cog.Bundle.Embedded do
     Config.gen_config(Cog.Util.Misc.embedded_bundle,
                       "Core chat commands for Cog",
                       version,
+                      "Operable <support@operable.io>",
+                      "operable.io",
                       modules,
-                      Path.join([:code.priv_dir(:cog), "templates"]))
+                      Path.join([:code.priv_dir(:cog), "templates", "embedded"]))
   end
 
 end

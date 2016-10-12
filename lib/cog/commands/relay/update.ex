@@ -1,10 +1,10 @@
 defmodule Cog.Commands.Relay.Update do
   alias Cog.Repository.Relays
-  alias Cog.Commands.Helpers
+  require Cog.Commands.Helpers, as: Helpers
 
   alias Cog.Commands.Relay.ViewHelpers
 
-  @moduledoc """
+  Helpers.usage """
   Updates relay name and/or description.
 
   USAGE
@@ -53,7 +53,4 @@ defmodule Cog.Commands.Relay.Update do
     end
   end
 
-  def show_usage(error \\ nil) do
-    {:ok, "usage", %{usage: @moduledoc, error: error}}
-  end
 end

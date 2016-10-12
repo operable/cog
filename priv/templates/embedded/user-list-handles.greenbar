@@ -1,0 +1,6 @@
+# TODO: This should be a mention name; shouldn't have a "@" in here
+# TODO: offload mention names to the provider rendering process??
+| Username | Handle |
+|----------|--------|
+~each var=$results~|~$item.username~|@~$item.handle~|
+~end~

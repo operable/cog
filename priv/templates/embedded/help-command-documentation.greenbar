@@ -1,0 +1,7 @@
+~each var=$results as=command~
+
+```
+~$command.documentation~
+```
+
+~end~

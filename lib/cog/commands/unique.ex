@@ -6,15 +6,9 @@ defmodule Cog.Commands.Unique do
 
   @description "Removes all duplicate values from the input"
 
-  @moduledoc """
-  #{@description}
-
-  USAGE
-    unique
-
-  EXAMPLES
-    seed '[{"a": 1}, {"a": 3}, {"a": 1}]' | unique
-    > [{"a": 1}, {"a": 3}]
+  @examples """
+  seed '[{"a": 1}, {"a": 3}, {"a": 1}]' | unique
+  > [{"a": 1}, {"a": 3}]
   """
 
   rule "when command is #{Cog.Util.Misc.embedded_bundle}:unique allow"

@@ -1,0 +1,12 @@
+~if cond=$results[0].relay_groups bound?~
+| Name | Status | Relay Groups |
+|------|--------|--------------|
+~each var=$results~|~$item.name~|~$item.status~|~join var=$item.relay_groups as=g ~~$g.name~~end~|
+~end~
+~end~
+~if cond=$results[0].relay_groups not_bound?~
+| Name | Status |
+|------|--------|
+~each var=$results~|~$item.name~|~$item.status~|
+~end~
+~end~

@@ -1,0 +1,3 @@
+~each var=$results~
+Alias 'user:~$item.name~' has been created
+~end~

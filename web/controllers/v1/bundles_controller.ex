@@ -59,14 +59,27 @@ defmodule Cog.V1.BundlesController do
   def create(conn, _params),
     do: send_resp(conn, 400, "")
 
+  def install(conn, %{"bundle" => bundle, "version" => version}) do
+    case Repository.Bundles.install_from_registry(bundle, version) do
+      {:ok, bundle_version} ->
+        conn
+        |> put_status(:created)
+        |> put_resp_header("location", Cog.Router.Helpers.bundle_version_path(conn, :show, bundle_version.bundle.id, bundle_version.id))
+        |> render(Cog.V1.BundleVersionView, "show.json", %{bundle_version: bundle_version, warnings: []})
+      {:error, error} ->
+        send_failure(conn, error)
+    end
+  end
+
   ########################################################################
   # Bundle Creation Helpers
 
   defp install_bundle(params) do
     with {:ok, config}                 <- parse_config(params),
+         {:ok, install_type}           <- install_type(params),
          {:ok, valid_config, warnings} <- validate_config(config),
          {:ok, params}                 <- merge_config(params, valid_config),
-         {:ok, bundle}                 <- Repository.Bundles.install(params) do
+         {:ok, bundle}                 <- Repository.Bundles.install(install_type, params) do
            {:ok, bundle, warnings}
     end
   end
@@ -79,6 +92,11 @@ defmodule Cog.V1.BundlesController do
   end
   defp parse_config(_),
     do: {:error, :no_config}
+
+  defp install_type(%{"force" => true}),
+    do: {:ok, :force}
+  defp install_type(_),
+    do: {:ok, :normal}
 
   # If we have a file, check to see if the filename has the correct extension
   defp validate_file_format(%Plug.Upload{filename: filename}) do
@@ -161,6 +179,14 @@ defmodule Cog.V1.BundlesController do
     msg = ["Could not save bundle."]
     errors = Enum.map(errors, fn({_, {message, []}}) -> message end)
     {:unprocessable_entity, %{errors: msg ++ errors}}
+  end
+  defp error({:not_found, bundle}) do
+    msg = ["Bundle #{inspect bundle} not found."]
+    {:not_found, %{errors: msg}}
+  end
+  defp error({:not_found, bundle, version}) do
+    msg = ["Bundle #{inspect bundle} version #{inspect version} not found."]
+    {:not_found, %{errors: msg}}
   end
   defp error(err) do
     msg = inspect(err)

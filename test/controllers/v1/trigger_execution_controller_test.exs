@@ -27,12 +27,12 @@ defmodule Cog.V1.TriggerExecutionControllerTest do
                   as_user: "cog"})
 
     conn = post(conn, "/v1/triggers/#{trigger.id}", Poison.encode!(%{}))
-    assert "foo" = json_response(conn, 200)
+    assert [%{"body" => ["foo"]}] = json_response(conn, 200)
 
     # The chat adapter shouldn't have gotten anything, since we didn't
     # redirect to it.
-    assert [] = Snoop.provider_messages(snoop, "test")
-    assert ["foo"] = Snoop.provider_messages(snoop, "http")
+    Snoop.assert_no_message_received(snoop, provider: "test")
+    assert [[%{"body" => ["foo"]}]] = Snoop.loop_until_received(snoop, provider: "http")
   end
 
   test "executing a non-existent trigger fails", %{conn: conn} do
@@ -70,7 +70,7 @@ defmodule Cog.V1.TriggerExecutionControllerTest do
     assert response(conn, 204)
 
     # And the adapter should get a message, too
-    assert [%{"body" => ["foo"]}] = Snoop.provider_messages(snoop, "test")
+    assert ["foo"] = Snoop.loop_until_received(snoop, provider: "test")
   end
 
   test "errors only go back to the request, not any chat adapters", %{conn: conn} do
@@ -86,13 +86,14 @@ defmodule Cog.V1.TriggerExecutionControllerTest do
     conn = post(conn, "/v1/triggers/#{trigger.id}", Poison.encode!(%{}))
 
     # The HTTP response should reflect an error
-    message = json_response(conn, 500)["errors"]
-    assert message =~ "An error has occurred"
+    message = json_response(conn, 500)["errors"]["error_message"]
+    assert message == "I can't find the variable '$not_a_key'."
 
     # And the adapter should not get a message, even though we redirected
-    assert [] = Snoop.provider_messages(snoop, "test")
-    [error_msg] = Snoop.provider_messages(snoop, "http")
-    assert String.contains?(error_msg, "I can't find the variable '$not_a_key'")
+    Snoop.assert_no_message_received(snoop, provider: "test")
+    [error_msg] = Snoop.loop_until_received(snoop, provider: "http")
+    assert Map.get(error_msg,
+                   "error_message") == "I can't find the variable '$not_a_key'."
   end
 
   test "disabled triggers don't fire", %{conn: conn} do
@@ -124,7 +125,7 @@ defmodule Cog.V1.TriggerExecutionControllerTest do
     json = Poison.encode!(body)
 
     conn = post(conn, "/v1/triggers/#{trigger_id}?thing=responds_to", json)
-    assert "this responds_to application/json" = json_response(conn, 200)
+    assert [%{"body" => ["this responds_to application/json"]}] = json_response(conn, 200)
 
     # Check that the executor got the context we expected
     [message] = Snoop.messages(executor_snoop)
@@ -171,7 +172,7 @@ defmodule Cog.V1.TriggerExecutionControllerTest do
     # the trigger fails
     conn = api_request(tokened_user, :post, "/v1/triggers/#{trigger.id}", body: %{}, endpoint: Cog.TriggerEndpoint)
     assert ["token " <> _] = Plug.Conn.get_req_header(conn, "authorization")
-    message = json_response(conn, 500)["errors"]
+    message = json_response(conn, 500)["errors"]["error_message"]
     assert message =~ "You will need at least one of the following permissions to run this command: 'operable:manage_permissions'."
 
     # Give the requestor the required permission
@@ -242,11 +243,8 @@ defmodule Cog.V1.TriggerExecutionControllerTest do
       "status" => status} = json_response(conn, 202)
     assert "Request accepted and still processing after #{timeout_sec} seconds" == status
 
-    # Wait to ensure that processing finishes and check that the chat
-    # adapter got it
-    :timer.sleep (timeout_sec + 1)* 1000
-    assert [%{"body" => ["Hello"]}] = Snoop.provider_messages(snoop, "test")
-    assert ["ok"] = Snoop.provider_messages(snoop, "http")
+    assert ["Hello"] = Snoop.loop_until_received(snoop, provider: "test")
+    assert ["ok"] = Snoop.loop_until_received(snoop, provider: "http")
   end
 
   @tag content_type: "text/plain"
@@ -272,7 +270,7 @@ defmodule Cog.V1.TriggerExecutionControllerTest do
     conn = post(conn, "/v1/triggers/#{trigger.id}", Poison.encode!(payload))
     message = json_response(conn, 200)
 
-    assert "#{payload[:test_key]} #{payload[:other_key]}" == message
+    assert [%{"body" => ["test_value other_value"]}] == message
   end
 
   @tag content_type: "application/x-www-form-urlencoded"
@@ -287,18 +285,18 @@ defmodule Cog.V1.TriggerExecutionControllerTest do
     conn = post(conn, "/v1/triggers/#{trigger.id}", URI.encode_query(payload))
     message = json_response(conn, 200)
 
-    assert "#{payload[:test_key]} #{payload[:other_key]}" == message
+    assert [%{"body" => ["#{payload[:test_key]} #{payload[:other_key]}"]}] == message
   end
 
   test "an empty body is treated as an empty JSON map", %{conn: conn} do
     {:ok, executor_snoop} = Snoop.incoming_executor_traffic
     user("cog")
     trigger = trigger(%{name: "echo",
-                  pipeline: "echo foo",
-                  as_user: "cog"})
+                        pipeline: "echo foo",
+                        as_user: "cog"})
     conn = post(conn, "/v1/triggers/#{trigger.id}")
 
-    assert "foo" = json_response(conn, 200)
+    assert [%{"body" => ["foo"]}] = json_response(conn, 200)
 
     [message] = Snoop.messages(executor_snoop)
     assert %{} == get_in(message, ["initial_context", "body"])
@@ -317,11 +315,11 @@ defmodule Cog.V1.TriggerExecutionControllerTest do
 
     # We should get a success message back in the response
     message = json_response(conn, 200)
-    assert message == "Pipeline executed successfully, but no output was returned"
+    assert message == %{}
 
     # And the adapter should not get a message, even though we redirected
-    assert [] = Snoop.provider_messages(snoop, "test")
-    assert ["Pipeline executed successfully, but no output was returned"] = Snoop.provider_messages(snoop, "http")
+    Snoop.assert_no_message_received(snoop, provider: "test")
+    assert [%{}] = Snoop.loop_until_received(snoop, provider: "http")
   end
 
   ########################################################################

@@ -14,6 +14,8 @@ defmodule Cog.Commands.Relay.ViewHelpers do
   def render(relays, options) when is_list(relays),
     do: Enum.map(relays, &relay_json(&1, options))
 
+  def template("relay-list", %{"verbose" => true}),
+    do: "relay-info"
   def template(base_template_name, %{"verbose" => true}),
     do: "#{base_template_name}-verbose"
   def template(base_template_name, _options),

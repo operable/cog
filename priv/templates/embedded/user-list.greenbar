@@ -1,0 +1,4 @@
+| Username | First Name | Last Name | Email |
+|----------|------------|-----------|-------|
+~each var=$results~|~$item.username~|~if cond=$item.first_name bound?~~$item.first_name~~end~|~if cond=$item.last_name~~$item.last_name~~end~|~$item.email_address~|
+~end~

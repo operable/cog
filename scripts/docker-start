@@ -15,5 +15,10 @@ wait-for-it.sh -s -t 0 -h "${host}" -p "${port}" && true
 echo "Apply database migrations..."
 mix ecto.migrate --no-deps-check
 
+echo "Generating a cogctl profile..."
+cogctl profiles create default \
+  --rest-user "${COG_BOOTSTRAP_USERNAME}" \
+  --rest-password "${COG_BOOTSTRAP_PASSWORD}"
+
 echo "Launching Cog server..."
 elixir --no-halt --name cog@127.0.0.1 -S mix phoenix.server --no-compile --no-deps-check

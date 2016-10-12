@@ -1,0 +1,5 @@
+| Name | ID | Roles | Members |
+|------|----|-------|---------|
+~each var=$results~
+|~$item.name~|~$item.id~|~join var=$item.roles as=r~~$r.name~~end~|~join var=$item.members as=m~~$m.username~~end~|
+~end~

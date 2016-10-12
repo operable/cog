@@ -1,9 +1,7 @@
 defmodule Cog.V1.BundlesControllerTest do
-
-  require Logger
-
   use Cog.ModelCase
   use Cog.ConnCase
+  use ExVCR.Mock
 
   alias Cog.Repository.Bundles
 
@@ -63,26 +61,6 @@ defmodule Cog.V1.BundlesControllerTest do
       assert bundle_version.bundle.name == config["name"]
     end
   end)
-
-  test "accepts an upgradable config", %{authed: requestor} do
-    config_path = make_config_file("old_config.yaml", contents: old_config)
-    upload = %Plug.Upload{path: config_path, filename: "old_config.yaml"}
-
-    conn = api_request(requestor, :post, "/v1/bundles", body: %{bundle: %{config_file: upload}}, content_type: :multipart)
-
-    response = Poison.decode!(conn.resp_body)
-
-    warnings = get_in(response, ["warnings"])
-    bundle_version_id = get_in(response, ["bundle_version", "id"])
-    bundle_version = Cog.Repository.Bundles.version(bundle_version_id)
-    config = Spanner.Config.Parser.read_from_file!(config_path)
-
-    assert conn.status == 201
-    assert bundle_version.bundle.name == config["name"]
-    assert warnings == [
-      "Warning near #/cog_bundle_version: Bundle config version 2 has been deprecated. Please update to version 3.",
-      "Warning near #/commands/date/enforcing: Non-enforcing commands have been deprecated. Please update your bundle config to version 3."]
-  end
 
   test "rejects a file with an improper extension", %{authed: requestor} do
     filename = "config.jpg"
@@ -156,6 +134,14 @@ defmodule Cog.V1.BundlesControllerTest do
             "version has already been taken"] = json_response(conn, 409)["errors"]
   end
 
+  test "force enables installation of an already installed version", %{authed: requestor} do
+    config = config(:map)
+    {:ok, _orig_version3} = Bundles.install(%{"name" => config["name"], "version" => config["version"], "config_file" => config})
+
+    conn = api_request(requestor, :post, "/v1/bundles", body: %{"bundle" => %{"config" => config, "force" => true}})
+    assert response(conn, 201)
+  end
+
   test "fails to install with semantically invalid config", %{authed: requestor} do
     # The config includes rules that mention permissions; if we remove
     # those permissions, installation should fail
@@ -163,6 +149,24 @@ defmodule Cog.V1.BundlesControllerTest do
 
     conn = api_request(requestor, :post, "/v1/bundles", body: %{"bundle" => %{"config" => config}})
     assert json_response(conn, 422)["errors"]
+  end
+
+  test "installs a registered bundle", %{authed: requestor} do
+    ExVCR.Config.cassette_library_dir("test/fixtures/cassettes")
+
+    use_cassette "installs_a_registered_bundle" do
+      conn = api_request(requestor, :post, "/v1/bundles/install/heroku/0.0.4")
+      assert json_response(conn, 201)
+    end
+  end
+
+  test "fails to install a missing registered bundle", %{authed: requestor} do
+    ExVCR.Config.cassette_library_dir("test/fixtures/cassettes")
+
+    use_cassette "installs_a_missing_registered_bundle" do
+      conn = api_request(requestor, :post, "/v1/bundles/install/herooku/0.0.4")
+      assert json_response(conn, 404)
+    end
   end
 
   test "shows disabled bundle", %{authed: requestor} do
@@ -431,41 +435,4 @@ defmodule Cog.V1.BundlesControllerTest do
         slack: "{{date}}"
     """
   end
-
-  defp old_config do
-    """
-    ---
-    # Format version
-    cog_bundle_version: 2
-
-    name: test_bundle
-    version: "0.1.0"
-    permissions:
-    - test_bundle:date
-    - test_bundle:time
-    docker:
-      image: operable-bundle/test_bundle
-      tag: v0.1.0
-    commands:
-      date:
-        executable: /usr/local/bin/date
-        enforcing: false
-        options:
-          option1:
-            type: string
-            description: An option
-            required: false
-            short_flag: o
-      time:
-        executable: /usr/local/bin/time
-        rules:
-        - when command is test_bundle:time must have test_bundle:time
-    templates:
-      time:
-        slack: "{{time}}"
-      date:
-        slack: "{{date}}"
-    """
-  end
-
 end

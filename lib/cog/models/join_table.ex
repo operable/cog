@@ -32,7 +32,16 @@ defmodule Cog.Models.JoinTable do
   `Permittable` protocol.
 
   """
-  use Cog.Models
+
+  alias Cog.Models.Bundle
+  alias Cog.Models.BundleVersion
+  alias Cog.Models.Group
+  alias Cog.Models.Permission
+  alias Cog.Models.Relay
+  alias Cog.Models.RelayGroup
+  alias Cog.Models.Role
+  alias Cog.Models.Rule
+  alias Cog.Models.User
 
   def associate(lhs, %{__struct__: type}=rhs) when type in [Role, Permission] do
     lhs_type = struct_name(lhs)

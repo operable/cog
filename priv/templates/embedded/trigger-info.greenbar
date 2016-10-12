@@ -1,0 +1,16 @@
+~if cond=length($results) == 1~
+**ID**: ~$results[0].id~
+**Name**: ~$results[0].name~
+**Description**: ~$results[0].description~
+**Enabled?**: ~$results[0].enabled~
+**Pipeline**: ~$results[0].pipeline~
+**As User**: ~$results[0].as_user~
+**Timeout (sec)**: ~$results[0].timeout_sec~
+**Invocation URL**: ~$results[0].invocation_url~
+~end~
+~if cond=length($results) > 1~
+| ID | Name | Description | Enabled? | Pipeline | As User | Timeout | Invocation URL |
+|----|------|-------------|----------|----------|---------|---------|----------------|
+~each var=$results~|~$item.id~|~$item.name~|~if cond=$item.description bound?~~$item.description~~end~|~$item.enabled~|~$item.pipeline~|~if cond=$item.as_user~~$item.as_user~~end~|~$item.timeout_sec~|~$item.invocation_url~|
+~end~
+~end~

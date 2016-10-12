@@ -2,24 +2,32 @@ use Mix.Config
 import Cog.Config.Helpers
 
 # ========================================================================
+# Set this to :unenforcing to globally disable all access rules.
+# NOTE: This is a global setting.
+# ========================================================================
+
+if System.get_env("DISABLE_RULE_ENFORCEMENT") do
+  config :cog, :access_rules, :unenforcing
+else
+  config :cog, :access_rules, :enforcing
+end
+
+# ========================================================================
 # Embedded Command Bundle Version (for built-in commands)
 # NOTE: Do not change this value unless you know what you're doing.
 # ========================================================================
-config :cog, :embedded_bundle_version, "0.12.0"
+config :cog, :embedded_bundle_version, "0.13.0"
 
 # ========================================================================
 # Chat Adapters
 # ========================================================================
 
-config :cog, Cog.Chat.Adapter,
-  providers: [http: Cog.Chat.Http.Provider],
-  cache_ttl: {60, :sec}
-
-config :cog, Cog.Chat.Slack.Provider,
-  api_token: System.get_env("SLACK_API_TOKEN")
-
 config :cog, Cog.Chat.Http.Provider,
   foo: "blah"
+
+config :cog, Cog.Chat.Adapter,
+  providers: provider_list(),
+  chat: enabled_chat_provider()
 
 config :cog, :enable_spoken_commands, ensure_boolean(System.get_env("ENABLE_SPOKEN_COMMANDS")) || true
 
@@ -96,7 +104,8 @@ config :cog, Cog.Repo,
   pool_timeout: ensure_integer(System.get_env("COG_DB_POOL_TIMEOUT")) || 15000,
   timeout: ensure_integer(System.get_env("COG_DB_TIMEOUT")) || 15000,
   parameters: [timezone: 'UTC'],
-  loggers: [{Cog.LogHelper, :log, []}]
+  loggers: [{Cog.LogHelper, :log, []}],
+  ssl: ensure_boolean(System.get_env("COG_DB_SSL")) || false
 
 # ========================================================================
 
@@ -180,5 +189,8 @@ config :cog, Cog.Mailer,
 
 config :cog, :email_from, System.get_env("COG_EMAIL_FROM")
 config :cog, :password_reset_base_url, System.get_env("COG_PASSWORD_RESET_BASE_URL")
+
+import_config "slack.exs"
+import_config "hipchat.exs"
 
 import_config "#{Mix.env}.exs"

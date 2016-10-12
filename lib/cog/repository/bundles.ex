@@ -9,6 +9,7 @@ defmodule Cog.Repository.Bundles do
   alias Cog.Models.{Bundle, BundleVersion, BundleDynamicConfig, CommandVersion, Rule}
   alias Cog.Repository.Rules
   alias Cog.Queries
+  alias Cog.BundleRegistry
 
   alias Cog.Models.Types.VersionTriple
   alias Ecto.Adapters.SQL
@@ -34,6 +35,9 @@ defmodule Cog.Repository.Bundles do
 
   @permanent_site_bundle_version "0.0.0"
 
+  @install_types [:normal, :force]
+  @default_install_type :normal
+
   ########################################################################
   # CRUD Operations
 
@@ -47,15 +51,32 @@ defmodule Cog.Repository.Bundles do
       #{inspect @reserved_bundle_names}
 
   """
-  def install(%{"name" => reserved}) when reserved in @reserved_bundle_names,
+  def install(install_type \\ @default_install_type, params)
+  def install(_, %{"name" => reserved}) when reserved in @reserved_bundle_names,
     do: {:error, {:reserved_bundle, reserved}}
-  def install(params),
-    do: __install(params)
+  def install(install_type, params) when install_type in @install_types,
+    do: __install(install_type, params)
+
+  def install_from_registry(bundle, version) do
+    case BundleRegistry.get_config(bundle, version) do
+      {:ok, %{"name" => name, "version" => version} = config} ->
+        revised_config = %{"name" => name,
+                           "version" => version,
+                           "config_file" => config}
+        install(revised_config)
+      {:error, error} ->
+        {:error, error}
+    end
+  end
 
   # TODO: clean this up so we only need the config file part;
   # everything else is redundant
-  defp __install(%{"name" => _name, "version" => _version, "config_file" => _config}=params) do
-    case install_bundle(params) do
+  defp __install(install_type \\ @default_install_type, params)
+  defp __install(install_type, %{"name" => _name,
+                                 "version" => _version,
+                                 "config_file" => _config}=params)
+                             when install_type in @install_types do
+    case install_bundle(install_type, params) do
       {:ok, bundle_version} ->
         {:ok, preload(bundle_version)}
       {:error, _}=error ->
@@ -303,8 +324,9 @@ defmodule Cog.Repository.Bundles do
   def highest_disabled_versions do
     query = from bv in BundleVersion,
             left_join: e in "enabled_bundle_versions",
-              on: bv.bundle_id == e.bundle_id and bv.version == e.version,
-            where: is_nil(e.bundle_id),
+              on: bv.bundle_id == e.bundle_id,
+            join: b in assoc(bv, :bundle),
+            where: is_nil(e.bundle_id) and b.name != "site",
             distinct: bv.bundle_id,
             order_by: [desc: bv.version]
 
@@ -559,7 +581,7 @@ defmodule Cog.Repository.Bundles do
   Creates a new dynamic configuration for a given bundle.
   Will overwrite previous config.
   """
-  def create_dynamic_config_for_bundle(%Bundle{id: bundle_id}=bundle, %{"layer" => layer, "name" => name, "config" => config}) do
+  def create_dynamic_config_for_bundle!(%Bundle{id: bundle_id}=bundle, %{"layer" => layer, "name" => name, "config" => config}) do
     Repo.transaction(fn ->
       delete_dynamic_config_for_bundle(bundle, layer, name)
 
@@ -620,12 +642,40 @@ defmodule Cog.Repository.Bundles do
     Repo.preload(bundle, [:permissions, :commands])
   end
 
-  defp new_version!(bundle, params) do
+  defp new_version!(:normal, bundle, params) do
+    params = Map.merge(params, Map.take(params["config_file"], ["description", "long_description", "author", "homepage"]))
+
     bundle
     |> Ecto.build_assoc(:versions)
     |> BundleVersion.changeset(params)
     |> Repo.insert!
     |> preload
+  end
+  defp new_version!(:force, bundle, params) do
+    # If we are doing a force install we check to see if the version
+    # already exists.
+    version_num = params["config_file"]["version"]
+    result = Repo.one(from bv in BundleVersion,
+                      where: bv.bundle_id == ^bundle.id,
+                      where: bv.version == ^version_num)
+
+    # If there is an existing version we remove it before adding the
+    # new version.
+    case result do
+      nil ->
+        new_version!(:normal, bundle, params)
+      old_version ->
+        # If the old version was enabled we enable the new version
+        if enabled?(old_version) do
+          Repo.delete!(old_version)
+          new_version = new_version!(:normal, bundle, params)
+          set_bundle_version_status(new_version, :enabled)
+          new_version
+        else
+          Repo.delete!(old_version)
+          new_version!(:normal, bundle, params)
+        end
+    end
   end
 
   # Consolidate what we need to preload for various things so we stay
@@ -648,16 +698,18 @@ defmodule Cog.Repository.Bundles do
   #
   ########################################################################
 
-  use Cog.Models
+  alias Cog.Models.Command
+  alias Cog.Models.CommandOption
+  alias Cog.Models.Permission
 
-  defp install_bundle(bundle_params) do
+  defp install_bundle(install_type, bundle_params) do
     Repo.transaction(fn ->
       try do
         # Create a bundle record if it doesn't exist yet
         bundle = find_or_create_bundle(bundle_params["name"])
 
-        # Create a new version record
-        version = new_version!(bundle, bundle_params)
+        # Create the new version
+        version = new_version!(install_type, bundle, bundle_params)
 
         # Add permissions, after deduping
         :ok = register_permissions_for_version(bundle, version)
@@ -674,7 +726,7 @@ defmodule Cog.Repository.Bundles do
         # Add templates
         version.config_file
         |> Map.get("templates", %{})
-        |> Enum.each(&create_template!(version, &1))
+        |> Enum.each(&Cog.Repository.Templates.create_template!(version, &1))
 
         # Once we go to Ecto 2.0 and there's a Repo.preload/3, I'd like
         # to add the ability to selectively force preloading on our
@@ -724,22 +776,6 @@ defmodule Cog.Repository.Bundles do
 
     CommandOption.build_new(command_version, option)
     |> Repo.insert!
-  end
-
-  defp create_template!(bundle_version, {name, template}) do
-    Enum.each(template, fn({provider, contents}) ->
-      contents = String.replace(contents, ~r{\n\z}, "")
-      params = %{
-        adapter: provider,
-        name: name,
-        source: contents
-      }
-
-      bundle_version
-      |> Ecto.build_assoc(:templates)
-      |> Template.changeset(params)
-      |> Repo.insert!
-    end)
   end
 
   defp register_permissions_for_version(bundle, bundle_version) do

@@ -1,17 +1,23 @@
 defmodule Cog.Adapters.Slack.Helpers do
   alias Cog.Assertions
 
+  require Logger
   @bot_handle "deckard"
-  @room "ci_bot_testing"
+  @room "#ci_bot_testing"
   @interval 1000 # 1 second
   @timeout 120000 # 2 minutes
+
+  def mention_name(handle) do
+    {:ok, mention_name} = Cog.Chat.Adapter.mention_name("slack", handle)
+    mention_name
+  end
 
   # keyword args:
   #   after: the last Slack message sent; you only want to look at
   #          responses that came in after this one. Required argument.
   #   count: the number of messages you want to retrieve and assert
   #          against. Optional, defaulting to 1
-  def assert_response(message, opts) do
+  def assert_response(message, opts, room \\ @room) do
 
     %{"ts" => ts} = Keyword.fetch!(opts, :after)
     expected_count = Keyword.get(opts, :count, 1)
@@ -19,7 +25,7 @@ defmodule Cog.Adapters.Slack.Helpers do
     :timer.sleep(@interval)
 
     last_message_func = fn ->
-      {:ok, last_message} = retrieve_last_message(room: @room, oldest: ts, count: expected_count)
+      {:ok, last_message} = retrieve_last_message(room: room, oldest: ts, count: expected_count)
       last_message
     end
 
@@ -31,14 +37,14 @@ defmodule Cog.Adapters.Slack.Helpers do
   #          responses that came in after this one. Required argument.
   #   count: the number of messages you want to retrieve and assert
   #          against. Optional, defaulting to 1
-  def assert_response_contains(message, opts) do
+  def assert_response_contains(message, opts, room \\ @room) do
     %{"ts" => ts} = Keyword.fetch!(opts, :after)
     expected_count = Keyword.get(opts, :count, 1)
 
     :timer.sleep(@interval)
 
     last_message_func = fn ->
-      {:ok, last_message} = retrieve_last_message(room: @room, oldest: ts, count: expected_count)
+      {:ok, last_message} = retrieve_last_message(room: room, oldest: ts, count: expected_count)
       last_message
     end
 
@@ -51,9 +57,17 @@ defmodule Cog.Adapters.Slack.Helpers do
   def retrieve_last_message(room: room, oldest: oldest),
     do: retrieve_last_message(room: room, oldest: oldest, count: 1)
   def retrieve_last_message(room: room, oldest: oldest, count: count) do
-    {:ok, %{id: channel}} = Cog.Chat.Adapter.lookup_room("slack", room)
+    {:ok, %{id: channel}} = Cog.Chat.Adapter.lookup_room("slack", name: room)
 
-    url = "https://slack.com/api/channels.history"
+    url = case channel do
+      "C" <> _ ->
+        "https://slack.com/api/channels.history"
+      "G" <> _ ->
+        "https://slack.com/api/groups.history"
+      "D" <> _ ->
+        "https://slack.com/api/im.history"
+    end
+
     params = %{channel: channel, oldest: oldest, count: count, token: token}
     query = URI.encode_query(params)
 
@@ -61,8 +75,8 @@ defmodule Cog.Adapters.Slack.Helpers do
     maybe_consume_messages(Poison.decode!(response.body), count)
   end
 
-  def send_message(message) do
-    {:ok, %{id: channel}} = Cog.Chat.Adapter.lookup_room("slack", @room)
+  def send_message(message, room \\ @room) do
+    {:ok, %{id: channel}} = Cog.Chat.Adapter.lookup_room("slack", name: room)
 
     url = "https://slack.com/api/chat.postMessage"
     params = %{channel: channel, text: message, as_user: true,
@@ -75,7 +89,7 @@ defmodule Cog.Adapters.Slack.Helpers do
   end
 
   def send_edited_message(message, initial_message \\ "FOO3rjha92") do
-    {:ok, %{id: channel}} = Cog.Chat.Adapter.lookup_room("slack", @room)
+    {:ok, %{id: channel}} = Cog.Chat.Adapter.lookup_room("slack", name: @room)
     initial_response = send_message(initial_message)
     url = "https://slack.com/api/chat.update"
     params = %{channel: channel, ts: initial_response["ts"], text: message, parse: "full", as_user: true, token: token}
@@ -116,7 +130,8 @@ defmodule Cog.Adapters.Slack.Helpers do
           # for; we'll take just as many as we expected to get
           formatted = Enum.sort(messages, &(&1["ts"] < &2["ts"]))
           |> Enum.take(expected_count)
-          |> Enum.map_join("\n", &(&1["text"]))
+          |> Enum.map(&extract_message/1)
+          |> Enum.join("\n")
           {:ok, formatted}
         end
     end
@@ -127,4 +142,28 @@ defmodule Cog.Adapters.Slack.Helpers do
   defp token do
     System.get_env("SLACK_USER_API_TOKEN")
   end
+
+  defp extract_message(%{"attachments" => [%{"text" => message}]})
+  when is_binary(message) and message != "",
+    do: message
+  defp extract_message(%{"attachments" => attachments}=message)
+  when attachments != [] do
+    Logger.warn("""
+
+    Received a message with more than one attachment, or one
+    attachment with an empty "text" field. This testing infrastructure
+    currently assumes at most one attachment, with a non-empty "text"
+    field.
+
+    If you see this message, this assumption has been violated.
+
+    Message:
+    #{inspect message, pretty: true}
+
+    """)
+    raise "bad attachment"
+  end
+  defp extract_message(%{"text" => message}) when is_binary(message),
+    do: message
+
 end

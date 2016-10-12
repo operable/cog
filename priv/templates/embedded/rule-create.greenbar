@@ -1,0 +1,3 @@
+~each var=$results~
+Created rule '~$item.id~'
+~end~

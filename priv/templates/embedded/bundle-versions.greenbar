@@ -1,0 +1,4 @@
+| Version | Enabled? |
+|---------|----------|
+~each var=$results~|~$item.version~|~$item.enabled~|
+~end~

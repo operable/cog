@@ -1,11 +1,20 @@
 defmodule Cog.Models.CommandVersion do
   use Cog.Model
-  use Cog.Models
+
+  alias Cog.Models.BundleVersion
+  alias Cog.Models.Command
+  alias Cog.Models.CommandOption
+  alias Cog.Models.CommandVersion
 
   require Logger
 
   schema "command_versions" do
     field :description, :string
+    field :long_description, :string
+    field :examples, :string
+    field :notes, :string
+    field :arguments, :string
+    field :subcommands, :map
     field :documentation, :string
     field :status, :string, virtual: true
 
@@ -18,7 +27,7 @@ defmodule Cog.Models.CommandVersion do
   end
 
   @required_fields ~w(command_id bundle_version_id)
-  @optional_fields ~w(description documentation)
+  @optional_fields ~w(description documentation long_description examples notes arguments subcommands)
 
   summary_fields [:documentation]
   detail_fields [:documentation]
@@ -42,7 +51,7 @@ defmodule Cog.Models.CommandVersion do
     |> foreign_key_constraint(:command_id)
   end
 
-  def full_name(%Cog.Models.CommandVersion{}=cv),
+  def full_name(%CommandVersion{}=cv),
     do: "#{cv.command.bundle.name}:#{cv.command.name}"
 end
 

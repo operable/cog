@@ -1,5 +1,78 @@
 #  Changelog
 
+## 0.15.1
+
+### Bug Fixes
+
+- Removed `COG_HIPCHAT_ENABLED` and `COG_SLACK_ENABLED` from base `docker-compose.yml` [#1037](https://github.com/operable/cog/issues/1037)
+
+## 0.15.0
+
+### Enhancements
+
+- Restored HipChat support [#968](https://github.com/operable/cog/issues/968)
+- Added global switch to toggle access rule enforcment [#977](https://github.com/operable/cog/issues/977)
+- Added a `--force` flag to cogctl for bundle installations [##969](https://github.com/operable/cog/issues/969)
+- Added an optional "config" section to bundle help [#948](https://github.com/operable/cog/issues/948)
+- Allowed bundle installs from [Warehouse](https://bundles.operable.io) [#988](https://github.com/operable/cog/pull/988)
+- Validate Slack bot tokens during startup [#1021](https://github.com/operable/cog/issues/1021)
+- Documented SMTP and password reset environment variables [#910](https://github.com/operable/issues/910)
+- Improved cogctl documentation [#930](https://github.com/operable/issues/930)
+
+### Bug Fixes
+
+- cogctl uses the "old" style templates when generating bundle configs for installation [#1000](https://github.com/operable/cog/issues/1000)
+- Cog should use user id references when responding to users [#944](https://github.com/operable/cog/issues/944)
+- Allow Piper to handle datum dot datum/string as an argument or option value [#1015](https://github.com/operable/cog/issues/1015)
+- Removed re-execution of edited commands from Cog [#1013](https://github.com/operable/cog/issues/1013)
+
+## 0.14.1
+
+### Bug Fixes
+
+- Relay left in zombie state when partially disconnected [#990](https://github.com/operable/cog/issues/990)
+  - Relay now halts whenever one of its message bus connections is lost. Users will need to ensure that Relay is properly run under supervision.
+- Support groups (private channels and group DMs) in the Slack adapter [#973](https://github.com/operable/cog/issues/973)
+  - A regression occurred when we rewrote the Slack chat adapter; Cog can once again interact with private channels
+- Fix how redirects are specified [#976](https://github.com/operable/cog/issues/976)
+  - Another regression with the new Slack chat adapter was fixed; redirects work again in Slack
+- Can't log from commands at anything but INFO levels [#980](https://github.com/operable/cog/issues/980)
+- Echo command crashes with non-string args [#981](https://github.com/operable/cog/issues/981)
+- Cog crashes processing slackbot messages [#982](https://github.com/operable/cog/issues/982)
+- values in json objects can only be referenced one level deep with the dot syntax [#993](https://github.com/operable/cog/issues/993)
+- Relay doesn't consider developer mode at startup [#997](https://github.com/operable/cog/issues/997)
+- Aborted commands crash the executor [#1003](https://github.com/operable/cog/issues/1003)
+- Unordered lists render incorrectly in Slack [#1004](https://github.com/operable/cog/issues/1004)
+
+## 0.14.0
+
+### Enhancements
+
+- New Template Engine [#876](https://github.com/operable/cog/issues/876)
+
+  - Cog's previous Mustache-based template engine, [fumanchu](https://github.com/operable/fumanchu), has been deprecated and replaced
+    by [greenbar](https://github.com/operable/greenbar). The combination of Cog's new chat API (released in 0.13) and Greenbar allows
+    Cog to render a single template across multiple providers and preserve the majority of formatting.
+
+- Added a `-dev` flag to Relay's CLI [#950](https://github.com/operable/cog/issues/950)
+
+  - We've added a development mode to Relay to simplify bundle development. Starting a Relay with `-dev` causes Relay to
+    re-pull any Docker images associated with installed command bundles on each pipeline execution. This should simplify
+    iterating command development.
+
+- Improved presentation of bundle and command help [#658](https://github.com/operable/cog/issues/658)
+
+- Introduced new bundle config version 4 which adds documentation structure
+  used by help command and reorganized template definitions. Also bundle
+  descriptions are now required. [spanner #76](https://github.com/operable/spanner/pull/76/files)
+
+### Bug Fixes
+
+- Return better error message for invalid dynamic configurations [#867](https://github.com/operable/cog/issues/867)
+- Update Docker installation documentation [#932](https://github.com/operable/cog/issues/932)
+- Documented Relay's backoff & retry behavior when disconnected [#935](https://github.com/operable/cog/issues/935)
+
+
 ## 0.13.0
 
 ### Enhancements

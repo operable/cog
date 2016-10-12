@@ -6,6 +6,7 @@ defmodule Cog.ExecutorHelpers do
   alias Cog.Command.Pipeline.ParserMeta
   alias Cog.Models.CommandOption
   alias Cog.Models.CommandOptionType
+  alias Cog.Models.BundleVersion
   alias Piper.Command.Parser
 
   # TODO: document command_spec
@@ -48,8 +49,9 @@ defmodule Cog.ExecutorHelpers do
     {:ok, version} = Version.parse("1.0.0")
     ParserMeta.new(Keyword.fetch!(spec, :bundle),
                    Keyword.fetch!(spec, :name),
-                   version,
-                   "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+                   %BundleVersion{version: version,
+                                  id: "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+                                  config_file: %{"cog_bundle_version" => Spanner.Config.current_config_version}},
                    Enum.map(Keyword.get(spec, :options, []), &option_from_spec/1),
                    Enum.map(Keyword.get(spec, :rules, []), &rule_from_text/1))
   end

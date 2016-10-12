@@ -1,5 +1,8 @@
 defmodule Cog.Queries.Token do
-  use Cog.Queries
+
+  import Ecto.Query, only: [from: 2]
+
+  alias Cog.Models.Token
 
   @doc """
   Retrieve all expired tokens (those that are older than

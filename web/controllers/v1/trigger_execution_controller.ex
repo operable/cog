@@ -44,11 +44,7 @@ defmodule Cog.V1.TriggerExecutionController do
                 |> json(%{status: "Request accepted and still processing after #{trigger.timeout_sec} seconds",
                           id: request_id})
               response ->
-                # TODO: FIIIIIIIIILTHY HACK
-                # Until we have proper error templates, the easiest
-                # way to distinguish errors from success is to see if
-                # the response "looks like an error".
-                if is_binary(response) && String.contains?(response, "An error has occurred") do
+                if is_map(response) and Map.has_key?(response, "error_message") do
                   conn |> put_status(:internal_server_error) |> json(%{errors: response})
                 else
                   conn |> put_status(:ok) |> json(response)

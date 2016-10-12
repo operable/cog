@@ -1,6 +1,6 @@
 defmodule DatabaseTestSetup do
-  use Cog.Models
 
+  alias Groupable
   alias Cog.Repo
 
   @doc """

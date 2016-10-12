@@ -1,0 +1,3 @@
+~each var=$results~
+Relay '~$item.name~' has been updated
+~end~

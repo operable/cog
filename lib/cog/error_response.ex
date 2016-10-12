@@ -3,13 +3,13 @@ defmodule Cog.ErrorResponse do
   alias Cog.Models.Bundle
 
   def render({:parse_error, msg}) when is_binary(msg),
-    do: "Whoops! An error occurred. " <> msg
+    do: msg
   def render({:redirect_error, invalid}),
-    do: "Whoops! An error occurred. " <> redirection_error_message(invalid)
+    do: redirection_error_message(invalid)
   def render({:binding_error, {:missing_key, var}}),
     do: "I can't find the variable '$#{var}'."
   def render({:binding_error, msg}) when is_binary(msg),
-    do: "Whoops! An error occurred. " <> msg
+    do: msg
   def render({:no_rule, current_invocation}),
     do: "No rules match the supplied invocation of '#{current_invocation}'. Check your args and options, then confirm that the proper rules are in place."
   def render({:denied, {%Ast.Rule{}=rule, current_invocation}}) do
@@ -17,16 +17,16 @@ defmodule Cog.ErrorResponse do
     "Sorry, you aren't allowed to execute '#{current_invocation}' :(\n You will need at least one of the following permissions to run this command: #{perms}."
   end
   def render({:no_relays, bundle_name}), # TODO: Add version, too?
-    do: "Whoops! An error occurred. No Cog Relays supporting the `#{bundle_name}` bundle are currently online"
+    do: "No Cog Relays supporting the `#{bundle_name}` bundle are currently online"
   def render({:disabled_bundle, %Bundle{name: name}}),
-    do: "Whoops! An error occurred. The #{name} bundle is currently disabled"
+    do: "The #{name} bundle is currently disabled"
   def render({:timeout, full_command_name}),
     do: "The #{full_command_name} command timed out"
   def render({:template_rendering_error, {error, template, adapter}}),
-    do: "Whoops! An error occurred. There was an error rendering the template '#{template}' for the adapter '#{adapter}': #{inspect error}"
+    do: "There was an error rendering the template '#{template}' for the adapter '#{adapter}': #{inspect error}"
   def render({:command_error, response}) do
     error = response.status_message || response.body["message"]
-    "Whoops! An error occurred. " <> error
+    error
   end
 
   # `errors` is a keyword list of [reason: name] for all bad redirect

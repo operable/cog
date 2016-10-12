@@ -1,0 +1,3 @@
+~each var=$results~
+Granted permission '~$item.permission.bundle~:~$item.permission.name~' to role '~$item.role.name~'
+~end~

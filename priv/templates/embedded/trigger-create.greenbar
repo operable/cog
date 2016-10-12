@@ -1,0 +1,3 @@
+~each var=$results~
+Created trigger '~$item.id~'
+~end~

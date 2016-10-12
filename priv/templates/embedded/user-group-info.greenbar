@@ -1,0 +1,14 @@
+~if cond=length($results) == 1~
+**Name**: ~$results[0].name~
+**ID**: ~$results[0].id~
+**Roles**: ~join var=$results[0].roles as=r~~$r.name~~end~
+
+**Members**: ~join var=$results[0].members as=m~~$m.username~~end~
+~end~
+~if cond=length($results) > 1~
+| Name | ID | Roles | Members |
+|------|----|-------|---------|
+~each var=$results~
+|~$item.name~|~$item.id~|~join var=$item.roles as=r~~$r.name~~end~|~join var=$item.members as=m~~$m.username~~end~|
+~end~
+~end~

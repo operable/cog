@@ -1,10 +1,13 @@
 defmodule Cog.Models.User do
   use Cog.Model
-  use Cog.Models
   use Cog.Models.EctoJson
 
-  alias Cog.Models.Permission
   alias Cog.Passwords
+  alias Cog.Models.Permission
+  alias Cog.Models.UserGroupMembership
+  alias Cog.Models.UserPermission
+  alias Cog.Models.UserRole
+  alias Cog.Models.ChatHandle
 
   schema "users" do
     field :username, :string
@@ -14,7 +17,7 @@ defmodule Cog.Models.User do
     field :password, :string, virtual: true
     field :password_digest, :string
 
-    has_many :chat_handles, Cog.Models.ChatHandle
+    has_many :chat_handles, ChatHandle
 
     has_many :group_memberships, UserGroupMembership, foreign_key: :member_id
     has_many :direct_group_memberships, through: [:group_memberships, :group]

@@ -1,7 +1,8 @@
 defmodule TokenTest do
   use Cog.ModelCase
-  use Cog.Models
+
   alias Cog.Repo
+  alias Cog.Models.Token
 
   setup do
     user = user("cog")

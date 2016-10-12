@@ -57,11 +57,21 @@ defmodule Cog.Chat.Adapter do
     end
   end
 
-  def lookup_room(provider, room_identifier) do
+  # Declaring like this so we fail quickly if lookup_room
+  # is called with something other than a keyword list.
+  def lookup_room(provider, name: name),
+    do: do_lookup_room(provider, name: name)
+  def lookup_room(provider, id: id),
+    do: do_lookup_room(provider, id: id)
+
+  # room_identifier should come in as a keyword list with
+  # either [id: id] or [name: name]
+  defp do_lookup_room(provider, room_identifier) do
+    args = Enum.into(room_identifier, %{provider: provider})
     cache = get_cache
     case cache[{provider, :room, room_identifier}] do
       nil ->
-        case GenMqtt.call(@adapter_topic , "lookup_room", %{provider: provider, id: room_identifier} , :infinity) do
+        case GenMqtt.call(@adapter_topic , "lookup_room", args, :infinity) do
           {:ok, room} ->
             Room.from_map(room)
           {:error, _}=error ->
@@ -149,11 +159,12 @@ defmodule Cog.Chat.Adapter do
     Logger.info("Starting")
     case Application.fetch_env(:cog, __MODULE__) do
       :error ->
-        {:error, :missing_chat_adapter_config}
+        {:stop, :missing_chat_adapter_config}
       {:ok, config} ->
         case Keyword.get(config, :providers) do
           nil ->
-            {:error, :missing_chat_providers}
+            Logger.error("Chat provider not specified. You must specify one of 'COG_SLACK_ENABLED' or 'COG_HIPCHAT_ENABLED' env variables")
+            {:stop, :missing_chat_providers}
           providers ->
             # TODO: validate that these providers actually implement
             # the proper behavior
@@ -165,7 +176,10 @@ defmodule Cog.Chat.Adapter do
   # RPC calls
 
   def handle_call(_conn, @adapter_topic, _sender, "lookup_room", %{"provider" => provider, "id" => id}, state) do
-    {:reply, maybe_cache(with_provider(provider, state, :lookup_room, [id]), {provider, :room, id}, state), state}
+    {:reply, maybe_cache(with_provider(provider, state, :lookup_room, [id: id]), {provider, :room, id}, state), state}
+  end
+  def handle_call(_conn, @adapter_topic, _sender, "lookup_room", %{"provider" => provider, "name" => name}, state) do
+    {:reply, maybe_cache(with_provider(provider, state, :lookup_room, [name: name]), {provider, :room, name}, state), state}
   end
   def handle_call(_conn, @adapter_topic, _sender, "lookup_user", %{"provider" => provider,
                                                                    "handle" => handle}, state) do
@@ -205,7 +219,7 @@ defmodule Cog.Chat.Adapter do
                                                     "provider" => provider}, state) do
     case with_provider(provider, state, :send_message, [target, message]) do
       :ok ->
-        Logger.info("Sent #{:erlang.size(message)} bytes via provider #{provider}.")
+        :ok
       {:error, :not_implemented} ->
         Logger.error("send_message function not implemented for provider '#{provider}'! No message sent")
       {:error, reason} ->
@@ -233,8 +247,8 @@ defmodule Cog.Chat.Adapter do
                   false ->
                     state
                 end
-              _error ->
-                Logger.error("Ignoring invalid chat message: #{inspect message, pretty: true}")
+              error ->
+                Logger.error("Error decoding chat message: #{inspect error}   #{inspect message, pretty: true}")
                 state
             end
     {:noreply, state}
@@ -319,14 +333,14 @@ defmodule Cog.Chat.Adapter do
 
  defp parse_mention(_text, nil), do: nil
  defp parse_mention(text, bot_name) do
-   updated = Regex.replace(~r/^#{Regex.escape(bot_name)}/, text, "")
+   updated = Regex.replace(~r/^#{Regex.escape(bot_name)}/i, text, "")
    if updated != text do
       Regex.replace(~r/^:/, updated, "")
       |> String.trim
-    else
-      nil
-    end
-  end
+   else
+     nil
+   end
+ end
 
  defp prepare_target(target) do
    case Cog.Chat.Room.from_map(target) do

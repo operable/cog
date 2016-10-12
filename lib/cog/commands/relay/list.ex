@@ -1,10 +1,10 @@
 defmodule Cog.Commands.Relay.List do
-  alias Cog.Commands.Helpers
+  require Cog.Commands.Helpers, as: Helpers
   alias Cog.Repository.Relays
 
   alias Cog.Commands.Relay.ViewHelpers
 
-  @moduledoc """
+  Helpers.usage """
   Lists relays.
 
   USAGE
@@ -36,7 +36,4 @@ defmodule Cog.Commands.Relay.List do
     end
   end
 
-  defp show_usage do
-    {:ok, "usage", %{usage: @moduledoc}}
-  end
 end

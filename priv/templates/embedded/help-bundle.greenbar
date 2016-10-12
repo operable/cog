@@ -1,0 +1,54 @@
+~each var=$results as=bundle~
+
+__Name__
+~br~
+~$bundle.name~~if cond=$bundle.description~ - ~$bundle.description~~end~
+~br~
+
+~if cond=$bundle.long_description~
+__Description__
+~br~
+~$bundle.long_description~
+~br~
+~end~
+
+~if cond=$bundle.config~
+__Configuration__
+~br~
+
+~if cond=$bundle.config.notes~
+~$bundle.config.notes~
+~br~
+~end~
+
+~each var=$bundle.config.env as=env_var~
+* ~$env_var.var~~if cond=$env_var.description~ - ~$env_var.description~~end~
+
+~end~
+~br~
+~end~
+
+~if cond=$bundle.commands not_empty?~
+__Commands__
+~br~
+~each var=$bundle.commands as=command~
+* ~$command.name~~if cond=$command.description~ - ~$command.description~~end~
+
+~end~
+~br~
+~end~
+
+~if cond=$bundle.author~
+__Author__
+~br~
+~$bundle.author~
+~br~
+~end~
+
+~if cond=$bundle.homepage~
+__Homepage__
+~br~
+~$bundle.homepage~
+~end~
+
+~end~

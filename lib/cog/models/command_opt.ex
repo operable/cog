@@ -38,14 +38,14 @@ defmodule Cog.Models.CommandOption do
     field :type, :string, virtual: true
     field :short_flag, :string
     field :long_flag, :string
-    field :desc, :string
+    field :description, :string
 
     belongs_to :command_version, Cog.Models.CommandVersion
     belongs_to :option_type, Cog.Models.CommandOptionType
   end
 
   @required_fields ~w(name required)
-  @optional_fields ~w(desc type option_type_id short_flag long_flag)
+  @optional_fields ~w(description type option_type_id short_flag long_flag)
 
   summary_fields [:id, :name, :required]
   detail_fields [:id, :name, :required, :short_flag, :long_flag,
