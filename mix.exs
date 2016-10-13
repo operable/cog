@@ -79,8 +79,9 @@ defmodule Cog.Mixfile do
 
       # Logging
       ########################################################################
-      # lager_logger depends on lager, but is using an old version
-      {:lager, "~> 3.0.2", override: true},
+      # emqttd depends on lager but just points at master. Overriding to the most
+      # recent version in hex.
+      {:lager, "~> 3.2.1", override: true},
       {:lager_logger, "~> 1.0.3"},
       {:logger_file_backend, github: "onkel-dirtus/logger_file_backend"},
 

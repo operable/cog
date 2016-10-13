@@ -333,7 +333,7 @@ defmodule Cog.Chat.Slack.Connector do
   end
 
   defp jitter() do
-    n = :random.uniform(90) + 10
+    n = :rand.uniform(90) + 10
     :timer.sleep((n * 10))
   end
 

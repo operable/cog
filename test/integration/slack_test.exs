@@ -9,7 +9,7 @@ defmodule Integration.SlackTest do
 
   setup do
     # Wait random 1-3 second interval to avoid being throttled by Slack's API
-    interval = :random.uniform(3) * 1000
+    interval = :rand.uniform(3) * 1000
     :timer.sleep(interval)
 
     # The user always interacts with the bot via the `@user` account
