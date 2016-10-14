@@ -24,7 +24,12 @@ defmodule Cog.Chat.HipChat.Util do
             if message.body == nil or message.body == "" do
               :ignore
             else
-              {:dm, message.from.full, message.body}
+              case parse_jid(message.from.full) do
+                nil ->
+                  :ignore
+                {jid, _resource} ->
+                  {:dm, jid, message.body}
+              end
             end
           true ->
             :ignore
