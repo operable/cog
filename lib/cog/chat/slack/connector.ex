@@ -275,37 +275,41 @@ defmodule Cog.Chat.Slack.Connector do
     if user == state.me.id do
       :ignore
     else
-      user = lookup_user(user, state.users, by: :id)
-      {:chat_event, %{type: "presence_change", user: user, presence: presence, provider: "slack"}}
+      case lookup_user(user, state.users, by: :id) do
+        {:ok, user} ->
+          {:chat_event, %{type: "presence_change", user: user, presence: presence, provider: "slack"}}
+        {:error, :not_found} ->
+          :ignore
+      end
     end
   end
   defp annotate(_, _), do: :ignore
 
   defp annotate_message(%{channel: channel, user: userid, text: text}, state) do
     text = Formatter.unescape(text, state)
-    user = lookup_user(userid, state.users, by: :id)
 
-    if user == nil do
-      Logger.info("Failed looking up user '#{userid}'.")
-      :ignore
-    else
-      room = case channel_type(channel) do
-        :room ->
-          lookup_room(channel, state.channels, by: :id)
-        :group ->
-          lookup_room(channel, state.groups, by: :id)
-        :dm ->
-          lookup_dm(userid, state.users)
-      end
-
-      if room == nil do
-        Logger.info("Failed looking up channel '#{channel}'.")
+    case lookup_user(userid, state.users, by: :id) do
+      {:error, :not_found} ->
+        Logger.info("Failed looking up user '#{userid}'.")
         :ignore
-      else
-        {:chat_message, %Message{id: Cog.Events.Util.unique_id,
-            room: room, user: user, text: text, provider: @provider_name,
-            bot_name: "@#{state.me.name}", edited: false}}
-      end
+      {:ok, user} ->
+        room = case channel_type(channel) do
+          :room ->
+            lookup_room(channel, state.channels, by: :id)
+          :group ->
+            lookup_room(channel, state.groups, by: :id)
+          :dm ->
+            lookup_dm(userid, state.users)
+        end
+
+        if room == nil do
+          Logger.info("Failed looking up channel '#{channel}'.")
+          :ignore
+        else
+          {:chat_message, %Message{id: Cog.Events.Util.unique_id,
+              room: room, user: user, text: text, provider: @provider_name,
+              bot_name: "@#{state.me.name}", edited: false}}
+        end
     end
   end
 
