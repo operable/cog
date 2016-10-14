@@ -13,6 +13,8 @@ defmodule Cog do
   end
 
   def start(_type, _args) do
+    Application.put_env(:cog, :message_queue_password, gen_password(64))
+
     maybe_display_unenforcing_warning()
     children = [worker(Cog.BusDriver, [], shutdown: 1000),
                 worker(Cog.Repo, []),
@@ -100,6 +102,13 @@ defmodule Cog do
       _ ->
         :ok
     end
+  end
+
+  # Generate a random string `length` characters long
+  defp gen_password(length) do
+    :crypto.strong_rand_bytes(length)
+    |> Base.encode64
+    |> binary_part(0, length)
   end
 
 end
