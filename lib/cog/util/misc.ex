@@ -12,6 +12,10 @@ defmodule Cog.Util.Misc do
   @doc "The name of the admin group."
   def admin_group, do: "cog-admin"
 
+  @doc "Username that all Cog-initiated message queue connections use"
+  def internal_mq_username,
+    do: "COG_INTERNAL"
+
   ########################################################################
   # Adapter Resolution Functions
 
