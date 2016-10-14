@@ -1,0 +1,18 @@
+#!/bin/sh -x
+
+set -e
+
+ERLANG_SOURCE="otp_src_19.1"
+
+wget "http://erlang.org/download/$ERLANG_SOURCE.tar.gz"
+tar -xzf $ERLANG_SOURCE.tar.gz
+
+cd $ERLANG_SOURCE
+
+./otp_build remove_prebuilt_files
+./configure && make && make install
+
+cd ..
+
+rm -rf $ERLANG_SOURCE
+rm $ERLANG_SOURCE.tar.gz
