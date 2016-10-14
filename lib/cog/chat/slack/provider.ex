@@ -28,7 +28,7 @@ defmodule Cog.Chat.Slack.Provider do
     # handle and alert the user. For example, when you return the mention name
     # followed by a colon.
     case lookup_user(handle) do
-      %Cog.Chat.User{id: id} -> "<@#{id}>"
+      {:ok, %Cog.Chat.User{id: id}} -> "<@#{id}>"
       _ -> super(handle)
     end
   end
