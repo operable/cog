@@ -169,10 +169,16 @@ defmodule Cog.Chat.Slack.Connector do
   end
 
   defp lookup_user(value, users, [by: :id]) do
-    Enum.reduce_while(users, nil, &(user_by_id(value, &1, &2)))
+    case Enum.reduce_while(users, nil, &(user_by_id(value, &1, &2))) do
+      nil -> {:error, :not_found}
+      user -> {:ok, user}
+    end
   end
   defp lookup_user(value, users, [by: :handle]) do
-    Enum.reduce_while(users, nil, &(user_by_name(value, &1, &2)))
+    case Enum.reduce_while(users, nil, &(user_by_name(value, &1, &2))) do
+      nil -> {:error, :not_found}
+      user -> {:ok, user}
+    end
   end
 
   defp lookup_dm(value, dms) do
