@@ -169,15 +169,19 @@ defmodule Cog.Chat.Slack.Connector do
   end
 
   defp lookup_user(value, users, [by: :id]) do
-    case Enum.reduce_while(users, nil, &(user_by_id(value, &1, &2))) do
-      nil -> {:error, :not_found}
-      user -> {:ok, user}
+    case Map.fetch(users, value) do
+      {:ok, user} ->
+        {:ok, make_user(user)}
+      :error ->
+        {:error, :not_found}
     end
   end
   defp lookup_user(value, users, [by: :handle]) do
-    case Enum.reduce_while(users, nil, &(user_by_name(value, &1, &2))) do
-      nil -> {:error, :not_found}
-      user -> {:ok, user}
+    case Map.values(users) |> Enum.find(&(&1.name == value)) do
+      nil ->
+        {:error, :not_found}
+      user ->
+        {:ok, make_user(user)}
     end
   end
 
@@ -212,19 +216,6 @@ defmodule Cog.Chat.Slack.Connector do
     {:halt, make_room(room)}
   end
   defp room_by_id(_, _, acc), do: {:cont, acc}
-
-  defp user_by_name(name, {_, user}, acc) do
-    if user.name == name do
-      {:halt, make_user(user)}
-    else
-      {:cont, acc}
-    end
-  end
-
-  defp user_by_id(id, {id, user}, _acc) do
-    {:halt, make_user(user)}
-  end
-  defp user_by_id(_, _, acc), do: {:cont, acc}
 
   defp dm_by_id(id, {id, _im}, _acc) do
     {:halt, %Room{id: id,
