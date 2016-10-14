@@ -73,7 +73,7 @@ defmodule Cog.Test.Support.HipChatClient do
                 {user, users} = Users.lookup(state.users, state.conn, jid: sender_jid)
                 state = %{state | users: users}
                 handle_dm(user.mention_name, body, state)
-               :ignore ->
+              :ignore ->
                 state
             end
     {:noreply, state}
