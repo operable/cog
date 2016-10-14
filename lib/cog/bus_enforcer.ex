@@ -28,7 +28,8 @@ defmodule Cog.BusEnforcer do
       {_, :undefined} ->
         false
       _ ->
-        case Repo.one(Queries.Relay.for_id(username)) do
+        id = extract_id_from_name(username)
+        case Repo.one(Queries.Relay.for_id(id)) do
           nil ->
             addr = format_address(mqtt_client(client, :peername))
             Logger.info("Denied connect attempt for unknown client #{username} from #{addr}")
@@ -52,15 +53,31 @@ defmodule Cog.BusEnforcer do
       :undefined ->
         false
       username ->
-        case Repo.exists?(Relay, username) do
+        id = extract_id_from_name(username)
+        case Repo.exists?(Relay, id) do
           false ->
             false
           true ->
-            relays_prefix = "bot/relays/#{username}"
-            commands_prefix = "/bot/commands/#{username}"
+            relays_prefix = "bot/relays/#{id}"
+            commands_prefix = "/bot/commands/#{id}"
             String.starts_with?(topic, relays_prefix) or
               String.starts_with?(topic, commands_prefix)
         end
+    end
+  end
+
+  # Extracts the id part of a MQTT username
+  # Valid ID formats are:
+  # * <UUID>
+  # * <UUID>/<name>
+  # Cog authenticates IDs only so we need to
+  # extract just the ID here.
+  defp extract_id_from_name(username) do
+    case String.split(username, "/", parts: 2) do
+      [id] ->
+        id
+      [id, _] ->
+        id
     end
   end
 
