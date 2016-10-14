@@ -13,6 +13,7 @@ defmodule Carrier.Messaging.Connection do
   Interface for the message bus on which commands communicate.
   """
 
+  @internal_mq_username Cog.Util.Misc.internal_mq_username
   @default_connect_timeout 5000 # 5 seconds
   @default_log_level :error
 
@@ -50,7 +51,10 @@ defmodule Carrier.Messaging.Connection do
   def connect(opts) do
     connect_timeout = Keyword.get(opts, :connect_timeout, @default_connect_timeout)
 
-    opts = add_system_config(opts)
+    opts = opts
+    |> add_connect_config
+    |> add_internal_credentials
+
     {:ok, conn} = :emqttc.start_link(opts)
 
     # `emqttc:start_link/1` returns a message bus client process, but it
@@ -163,9 +167,12 @@ defmodule Carrier.Messaging.Connection do
     :emqttc.sync_publish(conn, topic, encoded, :qos1)
   end
 
-  defp add_system_config(opts) do
+  ########################################################################
+
+  defp add_internal_credentials(opts) do
     opts
-    |> add_connect_config
+    |> Keyword.put(:username, @internal_mq_username)
+    |> Keyword.put(:password, Application.fetch_env!(:cog, :message_queue_password))
   end
 
   defp add_connect_config(opts) do
