@@ -1,0 +1,14 @@
+env:
+  BUILDKITE_DOCKER_COMPOSE_CONTAINER: cog
+  BUILDKITE_DOCKER_COMPOSE_FILE: buildkite.docker-compose.yml
+
+steps:
+  - command: "mix deps.get && make unit-tests"
+    label: ":cogops: Cog Unit Tests"
+    agents:
+      - docker=1.12.1
+  - command: "mix deps.get && make integration-tests"
+    label: ":cogops: Cog Integration Tests"
+    agents:
+      - docker=1.12.1
+
