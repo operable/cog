@@ -9,6 +9,8 @@ steps:
       - docker=1.12.1
   - command: "mix deps.get && make integration-tests"
     label: ":cogops: Cog Integration Tests"
+    concurrency: 1
+    concurrency_group: "cog_integration_tests"
     agents:
       - docker=1.12.1
 
