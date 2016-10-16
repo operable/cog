@@ -1,6 +1,6 @@
 env:
   BUILDKITE_DOCKER_COMPOSE_CONTAINER: cog
-  BUILDKITE_DOCKER_COMPOSE_FILE: docker-compose.buildkite.yml
+  BUILDKITE_DOCKER_COMPOSE_FILE: buildkite.docker-compose.yml
 
 steps:
   - command: "mix deps.get && make test-all"
