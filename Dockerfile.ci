@@ -1,0 +1,14 @@
+FROM msaraiva/elixir-dev:1.3.1
+
+RUN apk update -U && apk add bash make expat-dev gcc g++ libstdc++
+
+# Make sure all the erlang bits are installed
+RUN apk update -U && \
+    apk add `apk search erlang | grep -E "cos|eldap|gs|mibs|snmp|common-test|jinterface|megaco|diameter|odbc|observer|orber|test-server" -v | sed "s/-18.3.2-r0//g"`
+
+RUN elixir --version
+
+RUN mix local.hex --force && \
+    mix local.rebar --force
+
+WORKDIR /cog
