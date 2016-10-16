@@ -28,7 +28,7 @@ defmodule Cog.Snoop do
 
   # Wait a total of @tries x @wait ms to receive a single response
   # from the test adapter
-  @tries 100
+  @tries 200
   @wait 50 # ms
 
   @doc """

@@ -12,8 +12,10 @@ endif
 
 DOCKER_IMAGE      ?= operable/cog:0.5-dev
 
+deps:
+	mix deps.get
+
 ifeq ($(wildcard NO_CI),)
-ci: export DATABASE_URL = $(TEST_DATABASE_URL)
 ci: export MIX_ENV = test
 ci: ci-setup test-all ci-cleanup
 
@@ -21,10 +23,9 @@ ci-reset:
 	@echo "Resetting build environment"
 #	@rm -rf _build
 
-ci-setup: ci-reset
+ci-setup: deps ci-reset
 # Nuke mnesia dirs so we don't get borked on emqttd upgrades
 	rm -rf Mnesia.* $(GENERATED_FILES) deps
-	mix deps.get
 
 ci-cleanup:
 	mix ecto.drop
@@ -45,7 +46,7 @@ setup:
 run:
 	iex -S mix phoenix.server
 
-reset-db:
+reset-db: deps
 	mix ecto.reset --no-start
 
 test-rollbacks: export MIX_ENV = test
@@ -53,16 +54,18 @@ test-rollbacks: reset-db
 	mix do ecto.rollback --all, ecto.drop
 
 test: export MIX_ENV = test
-test: reset-db
+test: deps reset-db
 	mix test $(TEST)
 
 test-all: export MIX_ENV = test
 test-all: unit-tests integration-tests
 
-unit-tests: reset-db
+unit-tests: export MIX_ENV = test
+unit-tests: deps reset-db
 	mix test --exclude=integration
 
-integration-tests: reset-db
+integration-tests: export MIX_ENV = test
+integration-tests: deps reset-db
 	mix test --only=integration
 
 test-watch: export MIX_ENV = test
@@ -77,4 +80,4 @@ coverage:
 docker:
 	docker build --build-arg MIX_ENV=prod -t $(DOCKER_IMAGE) .
 
-.PHONY: ci ci-setup ci-cleanup test docker unit-tests integration-tests
+.PHONY: ci ci-setup ci-cleanup test docker unit-tests integration-tests deps
