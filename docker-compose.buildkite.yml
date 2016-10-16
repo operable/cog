@@ -1,0 +1,18 @@
+version: '2'
+services:
+  postgres:
+    image: postgres:9.5
+    environment:
+      - POSTGRES_USER=cog
+      - POSTGRES_PASSWORD=cog
+  cog:
+    build:
+      context: .
+      dockerfile: Dockerfile.ci
+    volumes:
+      - .:/cog
+    depends_on:
+      - postgres
+    environment:
+      - COG_MQTT_HOST=0.0.0.0
+      - DATABASE_URL=ecto://cog:cog@postgres:5432/cog

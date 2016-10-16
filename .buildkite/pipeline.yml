@@ -1,0 +1,10 @@
+env:
+  BUILDKITE_DOCKER_COMPOSE_CONTAINER: cog
+  BUILDKITE_DOCKER_COMPOSE_FILE: docker-compose.buildkite.yml
+
+steps:
+  - command: "mix deps.get && make test-all"
+    label: ":cogops: Testing :elixir: Using :docker: on :buildkite:!!! :joy:"
+    agents:
+      - docker=1.12.1
+
