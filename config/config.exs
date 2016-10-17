@@ -16,7 +16,7 @@ end
 # Embedded Command Bundle Version (for built-in commands)
 # NOTE: Do not change this value unless you know what you're doing.
 # ========================================================================
-config :cog, :embedded_bundle_version, "0.13.0"
+config :cog, :embedded_bundle_version, "0.14.0"
 
 # ========================================================================
 # Chat Adapters
