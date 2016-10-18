@@ -1,0 +1,6 @@
+# This template is used explicitly when the 'raw' command is called. This allows
+# us to render the entire json object, {"body": ["text"]}, for commands piped in
+# that normally just render text.
+# This is necessary for commands that return an object like {"body": ["list", "of", "strings"]}
+# to prevent the fallback logic from rendering it with the text template.
+~json var=$results~

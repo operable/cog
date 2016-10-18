@@ -22,7 +22,11 @@ defmodule Cog.Command.Raw do
 
   def handle_message(%Command{cog_env: nil}=req, state),
     do: {:reply, req.reply_to, "nil", state}
+  # Note we specify the "raw" template here. This is the template located at
+  # priv/templates/embedded/raw. We do this so commands that return an object
+  # like {"body": ["list", "of", "strings"]} won't get caught by the fallback
+  # logic and rendered as text.
   def handle_message(req, state),
-    do: {:reply, req.reply_to, req.cog_env, state}
+    do: {:reply, req.reply_to, "raw", req.cog_env, state}
 
 end
