@@ -14,11 +14,20 @@ ENV MIX_ENV ${MIX_ENV:-dev}
 RUN apk update -U && apk add bash ca-certificates curl git openssl postgresql-client
 
 # Install Erlang
-RUN apk update -U && \
-    apk add `apk search erlang | grep -E "cos|eldap|gs|mibs|snmp|common-test|jinterface|megaco|diameter|odbc|observer|orber|test-server" -v | sed "s/-18.3.2-r0//g"`
+#RUN apk update -U && \
+    #apk add `apk search erlang | grep -E "cos|eldap|gs|mibs|snmp|common-test|jinterface|megaco|diameter|odbc|observer|orber|test-server" -v | sed "s/-18.3.2-r0//g"`
 
-# Install Elixir 1.3.1
-RUN wget https://github.com/elixir-lang/elixir/releases/download/v1.3.1/Precompiled.zip && \
+# install Erlang 19.1
+COPY ./scripts/install_erlang .
+RUN apk update -U && \
+    apk add gcc g++ make perl-dev zlib-dev ncurses-dev openssl-dev openjdk7 unixodbc-dev && \
+    ./install_erlang && \
+    apk del gcc g++ perl-dev zlib-dev ncurses-dev openssl-dev openjdk7 unixodbc-dev && \
+    rm install_erlang && \
+    rm -f /var/cache/apk/*
+
+# Install Elixir 1.3.4
+RUN wget https://github.com/elixir-lang/elixir/releases/download/v1.3.4/Precompiled.zip && \
     unzip -d /usr/local Precompiled.zip && rm -f /usr/local/bin/*.bat && rm -f Precompiled.zip
 
 # Setup Operable user. UID/GID default to 60000 but can be overriden.
