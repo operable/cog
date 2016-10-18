@@ -1,5 +1,15 @@
 #  Changelog
 
+## 0.15.2
+### Bug Fixes
+
+- Local Relays connecting prior to registration crash Cog [#1034](https://github.com/operable/cog/issues/1034)
+- Chat handle creation erroneous error [#1049](https://github.com/operable/cog/issues/1049)
+- Relay suffers from frequent disconnects [#1050](https://github.com/operable/cog/issues/1050)
+- Bot does not respond to HipChat DMs [#1053](https://github.com/operable/cog/issues/1053)
+- Bump the embedded bundle version [#1063](https://github.com/operable/cog/issues/1063)
+- Enable dynamic config for Relay in container [#1066](https://github.com/operable/cog/issues/1066)
+
 ## 0.15.1
 
 ### Bug Fixes
