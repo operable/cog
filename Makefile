@@ -59,9 +59,11 @@ test: reset-db
 test-all: export MIX_ENV = test
 test-all: unit-tests integration-tests
 
+unit-tests: export MIX_ENV = test
 unit-tests: reset-db
 	mix test --exclude=integration
 
+integration-tests: export MIX_ENV = test
 integration-tests: reset-db
 	mix test --only=integration
 

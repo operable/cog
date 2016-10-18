@@ -1,0 +1,12 @@
+FROM mpeck/wip-ci-testing:latest
+
+RUN apk update -U && \
+    apk add bash make git ca-certificates openssl expat-dev gcc g++ libstdc++ && \
+    rm -f /var/cache/apk/*
+
+RUN elixir --version
+
+RUN mix local.hex --force && \
+    mix local.rebar --force
+
+WORKDIR /cog
