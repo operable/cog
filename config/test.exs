@@ -16,7 +16,8 @@ config :cog, Cog.Chat.Test.Provider,
   verbose: true
 
 config :cog, Cog.Repo,
-  pool: Ecto.Adapters.SQL.Sandbox
+  pool: Ecto.Adapters.SQL.Sandbox,
+  ownership_timeout: 60000
 
 config :cog,
   :template_cache_ttl, {1, :sec}
