@@ -91,6 +91,9 @@ defimpl Cog.Eval, for: Piper.Permissions.Ast.ContainExpr do
     end
   end
 
+  defp expr_match?(lhsv, rhsv) when is_list(lhsv) do
+    Enum.any?(lhsv, fn(item) -> expr_match?(item, rhsv) end)
+  end
   defp expr_match?(lhsv, %Regex{}=rhsv) do
     Regex.match?(rhsv, "#{lhsv}")
   end
