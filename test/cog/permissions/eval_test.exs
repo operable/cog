@@ -183,13 +183,27 @@ must have foo:write
     assert Eval.value_of(ast, context) == {true, 2}
   end
 
-  test "in expr referencing an option" do
+  test "in expr referencing an option (==)" do
     {:ok, ast} = :piper_rule_parser.parse_rule("""
 when command is debug:opts with option[list] in ["foo", "bar"] allow
     """)
-    context = make_context("debug:opts", [], %{"list" => "foo"})
+    context = make_context("debug:opts", [], %{"list" => ["foo"]})
     assert Eval.value_of(ast, context) == {true, 1}
-    context = make_context("debug:opts", [], %{"list" => "baz"})
+    context = make_context("debug:opts", [], %{"list" => ["baz"]})
+    assert Eval.value_of(ast, context) == :nomatch
+    context = make_context("debug:opts", [], %{"list" => ["f","oo"]})
+    assert Eval.value_of(ast, context) == :nomatch
+  end
+
+  test "in expr referencing an option (regex)" do
+    {:ok, ast} = :piper_rule_parser.parse_rule("""
+when command is debug:opts with option[list] in [/foo/] allow
+    """)
+    context = make_context("debug:opts", [], %{"list" => ["foo"]})
+    assert Eval.value_of(ast, context) == {true, 1}
+    context = make_context("debug:opts", [], %{"list" => ["baz"]})
+    assert Eval.value_of(ast, context) == :nomatch
+    context = make_context("debug:opts", [], %{"list" => ["f","oo"]})
     assert Eval.value_of(ast, context) == :nomatch
   end
 
