@@ -1,25 +1,24 @@
 # Cog
 
-Cog is an open chatops platform that gives you a secure, collaborative command
-line right in your chat window. It is designed to be secure, highly available,
-chat provider agnostic, and to be extensible using your favorite programming
-language.
+Cog brings the power of the command line to the place you collaborate with your team all the time -- your chat window.
 
-* [Installation Guide](http://docs.operable.io/docs/installation)
+![Collaborating with Cog](https://operable.io/assets/img/cog1.gif)
+
+Powerful access control means you can collaborate around even the most sensitive tasks with confidence. A focus on extensibility and adaptability means that you can respond quickly to the unexpected, without your team losing visibility.
+
+* [Installation Guide](https://cog-book.operable.io/#_installation_guide) - You want Cog, now go here to start installing it.
 * [Development Guide](https://github.com/operable/cog/blob/master/DEVELOP.md)
-* [Documentation](http://docs.operable.io)
+* [Cog Book](https://cog-book.operable.io) - Our new book that includes the above mentioned Installation Guide and a chapter on Command Bundle Writing.
+* [Documentation](http://docs.operable.io) - All about Cog that isn't covered in the book, yet.
+* [Bundle Warehouse](https://bundles.operable.io/) - Install one of these bundles on Cog and/or create your own command bundle and upload it here.
 
-## Status 
+## Status
 
-Cog is currently in public alpha and is not currently recommended for mission
-critical workflows. While many of the core features are in place, there are a
-number of rough edges that we anticipate smoothing out over the next few
-months. We are releasing it in this state in order to allow us to collaborate
-in the open with the community in order to build the best possible platform.
+Cog is production ready! :tada:
 
 ## More Links
 
-* [Cog Public Chat](http://slack.operable.io/)
+* [Cog Public Slack Community](http://slack.operable.io/)
 * [GitHub Issues](https://github.com/operable/cog/issues)
 * [How to Contribute](https://github.com/operable/cog/blob/master/CONTRIBUTING.md)
 * [Code of Conduct](https://github.com/operable/cog/blob/master/CODE_OF_CONDUCT.md)
