@@ -54,7 +54,8 @@ defmodule Cog.TokenReaper do
   - ttl: the age at which a token is considered expired, in seconds
   """
   def init([period, ttl]) do
-    schedule_next_reaping(5000)
+    delete_expired_tokens(ttl)
+    schedule_next_reaping(period)
     {:ok, %__MODULE__{period: period,
                       ttl: ttl}}
   end
