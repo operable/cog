@@ -53,6 +53,9 @@ config :cog, :command_prefix, System.get_env("COG_COMMAND_PREFIX") || "!"
 config :cog, Cog.Bundle.BundleSup,
   bundle_root: Path.join([File.cwd!, "bundles"])
 
+config :cog, Cog.Command.Pipeline,
+  command_timeout: {60, :sec}
+
 # Set these to zero (0) to disable caching
 config :cog, :command_cache_ttl, {60, :sec}
 config :cog, :command_rule_ttl, {10, :sec}
