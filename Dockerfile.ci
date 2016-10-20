@@ -1,7 +1,10 @@
 FROM operable/elixir:1.3.1-r3
 
-COPY . /code
+COPY mix.exs mix.lock /code/
+COPY config/ /code/config/
 WORKDIR /code
 RUN mix deps.get
 RUN MIX_ENV=test mix deps.compile
+
+COPY . /code
 RUN MIX_ENV=test mix compile
