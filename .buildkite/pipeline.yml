@@ -1,4 +1,3 @@
-
 steps:
   - command: "make unit-tests integration-tests"
     label: ":cogops: Cog Tests"
@@ -9,3 +8,7 @@ steps:
     agents:
       - docker=1.12.1
 
+  - wait
+
+  - command: ".buildkite/scripts/trigger_dependent_build.sh cogctl"
+    label: ":cogops: cogctl build"
