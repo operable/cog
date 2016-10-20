@@ -54,7 +54,8 @@ config :cog, Cog.Bundle.BundleSup,
   bundle_root: Path.join([File.cwd!, "bundles"])
 
 config :cog, Cog.Command.Pipeline,
-  command_timeout: {60, :sec}
+  interactive_timeout: {60, :sec},
+  trigger_timeout: {300, :sec}
 
 # Set these to zero (0) to disable caching
 config :cog, :command_cache_ttl, {60, :sec}

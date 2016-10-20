@@ -131,8 +131,7 @@ defmodule Cog.Command.Pipeline.Executor do
         case fetch_user_from_request(request) do
           {:ok, user} ->
             {:ok, perms} = PermissionsCache.fetch(user)
-            command_timeout = Keyword.fetch!(config, :command_timeout)
-            |> Cog.Config.convert(:ms)
+            command_timeout = get_command_timeout(request.adapter, config)
             loop_data = %__MODULE__{id: id, topic: topic, request: request,
                                     mq_conn: conn,
                                     user: user,
@@ -716,5 +715,14 @@ defmodule Cog.Command.Pipeline.Executor do
           {:error, :not_found}
       end
     end
+  end
+
+  defp get_command_timeout(adapter, config) do
+    if ChatAdapter.is_chat_provider?(adapter) do
+      Keyword.fetch!(config, :interactive_timeout)
+    else
+      Keyword.fetch!(config, :trigger_timeout)
+    end
+    |> Cog.Config.convert(:ms)
   end
 end
