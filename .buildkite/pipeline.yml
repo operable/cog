@@ -1,0 +1,11 @@
+
+steps:
+  - command: "make unit-tests integration-tests"
+    label: ":cogops: Cog Tests"
+    env:
+      BUILDKITE_DOCKER_COMPOSE_CONTAINER: cog
+      BUILDKITE_DOCKER_COMPOSE_FILE: docker-compose.ci.yml
+      MIX_ENV: test
+    agents:
+      - docker=1.12.1
+
