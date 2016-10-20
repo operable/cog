@@ -6,6 +6,7 @@ defmodule Cog.CommandVersionHelpView do
   def render("command_version.json", %{command_version: command_version}) do
     %{name: command_version.command.name,
       description: command_version.description,
+      long_description: command_version.long_description,
       synopsis: render_synopsis(command_version),
       required_options: render_required_options(command_version),
       options: render_options(command_version),
