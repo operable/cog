@@ -1,5 +1,5 @@
 steps:
-  - command: ".buildkite/scripts/unit_tests.sh"
+  - command: ".buildkite/scripts/test.sh unit"
     label: ":cogops: Cog Unit Tests"
     env:
       BUILDKITE_DOCKER_COMPOSE_CONTAINER: cog
@@ -7,7 +7,7 @@ steps:
     agents:
       - docker=1.12.1
 
-  - command: ".buildkite/scripts/slack_tests.sh"
+  - command: ".buildkite/scripts/test.sh slack"
     label: ":slack: Cog Integration Tests - Slack"
     env:
       BUILDKITE_DOCKER_COMPOSE_CONTAINER: cog
@@ -17,7 +17,7 @@ steps:
     concurrency_group: "cog_slack_integration"
     concurreny: 1
 
-  - command: ".buildkite/scripts/hipchat_tests.sh"
+  - command: ".buildkite/scripts/test.sh hipchat"
     label: ":hipchat: Cog Integration Tests - HipChat"
     env:
       BUILDKITE_DOCKER_COMPOSE_CONTAINER: cog

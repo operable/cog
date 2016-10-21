@@ -1,7 +1,7 @@
-/_build
-/deps
-/cover
-/data
+./_build
+./deps
+./cover
+./data
 erl_crash.dump
 *.ez
 *.swp
