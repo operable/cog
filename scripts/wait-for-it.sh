@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 #   Use this script to test if a given TCP host/port are available
 
+##### NOTE #######
+# This script has been modified to work with Alpine Linux.
+# Specifically in regards to the timeout functionality, because Alpine Linux
+# does NOT use the standard GNU Timeout util.
+# See lines #56 - #66 in the wait_for_wrapper function for changes.
+
 cmdname=$(basename $0)
 
 echoerr() { if [[ $QUIET -ne 1 ]]; then echo "$@" 1>&2; fi }
@@ -48,9 +54,15 @@ wait_for_wrapper()
 {
     # In order to support SIGINT during timeout: http://unix.stackexchange.com/a/57692
     if [[ $QUIET -eq 1 ]]; then
-        timeout $TIMEOUT $0 --quiet --child --host=$HOST --port=$PORT --timeout=$TIMEOUT &
+        # Modified to work with Alpine Linux
+        # Original command
+        # timeout $TIMEOUT $0 --quiet --child --host=$HOST --port=$PORT --timeout=$TIMEOUT &
+        timeout -t $TIMEOUT -s KILL $0 --quiet --child --host=$HOST --port=$PORT --timeout=$TIMEOUT &
     else
-        timeout $TIMEOUT $0 --child --host=$HOST --port=$PORT --timeout=$TIMEOUT &
+        # Modified to work with Alpine Linux
+        # Original command
+        # timeout $TIMEOUT $0 --child --host=$HOST --port=$PORT --timeout=$TIMEOUT &
+        timeout -t $TIMEOUT -s KILL $0 --child --host=$HOST --port=$PORT --timeout=$TIMEOUT &
     fi
     PID=$!
     trap "kill -INT -$PID" INT
