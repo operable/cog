@@ -247,6 +247,33 @@ defmodule Cog.V1.TriggerExecutionControllerTest do
     assert ["ok"] = Snoop.loop_until_received(snoop, provider: "http")
   end
 
+  test "a trigger's command timeout is configurable separate from an interactive pipeline's command timeout", %{conn: conn} do
+    # Change the trigger timeout to 1 second
+    config = Application.fetch_env!(:cog, Cog.Command.Pipeline)
+    updated_config = Keyword.put(config, :trigger_timeout, {1, :sec})
+    Application.put_env(:cog, Cog.Command.Pipeline, updated_config)
+
+    pipeline = "sleep 5 | echo foobar"
+
+    {:ok, snoop} = Snoop.adapter_traffic
+
+    user = user("cog")
+    |> with_chat_handle_for("test")
+
+    trigger = trigger(%{name: "pipelinetimeout",
+                        pipeline: pipeline,
+                        as_user: "cog"})
+
+    # Execute the trigger
+    post(conn, "/v1/triggers/#{trigger.id}", Poison.encode!(%{}))
+
+    # The pipeline should timeout with the sleep command.
+    assert [%{"error_message" => "The operable:sleep command timed out"}] = Snoop.loop_until_received(snoop, provider: "http")
+
+    # The same pipeline sent through a chat provider should succeed.
+    assert [%{body: ["foobar"]}] == Cog.Adapters.Test.Helpers.send_message(user, "@bot: #{pipeline}")
+  end
+
   @tag content_type: "text/plain"
   test "requires JSON or x-www-form-urlencoded content", %{conn: conn} do
     user("cog")
