@@ -78,28 +78,28 @@ defmodule Cog.Command.OptionInterpreter.Test do
       opt_args = options_and_args("test-command --stuff=$var",
                                   %{"var" => unquote(input)},
                                   options: [[name: "stuff", type: unquote(type)]])
-      assert_options_and_args(opt_args, %{"stuff" => unquote(output)}, [])
+      assert_options_and_args(opt_args, %{"stuff" => unquote(output)})
     end
 
     test "`#{inspect input}` is processed as `#{inspect output}` as a #{type} option, when specified as a variable with an equal sign with a short flag" do
       opt_args = options_and_args("test-command -s=$var",
                                   %{"var" => unquote(input)},
                                   options: [[name: "stuff", type: unquote(type), short_flag: "s"]])
-      assert_options_and_args(opt_args, %{"stuff" => unquote(output)}, [])
+      assert_options_and_args(opt_args, %{"stuff" => unquote(output)})
     end
 
     test "`#{inspect input}` is processed as `#{inspect output}` as a #{type} option, when specified directly with an equal sign" do
       opt_args = options_and_args("test-command --stuff=#{inspect unquote(input)}",
                                   %{},
                                   options: [[name: "stuff", type: unquote(type)]])
-      assert_options_and_args(opt_args, %{"stuff" => unquote(output)}, [])
+      assert_options_and_args(opt_args, %{"stuff" => unquote(output)})
     end
 
     test "`#{inspect input}` is processed as `#{inspect output}` as a #{type} option, when specified directly with an equal sign with a short flag" do
       opt_args = options_and_args("test-command -s=#{inspect unquote(input)}",
                                   %{},
                                   options: [[name: "stuff", type: unquote(type), short_flag: "s"]])
-      assert_options_and_args(opt_args, %{"stuff" => unquote(output)}, [])
+      assert_options_and_args(opt_args, %{"stuff" => unquote(output)})
     end
   end)
 
@@ -108,28 +108,28 @@ defmodule Cog.Command.OptionInterpreter.Test do
       opt_args = options_and_args("test-command --stuff $var",
                                   %{"var" => unquote(input)},
                                   options: [[name: "stuff", type: unquote(type)]])
-      assert_options_and_args(opt_args, %{"stuff" => unquote(output)}, [])
+      assert_options_and_args(opt_args, %{"stuff" => unquote(output)})
     end
 
     test "`#{inspect input}` is processed as `#{inspect output}` as a #{type} option, when specified as a variable without an equal sign with a short flag" do
       opt_args = options_and_args("test-command -s $var",
                                   %{"var" => unquote(input)},
                                   options: [[name: "stuff", type: unquote(type), short_flag: "s"]])
-      assert_options_and_args(opt_args, %{"stuff" => unquote(output)}, [])
+      assert_options_and_args(opt_args, %{"stuff" => unquote(output)})
     end
 
     test "`#{inspect input}` is processed as `#{inspect output}` as a #{type} option, when specified directly without an equal sign" do
       opt_args = options_and_args("test-command --stuff #{inspect unquote(input)}",
                                   %{},
                                   options: [[name: "stuff", type: unquote(type)]])
-      assert_options_and_args(opt_args, %{"stuff" => unquote(output)}, [])
+      assert_options_and_args(opt_args, %{"stuff" => unquote(output)})
     end
 
     test "`#{inspect input}` is processed as `#{inspect output}` as a #{type} option, when specified directly without an equal sign with a short flag" do
       opt_args = options_and_args("test-command -s #{inspect unquote(input)}",
                                   %{},
                                   options: [[name: "stuff", type: unquote(type), short_flag: "s"]])
-      assert_options_and_args(opt_args, %{"stuff" => unquote(output)}, [])
+      assert_options_and_args(opt_args, %{"stuff" => unquote(output)})
     end
 
   end)
@@ -170,14 +170,14 @@ defmodule Cog.Command.OptionInterpreter.Test do
     opt_args = options_and_args("test-command --stuff",
                                 %{},
                                 options: [[name: "stuff", type: "bool"]])
-    assert_options_and_args(opt_args, %{"stuff" => true}, [])
+    assert_options_and_args(opt_args, %{"stuff" => true})
   end
 
   test "boolean option specified with a short flag without a value is interpreted as true" do
     opt_args = options_and_args("test-command -s",
                                 %{},
                                 options: [[name: "stuff", type: "bool", short_flag: "s"]])
-    assert_options_and_args(opt_args, %{"stuff" => true}, [])
+    assert_options_and_args(opt_args, %{"stuff" => true})
   end
 
   test "boolean option without a value given *without* an equal sign is true, and the value is interpreted as an argument" do
@@ -191,42 +191,42 @@ defmodule Cog.Command.OptionInterpreter.Test do
     opt_args = options_and_args("test-command -v",
                                 %{},
                                 options: [[name: "verbose", type: "incr", short_flag: "v"]])
-    assert_options_and_args(opt_args, %{"verbose" => 1}, [])
+    assert_options_and_args(opt_args, %{"verbose" => 1})
   end
 
   test "incr option given with a parameter" do
     opt_args = options_and_args("test-command -v=3",
                                 %{},
                                 options: [[name: "verbose", type: "incr", short_flag: "v"]])
-    assert_options_and_args(opt_args, %{"verbose" => 3}, [])
+    assert_options_and_args(opt_args, %{"verbose" => 3})
   end
 
   test "incr option without actually being specified" do
     opt_args = options_and_args("test-command",
                                 %{},
                                 options: [[name: "verbose", type: "incr", short_flag: "v"]])
-    assert_options_and_args(opt_args, %{"verbose" => 0}, [])
+    assert_options_and_args(opt_args, %{"verbose" => 0})
   end
 
   test "incr option specified multiple times" do
     opt_args = options_and_args("test-command -v -v -v -v",
                                 %{},
                                 options: [[name: "verbose", type: "incr", short_flag: "v"]])
-    assert_options_and_args(opt_args, %{"verbose" => 4}, [])
+    assert_options_and_args(opt_args, %{"verbose" => 4})
   end
 
   test "incr option specified multiple times with values" do
     opt_args = options_and_args("test-command -v -v=2 -v=3 -v=62",
                                 %{},
                                 options: [[name: "verbose", type: "incr", short_flag: "v"]])
-    assert_options_and_args(opt_args, %{"verbose" => 68}, [])
+    assert_options_and_args(opt_args, %{"verbose" => 68})
   end
 
   test "incr option specified with negative values" do
     opt_args = options_and_args("test-command -v=-1",
                                 %{},
                                 options: [[name: "verbose", type: "incr", short_flag: "v"]])
-    assert_options_and_args(opt_args, %{"verbose" => -1}, [])
+    assert_options_and_args(opt_args, %{"verbose" => -1})
   end
 
   args = [["string", "value"],
@@ -249,7 +249,7 @@ defmodule Cog.Command.OptionInterpreter.Test do
     opt_args = options_and_args("ec2 --tags=$var1 --stuff=$var2",
                                 %{"var1" => "monkeys", "var2" => "stuff"},
                                 options: [[name: "tags"]])
-    assert_options_and_args(opt_args, %{"tags" => "monkeys"}, [])
+    assert_options_and_args(opt_args, %{"tags" => "monkeys"})
   end
 
   test "required options are required" do
@@ -259,6 +259,16 @@ defmodule Cog.Command.OptionInterpreter.Test do
                                           [name: "needed", required: true],
                                           [name: "really_needed", required: true]])
     assert {:error, "Looks like you forgot to include some required options: 'needed, really_needed'"} = opt_args
+  end
+
+  test "required options with short names work" do
+    opt_args = options_and_args("test-command -f", %{}, options: [[name: "force", required: true, short_flag: "f", type: "bool"]])
+    assert_options_and_args(opt_args, %{"force" => true})
+  end
+
+  test "required options with long names work" do
+    opt_args = options_and_args("test-command --priority=high", %{}, options: [[name: "priority", required: true, short_flag: "p", type: "string"]])
+    assert_options_and_args(opt_args, %{"priority" => "high"})
   end
 
   test "multiple values for a list" do
@@ -275,8 +285,7 @@ defmodule Cog.Command.OptionInterpreter.Test do
                                 %{},
                                 options: [[name: "foo", type: "list"]])
     assert_options_and_args(opt_args,
-                            %{"foo" => ["one", "two", "three", "four","five"]},
-                            [])
+                            %{"foo" => ["one", "two", "three", "four","five"]})
   end
 
   test "commas in list values can be optionally escaped" do
@@ -284,8 +293,7 @@ defmodule Cog.Command.OptionInterpreter.Test do
                                 %{},
                                 options: [[name: "foo", type: "list"]])
     assert_options_and_args(opt_args,
-                            %{"foo" => ["one", "two,three", "four","five"]},
-                            [])
+                            %{"foo" => ["one", "two,three", "four","five"]})
   end
 
   test "complex example" do
@@ -310,9 +318,13 @@ defmodule Cog.Command.OptionInterpreter.Test do
     |> OptionInterpreter.initialize
   end
 
+  defp assert_options_and_args(options_args, expected_options, expected_args \\ [])
   defp assert_options_and_args({:ok, options, args}, expected_options, expected_args) do
     assert options == expected_options
     assert args == expected_args
+  end
+  defp assert_options_and_args({:error, reason}, _, _) do
+    flunk("#{reason}")
   end
 
 end
