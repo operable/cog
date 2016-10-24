@@ -1,12 +1,31 @@
 steps:
-  - command: "make unit-tests integration-tests"
-    label: ":cogops: Cog Tests"
+  - command: ".buildkite/scripts/test.sh unit"
+    label: ":cogops: Cog Unit Tests"
     env:
       BUILDKITE_DOCKER_COMPOSE_CONTAINER: cog
       BUILDKITE_DOCKER_COMPOSE_FILE: docker-compose.ci.yml
-      MIX_ENV: test
     agents:
       - docker=1.12.1
+
+  - command: ".buildkite/scripts/test.sh slack"
+    label: ":slack: Cog Integration Tests - Slack"
+    env:
+      BUILDKITE_DOCKER_COMPOSE_CONTAINER: cog
+      BUILDKITE_DOCKER_COMPOSE_FILE: docker-compose.ci.yml
+    agents:
+      - docker=1.12.1
+    concurrency_group: "cog_slack_integration"
+    concurreny: 1
+
+  - command: ".buildkite/scripts/test.sh hipchat"
+    label: ":hipchat: Cog Integration Tests - HipChat"
+    env:
+      BUILDKITE_DOCKER_COMPOSE_CONTAINER: cog
+      BUILDKITE_DOCKER_COMPOSE_FILE: docker-compose.ci.yml
+    agents:
+      - docker=1.12.1
+    concurrency_group: "cog_hipchat_integration"
+    concurreny: 1
 
   - wait
 
