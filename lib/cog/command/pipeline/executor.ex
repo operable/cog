@@ -82,7 +82,8 @@ defmodule Cog.Command.Pipeline.Executor do
     user_permissions: [String.t],
     service_token: String.t,
     error_type: atom(),
-    error_message: String.t
+    error_message: String.t,
+    command_timeout: Int.t # Timeout for commands once they are in the `run_command` state
   }
   defstruct [
     id: nil,
@@ -102,13 +103,11 @@ defmodule Cog.Command.Pipeline.Executor do
     user_permissions: [],
     service_token: nil,
     error_type: nil,
-    error_message: nil
+    error_message: nil,
+    command_timeout: nil
   ]
 
   @behaviour :gen_fsm
-
-  # Timeout for commands once they are in the `run_command` state
-  @command_timeout 60000
 
   use Adz
 
@@ -116,6 +115,7 @@ defmodule Cog.Command.Pipeline.Executor do
     do: :gen_fsm.start_link(__MODULE__, [request], [])
 
   def init([%Cog.Messages.AdapterRequest{}=request]) do
+    config = Application.fetch_env!(:cog, Cog.Command.Pipeline)
     request = sanitize_request(request)
     {:ok, conn} = Connection.connect()
     id = request.id
@@ -131,13 +131,15 @@ defmodule Cog.Command.Pipeline.Executor do
         case fetch_user_from_request(request) do
           {:ok, user} ->
             {:ok, perms} = PermissionsCache.fetch(user)
+            command_timeout = get_command_timeout(request.adapter, config)
             loop_data = %__MODULE__{id: id, topic: topic, request: request,
                                     mq_conn: conn,
                                     user: user,
                                     service_token: service_token,
                                     user_permissions: perms,
                                     output: initial_context,
-                                    started: :os.timestamp()}
+                                    started: :os.timestamp(),
+                                    command_timeout: command_timeout}
             initialization_event(loop_data)
             {:ok, :parse, loop_data, 0}
           {:error, :not_found} ->
@@ -237,7 +239,7 @@ defmodule Cog.Command.Pipeline.Executor do
         dispatch_event(updated_state, relay)
         Connection.publish(updated_state.mq_conn, req, routed_by: topic)
 
-        {:next_state, :wait_for_command, updated_state, @command_timeout}
+        {:next_state, :wait_for_command, updated_state, state.command_timeout}
     end
 
   end
@@ -713,5 +715,14 @@ defmodule Cog.Command.Pipeline.Executor do
           {:error, :not_found}
       end
     end
+  end
+
+  defp get_command_timeout(adapter, config) do
+    if ChatAdapter.is_chat_provider?(adapter) do
+      Keyword.fetch!(config, :interactive_timeout)
+    else
+      Keyword.fetch!(config, :trigger_timeout)
+    end
+    |> Cog.Config.convert(:ms)
   end
 end
