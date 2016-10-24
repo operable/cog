@@ -1,25 +1,11 @@
-FROM alpine:3.4
-
-# Setup Operable APK repository
-COPY config/docker/operable-56f35cdd.rsa.pub /etc/apk/keys/operable-56f35cdd.rsa.pub
-RUN echo "@operable https://storage.googleapis.com/operable-apk/" > /etc/apk/repositories.operable && \
-    cat /etc/apk/repositories >> /etc/apk/repositories.operable && \
-    mv /etc/apk/repositories.operable /etc/apk/repositories
+FROM operable/elixir:1.3.1-r4
 
 # Select mix environment to use. We declare the MIX_ENV at build time
 ARG MIX_ENV
 ENV MIX_ENV ${MIX_ENV:-dev}
 
 # Install runtime dependencies & nice-to-have packages
-RUN apk update -U && apk add bash ca-certificates curl git openssl postgresql-client
-
-# Install Erlang
-RUN apk update -U && \
-    apk add `apk search erlang | grep -E "cos|eldap|gs|mibs|snmp|common-test|jinterface|megaco|diameter|odbc|observer|orber|test-server" -v | sed "s/-18.3.2-r0//g"`
-
-# Install Elixir 1.3.1
-RUN wget https://github.com/elixir-lang/elixir/releases/download/v1.3.1/Precompiled.zip && \
-    unzip -d /usr/local Precompiled.zip && rm -f /usr/local/bin/*.bat && rm -f Precompiled.zip
+RUN apk update -U && apk add curl postgresql-client
 
 # Setup Operable user. UID/GID default to 60000 but can be overriden.
 ARG OPERABLE_UID
