@@ -189,17 +189,17 @@ defmodule Cog.Command.OptionInterpreter do
     do: {:error, error_msg(:type_error, value, type)}
 
   defp check_required_options(defs, opts) do
-    required_set = Enum.filter_map(defs,
-                                   fn({_,o_def}) -> o_def.required end,
-                                   fn({o_name,_}) -> o_name end) |> MapSet.new
+    required_set = defs
+                   |> Enum.filter_map(fn({_, optdef}) -> optdef.required end, fn({_, optdef}) -> optdef.name end)
+                   |> Enum.uniq
+                   |> MapSet.new
+    input_set = opts |> Map.keys |> MapSet.new
 
-    existing_set = Enum.map(opts, fn({o_name, _}) -> o_name end) |> MapSet.new
-
-    case MapSet.subset?(required_set, existing_set) do
+    case MapSet.subset?(required_set, input_set) do
       true ->
         :ok
       false ->
-        missing = MapSet.difference(required_set, existing_set) |> MapSet.to_list
+        missing = MapSet.difference(required_set, input_set) |> MapSet.to_list
         {:error, "Looks like you forgot to include some required options: '#{Enum.join(missing, ", ")}'"}
     end
   end
