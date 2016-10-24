@@ -253,6 +253,11 @@ defmodule Cog.V1.TriggerExecutionControllerTest do
     updated_config = Keyword.put(config, :trigger_timeout, {1, :sec})
     Application.put_env(:cog, Cog.Command.Pipeline, updated_config)
 
+    on_exit(fn ->
+      # Restore the original config after the test completes
+      Application.put_env(:cog, Cog.Command.Pipeline, config)
+    end)
+
     pipeline = "sleep 5 | echo foobar"
 
     {:ok, snoop} = Snoop.adapter_traffic
