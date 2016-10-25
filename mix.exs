@@ -63,7 +63,7 @@ defmodule Cog.Mixfile do
       {:adz, github: "operable/adz"},
       {:conduit, github: "operable/conduit"},
       {:fumanchu, github: "operable/fumanchu"},
-      {:greenbar, github: "operable/greenbar"},
+      {:greenbar, github: "operable/greenbar", branch: "kevsmith/fixed-width-blocks"},
       {:probe, github: "operable/probe"},
       {:spanner, github: "operable/spanner"},
 
