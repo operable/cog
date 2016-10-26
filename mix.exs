@@ -101,7 +101,7 @@ defmodule Cog.Mixfile do
       {:phoenix_html, "~> 2.6"},
       {:poison, "~> 2.0"},
       {:postgrex, "~> 0.11.2"},
-      {:slack, github: "operable/Elixir-Slack", branch: "allow-attachments"},
+      {:slack, github: "operable/Elixir-Slack"},
       {:table_rex, "~> 0.8"},
       {:uuid, "~> 1.1.3"},
       {:romeo, github: "operable/romeo", branch: "iq-bodies"},
