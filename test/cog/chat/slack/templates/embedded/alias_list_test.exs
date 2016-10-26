@@ -14,17 +14,17 @@ defmodule Cog.Chat.Slack.Templates.Embedded.AliasListTest do
     expected = """
     Found 3 matching aliases.
 
-    Name: ```awesome_alias```
-    Visibility: ```user```
-    Pipeline: ```echo 'awesome!'```
+    Name: `awesome_alias`
+    Visibility: `user`
+    Pipeline: `echo 'awesome!'`
 
-    Name: ```another_awesome_alias```
-    Visibility: ```user```
-    Pipeline: ```echo 'more awesome!'```
+    Name: `another_awesome_alias`
+    Visibility: `user`
+    Pipeline: `echo 'more awesome!'`
 
-    Name: ```wow_neat```
-    Visibility: ```site```
-    Pipeline: ```echo 'wow, neat!'```
+    Name: `wow_neat`
+    Visibility: `site`
+    Pipeline: `echo 'wow, neat!'`
     """ |> String.strip
 
     assert_rendered_template(:slack, :embedded, "alias-list", data, expected)

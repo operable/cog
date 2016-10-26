@@ -18,8 +18,8 @@ defmodule Cog.Chat.HipChat.Templates.Common.ErrorTest do
       "<strong>Pipeline:</strong> echo foo<br/>" <>
       "<strong>Caller:</strong> somebody<br/><br/>" <>
       "The pipeline failed planning the invocation:<br/><br/>" <>
-      "<pre>I can't plan this!\n</pre><br/><br/>" <>
-      "The specific error was:<br/><br/><pre>bad stuff happened\n</pre>" == rendered
+      "<pre>I can't plan this!</pre><br/><br/>" <>
+      "The specific error was:<br/><br/><pre>bad stuff happened</pre>" == rendered
   end
 
   test "error template; execution failure" do
@@ -39,8 +39,8 @@ defmodule Cog.Chat.HipChat.Templates.Common.ErrorTest do
       "<strong>Pipeline:</strong> echo foo<br/>" <>
       "<strong>Caller:</strong> somebody<br/><br/>" <>
       "The pipeline failed executing the command:<br/><br/>" <>
-      "<pre>I can't execute this!\n</pre><br/><br/>" <>
-      "The specific error was:<br/><br/><pre>bad stuff happened\n</pre>" == rendered
+      "<pre>I can't execute this!</pre><br/><br/>" <>
+      "The specific error was:<br/><br/><pre>bad stuff happened</pre>" == rendered
   end
 
 end

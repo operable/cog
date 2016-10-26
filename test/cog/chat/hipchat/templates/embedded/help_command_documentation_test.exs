@@ -3,7 +3,7 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.HelpCommandDocumentationTest do
 
   test "help-command-documentation template" do
     data = %{"results" => [%{"documentation" => "big ol' doc string"}]}
-    expected = "<pre>big ol' doc string\n</pre>"
+    expected = "<pre>big ol' doc string</pre>"
     assert_rendered_template(:hipchat, :embedded, "help-command-documentation", data, expected)
   end
 end

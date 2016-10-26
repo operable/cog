@@ -142,6 +142,8 @@ defmodule Cog.Snoop do
   # tag, so text will just be JSON
   defp render_directive(%{"name" => "fixed_width", "text" => text}),
     do: text
+  defp render_directive(%{"name" => "fixed_width_block", "text" => text}),
+    do: text
   # We can also get plain text (e.g., from `echo` output)
   defp render_directive(%{"name" => "text", "text" => text}),
     do: text

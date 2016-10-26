@@ -15,13 +15,11 @@ defmodule Cog.Chat.Slack.Templates.Common.ErrorTest do
     assert """
     The pipeline failed planning the invocation:
 
-    ```I can't plan this!
-    ```
+    ```I can't plan this!```
 
     The specific error was:
 
-    ```bad stuff happened
-    ```
+    ```bad stuff happened```
     """ |> String.strip == Map.get(rendered, "text")
   end
 
@@ -39,13 +37,11 @@ defmodule Cog.Chat.Slack.Templates.Common.ErrorTest do
     assert """
     The pipeline failed executing the command:
 
-    ```I can't execute this!
-    ```
+    ```I can't execute this!```
 
     The specific error was:
 
-    ```bad stuff happened
-    ```
+    ```bad stuff happened```
     """ |> String.strip  == Map.get(rendered, "text")
   end
 

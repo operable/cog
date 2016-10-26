@@ -4,7 +4,7 @@ defmodule Cog.Template.New.CommonTest do
   test "raw template directives" do
     assert_directives("raw",
                       %{"results" => [%{"foo" => "bar"}]},
-                      [%{"name" => "fixed_width",
+                      [%{"name" => "fixed_width_block",
                          "text" => "[\n  {\n    \"foo\": \"bar\"\n  }\n]"}])
   end
 
@@ -20,13 +20,13 @@ defmodule Cog.Template.New.CommonTest do
       [%{"name" => "attachment", "children" => [
           %{"name" => "text", "text" => "The pipeline failed planning the invocation:"}, %{"name" => "newline"},
           %{"name" => "newline"},
-          %{"name" => "fixed_width", "text" => "I can't plan this!\n"},
+          %{"name" => "fixed_width_block", "text" => "I can't plan this!"},
           %{"name" => "newline"},
           %{"name" => "newline"},
           %{"name" => "text", "text" => "The specific error was:"},
           %{"name" => "newline"},
           %{"name" => "newline"},
-          %{"name" => "fixed_width", "text" => "bad stuff happened\n"}
+          %{"name" => "fixed_width_block", "text" => "bad stuff happened"}
         ],
          "color" => "#ff3333",
          "fields" => [
@@ -52,13 +52,13 @@ defmodule Cog.Template.New.CommonTest do
           %{"name" => "text", "text" => "The pipeline failed executing the command:"},
           %{"name" => "newline"},
           %{"name" => "newline"},
-          %{"name" => "fixed_width", "text" => "I can't execute this!\n"},
+          %{"name" => "fixed_width_block", "text" => "I can't execute this!"},
           %{"name" => "newline"},
           %{"name" => "newline"},
           %{"name" => "text", "text" => "The specific error was:"},
           %{"name" => "newline"},
           %{"name" => "newline"},
-          %{"name" => "fixed_width", "text" => "bad stuff happened\n"}], "color" => "#ff3333", "fields" => [
+          %{"name" => "fixed_width_block", "text" => "bad stuff happened"}], "color" => "#ff3333", "fields" => [
           %{"short" => false, "title" => "Started", "value" => "some time in the past"},
           %{"short" => false, "title" => "Pipeline ID", "value" => "deadbeef"},
           %{"short" => false, "title" => "Pipeline", "value" => "echo foo"},

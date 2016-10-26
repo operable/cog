@@ -13,8 +13,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.HelpCommandTest do
 
     *Synopsis*
 
-    ```test --do-a-thing
-    ```
+    ```test --do-a-thing```
     *Author*
 
     vanstee

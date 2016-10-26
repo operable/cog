@@ -20,6 +20,8 @@ defmodule Cog.Chat.HipChat.TemplateProcessor do
   defp process_directive(%{"name" => "bold", "text" => text}),
     do: "<strong>#{text}</strong>"
   defp process_directive(%{"name" => "fixed_width", "text" => text}),
+    do: "<code>#{text}</code>"
+  defp process_directive(%{"name" => "fixed_width_block", "text" => text}),
     do: "<pre>#{text}</pre>"
 
   defp process_directive(%{"name" => "newline"}), do: "<br/>"

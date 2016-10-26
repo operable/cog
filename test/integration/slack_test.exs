@@ -35,14 +35,12 @@ defmodule Integration.SlackTest do
     expected = """
     The pipeline failed executing the command:
 
-    ```operable:st-echo test
-    ```
+    ```operable:st-echo test```
 
     The specific error was:
 
     ```Sorry, you aren't allowed to execute 'operable:st-echo test' :(
-     You will need at least one of the following permissions to run this command: 'operable:st-echo'.
-    ```
+     You will need at least one of the following permissions to run this command: 'operable:st-echo'.```
     """ |> String.strip
     assert reply.text == expected
     assert reply.location.type == :channel
@@ -69,14 +67,12 @@ defmodule Integration.SlackTest do
     expected = """
     The pipeline failed executing the command:
 
-    ```operable:st-thorn $body
-    ```
+    ```operable:st-thorn $body```
 
     The specific error was:
 
     ```Sorry, you aren't allowed to execute 'operable:st-thorn $body' :(
-      You will need at least one of the following permissions to run this command: 'operable:st-thorn'.
-    ```
+      You will need at least one of the following permissions to run this command: 'operable:st-thorn'.```
      """ |> String.strip
     assert reply.text == expected
     assert reply.location.type == :channel

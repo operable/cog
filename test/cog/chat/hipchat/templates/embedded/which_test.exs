@@ -6,7 +6,7 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.WhichTest do
                              "scope" => "site",
                              "name" => "foo",
                              "pipeline" => "echo 'foo'"}]}
-    expected = "alias - site:foo -> <pre>echo 'foo'</pre>"
+    expected = "alias - site:foo -> <code>echo 'foo'</code>"
     assert_rendered_template(:hipchat, :embedded, "which", data, expected)
   end
 
@@ -31,9 +31,9 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.WhichTest do
                              "name" => "bar",
                              "pipeline" => "echo 'bar'"}]}
 
-    expected = "alias - site:foo -> <pre>echo 'foo'</pre><br/>" <>
+    expected = "alias - site:foo -> <code>echo 'foo'</code><br/>" <>
       "command - operable:alias<br/>" <>
-      "alias - user:bar -> <pre>echo 'bar'</pre>"
+      "alias - user:bar -> <code>echo 'bar'</code>"
 
     assert_rendered_template(:hipchat, :embedded, "which", data, expected)
   end
