@@ -59,7 +59,9 @@ __Subcommands__
 ~if cond=$command.examples~
 __Examples__
 ~br~
+```
 ~$command.examples~
+```
 ~br~
 ~end~
 

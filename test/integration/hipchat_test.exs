@@ -1,6 +1,9 @@
 defmodule Integration.HipChatTest do
   use Cog.Test.Support.ProviderCase, provider: :hipchat
 
+  @moduletag :hipchat
+  @moduletag :integration
+
   @user "botci"
 
   @bot "deckard"
@@ -28,14 +31,10 @@ defmodule Integration.HipChatTest do
   test "running the st-echo command without permission", %{client: client} do
     message = "@#{@bot}: operable:st-echo test"
     {:ok, reply} = ChatClient.chat_wait!(client, [room: @ci_room, message: message,
-                                                   reply_from: @bot_name, timeout: @timeout])
-    expected = """
-    <strong>Pipeline:</strong> operable:st-echo test<br /><strong>Caller:</strong> @botci<br /><br />The pipeline failed executing the command:<br /><br /><pre>operable:st-echo test
-    </pre><br /><br />The specific error was:<br /><br /><pre>Sorry, you aren't allowed to execute 'operable:st-echo test' :(
-     You will need at least one of the following permissions to run this command: 'operable:st-echo'.
-    </pre>
-    """ |> String.strip
-    assert String.contains?(reply.text, expected)
+                                                  reply_from: @bot_name, timeout: @timeout])
+    assert String.contains?(reply.text, "<strong>Pipeline:</strong> operable:st-echo test")
+    assert String.contains?(reply.text, "You will need at least one of the following permissions to run this command: " <>
+      "'operable:st-echo'")
     assert reply.location.type == :channel
     assert reply.location.name == @ci_room
   end
@@ -57,13 +56,9 @@ defmodule Integration.HipChatTest do
 
     message = "@#{@bot}: operable:st-echo \"this is a test\" | operable:st-thorn $body"
     {:ok, reply} = ChatClient.chat_wait!(client, [room: @ci_room, message: message, reply_from: @bot_name, timeout: @timeout])
-    expected = """
-    <strong>Pipeline:</strong> operable:st-echo "this is a test" | operable:st-thorn $body<br /><strong>Caller:</strong> @botci<br /><br />The pipeline failed executing the command:<br /><br /><pre>operable:st-thorn $body
-    </pre><br /><br />The specific error was:<br /><br /><pre>Sorry, you aren't allowed to execute 'operable:st-thorn $body' :(
-     You will need at least one of the following permissions to run this command: 'operable:st-thorn'.
-    </pre>
-    """ |> String.strip
-    assert String.contains?(reply.text, expected)
+    assert String.contains?(reply.text, "<strong>Pipeline:</strong> operable:st-echo \"this is a test\" | operable:st-thorn $body")
+    assert String.contains?(reply.text, "You will need at least one of the following permissions to run this command: " <>
+      "'operable:st-thorn'.")
     assert reply.location.type == :channel
     assert reply.location.name == @ci_room
   end

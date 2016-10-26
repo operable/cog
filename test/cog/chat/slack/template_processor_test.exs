@@ -17,6 +17,8 @@ defmodule Cog.Chat.Slack.TemplateProcessorTest do
         "text" => "\nFascinating. How about some fixed width text?  "},
       %{"name" => "fixed_width",
         "text" => "BEEP BOOP... I AM A ROBOT... BEEP BOOP"},
+      %{"name" => "newline"},
+      %{"name" => "fixed_width_block", "text" => "I AM FROM THE FUTURE. BLEEP. BOOP."},
       %{"name" => "text",
         "text" => "\nWow, good stuff. And now... AN ASCII TABLE!\n\n"},
       %{"name" => "table",
@@ -67,7 +69,8 @@ defmodule Cog.Chat.Slack.TemplateProcessorTest do
     expected = """
     This is a rendering test. First, let's try italics: _I'm italic text!_
     That was fun; now let's do bold: *BEHOLD! BOLD!*
-    Fascinating. How about some fixed width text?  ```BEEP BOOP... I AM A ROBOT... BEEP BOOP```
+    Fascinating. How about some fixed width text?  `BEEP BOOP... I AM A ROBOT... BEEP BOOP`
+    ```I AM FROM THE FUTURE. BLEEP. BOOP.```
     Wow, good stuff. And now... AN ASCII TABLE!
 
     ```+--------------+-------------------------+

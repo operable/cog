@@ -9,7 +9,7 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.HelpCommandTest do
     expected = "<strong>Name</strong><br/><br/>" <>
       "test - Do a test thing<br/><br/>" <>
       "<strong>Synopsis</strong><br/><br/>" <>
-      "<pre>test --do-a-thing\n</pre><br/>" <>
+      "<pre>test --do-a-thing</pre><br/>" <>
       "<strong>Author</strong><br/><br/>" <>
       "vanstee<br/>"
 

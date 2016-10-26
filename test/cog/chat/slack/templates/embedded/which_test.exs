@@ -6,7 +6,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.WhichTest do
                              "scope" => "site",
                              "name" => "foo",
                              "pipeline" => "echo 'foo'"}]}
-    expected = "alias - site:foo -> ```echo 'foo'```"
+    expected = "alias - site:foo -> `echo 'foo'`"
     assert_rendered_template(:slack, :embedded, "which", data, expected)
   end
 
@@ -32,9 +32,9 @@ defmodule Cog.Chat.Slack.Templates.Embedded.WhichTest do
                              "pipeline" => "echo 'bar'"}]}
 
     expected = """
-    alias - site:foo -> ```echo 'foo'```
+    alias - site:foo -> `echo 'foo'`
     command - operable:alias
-    alias - user:bar -> ```echo 'bar'```
+    alias - user:bar -> `echo 'bar'`
     """ |> String.strip
     assert_rendered_template(:slack, :embedded, "which", data, expected)
 

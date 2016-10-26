@@ -17,6 +17,8 @@ defmodule Cog.Chat.HipChat.TemplateProcessorTest do
         "text" => "\nFascinating. How about some fixed width text?  "},
       %{"name" => "fixed_width",
         "text" => "BEEP BOOP... I AM A ROBOT... BEEP BOOP"},
+      %{"name" => "newline"},
+      %{"name" => "fixed_width_block", "text" => "I AM FROM THE FUTURE. BLEEP. BOOP."},
       %{"name" => "text",
         "text" => "\nWow, good stuff. And now... AN ASCII TABLE!\n\n"},
       %{"name" => "table",
@@ -67,7 +69,7 @@ defmodule Cog.Chat.HipChat.TemplateProcessorTest do
     expected = """
     This is a rendering test. First, let's try italics: <i>I'm italic text!</i>
     That was fun; now let's do bold: <strong>BEHOLD! BOLD!</strong>
-    Fascinating. How about some fixed width text?  <pre>BEEP BOOP... I AM A ROBOT... BEEP BOOP</pre>
+    Fascinating. How about some fixed width text?  <code>BEEP BOOP... I AM A ROBOT... BEEP BOOP</code><br/><pre>I AM FROM THE FUTURE. BLEEP. BOOP.</pre>
     Wow, good stuff. And now... AN ASCII TABLE!
 
     <table>
