@@ -185,6 +185,8 @@ defmodule Cog.Command.OptionInterpreter do
     |> Enum.map(&String.replace(&1, ~r/\\,/, ","))
     {:ok, splits}
   end
+  defp coerce_value("list", value) when is_list(value),
+    do: {:ok, value}
   defp coerce_value(type, value),
     do: {:error, error_msg(:type_error, value, type)}
 
