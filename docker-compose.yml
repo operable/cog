@@ -39,6 +39,9 @@ postgres:
     - POSTGRES_PASSWORD=cog
 
 cog:
+  extends:
+    file: docker-compose.common.yml
+    service: common
   image: operable/cog:latest
   environment:
     - COG_MQTT_HOST=0.0.0.0
@@ -53,6 +56,9 @@ cog:
   entrypoint: /home/operable/cog/scripts/docker-start
 
 relay:
+  extends:
+    file: docker-compose.common.yml
+    service: common
   image: operable/relay:latest
   privileged: true
   volumes:
