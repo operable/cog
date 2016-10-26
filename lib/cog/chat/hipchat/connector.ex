@@ -355,6 +355,7 @@ defmodule Cog.Chat.HipChat.Connector do
   defp join_room(room_name, state) do
     # If we were given a JID then use it, else build a JID
     # using the hipchat org and conf_host
+    room_name = String.replace(room_name, " ", "_")
     muc_name = if String.contains?(room_name, state.conf_host) do
       room_name
     else
