@@ -50,6 +50,9 @@ defmodule Cog do
         Logger.info("Ensuring common templates are up-to-date")
         Cog.Repository.Templates.refresh_common_templates!
 
+        # Send a start event to the Operable telemetry service
+        Cog.Telemetry.send_event(:start)
+
         {:ok, top_sup}
       error ->
         error
