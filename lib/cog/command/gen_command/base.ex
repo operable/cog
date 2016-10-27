@@ -198,8 +198,8 @@ defmodule Cog.Command.GenCommand.Base do
   """
   def options(module) do
     attr_values(module, :options)
-    |> Enum.reduce(%{}, fn(%{"name" => name, "type" => type, "required" => required, "short_flag" => short}, acc) ->
-      Map.put(acc, name, %{"type" => type, "required" => required, "short_flag" => short})
+    |> Enum.reduce(%{}, fn(%{"name" => name, "type" => type, "required" => required, "short_flag" => short, "description" => description}, acc) ->
+      Map.put(acc, name, %{"type" => type, "required" => required, "short_flag" => short, "description" => description})
     end)
   end
 
@@ -242,11 +242,13 @@ defmodule Cog.Command.GenCommand.Base do
 
   """
   defmacro option(name, options \\ []) do
+    description = Keyword.get(options, :description, nil)
     required = Keyword.get(options, :required, false)
     type = Keyword.get(options, :type, "string")
     short = Keyword.get(options, :short, nil)
     quote do
       @options %{"name" => unquote(name),
+                 "description" => unquote(description),
                  "required" => unquote(required),
                  "short_flag" => unquote(short),
                  "type" => unquote(type)}

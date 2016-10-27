@@ -16,7 +16,8 @@ end
 # Embedded Command Bundle Version (for built-in commands)
 # NOTE: Do not change this value unless you know what you're doing.
 # ========================================================================
-config :cog, :embedded_bundle_version, "0.14.0"
+
+config :cog, :embedded_bundle_version, "0.15.0"
 
 # ========================================================================
 # Chat Adapters
@@ -56,6 +57,9 @@ config :cog, Cog.Bundle.BundleSup,
 config :cog, Cog.Command.Pipeline,
   interactive_timeout: {60, :sec},
   trigger_timeout: {300, :sec}
+
+config :cog, Cog.Command.Service,
+  data_path: data_dir("service_data")
 
 # Set these to zero (0) to disable caching
 config :cog, :command_cache_ttl, {60, :sec}
