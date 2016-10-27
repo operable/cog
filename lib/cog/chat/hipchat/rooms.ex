@@ -76,6 +76,7 @@ defmodule Cog.Chat.HipChat.Rooms do
 
   def fetch_api_room(rooms, name, room \\ nil)
   def fetch_api_room(rooms, name, nil) do
+    name = URI.encode(name)
     url = Enum.join([rooms.hipchat_api_root, "room", name], "/") <> "?auth_token=#{rooms.api_token}"
     response = HTTPotion.get(url, headers: ["Accepts": "application/json"])
     case response.status_code do
@@ -98,6 +99,7 @@ defmodule Cog.Chat.HipChat.Rooms do
     end
   end
   def fetch_api_room(rooms, name, room) do
+    name = URI.encode(name)
     url = Enum.join([rooms.hipchat_api_root, "room", name], "/") <> "?auth_token=#{rooms.api_token}"
     response = HTTPotion.get(url, headers: ["Accepts": "application/json"])
     case response.status_code do
