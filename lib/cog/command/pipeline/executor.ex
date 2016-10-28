@@ -228,9 +228,9 @@ defmodule Cog.Command.Pipeline.Executor do
     #   fail_pipeline_with_error({:disabled_bundle, bundle}, state)
     #
     case assign_relay(relays, bundle_name, version) do
-      {nil, _} ->
-        fail_pipeline_with_error({:no_relays, bundle_name}, state)
-      {relay, relays} ->
+      {:error, reason} ->
+        fail_pipeline_with_error({reason, bundle_name}, state)
+      {:ok, {relay, relays}} ->
         topic = "/bot/commands/#{relay}/#{bundle_name}/#{command_name}"
         reply_to_topic = "#{state.topic}/reply"
         req = request_for_plan(current_plan, request, user, reply_to_topic, state.service_token)
@@ -671,19 +671,23 @@ defmodule Cog.Command.Pipeline.Executor do
       # No assignment so let's pick one
       nil ->
         case Relays.pick_one(bundle_name, bundle_version) do
-          # No relays available
-          nil ->
-            {nil, relays}
           # Store the selected relay in the relay cache
-          relay ->
-            {relay, Map.put(relays, bundle_name, relay)}
+          {:ok, relay} ->
+            {:ok, {relay, Map.put(relays, bundle_name, relay)}}
+          error ->
+            # Query DB to clarify error before reporting to the user
+            if Cog.Repository.Bundles.assigned_to_group?(bundle_name) do
+              error
+            else
+              {:error, :no_relay_group}
+            end
         end
       # Relay was previously assigned
       relay ->
         # Is the bundle still available on the relay? If not, remove the current assignment from the cache
         # and select a new relay
         if Relays.relay_available?(relay, bundle_name, bundle_version) do
-          {relay, relays}
+          {:ok, {relay, relays}}
         else
           relays = Map.delete(relays, bundle_name)
           assign_relay(relays, bundle_name, bundle_version)

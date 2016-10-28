@@ -23,9 +23,13 @@ defmodule Cog.Command.CommandResolver do
         %SiteCommandAlias{pipeline: pipeline} ->
           {:pipeline, pipeline}
         :not_found ->
-          :not_found
+          {:error, :not_found}
+        {:not_enabled, bundle_name} ->
+          {:error, {:not_enabled, bundle_name}}
+        {:not_in_bundle, bundle_name} ->
+          {:error, {:not_in_bundle, bundle_name}}
         {:ambiguous, names} ->
-          {:ambiguous, names}
+          {:error, {:ambiguous, names}}
       end
     end
   end
@@ -51,13 +55,13 @@ defmodule Cog.Command.CommandResolver do
     case Map.get(enabled_bundles, bundle_name) do
       nil ->
         # No enabled version of the requested bundle was found
-        :not_found
+        {:not_enabled, bundle_name}
       version ->
         case Bundles.command_for_bundle_version(command_name, bundle_name, version) do
           nil ->
             # The enabled bundle version does not contain the
             # requested command
-            :not_found
+            {:not_in_bundle, bundle_name}
           result ->
             {:ok, rules} = Rules.rules_for_command(result.command)
             Cog.Command.Pipeline.ParserMeta.new(result.command.bundle.name,

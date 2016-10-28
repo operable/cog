@@ -120,15 +120,19 @@ defmodule Cog.Relay.Tracker do
   end
 
   @doc """
-  Return a list of relays serving the specified bundle version. If the bundle is
-  disabled, return an empty list.
+  Return a tuple with the list of relays serving the bundle or an error and
+  a reason.
   """
-  @spec relays(t, bundle_name, version) :: [String.t]
+  @spec relays(t, bundle_name, version) :: {:ok, [String.t]} | {:error, atom()}
   def relays(tracker, bundle_name, bundle_version) when is_binary(bundle_name) do
-    tracker.map
-    |> Map.get({bundle_name, bundle_version}, MapSet.new)
-    |> MapSet.difference(tracker.disabled)
-    |> MapSet.to_list
+    relays = Map.get(tracker.map, {bundle_name, bundle_version}, MapSet.new)
+    enabled_relays = MapSet.difference(relays, tracker.disabled)
+
+    case {MapSet.to_list(relays), MapSet.to_list(enabled_relays)} do
+      {[], []} -> {:error, :no_relays}
+      {_, []} -> {:error, :no_enabled_relays}
+      {_, relays} -> {:ok, relays}
+    end
   end
 
   @doc """
@@ -137,8 +141,12 @@ defmodule Cog.Relay.Tracker do
   """
   @spec is_bundle_available?(t, relay_id, bundle_name, version) :: boolean()
   def is_bundle_available?(tracker, relay, bundle_name, bundle_version) do
-    available_relays = relays(tracker, bundle_name, bundle_version)
-    Enum.member?(available_relays, relay)
+    case relays(tracker, bundle_name, bundle_version) do
+      {:ok, available_relays} ->
+        Enum.member?(available_relays, relay)
+      _ ->
+        false
+    end
   end
 
   defp in_tracker?(tracker, relay_id) do
