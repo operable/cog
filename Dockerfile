@@ -1,4 +1,4 @@
-FROM operable/elixir:1.3.1-r4
+FROM operable/elixir:1.3.4-r0
 
 # Select mix environment to use. We declare the MIX_ENV at build time
 ARG MIX_ENV
