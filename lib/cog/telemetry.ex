@@ -26,11 +26,15 @@ defmodule Cog.Telemetry do
       bundle_id ->
         telemetry_id = Base.encode16(:crypto.hash(:sha256, bundle_id))
         {:ok, version} = :application.get_key(:cog, :vsn)
-        {:ok, %{ cog: %{ id: telemetry_id, version: to_string(version) }}}
+        {:ok,
+          %{ cog:
+            %{ id: telemetry_id,
+               version: to_string(version),
+               env: Atom.to_string(Mix.env) }}
     end
   end
 
-  defp telemetry_enabled do
+  def telemetry_enabled do
     Application.fetch_env!(:cog, :telemetry)
   end
 

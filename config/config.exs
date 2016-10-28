@@ -4,8 +4,9 @@ import Cog.Config.Helpers
 # ========================================================================
 # Cog Telemetry - By default, Cog is configured to send an event to the
 # Operable telemetry service every time it starts. This event contains a
-# unique ID (based on the SHA256 of the UUID for your operable bundle)
-# and the Cog version number.
+# unique ID (based on the SHA256 of the UUID for your operable bundle),
+# the Cog version number, and the Elixir mix environment (:prod, :dev, etc)
+# that Cog is running under.
 #
 # If you would like to opt-out of sending this data, you can set the
 # COG_TELEMETRY environment variable to "false".
