@@ -16,6 +16,7 @@ services:
       - postgres
     environment:
       - COG_MQTT_HOST=0.0.0.0
+      - COG_TELEMETRY=false
       - DATABASE_URL=ecto://cog:cog@postgres:5432/cog
       - SLACK_API_TOKEN=${SLACK_API_TOKEN}
       - SLACK_USER_API_TOKEN=${SLACK_USER_API_TOKEN}
