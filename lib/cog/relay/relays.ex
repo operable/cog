@@ -108,8 +108,12 @@ defmodule Cog.Relay.Relays do
     tracker = remove_relay(state.tracker, relay.id)
     {:reply, :ok, %{state | tracker: tracker}}
   end
-  def handle_call({:relays_running, bundle_name, version} , _from, state),
-    do: {:reply, Tracker.relays(state.tracker, bundle_name, version), state}
+  def handle_call({:relays_running, bundle_name, version} , _from, state) do
+    case Tracker.relays(state.tracker, bundle_name, version) do
+      {:ok, relays} -> {:reply, relays, state}
+      {:error, _} -> {:reply, [], state}
+    end
+  end
 
   def handle_info({:publish, @relays_discovery_topic, message}, state) do
     try do
@@ -202,8 +206,8 @@ defmodule Cog.Relay.Relays do
 
   defp random_relay(tracker, bundle, version) do
     case Tracker.relays(tracker, bundle, version) do
-      [] -> nil
-      relays -> Enum.random(relays)
+      {:ok, relays} -> {:ok, Enum.random(relays)}
+      error -> error
     end
   end
 

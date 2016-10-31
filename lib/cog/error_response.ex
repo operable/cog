@@ -16,8 +16,16 @@ defmodule Cog.ErrorResponse do
     perms = Enum.map(Ast.Rule.permissions_used(rule), &("'#{&1}'")) |> Enum.join(", ")
     "Sorry, you aren't allowed to execute '#{current_invocation}' :(\n You will need at least one of the following permissions to run this command: #{perms}."
   end
-  def render({:no_relays, bundle_name}), # TODO: Add version, too?
-    do: "No Cog Relays supporting the `#{bundle_name}` bundle are currently online"
+  def render({:no_relays, bundle_name}) do # TODO: Add version, too?
+    "No Cog Relays supporting the `#{bundle_name}` bundle are currently online. " <>
+    "If you just assigned the bundle to a relay group you will need to wait for the relay refresh interval to pick up the new bundle."
+  end
+  def render({:no_relay_group, bundle_name}),
+    do: "Bundle '#{bundle_name}' is not assigned to a relay group. Assign the bundle to a relay group and try again."
+  def render({:no_enabled_relays, bundle_name}) do # TODO: Should we print the list of disabled relays?
+    "No Cog Relays supporting the `#{bundle_name}` bundle are currently available. " <>
+    "There are one or more relays serving the bundle, but they are disabled. Enable an appropriate relay and try again."
+  end
   def render({:disabled_bundle, %Bundle{name: name}}),
     do: "The #{name} bundle is currently disabled"
   def render({:timeout, full_command_name}),

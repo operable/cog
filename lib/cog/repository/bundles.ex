@@ -6,7 +6,7 @@ defmodule Cog.Repository.Bundles do
   require Logger
 
   alias Cog.Repo
-  alias Cog.Models.{Bundle, BundleVersion, BundleDynamicConfig, CommandVersion, Rule}
+  alias Cog.Models.{Bundle, BundleVersion, BundleDynamicConfig, CommandVersion, Rule, RelayGroupAssignment}
   alias Cog.Repository.Rules
   alias Cog.Queries
   alias Cog.BundleRegistry
@@ -26,8 +26,9 @@ defmodule Cog.Repository.Bundles do
                                                commands: [command: :bundle]]]
   @bundle_dynamic_config_preloads [:bundle]
 
+  @embedded_bundle Cog.Util.Misc.embedded_bundle
   @reserved_bundle_names [
-    Cog.Util.Misc.embedded_bundle,
+    @embedded_bundle,
     Cog.Util.Misc.site_namespace,
     "user", # a bundle named "user" would break alias resolution
     "cog"   # we're going to squat on this for now to prevent potential confusion
@@ -147,6 +148,22 @@ defmodule Cog.Repository.Bundles do
       bundle ->
         preload(bundle)
     end
+  end
+
+  def assigned_to_group?(name) when name == @embedded_bundle,
+    # If it's the internal bundle we'll return true here since it doesn't
+    # run on a relay.
+    do: true
+  def assigned_to_group?(name) do
+    # If there are relay groups associated with the bundle the query will return
+    # true, otherwise it will return nil
+    query = from(b in Bundle,
+                 join: r in RelayGroupAssignment, on: b.id == r.bundle_id,
+                 where: b.name == ^name,
+                 select: true)
+
+    # Make sure that we return a boolean
+    if Repo.one(query), do: true, else: false
   end
 
   @doc """

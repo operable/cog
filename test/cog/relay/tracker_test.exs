@@ -90,12 +90,17 @@ defmodule Cog.Relay.Tracker.Test do
   defp bundle_spec(name, version),
     do: {name, version}
 
-  defp assert_missing({name, version}, tracker),
-    do: assert [] = Tracker.relays(tracker, name, version)
+  defp assert_missing(bundle_spec, tracker),
+    do: assert [] = actual_relays(tracker, bundle_spec)
 
-  defp assert_relays(tracker, {name, version}, expected_relays) do
-    actual_relays = Tracker.relays(tracker, name, version)
-    assert Enum.sort(expected_relays) == Enum.sort(actual_relays)
+  defp assert_relays(tracker, bundle_spec, expected_relays),
+    do: assert Enum.sort(expected_relays) == Enum.sort(actual_relays(tracker, bundle_spec))
+
+  defp actual_relays(tracker, {name, version}) do
+    case Tracker.relays(tracker, name, version) do
+      {:ok, relays} -> relays
+      {:error, _} -> []
+    end
   end
 
 end
