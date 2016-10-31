@@ -103,7 +103,7 @@ defmodule Cog.Mixfile do
       {:postgrex, "~> 0.11.2"},
       {:slack, github: "operable/Elixir-Slack"},
       {:table_rex, "~> 0.8"},
-      {:uuid, "~> 1.1.3"},
+      {:uuid, "~> 1.1.5"},
       {:romeo, github: "operable/romeo", branch: "iq-bodies"},
       # The Slack library depends on this Github repo, and not the
       # version in Hex. Thus, we need to declare it manually :(
