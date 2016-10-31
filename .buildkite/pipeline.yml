@@ -1,3 +1,6 @@
+env:
+  COG_TELEMETRY: "false"
+
 steps:
   - command: ".buildkite/scripts/test.sh unit"
     label: ":cogops: Cog Unit Tests"
