@@ -72,22 +72,9 @@ defmodule Cog.Chat.Slack.Connector do
   end
   def handle_info({{ref, sender}, {:send_message, %{token: token, target: target}=args}}, _state) do
     message = %{token: token, as_user: true}
-    message = case Map.get(args, :message) do
-                nil ->
-                  message
-                text ->
-                  text_size = :erlang.size(text)
-                  unless text_size < 15000 do
-                    Logger.info("WARNING: Large message (#{text_size} bytes) detected. Slack might truncate or drop it entirely.")
-                  end
-                  Map.put(message, :text, text)
-              end
-    message = case Map.get(args, :attachments) do
-                nil ->
-                  message
-                attachments ->
-                  Map.put(message, :attachments, Poison.encode!(attachments))
-              end
+              |> prepare_text(args)
+              |> prepare_attachments(args)
+              |> Map.put(:link_names, 1)
     # Avoids Slack throttling
     jitter()
     result = Slack.Web.Chat.post_message(target, message)
@@ -336,6 +323,28 @@ defmodule Cog.Chat.Slack.Connector do
   defp jitter() do
     n = :rand.uniform(90) + 10
     :timer.sleep((n * 10))
+  end
+
+  defp prepare_text(message, args) do
+    case Map.get(args, :message) do
+      nil ->
+        message
+      text ->
+        text_size = :erlang.size(text)
+        unless text_size < 15000 do
+          Logger.info("WARNING: Large message (#{text_size} bytes) detected. Slack might truncate or drop it entirely.")
+        end
+        Map.put(message, :text, text)
+    end
+  end
+
+  defp prepare_attachments(message, args) do
+    case Map.get(args, :attachments) do
+      nil ->
+        message
+      attachments ->
+        Map.put(message, :attachments, Poison.encode!(attachments))
+    end
   end
 
 end
