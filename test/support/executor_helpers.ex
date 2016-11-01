@@ -9,6 +9,8 @@ defmodule Cog.ExecutorHelpers do
   alias Cog.Models.BundleVersion
   alias Piper.Command.Parser
 
+  @known_commands ["test-command", "ec2", "test"]
+
   # TODO: document command_spec
 
   # NOTE: Only returns ONE INVOCATION, so doesn't really work for
@@ -34,14 +36,18 @@ defmodule Cog.ExecutorHelpers do
 
   defp resolver(command_spec) do
     fn(bundle, name) ->
-      bundle = case bundle do
-                 nil ->
-                   "test-bundle"
-                 _ ->
-                   bundle
-               end
-      {:command, {bundle, name, parser_meta_from_spec([name: name,
-                                                       bundle: bundle] ++ command_spec)}}
+      if not name in @known_commands do
+        {:error, :not_found}
+      else
+        bundle = case bundle do
+                   nil ->
+                     "test-bundle"
+                   _ ->
+                     bundle
+                 end
+        {:command, {bundle, name, parser_meta_from_spec([name: name,
+                                                         bundle: bundle] ++ command_spec)}}
+      end
     end
   end
 
