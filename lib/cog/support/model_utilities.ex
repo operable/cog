@@ -218,7 +218,9 @@ defmodule Cog.Support.ModelUtilities do
   Create a command with the given name
   """
   def command(name, params \\ %{}) do
-    bundle_version = bundle_version("test-bundle")
+    bundle_name = Map.get(params, :bundle_name, "test-bundle")
+
+    bundle_version = bundle_version(bundle_name)
     bundle = bundle_version.bundle
 
     command = %Command{}
