@@ -14,9 +14,9 @@ defmodule Cog.Config.Helpers do
     Path.join([data_dir, subdir])
   end
 
-  def ensure_integer(ttl) when is_nil(ttl), do: false
-  def ensure_integer(ttl) when is_binary(ttl), do: String.to_integer(ttl)
-  def ensure_integer(ttl) when is_integer(ttl), do: ttl
+  def ensure_integer(number) when is_nil(number), do: false
+  def ensure_integer(number) when is_binary(number), do: String.to_integer(number)
+  def ensure_integer(number) when is_integer(number), do: number
 
   def ensure_boolean(nil), do: nil
   def ensure_boolean(value) when is_boolean(value), do: value

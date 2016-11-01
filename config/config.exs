@@ -201,7 +201,7 @@ config :cog, :trigger_timeout_buffer, (System.get_env("COG_TRIGGER_TIMEOUT_BUFFE
 config :cog, Cog.Mailer,
   adapter: Bamboo.SMTPAdapter,
   server: System.get_env("COG_SMTP_SERVER"),
-  port: System.get_env("COG_SMTP_PORT"),
+  port: ensure_integer(System.get_env("COG_SMTP_PORT")),
   username: System.get_env("COG_SMTP_USERNAME"),
   password: System.get_env("COG_SMTP_PASSWORD"),
   tls: :if_available, # can be `:always` or `:never`
