@@ -53,6 +53,6 @@ defmodule Cog.Repository.Commands do
   end
 
   def preloads_for_help(command_versions) do
-    Repo.preload(command_versions, [:command, :bundle_version, options: :option_type])
+    Repo.preload(command_versions, [:command, bundle_version: :bundle, options: :option_type])
   end
 end
