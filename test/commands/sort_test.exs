@@ -2,9 +2,9 @@ defmodule Cog.Test.Commands.SortTest do
   use Cog.CommandCase, command_module: Cog.Commands.Sort
 
   setup do
-    seed = [%{"a" => 1},
-            %{"a" => 3},
-            %{"a" => 2}]
+    seed = [%{a: 1},
+            %{a: 3},
+            %{a: 2}]
 
     {:ok, %{seed: seed}}
   end
@@ -16,10 +16,9 @@ defmodule Cog.Test.Commands.SortTest do
     # We only care about the last one though, the rest should be nil
     {:ok, response} = send_req(request) |> List.last
 
-    decoded = Poison.decode!(response)
-    assert [%{"a" => 1},
-            %{"a" => 2},
-            %{"a" => 3}] = decoded
+    assert [%{a: 1},
+            %{a: 2},
+            %{a: 3}] = response
   end
 
   test "sorting in descending order", %{seed: seed} do
@@ -27,23 +26,21 @@ defmodule Cog.Test.Commands.SortTest do
 
     {:ok, response} = send_req(request) |> List.last
 
-    decoded = Poison.decode!(response)
-    assert [%{"a" => 3},
-            %{"a" => 2},
-            %{"a" => 1}] = decoded
+    assert [%{a: 3},
+            %{a: 2},
+            %{a: 1}] = response
   end
 
   test "sorting by specific fields" do
-    seed = [%{"a" => 3, "b" => 4},
-            %{"a" => 1, "b" => 4},
-            %{"a" => 2, "b" => 6}]
+    seed = [%{a: 3, b: 4},
+            %{a: 1, b: 4},
+            %{a: 2, b: 6}]
     request = Enum.map(seed, &(new_req(cog_env: &1, args: ["b", "a"])))
 
     {:ok, response} = send_req(request) |> List.last
 
-    decoded = Poison.decode!(response)
-    assert [%{"a" => 1, "b" => 4},
-            %{"a" => 3, "b" => 4},
-            %{"a" => 2, "b" => 6}] = decoded
+    assert [%{a: 1, b: 4},
+            %{a: 3, b: 4},
+            %{a: 2, b: 6}] = response
   end
 end
