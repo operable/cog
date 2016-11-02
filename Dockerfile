@@ -39,3 +39,6 @@ RUN apk update -U && \
 
 USER operable
 WORKDIR /home/operable/cog
+
+HEALTHCHECK --interval=30s --timeout=10s \
+  CMD ./scripts/healthcheck.sh
