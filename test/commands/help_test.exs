@@ -1,30 +1,23 @@
 defmodule Cog.Test.Commands.HelpTest do
-  use Cog.AdapterCase, adapter: "test"
-
-  @moduletag :skip
+  use Cog.CommandCase, command_module: Cog.Commands.Help
 
   alias Cog.Support.ModelUtilities
 
-  setup do
-    user = user("vanstee", first_name: "Patrick", last_name: "Van Stee")
-    |> with_chat_handle_for("test")
-
-    {:ok, %{user: user}}
-  end
-
-  test "listing bundles", %{user: user} do
+  test "listing bundles" do
     ModelUtilities.command("test-command")
 
-    [response] = send_message(user, "@bot: operable:help")
+    request = new_req()
+    {:ok, response} = send_req(request)
 
     assert %{enabled: [%{name: "operable"}],
              disabled: [%{name: "test-bundle"}]} = response
   end
 
-  test "showing docs for a command", %{user: user} do
+  test "showing docs for a command" do
     ModelUtilities.command("test-command", %{description: "Does test command things", arguments: "[test-arg]"})
 
-    [response] = send_message(user, "@bot: operable:help test-bundle:test-command")
+    request = new_req(args: ["test-bundle:test-command"])
+    {:ok, response} = send_req(request)
 
     assert %{name: "test-command",
              description: "Does test command things"} = response
