@@ -5,12 +5,12 @@ config :emqttd, :access,
   acl: [cog_internal: []]
 
 config :emqttd, :broker,
-  sys_interval: 60,
-  retained: [expired_after: 0,
-             max_message_num: 100000,
-             max_payload_size: 1048576],
-  pubsub: [pool_size: 8,
-           subscription: true,
+  sys_interval: 0,
+  retained: [expired_after: 1,
+             max_message_num: 5,
+             max_payload_size: 8192],
+  pubsub: [pool_size: 4,
+           subscription: false,
            route_aging: 5]
 
 config :emqttd, :mqtt,
@@ -23,11 +23,12 @@ config :emqttd, :mqtt,
             max_awaiting_rel: 0,
             collect_interval: 0,
             expired_after: 120],
-  queue: [type: :simple,
-          max_length: 100,
-          low_watermark: 0.2,
-          high_watermark: 0.6,
-          queue_qos0: true]
+  queue: [type: :priority,
+          priority: [{'/bot/commands', 10},
+                     {'/bot/commands/#', 20},
+                     {'bot/chat/adapter/incoming', 5}],
+          max_length: :infinity,
+          queue_qos0: false]
 
 config :emqttd, :sysmon,
   long_gc: false,
@@ -41,5 +42,4 @@ config :emqttd, :plugins,
   loaded_file: '/dev/null'
 
 config :emqttd, :modules,
-  presence: [qos: 0],
-  subscription: [:backend]
+  presence: [qos: 0]
