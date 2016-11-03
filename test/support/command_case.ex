@@ -43,7 +43,7 @@ defmodule Cog.CommandCase do
       requestor: Keyword.get(opts, :requestor, %Cog.Chat.User{}),
       room: Keyword.get(opts, :room, %Cog.Chat.Room{}),
       service_token: Keyword.get(opts, :service_token, service_token()),
-      services_root: Keyword.get(opts, :services_root, Cog.ServiceEndpoint.public_url()),
+      services_root: Keyword.get(opts, :services_root, services_root()),
       user: Keyword.get(opts, :user, %{})}
   end
 
@@ -55,9 +55,9 @@ defmodule Cog.CommandCase do
         {:ok, nil}
       {:reply, _reply_to, _template, reply, _state} ->
         # We're encoding and then decoding here because that's basically what happens
-        # normally when the message is sent over the bus. It also serves to strip a
-        # lot of the cruft from the reply and makes it more closely resemble what it
-        # would normally.
+        # normally when the message is sent over the bus. For our use case this strips
+        # a lot of the cruft from the normal return value, simulating what happens to
+        # the data as it goes through a normal pipeline.
         reply = Poison.encode!(reply)
         |> Poison.decode!(keys: :atoms)
         {:ok, reply}
@@ -69,17 +69,16 @@ defmodule Cog.CommandCase do
         {:error, error_message}
     end
   end
-  # If we get a list of reqs then we set the invocation_step for each and map over them
-  def send_req(module, reqs) when is_list(reqs) do
-    Enum.map(reqs, &(%{&1 | invocation_step: nil}))
-    |> List.update_at(0, &(%{&1 | invocation_step: "first"}))
-    |> List.update_at(-1, &(%{&1 | invocation_step: "last"}))
-    |> Enum.map(&(send_req(module, &1)))
-  end
 
-  # Service token is unique per process, so we create one with the first `new_req`
-  # and store that in the process dictionary for any additional reqs
-  defp service_token do
+  def memory_accum(root \\ services_root(), token \\ service_token(), key, value),
+    do: Cog.Command.Service.MemoryClient.accum(root, token, key, value)
+
+  def memory_fetch(root \\ services_root(), token \\ service_token(), key),
+    do: Cog.Command.Service.MemoryClient.fetch(root, token, key)
+
+  # The service token is unique per process, so we create one with the first `new_req`
+  # and store that in the process dictionary for any additional reqs.
+  def service_token do
     case Process.get(:service_token) do
       nil ->
         token = Cog.Command.Service.Tokens.new()
@@ -89,5 +88,8 @@ defmodule Cog.CommandCase do
         token
     end
   end
+
+  def services_root,
+    do: Cog.ServiceEndpoint.public_url()
 
 end
