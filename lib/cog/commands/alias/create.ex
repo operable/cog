@@ -14,7 +14,7 @@ defmodule Cog.Commands.Alias.Create do
     -h, --help  Display this usage info
 
   EXAMPLE
-    alias create my-awesome-alias "echo \"My awesome alias\""
+    alias create my-awesome-alias \"echo \"My awesome alias\"\"
     > Success, 'user:my-awesome-alias' has been created
   """
 
