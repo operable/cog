@@ -115,7 +115,6 @@ defmodule Cog.Mixfile do
       {:earmark, "~> 1.0", only: :dev},
       {:ex_doc, "~> 0.13", only: :dev},
       {:excoveralls, "~> 0.5", only: :test},
-      {:exvcr, "~> 0.8", only: [:dev, :test]},
       {:mix_test_watch, "~> 0.2", only: [:dev, :test]},
       {:phoenix_live_reload, "~> 1.0", only: :dev}
     ]

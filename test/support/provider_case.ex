@@ -6,8 +6,6 @@ defmodule Cog.Test.Support.ProviderCase do
 
 
 
-  @vcr_adapter ExVCR.Adapter.IBrowse
-
   defmacro __using__([provider: provider]) do
     case client_for_provider(provider) do
       nil ->
@@ -44,17 +42,11 @@ defmodule Cog.Test.Support.ProviderCase do
           end
 
           setup context do
-            # recorder = start_recorder(unquote(provider), context)
-
             Ecto.Adapters.SQL.Sandbox.checkout(Repo)
             Ecto.Adapters.SQL.Sandbox.mode(Repo, {:shared, self()})
 
             bootstrap
             Cog.Command.PermissionsCache.reset_cache
-
-            # on_exit(fn ->
-            #   stop_recorder(recorder)
-            # end)
 
             :ok
           end
@@ -121,27 +113,6 @@ defmodule Cog.Test.Support.ProviderCase do
     Logger.disable(self)
     fun.()
     Logger.enable(self)
-  end
-
-  # The following recorder functions were adapted from ExVCR's `use_cassette`
-  # function which could not be easily used here.
-  def start_recorder("test", _context), do: nil
-  def start_recorder(_adapter, context) do
-    fixture = ExVCR.Mock.normalize_fixture("#{context.case}.#{context.test}")
-    recorder = ExVCR.Recorder.start(fixture: fixture, adapter: @vcr_adapter, match_requests_on: [:query, :request_body])
-
-    ExVCR.Mock.mock_methods(recorder, @vcr_adapter)
-
-    recorder
-  end
-
-  def stop_recorder(nil), do: nil
-  def stop_recorder(recorder) do
-    try do
-      :meck.unload(@vcr_adapter.module_name)
-    after
-      ExVCR.Recorder.save(recorder)
-    end
   end
 
   defp client_for_provider(:slack), do: Cog.Test.Support.SlackClient
