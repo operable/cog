@@ -3,6 +3,7 @@ defmodule Cog.Chat.Message do
   use Conduit
 
   field :id, :string, required: true
+  field :timestamp, :integer, required: true
   field :room, [object: Cog.Chat.Room], required: true
   field :user, [object: Cog.Chat.User], required: true
   field :text, :string, required: true
@@ -10,5 +11,9 @@ defmodule Cog.Chat.Message do
   field :edited, :bool, required: false
   field :initial_context, :map, required: false
   field :bot_name, :string, required: false
+
+  def age(message) do
+    System.system_time(:milliseconds) - message.timestamp
+  end
 
 end

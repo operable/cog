@@ -2,10 +2,10 @@ defmodule Cog.Chat.Slack.Connector do
   require Logger
   use Slack
 
+  alias Carrier.Messaging.GenMqtt
   alias Cog.Chat.Message
   alias Cog.Chat.Room
   alias Cog.Chat.Slack.Formatter
-  alias Cog.Chat.Slack.Provider
   alias Cog.Chat.User
 
   @provider_name "slack"
@@ -31,7 +31,7 @@ defmodule Cog.Chat.Slack.Connector do
       :ignore ->
         :ok
       msg ->
-        GenServer.cast(Provider, msg)
+        GenMqtt.admin(Cog.Chat.Ingestor, msg)
         :ok
     end
   end
@@ -284,9 +284,10 @@ defmodule Cog.Chat.Slack.Connector do
           Logger.info("Failed looking up channel '#{channel}'.")
           :ignore
         else
-          {:chat_message, %Message{id: Cog.Events.Util.unique_id,
-              room: room, user: user, text: text, provider: @provider_name,
-              bot_name: "@#{state.me.name}", edited: false}}
+            {:chat_message, %Message{id: Cog.Events.Util.unique_id,
+                                     timestamp: System.system_time(:milliseconds),
+                                     room: room, user: user, text: text, provider: @provider_name,
+                                     bot_name: "@#{state.me.name}", edited: false}}
         end
     end
   end

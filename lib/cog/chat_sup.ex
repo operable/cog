@@ -7,6 +7,7 @@ defmodule Cog.ChatSup do
 
   def init(_) do
     children = [supervisor(Cog.Chat.Http.Supervisor, []),
+                worker(Cog.Chat.Ingestor, []),
                 worker(Cog.Chat.Adapter, [])]
     {:ok, {%{strategy: :one_for_one, intensity: 10, period: 60}, children}}
   end

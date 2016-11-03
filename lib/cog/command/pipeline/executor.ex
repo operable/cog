@@ -10,6 +10,7 @@ defmodule Cog.Command.Pipeline.Executor do
   alias Cog.Command.ReplyHelper
   alias Cog.ErrorResponse
   alias Cog.Events.PipelineEvent
+  alias Cog.Messages.AdapterRequest
   alias Cog.Queries
   alias Cog.Relay.Relays
   alias Cog.Repo
@@ -114,7 +115,8 @@ defmodule Cog.Command.Pipeline.Executor do
   def start_link(request),
     do: :gen_fsm.start_link(__MODULE__, [request], [])
 
-  def init([%Cog.Messages.AdapterRequest{}=request]) do
+  def init([%AdapterRequest{}=request]) do
+    Logger.debug("#{AdapterRequest.age(request)} ms")
     config = Application.fetch_env!(:cog, Cog.Command.Pipeline)
     request = sanitize_request(request)
     {:ok, conn} = Connection.connect()
@@ -460,7 +462,8 @@ defmodule Cog.Command.Pipeline.Executor do
   defp success_event(%__MODULE__{id: id, output: output}=state) do
     elapsed_time = elapsed(state)
     elapsed_time_ms = round(elapsed_time / 1000)
-    Logger.info("Pipeline #{id} ran for #{elapsed_time_ms} ms.")
+    total_time = AdapterRequest.age(state.request)
+    Logger.info("Pipeline #{id} ran for #{elapsed_time_ms} (#{total_time}) ms.")
     PipelineEvent.succeeded(id, elapsed_time, strip_templates(output))
     |> Probe.notify
   end

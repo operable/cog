@@ -5,13 +5,11 @@ defmodule Cog.Chat.Adapter do
   use Carrier.Messaging.GenMqtt
   alias Cog.Util.CacheSup
   alias Cog.Util.Cache
-  alias Cog.Messages.AdapterRequest
+  alias Cog.Chat.Ingestor
   alias Cog.Chat.Room
-  alias Cog.Chat.Message
   alias Cog.Chat.User
 
   @adapter_topic "bot/chat/adapter"
-  @incoming_topic "bot/chat/adapter/incoming"
   @cache_name :cog_chat_adapter_cache
 
   defstruct [:providers, :cache]
@@ -227,36 +225,9 @@ defmodule Cog.Chat.Adapter do
     end
     {:noreply, state}
   end
-  def handle_cast(_conn, @incoming_topic, "event", event, state) do
-    Logger.debug("Received chat event: #{inspect event}")
-    {:noreply, state}
-  end
-  def handle_cast(conn, @incoming_topic, "message", message, state) do
-    state = case Message.from_map(message) do
-              {:ok, message} ->
-                case is_pipeline?(message) do
-                  {true, text} ->
-                    if message.edited == true do
-                      mention_name = with_provider(message.provider, state, :mention_name, [message.user.handle])
-                      send(conn, message.provider, message.room, "#{mention_name} Executing edited command '#{text}'")
-                    end
-                    request = %AdapterRequest{text: text, sender: message.user, room: message.room, reply: "", id: message.id,
-                                              adapter: message.provider, initial_context: message.initial_context || %{}}
-                    Connection.publish(conn, request, routed_by: "/bot/commands")
-                    state
-                  false ->
-                    state
-                end
-              error ->
-                Logger.error("Error decoding chat message: #{inspect error}   #{inspect message, pretty: true}")
-                state
-            end
-    {:noreply, state}
-  end
 
   defp finish_initialization(conn, providers) do
     Connection.subscribe(conn, @adapter_topic)
-    Connection.subscribe(conn, @incoming_topic)
     case start_providers(providers, %{}) do
       {:ok, providers} ->
         {:ok, %__MODULE__{providers: providers, cache: get_cache()}}
@@ -271,7 +242,7 @@ defmodule Cog.Chat.Adapter do
       :error ->
         {:error, {:missing_provider_config, provider}}
       {:ok, config} ->
-        config = [{:incoming_topic, @incoming_topic}|config]
+        config = [{:incoming_topic, Ingestor.incoming_topic}|config]
         case provider.start_link(config) do
           {:ok, _} ->
             Logger.info("Chat provider '#{name}' (#{provider}) initialized.")
@@ -293,63 +264,14 @@ defmodule Cog.Chat.Adapter do
     end
   end
 
-  defp is_pipeline?(message) do
-    # The notion of "bot name" only really makes sense in the context
-    # of chat providers, where we can use that to determine whether or
-    # not a message is being addressed to the bot. For other providers
-    # (lookin' at you, Http.Provider), this makes no sense, because all
-    # messages are directed to the bot, by definition.
-    if message.room.is_dm == true do
-      {true, message.text}
-    else
-      case parse_spoken_command(message.text) do
-        nil ->
-          case parse_mention(message.text, message.bot_name) do
-            nil ->
-              false
-            updated ->
-              {true, updated}
-          end
-        updated ->
-          {true, updated}
-      end
+  defp prepare_target(target) do
+    case Cog.Chat.Room.from_map(target) do
+      {:ok, room} ->
+        {:ok, room.id}
+      error ->
+        error
     end
   end
-
-  defp parse_spoken_command(text) do
-    case Application.get_env(:cog, :enable_spoken_commands, true) do
-      false ->
-        nil
-      true ->
-        command_prefix = Application.get_env(:cog, :command_prefix, "!")
-        updated = Regex.replace(~r/^#{Regex.escape(command_prefix)}/, text, "")
-        if updated != text do
-          updated
-        else
-          nil
-        end
-    end
-  end
-
- defp parse_mention(_text, nil), do: nil
- defp parse_mention(text, bot_name) do
-   updated = Regex.replace(~r/^#{Regex.escape(bot_name)}/i, text, "")
-   if updated != text do
-      Regex.replace(~r/^:/, updated, "")
-      |> String.trim
-   else
-     nil
-   end
- end
-
- defp prepare_target(target) do
-   case Cog.Chat.Room.from_map(target) do
-     {:ok, room} ->
-       {:ok, room.id}
-     error ->
-       error
-   end
- end
 
  defp fetch_cache_ttl do
    config = Application.get_env(:cog, __MODULE__)

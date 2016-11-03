@@ -10,6 +10,7 @@ defmodule Cog.Command.Pipeline.Initializer do
 
   require Logger
 
+  alias Cog.Messages.AdapterRequest
   alias Carrier.Messaging.Connection
   alias Cog.Command.ReplyHelper
   alias Cog.Command.Pipeline.ExecutorSup
@@ -24,6 +25,10 @@ defmodule Cog.Command.Pipeline.Initializer do
   def start_link,
     do: GenServer.start_link(__MODULE__, [], name: __MODULE__)
 
+  def pipeline(payload) do
+    GenServer.cast(__MODULE__, {:pipeline, payload})
+  end
+
   def init(_) do
     cp = Application.get_env(:cog, :command_prefix)
     {:ok, conn} = Connection.connect()
@@ -31,6 +36,30 @@ defmodule Cog.Command.Pipeline.Initializer do
     Logger.info("Ready.")
     {:ok, %__MODULE__{mq_conn: conn, history_token: "#{cp}#{cp}"}}
   end
+
+  def handle_cast({:pipeline, payload}, state) do
+    # Only self register when the feature is enabled via config
+    # and the incoming request is from Slack.
+    #
+    # TODO: should only do this if the adapter is a chat adapter
+    Logger.debug "#{AdapterRequest.age(payload)} ms"
+    self_register_flag = Application.get_env(:cog, :self_registration, false) and payload.adapter != "http"
+    case self_register_user(payload, self_register_flag, state) do
+      :ok ->
+        # TODO: should only do history check if the adapter is a chat
+        # adapter, too
+        case check_history(payload, state) do
+          {true, payload, state} ->
+            {:ok, _} = ExecutorSup.run(payload)
+            {:noreply, state}
+          {false, state} ->
+            {:noreply, state}
+        end
+      :error ->
+        {:noreply, state}
+    end
+  end
+
 
   def handle_info({:publish, "/bot/commands", message}, state) do
     payload = Cog.Messages.AdapterRequest.decode!(message)

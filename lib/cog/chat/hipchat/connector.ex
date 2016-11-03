@@ -4,6 +4,7 @@ defmodule Cog.Chat.HipChat.Connector do
 
   use GenServer
 
+  alias Carrier.Messaging.GenMqtt
   alias Cog.Chat.HipChat.Users
   alias Cog.Chat.HipChat.Provider
   alias Cog.Chat.HipChat.Rooms
@@ -242,9 +243,10 @@ defmodule Cog.Chat.HipChat.Connector do
               Logger.debug("Roster miss for #{inspect sender}")
               state
             {{:ok, user}, state} ->
-              GenServer.cast(state.provider, {:chat_message, %Cog.Chat.Message{id: Cog.Events.Util.unique_id,
-                                                                               room: room, user: user, text: body, provider: @provider_name,
-                                                                               bot_name: "@#{state.mention_name}", edited: false}})
+              GenMqtt.admin(Cog.Chat.Ingestor, {:chat_message, %Cog.Chat.Message{id: Cog.Events.Util.unique_id,
+                                                                                 timestamp: System.system_time(:milliseconds),
+                                                                                 room: room, user: user, text: body, provider: @provider_name,
+                                                                                 bot_name: "@#{state.mention_name}", edited: false}})
               state
             error ->
               Logger.error("Failed to lookup sender of groupchat message: #{inspect error}")
@@ -267,9 +269,10 @@ defmodule Cog.Chat.HipChat.Connector do
                               is_dm: true,
                               name: "direct",
                               provider: @provider_name}
-        GenServer.cast(state.provider, {:chat_message, %Cog.Chat.Message{id: Cog.Events.Util.unique_id,
-                                                                         room: room, user: user, text: body, provider: @provider_name,
-                                                                         bot_name: "@#{state.mention_name}", edited: false}})
+        GenMqtt.admin(Cog.Chat.Ingestor, {:chat_message, %Cog.Chat.Message{id: Cog.Events.Util.unique_id,
+                                                                           timestamp: System.system_time(:milliseconds),
+                                                                           room: room, user: user, text: body, provider: @provider_name,
+                                                                           bot_name: "@#{state.mention_name}", edited: false}})
         state
     end
   end
