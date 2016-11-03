@@ -18,7 +18,7 @@ steps:
     agents:
       - docker=1.12.1
     concurrency_group: "cog_slack_integration"
-    concurreny: 1
+    concurrency: 1
 
   - command: ".buildkite/scripts/test.sh hipchat"
     label: ":hipchat: Cog Integration Tests - HipChat"
@@ -28,7 +28,7 @@ steps:
     agents:
       - docker=1.12.1
     concurrency_group: "cog_hipchat_integration"
-    concurreny: 1
+    concurrency: 1
 
   - wait
 
