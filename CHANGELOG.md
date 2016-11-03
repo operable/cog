@@ -1,5 +1,42 @@
 #  Changelog
 
+## 0.16.0
+
+### Enhancements
+
+- Brand new command parser [#1082](https://github.com/operable/cog/issues/1082)
+  - Supports string interpolation `"EC2 Region ${region}"`
+  - Improved shell-like behavior greatly reduces surprising parse errors
+- Added support for git-style subcommands [#1091](https://github.com/operable/cog/issues/1091)
+- Added basic usage tracking [Pull Request](https://github.com/operable/cog/pull/1104)
+  - This information is used by Operable in order to help understand the size of the Cog install
+    base and the currently deployed versions. If you would like to opt out of having this telemetry data
+    sent, you can set the `COG_TELEMETRY` environment variable to the value false before starting Cog.
+- Added `tee` and `cat` commands [Pull Request](https://github.com/operable/cog/pull/1101)
+- Allow binding JSON arrays to list options [#1097](https://github.com/operable/cog/issues/1097)
+- Added support for single and triple backticks to Greenbar templates [#1087](https://github.com/operable/cog/issues/1087)
+- Improved `command not found` error messages [#1092](https://github.com/operable/cog/issues/1092)
+- Made timeouts configurable for interactive and trigger pipelines [#1027](https://github.com/operable/cog/issues/1027)
+- Moved to Erlang R19.1 and Elixir 1.3.4 [#1028](https://github.com/operable/cog/issues/1028)
+- Deprecated `mist` bundle replaced with `ec2` and `s3` bundles [#1051](https://github.com/operable/cog/issues/1051)
+- Added health checks to `docker-compose.yml` [#939](https://github.com/operable/cog/issues/939)
+
+### Bug Fixes
+
+- Raw commands should return JSON [#1023](https://github.com/operable/cog/issues/1023)
+- Bundle install can return an incorrect error message [#1065](https://github.com/operable/cog/issues/1065)
+- Greenbar interprets `!=` as `==` [#1071](https://github.com/operable/cog/issues/1071)
+- Triggers should be able to redirect to newly created rooms [#1096](https://github.com/operable/cog/issues/1096)
+- Cannot interact with HipChat room names containing a space [#1102](https://github.com/operable/cog/issues/1102)
+- Slack @-mentions aren't properly linkified [#1111](https://github.com/operable/cog/issues/1111)
+- Required options don't work w/short option names [#1088](https://github.com/operable/cog/issues/1088)
+- Fixed password reset emails [Pull Request](https://github.com/operable/cog/pull/1114)
+- Fixed permission rule evaluation for list options [Pull Request](https://github.com/operable/cog/pull/1077)
+
+### Documentation
+
+- Documented `docker-compose-override.yaml` [#961](https://github.com/operable/cog/issues/961)
+
 ## 0.15.2
 ### Bug Fixes
 
