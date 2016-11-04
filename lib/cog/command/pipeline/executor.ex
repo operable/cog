@@ -175,11 +175,13 @@ defmodule Cog.Command.Pipeline.Executor do
     options = %ParserOptions{resolver: CommandResolver.command_resolver_fn(state.user)}
     case Parser.scan_and_parse(state.request.text, options) do
       {:ok, %Ast.Pipeline{}=pipeline} ->
+        Logger.debug("#{AdapterRequest.age(state.request)} ms")
         case Destination.process(Ast.Pipeline.redirect_targets(pipeline),
                                  state.request.sender,
                                  state.request.room,
                                  state.request.adapter) do
           {:ok, destinations} ->
+            Logger.debug("#{AdapterRequest.age(state.request)} ms")
             {:next_state,
              :plan_next_invocation, %{state |
                                       destinations: destinations,
@@ -256,7 +258,7 @@ defmodule Cog.Command.Pipeline.Executor do
         dispatch_event(updated_state, relay)
         Logger.debug("#{AdapterRequest.age(state.request)} ms")
         Connection.publish(updated_state.mq_conn, req, routed_by: topic)
-
+        Logger.debug("#{AdapterRequest.age(state.request)} ms")
         {:next_state, :wait_for_command, updated_state, state.command_timeout}
     end
 
@@ -474,10 +476,9 @@ defmodule Cog.Command.Pipeline.Executor do
   end
 
   defp dispatch_event(%__MODULE__{id: id, current_plan: plan}=state, relay) do
-    PipelineEvent.dispatched(id, elapsed(state),
-                             plan.invocation_text,
-                             relay, plan.cog_env)
-    |> Probe.notify
+    Process.spawn(fn() ->
+      PipelineEvent.dispatched(id, elapsed(state), plan.invocation_text,
+        relay, plan.cog_env) |> Probe.notify end, [])
   end
 
   defp success_event(%__MODULE__{id: id, output: output}=state) do
