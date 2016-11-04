@@ -23,15 +23,15 @@ defmodule Cog.Command.ReplyHelper do
     publish(connection, adapter, room, payload)
   end
 
-  def choose_payload(adapter, directives, message_data) do
+  def publish(connection, adapter, room, payload),
+    do: Adapter.send(connection, adapter, room, payload)
+
+  defp choose_payload(adapter, directives, message_data) do
     if Adapter.is_chat_provider?(adapter) do
       directives
     else
       message_data
     end
   end
-
-  def publish(connection, adapter, room, payload),
-    do: Adapter.send(connection, adapter, room, payload)
 
 end

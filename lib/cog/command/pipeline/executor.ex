@@ -67,6 +67,7 @@ defmodule Cog.Command.Pipeline.Executor do
   """
   @type state :: %__MODULE__{
     id: String.t,
+    is_chat_pipeline: boolean(),
     topic: String.t,
     started: :erlang.timestamp(),
     mq_conn: Carrier.Messaging.Connection.connection(),
@@ -88,6 +89,7 @@ defmodule Cog.Command.Pipeline.Executor do
   }
   defstruct [
     id: nil,
+    is_chat_pipeline: true,
     topic: nil,
     mq_conn: nil,
     request: nil,
@@ -120,21 +122,27 @@ defmodule Cog.Command.Pipeline.Executor do
     config = Application.fetch_env!(:cog, Cog.Command.Pipeline)
     request = sanitize_request(request)
     {:ok, conn} = Connection.connect()
+    is_chat_pipeline = ChatAdapter.is_chat_provider?(conn, request.adapter)
     id = request.id
     topic = "/bot/pipelines/#{id}"
     Connection.subscribe(conn, topic <> "/+")
 
     service_token = Cog.Command.Service.Tokens.new
-
+    Logger.debug("#{AdapterRequest.age(request)} ms")
     # TODO: Fold initial context creation into decoding; we shouldn't
     # ever get anything invalid here
     case create_initial_context(request) do
       {:ok, initial_context} ->
-        case fetch_user_from_request(request) do
+        Logger.debug("#{AdapterRequest.age(request)} ms")
+        case fetch_user_from_request(is_chat_pipeline, request) do
           {:ok, user} ->
+            Logger.debug("#{AdapterRequest.age(request)} ms")
             {:ok, perms} = PermissionsCache.fetch(user)
-            command_timeout = get_command_timeout(request.adapter, config)
-            loop_data = %__MODULE__{id: id, topic: topic, request: request,
+            Logger.debug("#{AdapterRequest.age(request)} ms")
+            command_timeout = get_command_timeout(is_chat_pipeline, config)
+            loop_data = %__MODULE__{id: id, topic: topic,
+                                    is_chat_pipeline: is_chat_pipeline,
+                                    request: request,
                                     mq_conn: conn,
                                     user: user,
                                     service_token: service_token,
@@ -143,6 +151,7 @@ defmodule Cog.Command.Pipeline.Executor do
                                     started: :os.timestamp(),
                                     command_timeout: command_timeout}
             initialization_event(loop_data)
+            Logger.debug("#{AdapterRequest.age(request)} ms")
             {:ok, :parse, loop_data, 0}
           {:error, :not_found} ->
             ReplyHelper.send("unregistered-user",
@@ -162,6 +171,7 @@ defmodule Cog.Command.Pipeline.Executor do
   end
 
   def parse(:timeout, state) do
+    Logger.debug("#{AdapterRequest.age(state.request)} ms")
     options = %ParserOptions{resolver: CommandResolver.command_resolver_fn(state.user)}
     case Parser.scan_and_parse(state.request.text, options) do
       {:ok, %Ast.Pipeline{}=pipeline} ->
@@ -187,6 +197,7 @@ defmodule Cog.Command.Pipeline.Executor do
   def plan_next_invocation(:timeout, %__MODULE__{invocations: [current_invocation|remaining],
                                                  output: previous_output,
                                                  user_permissions: permissions}=state) do
+    Logger.debug("#{AdapterRequest.age(state.request)} ms")
     state = %{state | current_plan: nil}
     # If a previous command generated output, we don't need to retain
     # any templating information, because the current command now
@@ -218,6 +229,7 @@ defmodule Cog.Command.Pipeline.Executor do
     do: succeed_with_response(state)
 
   def execute_plan(:timeout, %__MODULE__{plans: [current_plan|remaining_plans], relays: relays, request: request, user: user}=state) do
+    Logger.debug("#{AdapterRequest.age(state.request)} ms")
     bundle_name  = current_plan.parser_meta.bundle_name
     command_name = current_plan.parser_meta.command_name
     version      = current_plan.parser_meta.version
@@ -252,6 +264,7 @@ defmodule Cog.Command.Pipeline.Executor do
     do: fail_pipeline_with_error({:timeout, state.current_plan.parser_meta.full_command_name}, state)
 
   def handle_info({:publish, topic, message}, :wait_for_command, state) do
+    Logger.debug("#{AdapterRequest.age(state.request)} ms")
     reply_topic = "#{state.topic}/reply" # TODO: bake this into state for easier pattern-matching?
     case topic do
       ^reply_topic ->
@@ -381,7 +394,11 @@ defmodule Cog.Command.Pipeline.Executor do
       # itself. Otherwise, we have to pull the provider logic into
       # here to render the directives once.
 
-      payload = ReplyHelper.choose_payload(dest.adapter, directives, output)
+      payload = if state.is_chat_pipeline do
+        directives
+      else
+        output
+      end
       publish_response(payload, dest.room, dest.adapter, state)
     end)
 
@@ -412,11 +429,11 @@ defmodule Cog.Command.Pipeline.Executor do
     # something that succeeds without output, we'll just be silent in
     # chat.
 
-    filtered_destinations = if ChatAdapter.is_chat_provider?(state.request.adapter) do
+    filtered_destinations = if state.is_chat_pipeline do
       state.destinations
     else
       state.destinations
-      |> Enum.reject(&(ChatAdapter.is_chat_provider?(&1.adapter)))
+      |> Enum.reject(&(ChatAdapter.is_chat_provider?(state.conn, &1.adapter)))
     end
 
     # TODO: We're not going through the normal "respond" path here, because
@@ -621,7 +638,7 @@ defmodule Cog.Command.Pipeline.Executor do
   end
 
   defp sender_name(state) do
-    if ChatAdapter.is_chat_provider?(state.request.adapter) do
+    if state.is_chat_pipeline do
       "@#{state.request.sender.handle}"
     else
       state.request.sender.id
@@ -698,38 +715,37 @@ defmodule Cog.Command.Pipeline.Executor do
     end
   end
 
-  defp fetch_user_from_request(%Cog.Messages.AdapterRequest{}=request) do
-    # TODO: This should happen when we validate the request
-    if ChatAdapter.is_chat_provider?(request.adapter) do
-      adapter   = request.adapter
-      sender_id = request.sender.id
+  defp fetch_user_from_request(true, %Cog.Messages.AdapterRequest{}=request) do
+    Logger.debug("#{AdapterRequest.age(request)} ms")
+    adapter   = request.adapter
+    sender_id = request.sender.id
+    user = Queries.User.for_chat_provider_user_id(sender_id, adapter)
+    |> Repo.one
+    Logger.debug("#{AdapterRequest.age(request)} ms")
 
-      user = Queries.User.for_chat_provider_user_id(sender_id, adapter)
-      |> Repo.one
-
-      case user do
-        nil ->
-          {:error, :not_found}
-        user ->
-          {:ok, user}
-      end
-    else
+    case user do
+      nil ->
+        {:error, :not_found}
+      user ->
+        {:ok, user}
+    end
+  end
+  defp fetch_user_from_request(false, %Cog.Messages.AdapterRequest{}=request) do
       cog_name = request.sender.id
       case Repo.get_by(Cog.Models.User, username: cog_name) do
         %Cog.Models.User{}=user ->
+          Logger.debug("#{AdapterRequest.age(request)} ms")
           {:ok, user}
         nil ->
           {:error, :not_found}
       end
-    end
   end
 
-  defp get_command_timeout(adapter, config) do
-    if ChatAdapter.is_chat_provider?(adapter) do
-      Keyword.fetch!(config, :interactive_timeout)
-    else
-      Keyword.fetch!(config, :trigger_timeout)
-    end
-    |> Cog.Config.convert(:ms)
+  defp get_command_timeout(true, config) do
+    Keyword.fetch!(config, :interactive_timeout) |> Cog.Config.convert(:ms)
   end
+  defp get_command_timeout(false, config) do
+    Keyword.fetch!(config, :trigger_timeout) |> Cog.Config.convert(:ms)
+  end
+
 end
