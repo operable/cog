@@ -155,7 +155,7 @@ defmodule Cog.Command.Pipeline.Executor do
             {:ok, :parse, loop_data, 0}
           {:error, :not_found} ->
             ReplyHelper.send("unregistered-user",
-                             unregistered_user_data(request),
+                             unregistered_user_data(conn, request),
                              request.room,
                              request.adapter,
                              conn)
@@ -243,14 +243,18 @@ defmodule Cog.Command.Pipeline.Executor do
     #
     case assign_relay(relays, bundle_name, version) do
       {:error, reason} ->
+        Logger.debug("#{AdapterRequest.age(state.request)} ms")
         fail_pipeline_with_error({reason, bundle_name}, state)
       {:ok, {relay, relays}} ->
+        Logger.debug("#{AdapterRequest.age(state.request)} ms")
         topic = "/bot/commands/#{relay}/#{bundle_name}/#{command_name}"
         reply_to_topic = "#{state.topic}/reply"
         req = request_for_plan(current_plan, request, user, reply_to_topic, state.service_token)
+        Logger.debug("#{AdapterRequest.age(state.request)} ms")
         updated_state =  %{state | current_plan: current_plan, plans: remaining_plans, relays: relays}
 
         dispatch_event(updated_state, relay)
+        Logger.debug("#{AdapterRequest.age(state.request)} ms")
         Connection.publish(updated_state.mq_conn, req, routed_by: topic)
 
         {:next_state, :wait_for_command, updated_state, state.command_timeout}
@@ -500,12 +504,12 @@ defmodule Cog.Command.Pipeline.Executor do
   ########################################################################
   # Unregistered User Functions
 
-  defp unregistered_user_data(request) do
+  defp unregistered_user_data(conn, request) do
     handle   = request.sender.handle
-    creators = user_creator_handles(request)
+    creators = user_creator_handles(conn, request)
 
-    {:ok, mention_name} = Cog.Chat.Adapter.mention_name(request.adapter, handle)
-    {:ok, display_name} = Cog.Chat.Adapter.display_name(request.adapter)
+    {:ok, mention_name} = ChatAdapter.mention_name(conn, request.adapter, handle)
+    {:ok, display_name} = ChatAdapter.display_name(conn, request.adapter)
 
     %{"handle" => handle,
       "mention_name" => mention_name,
@@ -523,7 +527,7 @@ defmodule Cog.Command.Pipeline.Executor do
   # with Cog. Not every Cog user with these permissions will
   # necessarily have a chat handle registered for the chat provider
   # being used (most notably, the bootstrap admin user).
-  defp user_creator_handles(request) do
+  defp user_creator_handles(conn, request) do
     provider = request.adapter
 
     "operable:manage_users"
@@ -534,7 +538,7 @@ defmodule Cog.Command.Pipeline.Executor do
     |> Cog.Repo.all
     |> Enum.flat_map(&(&1.chat_handles))
     |> Enum.map(fn(h) ->
-      {:ok, mention} = Cog.Chat.Adapter.mention_name(provider, h.handle)
+      {:ok, mention} = ChatAdapter.mention_name(conn, provider, h.handle)
       mention
     end)
     |> Enum.sort

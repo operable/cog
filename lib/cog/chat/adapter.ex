@@ -19,26 +19,21 @@ defmodule Cog.Chat.Adapter do
   end
 
   def mention_name(provider, handle) when is_binary(handle) do
-    GenMqtt.call(@adapter_topic , "mention_name", %{provider: provider, handle: handle}, :infinity)
+    GenMqtt.with_connection(&(mention_name(&1, provider, handle)))
+  end
+  def mention_name(conn, provider, handle) when is_binary(handle) do
+    GenMqtt.call(conn, @adapter_topic , "mention_name", %{provider: provider, handle: handle}, :infinity)
   end
 
   def display_name(provider) do
-    GenMqtt.call(@adapter_topic, "display_name", %{provider: provider}, :infinity)
+    GenMqtt.with_connection(&(display_name(&1, provider)))
+  end
+  def display_name(conn, provider) do
+    GenMqtt.call(conn, @adapter_topic, "display_name", %{provider: provider}, :infinity)
   end
 
   def lookup_user(provider, handle) when is_binary(handle) do
-    cache = get_cache
-    case cache[{provider, :user, handle}] do
-      nil ->
-        case GenMqtt.call(@adapter_topic, "lookup_user", %{provider: provider, handle: handle}, :infinity) do
-          {:ok, user} ->
-            User.from_map(user)
-          {:error, _}=error ->
-            error
-        end
-      {:ok, value} ->
-        User.from_map(value)
-    end
+    GenMqtt.with_connection(&(lookup_user(&1, provider, handle)))
   end
   def lookup_user(conn, provider, handle) when is_binary(handle) do
     cache = get_cache
@@ -65,11 +60,15 @@ defmodule Cog.Chat.Adapter do
   # room_identifier should come in as a keyword list with
   # either [id: id] or [name: name]
   defp do_lookup_room(provider, room_identifier) do
+    GenMqtt.with_connection(&(do_lookup_room(&1, provider, room_identifier)))
+  end
+
+  defp do_lookup_room(conn, provider, room_identifier) do
     args = Enum.into(room_identifier, %{provider: provider})
     cache = get_cache
     case cache[{provider, :room, room_identifier}] do
       nil ->
-        case GenMqtt.call(@adapter_topic , "lookup_room", args, :infinity) do
+        case GenMqtt.call(conn, @adapter_topic , "lookup_room", args, :infinity) do
           {:ok, room} ->
             Room.from_map(room)
           {:error, _}=error ->
@@ -81,12 +80,7 @@ defmodule Cog.Chat.Adapter do
   end
 
   def list_joined_rooms(provider) do
-    case GenMqtt.call(@adapter_topic, "list_joined_rooms", %{provider: provider}, :infinity) do
-      nil ->
-        nil
-      {:ok, rooms} ->
-        {:ok, Enum.map(rooms, &Room.from_map!/1)}
-    end
+    GenMqtt.with_connection(&(list_joined_rooms(&1, provider)))
   end
   def list_joined_rooms(conn, provider) do
     case GenMqtt.call(conn, @adapter_topic, "list_joined_rooms", %{provider: provider}, :infinity) do
@@ -99,14 +93,14 @@ defmodule Cog.Chat.Adapter do
 
 
   def join(provider, room) when is_binary(room) do
-    GenMqtt.call(@adapter_topic, "join", %{provider: provider, room: room}, :infinity)
+    GenMqtt.with_connection(&(join(&1, provider, room)))
   end
   def join(conn, provider, room) when is_binary(room) do
     GenMqtt.call(conn, @adapter_topic, "join", %{provider: provider, room: room}, :infinity)
   end
 
   def leave(provider, room) when is_binary(room) do
-    GenMqtt.call(@adapter_topic, "leave", %{provider: provider, room: room}, :infinity)
+    GenMqtt.with_connection(&(leave(&1, provider, room)))
   end
   def leave(conn, provider, room) when is_binary(room) do
     GenMqtt.call(conn, @adapter_topic, "leave", %{provider: provider, room: room}, :infinity)
@@ -114,29 +108,21 @@ defmodule Cog.Chat.Adapter do
 
 
   def list_providers() do
-    GenMqtt.call(@adapter_topic, "list_providers", %{}, :infinity)
+    GenMqtt.with_connection(&(list_providers(&1)))
   end
   def list_providers(conn) do
     GenMqtt.call(conn, @adapter_topic, "list_providers", %{}, :infinity)
   end
 
   def is_chat_provider?(name) do
-    {:ok, result} = GenMqtt.call(@adapter_topic, "is_chat_provider", %{name: name}, :infinity)
-    result
+    is_chat_provider?(nil, name)
   end
-  def is_chat_provider?(conn, name) do
-    {:ok, result} = GenMqtt.call(conn, @adapter_topic, "is_chat_provider", %{name: name}, :infinity)
-    result
+  def is_chat_provider?(_conn, name) do
+    name != "http"
   end
 
   def send(provider, target, message) do
-    case prepare_target(target) do
-      {:ok, target} ->
-        GenMqtt.cast(@adapter_topic, "send", %{provider: provider, target: target, message: message})
-      error ->
-        Logger.error("#{inspect error}")
-        error
-    end
+    GenMqtt.with_connection(&(send(&1, provider, target, message)))
   end
   def send(conn, provider, target, message) do
     case prepare_target(target) do

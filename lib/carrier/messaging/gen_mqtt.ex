@@ -72,18 +72,23 @@ defmodule Carrier.Messaging.GenMqtt do
     GenServer.start_link(__MODULE__, [%{cb: cb, args: args}], opts)
   end
 
-  def call(topic, endpoint, call_args, timeout \\ 5000), do: call(nil, topic, endpoint, call_args, timeout)
+  def with_connection(with_fn) when is_function(with_fn) do
+    case Connection.connect() do
+      {:ok, conn} ->
+        try do
+          with_fn.(conn)
+        after
+          Connection.disconnect(conn)
+        end
+      error ->
+        error
+    end
+  end
 
   @spec call(conn :: Connection.connection, topic :: String.t, endpoint :: String.t, call_args :: map, timeout :: call_timeout) ::
     {:ok, result :: any} |
     {:error, reason :: any}
-  def call(nil, topic, endpoint, call_args, timeout) do
-    {:ok, conn} = Connection.connect()
-    result = call(conn, topic, endpoint, call_args, timeout)
-    Connection.disconnect(conn)
-    result
-  end
-  def call(conn, topic, endpoint, call_args, timeout) do
+  def call(%Connection{}=conn, topic, endpoint, call_args, timeout \\ 5000) do
     timeout = case timeout do
                 :infinity ->
                   @infinity_timeout
