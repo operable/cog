@@ -10,7 +10,7 @@ defmodule Cog.Messages.AdapterRequest do
   field :id, :string, required: true
 
   # Time received from chat system (in milliseconds)
-  field :timestamp, :integer, required: true
+  field :timestamp, :integer, required: false
 
   # Command or pipeline text
   field :text, :string, required: true
@@ -33,8 +33,13 @@ defmodule Cog.Messages.AdapterRequest do
   # Short name of adapter, e.g. "slack"
   field :adapter, :string, required: true
 
-  def age(request) do
-    System.system_time(:milliseconds) - request.timestamp
+  def age(message) do
+    now = System.system_time(:milliseconds)
+    if message.timestamp == nil do
+      0
+    else
+      now - message.timestamp
+    end
   end
 
 end
