@@ -113,7 +113,7 @@ defmodule Carrier.Messaging.Connection do
 
     # Publish message (make blocking call)
     case publish(conn, message, routed_by: call_topic) do
-      {:ok, _} ->
+      :ok ->
         # Wait for response
         receive do
           {:publish, ^reply, message} ->
@@ -127,12 +127,7 @@ defmodule Carrier.Messaging.Connection do
   @spec cast(conn :: connection, cast_topic :: String.t, endpoint :: String.t, payload :: map) :: :ok | {:error, reason :: any}
   def cast(%__MODULE__{}=conn, cast_topic, endpoint, payload) when is_map(payload) do
     message = %MqttCast{endpoint: endpoint, payload: payload}
-    case publish(conn, message, routed_by: cast_topic) do
-      {:ok, _} ->
-        :ok
-      error ->
-        error
-    end
+    publish(conn, message, routed_by: cast_topic)
   end
 
   @doc """
@@ -164,7 +159,7 @@ defmodule Carrier.Messaging.Connection do
         :ok
     end
 
-    :emqttc.sync_publish(conn, topic, encoded, :qos1)
+    :emqttc.publish(conn, topic, encoded, :qos1)
   end
 
   ########################################################################
