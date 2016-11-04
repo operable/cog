@@ -7,20 +7,59 @@ defmodule Cog.CommandCase do
   use ExUnit.CaseTemplate, async: true
 
   using opts do
-    quote location: :keep do
-      import unquote(__MODULE__)
+    quote location: :keep, bind_quoted: [opts: opts] do
+      import Cog.CommandCase
 
-      @command_module Keyword.fetch!(unquote(opts), :command_module)
-      @command_name Module.split(@command_module) |> List.last |> String.downcase
+      # command_module and command_tag provide some niceties and shortcuts
+      # for working with command tests. Both are optional.
 
-      @moduletag commands: @command_name
+      # command_module: The default command module to send requests to.
+      # Specifying this will also add a @moduletag in the form of
+      # 'commands: <command_name>' where command_name is the last word in the
+      # module downcased. For example 'Cog.Commands.Help' would generate
+      # '@moduletag commands: "help"'. If command_module isn't specified you
+      # will need to explicitly pass the command module when calling send_req/2.
 
-      # So we don't have to keep passing the command name and command module
-      def send_req(req),
-        do: send_req(@command_module, req)
+      # command_tag: The command_name used for the generated @moduletag.
+      # @moduletag is generated in the form 'commands: <command_name>'. If
+      # both command_module and command_tag are specified, command_tag will
+      # take precedence over the value extracted from the command module.
 
-      def new_req(opts \\ []),
-        do: new_req(@command_name, opts)
+
+      # If defined we'll use the command_module later to generate send_req/1,
+      # so we'll go ahead and assign it here.
+      command_module = Keyword.get(opts, :command_module)
+
+      # Sets up the @moduletag
+      # If neither command_module or command_tag are set the @moduletag is set
+      # to 'commands: true'. So even though you can't specify the specific
+      # command test to run, you can still run the test when all command tests
+      # are ran.
+      moduletag = cond do
+        command_tag = Keyword.get(opts, :command_tag) ->
+          command_tag
+        command_module ->
+          command_name = Module.split(command_module)
+          |> List.last()
+          |> String.downcase()
+
+          command_name
+        true ->
+          true
+      end
+
+      @moduletag commands: moduletag
+
+      # If the command_module is set then we can provide a convenience function
+      # with the command_module already filled in. This should help reduce some
+      # of the repetition.
+      if command_module do
+        @command_module command_module
+
+        def send_req(req),
+          do: send_req(req, @command_module)
+      end
+
     end
   end
 
@@ -31,10 +70,10 @@ defmodule Cog.CommandCase do
     :ok
   end
 
-  def new_req(command, opts) do
+  def new_req(opts \\ []) do
     %Cog.Messages.Command{
       invocation_id: Keyword.get(opts, :invocation_id, "fake_invocation_id"),
-      command: Keyword.get(opts, :command, command),
+      command: Keyword.get(opts, :command),
       args: Keyword.get(opts, :args, []),
       options: Keyword.get(opts, :options, %{}),
       cog_env: Keyword.get(opts, :cog_env, %{}),
@@ -47,7 +86,7 @@ defmodule Cog.CommandCase do
       user: Keyword.get(opts, :user, %{})}
   end
 
-  def send_req(module, %Cog.Messages.Command{}=req) do
+  def send_req(%Cog.Messages.Command{}=req, module) do
     case module.handle_message(req, %{}) do
       {:reply, _reply_to, _template, nil, _state} ->
         {:ok, nil}
