@@ -1,47 +1,40 @@
 defmodule Cog.Test.Commands.FilterTest do
-  use Cog.AdapterCase, adapter: "test"
+  use Cog.CommandCase, command_module: Cog.Commands.Filter
 
-  @moduletag :skip
+  test "can match on objects on a specific path" do
+    data = %{"foo" => %{"bar" => "stuff", "baz" => "other stuff"}}
 
-  setup do
-    user = user("vanstee", first_name: "Patrick", last_name: "Van Stee")
-    |> with_chat_handle_for("test")
+    {:ok, match} = new_req(cog_env: data,
+                           options: %{"path" => "foo.bar",
+                                      "matches" => "stuff"})
+    |> send_req()
 
-    {:ok, %{user: user}}
+    {:ok, no_match} = new_req(cog_env: data,
+                           options: %{"path" => "foo.bar",
+                                      "matches" => "other stuff"})
+    |> send_req()
+
+    assert(%{foo: %{bar: "stuff",
+                    baz: "other stuff"}} = match)
+
+    assert(nil == no_match)
   end
 
-  test "filters a list of things based on a match", %{user: user} do
-    command = """
-    @bot: seed '[{"foo":{"bar":"stuff", "baz":"other stuff"}}, \
-    {"foo": {"bar":"me", "baz": "not this stuff"}},
-    {"foo": {"bar":"stuff", "baz":"more stuff"}}]' | \
-    filter \
-    --path="foo.bar" \
-    --matches="stuff"
-    """
+  test "filters a list of things based on a key" do
+    data = %{"foo" => %{"bar" => "stuff"}}
 
-    response = send_message(user, command)
+    {:ok, match} = new_req(cog_env: data,
+                           options: %{"path" => "foo.bar"})
+    |> send_req()
 
-    assert [%{foo: %{bar: "stuff",
-                     baz: "other stuff"}},
-            %{foo: %{bar: "stuff",
-                     baz: "more stuff"}}] = response
-  end
+    {:ok, no_match} = new_req(cog_env: data,
+                           options: %{"path" => "foo.baz"})
+    |> send_req()
 
-  test "filters a list of things based on a key", %{user: user} do
-    command = """
-    @bot: seed '[{"foo":{"bar":"stuff", "baz":"other stuff"}}, \
-    {"foo": {"bar":"me", "baz": "now this stuff"}},
-    {"foo": {"baz":"more stuff"}}]' | \
-    filter \
-    --path="foo.bar"
-    """
+    assert(%{foo: %{bar: "stuff"}} = match)
 
-    response = send_message(user, command)
-
-    assert [%{foo: %{bar: "stuff",
-                     baz: "other stuff"}},
-            %{foo: %{bar: "me",
-                     baz: "now this stuff"}}] = response
+    assert(nil == no_match)
   end
 end
+
+
