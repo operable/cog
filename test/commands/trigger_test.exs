@@ -1,22 +1,13 @@
 defmodule Cog.Test.Commands.TriggerTest do
-  use Cog.AdapterCase, adapter: "test"
+  use Cog.CommandCase, command_module: Cog.Commands.Trigger
   require Logger
-
-  @moduletag :skip
 
   alias Cog.Models.Trigger
   alias Cog.Repository.Triggers
 
-  setup do
-    user = user("cog")
-    |> with_chat_handle_for("test")
-    |> with_permission("operable:manage_triggers")
-    {:ok, %{user: user}}
-  end
-
-  test "creating a trigger (simple)", %{user: user} do
-    [payload] = user
-    |> send_message("@bot: operable:trigger create foo 'echo stuff'")
+  test "creating a trigger (simple)" do
+    {:ok, payload} = new_req(args: ["create", "foo", "echo stuff"])
+    |> send_req()
 
     assert %{id: _,
              name: "foo",
@@ -28,9 +19,13 @@ defmodule Cog.Test.Commands.TriggerTest do
              timeout_sec: 30} = payload
   end
 
-  test "creating a trigger (complex)", %{user: user} do
-    [payload] = user
-    |> send_message("@bot: operable:trigger create foo 'echo stuff' --description='behold, a trigger' --enabled=false --as-user=bobby_tables --timeout-sec=100")
+  test "creating a trigger (complex)" do
+    {:ok, payload} = new_req(args: ["create", "foo", "echo stuff"],
+                             options: %{"description" => "behold, a trigger",
+                                        "enabled" => false,
+                                        "as-user" => "bobby_tables",
+                                        "timeout-sec" => 100})
+    |> send_req()
 
     assert %{id: _,
              name: "foo",
@@ -42,15 +37,19 @@ defmodule Cog.Test.Commands.TriggerTest do
              timeout_sec: 100} = payload
   end
 
-  test "creating a trigger with an invalid timeout fails", %{user: user} do
-    response = send_message(user, "@bot: operable:trigger create foo 'echo stuff' --timeout-sec=0")
-    assert_error_message_contains(response, "timeout_sec must be greater than 0")
+  test "creating a trigger with an invalid timeout fails" do
+    {:error, error} = new_req(args: ["create", "foo", "echo stuff"],
+                              options: %{"timeout-sec" => 0})
+    |> send_req()
+
+    assert(error == "timeout_sec must be greater than 0")
   end
 
-  test "retrieving details about a trigger", %{user: user} do
+  test "retrieving details about a trigger" do
     {:ok, %Trigger{id: id}} = Triggers.new(%{name: "foo", pipeline: "echo stuff"})
-    [payload] = user
-    |> send_message("@bot: operable:trigger info foo")
+
+    {:ok, payload} = new_req(args: ["info", "foo"])
+    |> send_req()
 
     assert %{id: ^id,
              name: "foo",
@@ -62,17 +61,20 @@ defmodule Cog.Test.Commands.TriggerTest do
              timeout_sec: 30} = payload
   end
 
-  test "retrieving details about a non-existent trigger fails", %{user: user} do
-    response = send_message(user, "@bot: operable:trigger info foo")
-    assert_error_message_contains(response, "Could not find 'trigger' with the name 'foo'")
+  test "retrieving details about a non-existent trigger fails" do
+    {:error, error} = new_req(args: ["info", "foo"])
+    |> send_req()
+
+    assert(error == "Could not find 'trigger' with the name 'foo'")
   end
 
-  test "list existing triggers", %{user: user} do
+  test "list existing triggers" do
     {:ok, %Trigger{id: foo_id}} = Triggers.new(%{name: "foo", pipeline: "echo stuff"})
     {:ok, %Trigger{id: bar_id}} = Triggers.new(%{name: "bar", pipeline: "echo more stuff"})
-    results = user
-    |> send_message("@bot: operable:trigger list")
-    |> Enum.sort_by(fn(m) -> m[:name] end)
+
+    {:ok, results} = new_req(args: ["list"])
+    |> send_req()
+    results = Enum.sort_by(results, fn(m) -> m[:name] end)
 
     assert [%{id: ^bar_id,
               name: "bar",
@@ -92,12 +94,13 @@ defmodule Cog.Test.Commands.TriggerTest do
               timeout_sec: 30}] = results
   end
 
-  test "listing is the default operation", %{user: user} do
+  test "listing is the default operation" do
     {:ok, %Trigger{id: foo_id}} = Triggers.new(%{name: "foo", pipeline: "echo stuff"})
     {:ok, %Trigger{id: bar_id}} = Triggers.new(%{name: "bar", pipeline: "echo more stuff"})
-    results = user
-    |> send_message("@bot: operable:trigger")
-    |> Enum.sort_by(fn(m) -> m[:name] end)
+
+    {:ok, results} = new_req()
+    |> send_req()
+    results = Enum.sort_by(results, fn(m) -> m[:name] end)
 
     assert  [%{id: ^bar_id,
                name: "bar"},
@@ -105,39 +108,43 @@ defmodule Cog.Test.Commands.TriggerTest do
                name: "foo"}] = results
   end
 
-  test "updating a trigger", %{user: user} do
+  test "updating a trigger" do
     {:ok, %Trigger{id: id}} = Triggers.new(%{name: "foo", pipeline: "echo stuff"})
-    [payload] = user
-    |> send_message("@bot: operable:trigger update foo --pipeline='echo all the things'")
+    {:ok, payload} = new_req(args: ["update", "foo"],
+                             options: %{"pipeline" => "echo all the things"})
+    |> send_req()
 
     assert %{id: ^id,
              pipeline: "echo all the things"} = payload
   end
 
-  test "enabling a trigger", %{user: user} do
+  test "enabling a trigger" do
     {:ok, %Trigger{id: id, enabled: false}} = Triggers.new(%{name: "foo", pipeline: "echo stuff", enabled: false})
-    [payload] = user
-    |> send_message("@bot: operable:trigger enable foo")
+
+    {:ok, payload} = new_req(args: ["enable", "foo"])
+    |> send_req()
 
     assert %{id: ^id,
              name: "foo",
              enabled: true} = payload
   end
 
-  test "disabling a trigger", %{user: user} do
+  test "disabling a trigger" do
     {:ok, %Trigger{id: id, enabled: true}} = Triggers.new(%{name: "foo", pipeline: "echo stuff"})
-    [payload] = user
-    |> send_message("@bot: operable:trigger disable foo")
+
+    {:ok, payload} = new_req(args: ["disable", "foo"])
+    |> send_req()
 
     assert %{id: ^id,
              name: "foo",
              enabled: false} = payload
   end
 
-  test "deleting a trigger by name", %{user: user} do
+  test "deleting a trigger by name" do
     {:ok, %Trigger{id: id}} = Triggers.new(%{name: "foo", pipeline: "echo stuff"})
-    [payload] = user
-    |> send_message("@bot: operable:trigger delete foo")
+
+    {:ok, [payload]} = new_req(args: ["delete", "foo"])
+    |> send_req()
 
     assert %{id: ^id,
              name: "foo"} = payload
@@ -145,14 +152,14 @@ defmodule Cog.Test.Commands.TriggerTest do
     refute Cog.Repo.get(Trigger, id)
   end
 
-  test "deleting multiple triggers by name", %{user: user} do
+  test "deleting multiple triggers by name" do
     {:ok, %Trigger{id: foo_id}} = Triggers.new(%{name: "foo", pipeline: "echo stuff"})
     {:ok, %Trigger{id: bar_id}} = Triggers.new(%{name: "bar", pipeline: "echo stuff"})
     {:ok, %Trigger{id: baz_id}} = Triggers.new(%{name: "baz", pipeline: "echo stuff"})
 
-    payload = user
-    |> send_message("@bot: operable:trigger delete foo bar baz")
-    |> Enum.sort_by(fn(m) -> m[:name] end)
+    {:ok, payload} = new_req(args: ["delete", "foo", "bar", "baz"])
+    |> send_req()
+    payload = Enum.sort_by(payload, fn(m) -> m[:name] end)
 
     assert [%{id: ^bar_id,
               name: "bar"},
@@ -165,9 +172,11 @@ defmodule Cog.Test.Commands.TriggerTest do
       do: refute Cog.Repo.get(Trigger, id)
   end
 
-  test "passing an unknown subcommand fails", %{user: user} do
-    response = send_message(user, "@bot: operable:trigger not-a-subcommand")
-    assert_error_message_contains(response, "Unknown subcommand 'not-a-subcommand'")
+  test "passing an unknown subcommand fails" do
+    {:error, error} = new_req(args: ["not-a-subcommand"])
+    |> send_req()
+
+    assert(error == "Unknown subcommand 'not-a-subcommand'")
   end
 
 end
