@@ -1,50 +1,69 @@
 defmodule Cog.Test.Commands.WhichTest do
-  use Cog.AdapterCase, adapter: "test"
+  use Cog.CommandCase, command_module: Cog.Commands.Which
 
-  @moduletag :skip
+  import Cog.Support.ModelUtilities, only: [site_alias: 2,
+                                            with_alias: 3,
+                                            user: 1]
 
-  setup do
-    user = user("vanstee", first_name: "Patrick", last_name: "Van Stee")
-    |> with_chat_handle_for("test")
+  setup :with_user
 
-    {:ok, %{user: user}}
-  end
+  test "an alias in the 'user' visibility", %{user: user}=context do
+    with_user_alias(context)
 
-  test "an alias in the 'user' visibility", %{user: user} do
-    send_message(user, "@bot: operable:alias create my-new-alias \"echo My New Alias\"")
+    {:ok, response} = new_req(user: %{"id" => user.id}, args: ["my-new-alias"])
+    |> send_req()
 
-    response = send_message(user, "@bot: operable:which my-new-alias")
-
-    assert response == [%{type: "alias",
-                          scope: "user",
-                          name: "my-new-alias",
-                          pipeline: "echo My New Alias"}]
+    assert(response == %{type: "alias",
+                         scope: "user",
+                         name: "my-new-alias",
+                         pipeline: "echo My New Alias"})
   end
 
   test "an alias in the 'site' visibility", %{user: user} do
-    send_message(user, "@bot: operable:alias create my-new-alias \"echo My New Alias\"")
-    send_message(user, "@bot: operable:alias move my-new-alias site")
+    with_site_alias()
 
-    response = send_message(user, "@bot: operable:which my-new-alias")
+    {:ok, response} = new_req(user: %{"id" => user.id}, args: ["my-new-alias"])
+    |> send_req()
 
-    assert response == [%{type: "alias",
-                          scope: "site",
-                          name: "my-new-alias",
-                          pipeline: "echo My New Alias"}]
+    assert(response == %{type: "alias",
+                         scope: "site",
+                         name: "my-new-alias",
+                         pipeline: "echo My New Alias"})
   end
 
   test "a command", %{user: user} do
-    response = send_message(user, "@bot: operable:which alias")
+    {:ok, response} = new_req(user: %{"id" => user.id}, args: ["alias"])
+    |> send_req()
 
-    assert response == [%{type: "command",
-                          scope: "operable",
-                          name: "alias"}]
+    assert(response == %{type: "command",
+                         scope: "operable",
+                         name: "alias"})
   end
 
   test "an unknown", %{user: user} do
-    response = send_message(user, "@bot: operable:which foo")
+    {:ok, response} = new_req(user: %{"id" => user.id}, args: ["foo"])
+    |> send_req()
 
-    assert response == [%{not_found: true}]
+    assert(response == %{not_found: true})
   end
 
+  ### Context Functions ###
+
+  defp with_user(),
+    do: user("alias_test_user")
+  defp with_user(_),
+    do: [user: with_user()]
+
+  # User aliases requires a user, so it must be called with context
+  defp with_user_alias(%{user: user}) do
+    with_alias(user, "my-new-alias", "echo My New Alias")
+    :ok
+  end
+
+  # Site aliases don't require a user and so can be called with no args
+  defp with_site_alias(context \\ %{})
+  defp with_site_alias(_) do
+    site_alias("my-new-alias", "echo My New Alias")
+    :ok
+  end
 end
