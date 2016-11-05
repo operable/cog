@@ -129,8 +129,8 @@ defmodule Cog.Test.Commands.AliasTest do
       assert(get_alias("my-renamed-alias"))
     end
 
-    test "when an alias with that name already exists in site", %{user: user}=context do
-      with_site_alias(context)
+    test "when an alias with that name already exists in site", %{user: user}do
+      with_site_alias()
 
       {:error, error} = new_req(user: %{"id" => user.id}, args: ["move", "user:my-new-alias", "site"])
       |> send_req()
@@ -244,8 +244,8 @@ defmodule Cog.Test.Commands.AliasTest do
       assert(get_alias("my-renamed-alias", user.id))
     end
 
-    test "renaming an alias in the site visibility", %{user: user}=context do
-      with_site_alias(context)
+    test "renaming an alias in the site visibility", %{user: user} do
+      with_site_alias()
 
       {:ok, response} = new_req(user: %{"id" => user.id}, args: ["move", "my-new-alias", "my-renamed-alias"])
       |> send_req()
@@ -265,9 +265,9 @@ defmodule Cog.Test.Commands.AliasTest do
   end
 
   describe "listing aliases" do
-    test "all", %{user: user}=context do
+    test "all", %{user: user} do
       Enum.each(1..3, &with_alias(user, "my-new-alias#{&1}", "echo My New Alias"))
-      with_site_alias(context)
+      with_site_alias()
 
       {:ok, response} = new_req(user: %{"id" => user.id}, args: ["list"])
       |> send_req()
@@ -286,10 +286,10 @@ defmodule Cog.Test.Commands.AliasTest do
                 name: "my-new-alias3"}] == response)
     end
 
-    test "matching a pattern", %{user: user}=context do
+    test "matching a pattern", %{user: user} do
       Enum.each(1..2, &with_alias(user, "my-new-alias#{&1}", "echo My New Alias"))
       Enum.each(1..2, &with_alias(user, "new-alias#{&1}", "echo My New Alias"))
-      with_site_alias(context)
+      with_site_alias()
 
       {:ok, response} = new_req(user: %{"id" => user.id}, args: ["list", "my-*"])
       |> send_req()
@@ -316,8 +316,8 @@ defmodule Cog.Test.Commands.AliasTest do
                 name: "my-new-alias"}] == response)
     end
 
-    test "with no matching pattern", %{user: user}=context do
-      with_site_alias(context)
+    test "with no matching pattern", %{user: user} do
+      with_site_alias()
       {:ok, response} = new_req(user: %{"id" => user.id}, args: ["list", "their-*"])
       |> send_req()
 
@@ -379,14 +379,19 @@ defmodule Cog.Test.Commands.AliasTest do
 
   ### Context Functions ###
 
+  defp with_user(),
+    do: user("alias_test_user")
   defp with_user(_),
-    do: [user: user("alias_test_user")]
+    do: [user: with_user()]
 
-  defp with_user_alias(context) do
-    with_alias(context[:user], "my-new-alias", "echo My New Alias")
+  # User aliases requires a user, so it must be called with context
+  defp with_user_alias(%{user: user}) do
+    with_alias(user, "my-new-alias", "echo My New Alias")
     :ok
   end
 
+  # Site aliases don't require a user and so can be called with no args
+  defp with_site_alias(context \\ %{})
   defp with_site_alias(_) do
     site_alias("my-new-alias", "echo My New Alias")
     :ok
