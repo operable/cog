@@ -48,6 +48,7 @@ defmodule Cog.Support.ModelUtilities do
   alias Cog.Models.Command
   alias Cog.Models.CommandVersion
   alias Cog.Models.Group
+  alias Cog.Repository.Groups
   alias Cog.Models.Permission
   alias Cog.Models.Relay
   alias Cog.Models.RelayGroup
@@ -187,6 +188,16 @@ defmodule Cog.Support.ModelUtilities do
   """
   def group(name) do
     %Group{} |> Group.changeset(%{name: name}) |> Repo.insert!
+  end
+
+  @doc """
+  Adds a user or a role to a group based
+  """
+  def add_to_group(group, user_or_role) do
+    {:ok, group} = Groups.manage_membership(group,
+                                            %{"members" =>
+                                              %{"add" => [user_or_role]}})
+    group
   end
 
   @doc """
