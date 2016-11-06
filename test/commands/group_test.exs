@@ -1,176 +1,245 @@
 defmodule Cog.Test.Commands.GroupTest do
-  use Cog.AdapterCase, adapter: "test"
+  use Cog.CommandCase, command_module: Cog.Commands.Group
 
-  @moduletag :skip
+  import Cog.Support.ModelUtilities, only: [user: 1,
+                                            group: 1,
+                                            role: 1,
+                                            add_to_group: 2]
+  describe "group subcommands" do
 
-  alias Cog.Models.Group
-  alias Cog.Repository.Groups
+    test "can't pass an unknown subcommand" do
+      {:error, error} =
+        new_req(args: ["not-a-subcommand"])
+        |> send_req()
 
-  setup do
-    user = user("belf", first_name: "Buddy", last_name: "Elf")
-    |> with_chat_handle_for("test")
-    |> with_permission("operable:manage_users")
-    |> with_permission("operable:manage_groups")
+      assert(error == "Unknown subcommand 'not-a-subcommand'")
+    end
 
-    {:ok, %{user: user}}
   end
 
-  test "adding and removing users to groups", %{user: user} do
-    response = send_message(user, "@bot: operable:group member add elves #{user.username}")
-    assert_error_message_contains(response, "Could not find 'user group' with the name 'elves'")
+  describe "group CRUD" do
 
-    [response] = send_message(user, "@bot: operable:group create elves")
-    assert response.name == "elves"
+    test "can be created" do
+      {:ok, response} =
+        new_req(args: ["create", "created_group"])
+        |> send_req()
 
-    response = send_message(user, "@bot: operable:group member add elves papa_elf")
-    assert_error_message_contains(response, "Could not find 'user' with the name 'papa_elf'")
+      assert(%{name: "created_group"} = response)
+    end
 
-    [response] = send_message(user, "@bot: operable:group member add elves")
-    assert response.error == "Missing required args. At a minimum you must include the user group and at least one user name to add"
+    test "can be deleted" do
+      group("deleted_group")
 
-    [response] = send_message(user, "@bot: operable:group member add elves belf")
-    member = hd(response.members)
-    assert member.username == "belf"
+      {:ok, response} =
+        new_req(args: ["delete", "deleted_group"])
+        |> send_req()
 
-    [response] = send_message(user, "@bot: operable:group member remove elves belf")
-    assert length(response.members) == 0
+      assert(%{name: "deleted_group"} = response)
+    end
+
+    test "can be renamed" do
+      group("renamed_group")
+
+      {:ok, response} =
+        new_req(args: ["rename", "renamed_group", "has_been_renamed"])
+        |> send_req()
+
+      assert(%{name: "has_been_renamed"} = response)
+    end
+
+    test "can get info" do
+      group("info_group")
+
+      {:ok, response} =
+        new_req(args: ["info", "info_group"])
+        |> send_req()
+
+      assert(%{name: "info_group"} = response)
+    end
+
+    test "can be listed" do
+      Enum.each(1..3, &group("group#{&1}"))
+
+      {:ok, response} =
+        new_req(args: ["list"])
+        |> send_req()
+
+      response = Enum.sort_by(response, &(&1.name))
+
+      assert([%{name: "group1"},
+              %{name: "group2"},
+              %{name: "group3"}] = response)
+    end
+
+    test "can't create a group with a duplicate name" do
+      group("duplicate_group")
+
+      {:error, error} =
+        new_req(args: ["create", "duplicate_group"])
+        |> send_req()
+
+      assert(error == "name: has already been taken")
+    end
+
+    test "can't rename a group with another groups name" do
+      group("group_to_rename")
+      group("already_named")
+
+      {:error, error} =
+        new_req(args: ["rename", "group_to_rename", "already_named"])
+        |> send_req()
+
+      assert(error == "name has already been taken")
+    end
+
+    test "can't rename a group that doesn't exist" do
+      {:error, error} =
+        new_req(args: ["rename", "not-here", "monkeys"])
+        |> send_req()
+
+      assert(error == "Could not find 'group' with the name 'not-here'")
+    end
+
+    test "can't rename without the proper args" do
+      group("not_enough_args")
+
+      {:error, error} =
+        new_req(args: ["rename", "not_enough_args"])
+        |> send_req()
+
+      assert(error == "Not enough args. Arguments required: exactly 2.")
+
+      {:error, error} =
+        new_req(args: ["rename"])
+        |> send_req()
+
+      assert(error == "Not enough args. Arguments required: exactly 2.")
+    end
+
+    test "can't name a group with a number" do
+      group("number_group")
+
+      {:error, error} =
+        new_req(args: ["rename", "number_group", 123])
+        |> send_req()
+
+      assert(error == "Arguments must be strings")
+    end
+
   end
 
-  test "adding and removing roles to groups", %{user: user} do
-    group("cheer")
-    role("admin")
+  describe "users" do
+    setup [:with_user, :with_group]
 
-    [response] = send_message(user, "@bot: operable:group role add cheer admin")
-    assert response.name == "cheer"
+    test "can be added to a group", %{user: user, group: group} do
+      {:ok, response} =
+        new_req(args: ["member", "add", group.name, user.username])
+        |> send_req()
 
-    [response] = send_message(user, "@bot: operable:group info cheer")
-    assert hd(response.roles).name == "admin"
+      assert(is_group_user?(response, user.username))
+    end
 
-    [response] = send_message(user, "@bot: operable:group role remove cheer admin")
-    assert response.name == "cheer"
+    test "can be removed from a group", %{user: user, group: group} do
+      # Add the user to the group
+      group = add_to_group(group, user)
 
-    [response] = send_message(user, "@bot: operable:group info cheer")
-    assert length(response.roles) == 0
+      # Make sure that it's there
+      assert(is_group_user?(group, user.username))
+
+      # Then remove it via the group command
+      {:ok, response} =
+        new_req(args: ["member", "remove", group.name, user.username])
+        |> send_req()
+
+      refute(is_group_user?(response, user.username))
+    end
+
+    test "can not add an unknown user to a group", %{group: group} do
+      {:error, error} =
+        new_req(args: ["member", "add", group.name, "bob"])
+        |> send_req()
+
+      assert(error == "Could not find 'user' with the name 'bob'")
+    end
+
+    test "can not add to an unknown group", %{user: user} do
+      {:error, error} =
+        new_req(args: ["member", "add", "bad_group", user.username])
+        |> send_req()
+
+      assert(error == "Could not find 'user group' with the name 'bad_group'")
+    end
+
+    test "must supply the proper number of args", %{group: group} do
+      # TODO: This should probably return an error instead of a map with an
+      # error key. Probably something left over from the early templating days.
+      {:ok, response} =
+        new_req(args: ["member", "add", group.name])
+        |> send_req()
+
+      assert(response.error == "Missing required args. At a minimum you must include the user group and at least one user name to add")
+    end
+
   end
 
-  test "getting group info", %{user: user} do
-    group("cheer")
+  describe "roles" do
 
-    [response] = send_message(user, "@bot: operable:group info cheer")
-    assert response.name == "cheer"
+    setup [:with_role, :with_group]
+
+    test "can be added to a group", %{role: role, group: group} do
+      {:ok, response} =
+        new_req(args: ["role", "add", group.name, role.name])
+        |> send_req()
+
+      assert(is_group_role?(response, role.name))
+    end
+
+    test "can be removed from a group", %{role: role, group: group} do
+      # Add the role to the group
+      group = add_to_group(group, role)
+
+      # Make sure that it's there
+      assert(is_group_role?(group, role.name))
+
+      # Then remove it via the group command
+      {:ok, response} =
+        new_req(args: ["role", "remove", group.name, role.name])
+        |> send_req()
+
+      refute(is_group_role?(response, role.name))
+    end
+
   end
 
-  test "creating a group", %{user: user} do
-    [response] = send_message(user, "@bot: operable:group create test")
-    assert response.name == "test"
+  #### Setup Functions ####
 
-    response = send_message(user, "@bot: operable:group create test")
-    assert_error_message_contains(response, "name: has already been taken")
+  defp with_user(_),
+    do: [user: user("belf")]
+
+  defp with_group(_),
+    do: [group: group("elves")]
+
+  defp with_role(_),
+    do: [role: role("grand_elves")]
+
+  #### Helper Functions ####
+
+  defp is_group_user?(%Cog.Models.Group{}=group, username) do
+    Enum.map(group.user_membership, &(&1.member.username))
+    |> Enum.member?(username)
+  end
+  defp is_group_user?(%{members: members}, username) do
+    Enum.map(members, &(&1.username))
+    |> Enum.member?(username)
   end
 
-  test "errors using the group command", %{user: user} do
-    [response] = send_message(user, "@bot: operable:group create")
-    assert response.error == "Missing required argument: group_name"
-
-    [response] = send_message(user, "@bot: operable:group member add belf")
-    assert response.error == "Missing required args. At a minimum you must include the user group and at least one user name to add"
+  defp is_group_role?(%Cog.Models.Group{}=group, rolename) do
+    Enum.map(group.roles, &(&1.name))
+    |> Enum.member?(rolename)
   end
-
-  test "deleting a group", %{user: user} do
-    cheer = group("cheer")
-
-    [response] = send_message(user, "@bot: operable:group member add cheer belf")
-    assert response.id == cheer.id
-    assert response.name == cheer.name
-    member = hd(response.members)
-    assert member.email_address == user.email_address
-    assert member.first_name == user.first_name
-    assert member.last_name == user.last_name
-
-    [response] = send_message(user, "@bot: operable:group delete cheer")
-    assert response.name == "cheer"
-
-    response = send_message(user, "@bot: operable:group member remove cheer belf")
-    assert_error_message_contains(response, "Could not find 'user group' with the name 'cheer'")
-  end
-
-  test "listing group", %{user: user} do
-    group("elves")
-    cheer = group("cheer")
-
-    [response] = send_message(user, "@bot: operable:group member add cheer belf")
-    assert response.id == cheer.id
-    assert response.name == cheer.name
-    member = hd(response.members)
-    assert member.email_address == user.email_address
-    assert member.first_name == user.first_name
-    assert member.last_name == user.last_name
-
-    response = send_message(user, "@bot: operable:group list")
-    group_names = Enum.map(response, &(&1.name)) |> Enum.sort
-    assert group_names == ["cheer", "cog-admin", "elves"]
-
-    [response] = send_message(user, "@bot: operable:group delete cheer")
-    assert response.name == "cheer"
-
-    response = send_message(user, "@bot: operable:group list")
-    group_names = Enum.map(response, &(&1.name)) |> Enum.sort
-    assert group_names == ["cog-admin", "elves"]
-
-    response = send_message(user, "@bot: operable:group")
-    group_names = Enum.map(response, &(&1.name)) |> Enum.sort
-    assert group_names == ["cog-admin", "elves"]
-  end
-
-  test "renaming a group works", %{user: user} do
-    %Group{id: id} = group("foo")
-
-    [payload] = send_message(user, "@bot: operable:group rename foo bar")
-    assert %{id: ^id,
-             name: "bar",
-             old_name: "foo"} = payload
-
-    assert {:error, :not_found} = Groups.by_name("foo")
-    assert {:ok, %Group{id: ^id}} = Groups.by_name("bar")
-  end
-
-  test "the cog-admin group cannot be renamed", %{user: user} do
-    response = send_message(user, "@bot: operable:group rename cog-admin monkeys")
-    assert_error_message_contains(response , "Cannot alter protected group cog-admin")
-  end
-
-  test "renaming a non-existent group fails", %{user: user} do
-    response = send_message(user, "@bot: operable:group rename not-here monkeys")
-    assert_error_message_contains(response , "Could not find 'group' with the name 'not-here'")
-  end
-
-  test "renaming to an already-existing group fails", %{user: user} do
-    group("foo")
-    group("bar")
-
-    response = send_message(user, "@bot: operable:group rename foo bar")
-    assert_error_message_contains(response , "name has already been taken")
-  end
-
-  test "renaming requires a new name", %{user: user} do
-    group("foo")
-    response = send_message(user, "@bot: operable:group rename foo")
-    assert_error_message_contains(response , "Not enough args. Arguments required: exactly 2.")
-  end
-
-  test "rename requires a group and a name", %{user: user} do
-    response = send_message(user, "@bot: operable:group rename")
-    assert_error_message_contains(response , "Not enough args. Arguments required: exactly 2.")
-  end
-
-  test "renaming requires string arguments", %{user: user} do
-    response = send_message(user, "@bot: operable:group rename 123 456")
-    assert_error_message_contains(response , "Arguments must be strings")
-  end
-
-  test "passing an unknown subcommand fails", %{user: user} do
-    response = send_message(user, "@bot: operable:group not-a-subcommand")
-    assert_error_message_contains(response, "Unknown subcommand 'not-a-subcommand'")
+  defp is_group_role?(%{roles: roles}, rolename) do
+    Enum.map(roles, &(&1.name))
+    |> Enum.member?(rolename)
   end
 
 end
