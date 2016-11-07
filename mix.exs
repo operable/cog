@@ -5,7 +5,7 @@ defmodule Cog.Mixfile do
 
   def project do
     [app: :cog,
-     version: "0.16.0",
+     version: "0.16.1",
      elixir: "~> 1.3.1",
      erlc_paths: ["emqttd_plugins"],
      erlc_options: [:debug_info, :warnings_as_errors],
@@ -63,9 +63,9 @@ defmodule Cog.Mixfile do
       {:adz, github: "operable/adz", tag: "0.16.0"},
       {:conduit, github: "operable/conduit", tag: "0.16.0"},
       {:fumanchu, github: "operable/fumanchu"},
-      {:greenbar, github: "operable/greenbar", tag: "0.16.0"},
+      {:greenbar, github: "operable/greenbar", tag: "0.16.1"},
       {:probe, github: "operable/probe", tag: "0.16.0"},
-      {:spanner, github: "operable/spanner", tag: "0.16.0"},
+      {:spanner, github: "operable/spanner", tag: "0.16.1"},
 
       # MQTT-related
       ########################################################################
