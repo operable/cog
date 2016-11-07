@@ -1,5 +1,15 @@
 #  Changelog
 
+## 0.16.1
+
+### Bug Fixes
+
+- Command parser mangles Unicode inputs [#1133](https://github.com/operable/cog/issues/1133)
+- String interpolation breaks variable references in aliases [#1135](https://github.com/operable/cog/issues/1135)
+- Relay can't log to a file [#1123](https://github.com/operable/cog/issues/1123)
+- Ensure `SetAvailable` is run for all engine types [PR](https://github.com/operable/go-relay/pull/47) (Thanks @ctrochalakis!)
+- Removed references to `cog-relay` in Relay's `README.md` [PR](https://github.com/operable/cog-relay/pull/45) (Thanks @0xdiba!)
+
 ## 0.16.0
 
 ### Enhancements
