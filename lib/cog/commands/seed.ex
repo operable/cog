@@ -1,4 +1,4 @@
-defmodule Cog.Command.Seed do
+defmodule Cog.Commands.Seed do
   use Cog.Command.GenCommand.Base, bundle: Cog.Util.Misc.embedded_bundle
 
   alias Cog.Messages.Command
