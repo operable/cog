@@ -116,7 +116,8 @@ defmodule Cog.Mixfile do
       {:ex_doc, "~> 0.13", only: :dev},
       {:excoveralls, "~> 0.5", only: :test},
       {:mix_test_watch, "~> 0.2", only: [:dev, :test]},
-      {:phoenix_live_reload, "~> 1.0", only: :dev}
+      {:phoenix_live_reload, "~> 1.0", only: :dev},
+      {:meck, "~> 0.8.4", only: [:dev, :test]}
     ]
   end
 

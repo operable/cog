@@ -1,71 +1,95 @@
 defmodule Cog.Test.Commands.BundleTest do
-  use Cog.AdapterCase, adapter: "test"
-
-  @moduletag :skip
+  use Cog.CommandCase, command_module: Cog.Commands.Bundle
 
   alias Cog.Repository.Bundles
-  alias Cog.Support.ModelUtilities
+  import Cog.Support.ModelUtilities, only: [bundle_version: 1,
+                                            bundle_version: 2]
 
-  setup do
-    user = user("vanstee", first_name: "Patrick", last_name: "Van Stee")
-    |> with_chat_handle_for("test")
-    |> with_permission("operable:manage_commands")
+  test "listing bundles" do
+    bundle_version("test_bundle")
 
-    bundle_version = ModelUtilities.bundle_version("test_bundle")
+    {:ok, response} = new_req(args: ["list"])
+    |> send_req()
 
-    {:ok, %{user: user, bundle_version: bundle_version}}
+    bundles = Enum.map(response, &Map.take(&1, [:name]))
+    |> Enum.sort
+
+    assert([%{name: "operable"},
+            %{name: "test_bundle"}] == bundles)
   end
 
-  test "listing bundles", %{user: user} do
-    payload = user
-    |> send_message("@bot: operable:bundle list")
-    |> Enum.sort_by(fn(b) -> b[:name] end)
-
-    assert [%{name: "operable"},
-            %{name: "test_bundle"}] = payload
-  end
-
-  test "information about a single bundle", %{user: user} do
-    [payload] = user
-    |> send_message("@bot: operable:bundle info operable")
+  test "information about a single bundle" do
+    {:ok, response} = new_req(args: ["info", "operable"])
+    |> send_req()
 
     version = Application.fetch_env!(:cog, :embedded_bundle_version)
 
-    assert %{name: "operable",
-             enabled_version: %{version: ^version}} = payload
+    assert(%{name: "operable",
+             enabled_version: %{version: ^version}} = response)
   end
 
-  test "list versions for a bundle", %{user: user} do
-    payload = user
-    |> send_message("@bot: operable:bundle versions operable")
+  test "list versions for a bundle" do
+    {:ok, response} = new_req(args: ["versions", "operable"])
+    |> send_req()
 
     version = Application.fetch_env!(:cog, :embedded_bundle_version)
 
-    assert [%{name: "operable",
-              version: ^version}] = payload
+    assert([%{name: "operable",
+              version: ^version}] = response)
   end
 
-  test "enable a bundle", %{user: user, bundle_version: bundle_version} do
-    response = send_message(user, "@bot: bundle enable test_bundle")
-    assert response == [%{name: "test_bundle", status: "enabled", version: "0.1.0"}]
-    assert Bundles.enabled?(bundle_version)
+  test "enable a bundle" do
+    bundle_version = bundle_version("test_bundle")
+
+    {:ok, response} = new_req(args: ["enable", "test_bundle"])
+    |> send_req()
+
+    assert(response == %{name: "test_bundle", status: "enabled", version: "0.1.0"})
+    assert(Bundles.enabled?(bundle_version))
   end
 
-  test "disable a bundle", %{user: user, bundle_version: bundle_version} do
+  test "disable a bundle" do
+    bundle_version = bundle_version("test_bundle")
     Bundles.set_bundle_version_status(bundle_version, :enabled)
 
-    response = send_message(user, "@bot: bundle disable test_bundle")
-    assert response == [%{name: "test_bundle", status: "disabled", version: "0.1.0"}]
-    refute Bundles.enabled?(bundle_version)
+    {:ok, response} = new_req(args: ["disable", "test_bundle"])
+    |> send_req()
+
+    assert(response == %{name: "test_bundle", status: "disabled", version: "0.1.0"})
+    refute(Bundles.enabled?(bundle_version))
   end
 
-  test "passing an unknown subcommand fails", %{user: user} do
-    response = send_message(user, "@bot: operable:bundle not-a-subcommand")
-    assert_error_message_contains(response, "Unknown subcommand 'not-a-subcommand'")
+  test "passing an unknown subcommand fails" do
+    {:error, error} = new_req(args: ["not-a-subcommand"])
+    |> send_req()
+
+    assert(error == "Unknown subcommand 'not-a-subcommand'")
   end
 
-  test "installing a bundle", %{user: user} do
-    [payload] = send_message(user, "@bot: operable:bundle install heroku 0.0.4")
-    assert %{name: "heroku", versions: [%{version: "0.0.4"}]} = payload
+  test "installing a bundle via the registry" do
+    bundle = "heroku"
+    version = "0.0.4"
+    bundle_version = bundle_version(bundle, version: version)
+
+    # We're mocking the install_from_registry function here because it makes a
+    # call to the warehouse api. We aren't testing whether or not installing
+    # bundles from warehouse works, we just care that the command is making
+    # the right function calls. We also only want to mock this specific call,
+    # so unless the bundle and version match, we just do a passthrough.
+    :meck.new(Bundles, [:passthrough])
+    :meck.expect(Bundles, :install_from_registry, fn
+                 (^bundle, ^version) ->
+                   {:ok, bundle_version}
+                 (bundle, version) ->
+                   :meck.passthrough([bundle, version])
+    end)
+
+    Bundles.bundles()
+
+    {:ok, response} = new_req(args: ["install", bundle, version])
+    |> send_req()
+
+    assert(%{name: ^bundle, versions: [%{version: ^version}]} = response)
+    assert(:meck.validate(Bundles))
   end
 end
