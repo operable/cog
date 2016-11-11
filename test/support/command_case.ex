@@ -92,4 +92,21 @@ defmodule Cog.CommandCase do
   def services_root,
     do: Cog.ServiceEndpoint.public_url()
 
+
+  #### Utility Functions ####
+
+  # unwraps :ok tuples, returning just their value
+  # If a tuple without an :ok atom is passed, raises an error.
+  def unwrap({:ok, value}),
+    do: value
+  def unwrap(value),
+    do: raise "Expected {:ok, value}, but received #{inspect(value)} instead."
+
+  # unwraps :error tuples, returning just the error
+  # If a tuple without an :error atom is passed, raises an error.
+  def unwrap_error({:error, error}),
+    do: error
+  def unwrap_error(value),
+    do: raise "Expected {:error, error}, but received #{inspect(value)} instead."
+
 end
