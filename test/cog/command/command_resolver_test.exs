@@ -5,7 +5,6 @@ defmodule Cog.Command.CommandResolver.Test do
   alias Cog.Command.Pipeline.ParserMeta
   alias Cog.Models.UserCommandAlias
   alias Cog.Models.SiteCommandAlias
-  alias Cog.Repo
 
   test "an already-namespaced command is resolved as itself" do
     user = user("testuser")
@@ -220,24 +219,6 @@ defmodule Cog.Command.CommandResolver.Test do
 
   defp enabled_bundles do
     Cog.Repository.Bundles.enabled_bundles
-  end
-
-  # Returns user for use in pipelines
-  defp with_alias(user, name, pipeline_text) do
-    %UserCommandAlias{}
-    |> UserCommandAlias.changeset(%{name: name,
-                                    pipeline: pipeline_text,
-                                    user_id: user.id})
-    |> Repo.insert!
-
-    user
-  end
-
-  defp site_alias(name, pipeline_text) do
-    %SiteCommandAlias{}
-    |> SiteCommandAlias.changeset(%{name: name,
-                                    pipeline: pipeline_text})
-    |> Repo.insert!
   end
 
   defp assert_command(bundle, name, actual) do

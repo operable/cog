@@ -1,371 +1,399 @@
 defmodule Cog.Test.Commands.AliasTest do
-  use Cog.AdapterCase, adapter: "test"
+  use Cog.CommandCase, command_module: Cog.Commands.Alias
 
-  @moduletag :skip
+  import Cog.Support.ModelUtilities, only: [site_alias: 2,
+                                            with_alias: 3,
+                                            get_alias: 1,
+                                            get_alias: 2,
+                                            user: 1]
 
-  alias Cog.Models.UserCommandAlias
-  alias Cog.Models.SiteCommandAlias
-  alias Cog.Repo
+  setup :with_user
 
-  setup do
-    user = user("vanstee", first_name: "Patrick", last_name: "Van Stee")
-    |> with_chat_handle_for("test")
+  describe "alias creation" do
+    test "with standard args", %{user: user} do
+      {:ok, response} = new_req(user: %{"id" => user.id}, args: ["create", "my-new-alias", "echo My New Alias"])
+      |> send_req()
 
-    {:ok, %{user: user}}
+      assert(%{name: "my-new-alias",
+               pipeline: "echo My New Alias",
+               visibility: "user"} = response)
+
+      created_alias = get_alias("my-new-alias", user.id)
+
+      assert(%{name: "my-new-alias",
+               pipeline: "echo My New Alias",
+               visibility: "user"} = created_alias)
+    end
+
+    test "with an existing name", %{user: user}=context do
+      with_user_alias(context)
+
+      {:error, error} = new_req(user: %{"id" => user.id}, args: ["create", "my-new-alias", "echo My New Alias"])
+      |> send_req()
+
+      assert(error == "name: The alias name is already in use.")
+    end
   end
 
-  test "creating a new alias", %{user: user} do
-    response = send_message(user, "@bot: operable:alias create my-new-alias \"echo My New Alias\"")
+  describe "alias removal" do
+    setup :with_user_alias
 
-    assert response, [%{name: "my-new-alias",
-                        pipeline: "echo My New Alias",
-                        visibility: "user"}]
+    test "removing an alias", %{user: user} do
+      {:ok, response} = new_req(user: %{"id" => user.id}, args: ["delete", "my-new-alias"])
+      |> send_req()
 
-    created_alias = Repo.get_by(UserCommandAlias, name: "my-new-alias", user_id: user.id)
+      assert(%{name: "my-new-alias",
+               pipeline: "echo My New Alias",
+               visibility: "user"} = response)
 
-    assert %{
-      name: "my-new-alias",
-      pipeline: "echo My New Alias",
-      visibility: "user"
-    } = created_alias
+      deleted_alias = get_alias("my-new-alias", user.id)
+
+      refute deleted_alias
+    end
+
+    test "removing an alias that does not exist", %{user: user} do
+      {:error, error} = new_req(user: %{"id" => user.id}, args: ["delete", "my-non-existant-alias"])
+      |> send_req()
+
+      assert(error == "I can't find 'my-non-existant-alias'. Please try again")
+    end
   end
 
-  test "creating a new alias with an existing name", %{user: user} do
-    send_message(user, "@bot: operable:alias create my-new-alias \"echo My New Alias\"")
+  describe "moving an alias to site" do
+    setup :with_user_alias
 
-    response = send_message(user, "@bot: operable:alias create my-new-alias \"echo My New Alias\"")
+    test "using full visibility syntax", %{user: user} do
+      {:ok, response} = new_req(user: %{"id" => user.id}, args: ["move", "user:my-new-alias", "site"])
+      |> send_req()
 
-    assert_error_message_contains(response, "name: The alias name is already in use.")
+      assert(%{source: %{
+                   name: "my-new-alias",
+                   pipeline: "echo My New Alias",
+                   visibility: "user"},
+                destination: %{
+                  name: "my-new-alias",
+                  pipeline: "echo My New Alias",
+                  visibility: "site"}} = response)
+
+      command_alias = get_alias("my-new-alias")
+
+      assert(command_alias.name == "my-new-alias")
+    end
+
+    test "using full visibility syntax and rename", %{user: user} do
+      {:ok, response} = new_req(user: %{"id" => user.id}, args: ["move", "user:my-new-alias", "site:my-renamed-alias"])
+      |> send_req()
+
+      assert(%{source: %{
+                  name: "my-new-alias",
+                  pipeline: "echo My New Alias",
+                  visibility: "user"},
+               destination: %{
+                 name: "my-renamed-alias",
+                 pipeline: "echo My New Alias",
+                 visibility: "site"
+               }} = response)
+
+      assert(get_alias("my-renamed-alias"))
+    end
+
+    test "with short syntax", %{user: user} do
+      {:ok, response} = new_req(user: %{"id" => user.id}, args: ["move", "my-new-alias", "site"])
+      |> send_req()
+
+      assert(%{source: %{
+                  name: "my-new-alias",
+                  pipeline: "echo My New Alias",
+                  visibility: "user"},
+               destination: %{
+                 name: "my-new-alias",
+                 pipeline: "echo My New Alias",
+                 visibility: "site"}} = response)
+
+      assert(get_alias("my-new-alias"))
+    end
+
+    test "with short syntax and rename", %{user: user} do
+      {:ok, response} = new_req(user: %{"id" => user.id}, args: ["move", "my-new-alias", "site:my-renamed-alias"])
+      |> send_req()
+
+      assert(%{source: %{
+                  name: "my-new-alias",
+                  pipeline: "echo My New Alias",
+                  visibility: "user"},
+               destination: %{
+                 name: "my-renamed-alias",
+                 pipeline: "echo My New Alias",
+                 visibility: "site"}} = response)
+
+      assert(get_alias("my-renamed-alias"))
+    end
+
+    test "when an alias with that name already exists in site", %{user: user}do
+      with_site_alias()
+
+      {:error, error} = new_req(user: %{"id" => user.id}, args: ["move", "user:my-new-alias", "site"])
+      |> send_req()
+
+      assert(error == "name: The alias name is already in use.")
+    end
+
   end
 
-  test "removing an alias", %{user: user} do
-    send_message(user, "@bot: operable:alias create my-new-alias \"echo My New Alias\"")
+  describe "moving an alias to user" do
+    setup :with_site_alias
 
-    response = send_message(user, "@bot: operable:alias delete my-new-alias")
+    test "with full visibility syntax", %{user: user}  do
+      {:ok, response} = new_req(user: %{"id" => user.id}, args: ["move", "site:my-new-alias", "user"])
+      |> send_req()
 
-    assert response == [%{name: "my-new-alias",
-                          pipeline: "echo My New Alias",
-                          visibility: "user"}]
+      assert(%{source: %{
+                  name: "my-new-alias",
+                  pipeline: "echo My New Alias",
+                  visibility: "site"},
+               destination: %{
+                 name: "my-new-alias",
+                 pipeline: "echo My New Alias",
+                 visibility: "user"}} = response)
 
-    deleted_alias = Repo.get_by(UserCommandAlias, name: "my-new-alias", user_id: user.id)
+      # Alias is not in the site namespace
+      refute(get_alias("my-new-alias"))
+      # Alias is in the user namespace
+      assert(get_alias("my-new-alias", user.id))
+    end
 
-    refute deleted_alias
+    test "with full visibility syntax and rename", %{user: user} do
+      {:ok, response} = new_req(user: %{"id" => user.id}, args: ["move", "site:my-new-alias", "user:my-renamed-alias"])
+      |> send_req()
+
+      assert(%{source: %{
+                  name: "my-new-alias",
+                  pipeline: "echo My New Alias",
+                  visibility: "site"},
+               destination: %{
+                 name: "my-renamed-alias",
+                 pipeline: "echo My New Alias",
+                 visibility: "user"}} = response)
+
+      refute(get_alias("my-new-alias"))
+      assert(get_alias("my-renamed-alias", user.id))
+    end
+
+    test "with short syntax", %{user: user} do
+      {:ok, response} = new_req(user: %{"id" => user.id}, args: ["move", "my-new-alias", "user"])
+      |> send_req()
+
+      assert(%{source: %{
+                  name: "my-new-alias",
+                  pipeline: "echo My New Alias",
+                  visibility: "site"},
+               destination: %{
+                 name: "my-new-alias",
+                 pipeline: "echo My New Alias",
+                 visibility: "user"}} = response)
+
+      refute(get_alias("my-new-alias"))
+      assert(get_alias("my-new-alias", user.id))
+    end
+
+    test "with short syntax and rename", %{user: user} do
+      {:ok, response} = new_req(user: %{"id" => user.id}, args: ["move", "my-new-alias", "user:my-renamed-alias"])
+      |> send_req()
+
+      assert(%{source: %{
+                  name: "my-new-alias",
+                  pipeline: "echo My New Alias",
+                  visibility: "site"},
+               destination: %{
+                 name: "my-renamed-alias",
+                 pipeline: "echo My New Alias",
+                 visibility: "user"}} = response)
+
+      refute(get_alias("my-renamed-alias"))
+      assert(get_alias("my-renamed-alias", user.id))
+    end
+
+    test "when an alias with that name already exists in user", %{user: user}=context do
+      with_user_alias(context)
+
+      {:error, error} = new_req(user: %{"id" => user.id}, args: ["move", "site:my-new-alias", "user"])
+      |> send_req()
+
+      assert(error == "name: The alias name is already in use.")
+    end
+
   end
 
-  test "removing an alias that does not exist", %{user: user} do
-    response = send_message(user, "@bot: operable:alias delete my-new-alias")
+  describe "renaming an alias" do
+    test "renaming an alias in the user visibility", %{user: user}=context do
+      with_user_alias(context)
 
-    assert_error_message_contains(response, "I can't find 'my-new-alias'. Please try again")
+      {:ok, response} = new_req(user: %{"id" => user.id}, args: ["move", "my-new-alias", "my-renamed-alias"])
+      |> send_req()
+
+      assert(%{source: %{
+                  name: "my-new-alias",
+                  pipeline: "echo My New Alias",
+                  visibility: "user"},
+               destination: %{
+                 name: "my-renamed-alias",
+                 pipeline: "echo My New Alias",
+                 visibility: "user"}} = response)
+
+      refute(get_alias("my-new-alias", user.id))
+      assert(get_alias("my-renamed-alias", user.id))
+    end
+
+    test "renaming an alias in the site visibility", %{user: user} do
+      with_site_alias()
+
+      {:ok, response} = new_req(user: %{"id" => user.id}, args: ["move", "my-new-alias", "my-renamed-alias"])
+      |> send_req()
+
+      assert(%{source: %{
+                  name: "my-new-alias",
+                  pipeline: "echo My New Alias",
+                  visibility: "site"},
+               destination: %{
+                 name: "my-renamed-alias",
+                 pipeline: "echo My New Alias",
+                 visibility: "site"}} = response)
+
+      refute(get_alias("my-new-alias"))
+      assert(get_alias("my-renamed-alias"))
+    end
   end
 
-  test "moving an alias to site using full visibility syntax", %{user: user} do
-    send_message(user, "@bot: operable:alias create my-new-alias \"echo My New Alias\"")
+  describe "listing aliases" do
+    test "all", %{user: user} do
+      Enum.each(1..3, &with_alias(user, "my-new-alias#{&1}", "echo My New Alias"))
+      with_site_alias()
 
-    response = send_message(user, "@bot: operable:alias move user:my-new-alias site")
+      {:ok, response} = new_req(user: %{"id" => user.id}, args: ["list"])
+      |> send_req()
 
-    assert response == [%{source: %{
-                             name: "my-new-alias",
-                             pipeline: "echo My New Alias",
-                             visibility: "user"},
-                          destination: %{
-                            name: "my-new-alias",
-                            pipeline: "echo My New Alias",
-                            visibility: "site"}}]
+      assert([%{visibility: "site",
+                pipeline: "echo My New Alias",
+                name: "my-new-alias"},
+              %{visibility: "user",
+                pipeline: "echo My New Alias",
+                name: "my-new-alias1"},
+              %{visibility: "user",
+                pipeline: "echo My New Alias",
+                name: "my-new-alias2"},
+              %{visibility: "user",
+                pipeline: "echo My New Alias",
+                name: "my-new-alias3"}] == response)
+    end
 
-    command_alias = Repo.get_by(SiteCommandAlias, name: "my-new-alias")
+    test "matching a pattern", %{user: user} do
+      Enum.each(1..2, &with_alias(user, "my-new-alias#{&1}", "echo My New Alias"))
+      Enum.each(1..2, &with_alias(user, "new-alias#{&1}", "echo My New Alias"))
+      with_site_alias()
 
-    assert command_alias.name == "my-new-alias"
+      {:ok, response} = new_req(user: %{"id" => user.id}, args: ["list", "my-*"])
+      |> send_req()
+
+      assert([%{visibility: "site",
+                pipeline: "echo My New Alias",
+                name: "my-new-alias"},
+              %{visibility: "user",
+                pipeline: "echo My New Alias",
+                name: "my-new-alias1"},
+              %{visibility: "user",
+                pipeline: "echo My New Alias",
+                name: "my-new-alias2"}] == response)
+    end
+
+    test "is the default action", %{user: user}=context do
+      with_user_alias(context)
+
+      {:ok, response} = new_req(user: %{"id" => user.id})
+      |> send_req()
+
+      assert([%{visibility: "user",
+                pipeline: "echo My New Alias",
+                name: "my-new-alias"}] == response)
+    end
+
+    test "with no matching pattern", %{user: user} do
+      with_site_alias()
+      {:ok, response} = new_req(user: %{"id" => user.id}, args: ["list", "their-*"])
+      |> send_req()
+
+      assert([] == response)
+    end
+
+    test "with no aliases", %{user: user} do
+      {:ok, response} = new_req(user: %{"id" => user.id})
+      |> send_req()
+
+      assert([] == response)
+    end
+
+    test "with an invalid pattern", %{user: user} do
+      {:error, error} = new_req(user: %{"id" => user.id}, args: ["list", "% &my#-*"])
+      |> send_req()
+
+      assert(error == "Invalid alias name. Only emoji, letters, numbers, and the following special characters are allowed: *, -, _")
+    end
+
+    test "with too many wildcards", %{user: user} do
+      {:error, error} = new_req(user: %{"id" => user.id}, args: ["list", "*my-*"])
+      |> send_req()
+
+      assert(error == "Too many wildcards. You can only include one wildcard in a query")
+    end
+
+    test "with a bad pattern and too many wildcards", %{user: user} do
+      {:error, error} = new_req(user: %{"id" => user.id}, args: ["list", "*m++%y-*"])
+      |> send_req()
+
+      assert(error == "Too many wildcards. You can only include one wildcard in a query\nInvalid alias name. Only emoji, letters, numbers, and the following special characters are allowed: *, -, _")
+    end
   end
 
-  test "moving an alias to site using full visibility syntax and rename", %{user: user} do
-    send_message(user, "@bot: operable:alias create my-new-alias \"echo My New Alias\"")
+  describe "alias args" do
+    test "passing too many", %{user: user} do
+      {:error, error} = new_req(user: %{"id" => user.id}, args: ["create", "my-invalid-alias", "echo foo", "invalid-arg"])
+      |> send_req()
 
-    response = send_message(user, "@bot: operable:alias move user:my-new-alias site:my-renamed-alias")
+      assert(error == "Too many args. Arguments required: exactly 2.")
+    end
 
-    assert response == [%{source: %{
-                             name: "my-new-alias",
-                             pipeline: "echo My New Alias",
-                             visibility: "user"},
-                          destination: %{
-                            name: "my-renamed-alias",
-                            pipeline: "echo My New Alias",
-                            visibility: "site"
-                          }}]
+    test "passing too few", %{user: user} do
+      {:error, error} = new_req(user: %{"id" => user.id}, args: ["create", "my-invalid-alias"])
+      |> send_req()
 
-    command_alias = Repo.get_by(SiteCommandAlias, name: "my-renamed-alias")
+      assert(error == "Not enough args. Arguments required: exactly 2.")
+    end
 
-    assert command_alias.name == "my-renamed-alias"
+    test "passing an unknown subcommand", %{user: user} do
+      {:error, error} = new_req(user: %{"id" => user.id}, args: ["foo"])
+      |> send_req()
+
+      assert(error == "Unknown subcommand 'foo'")
+    end
   end
 
-  test "moving an alias to site with short syntax", %{user: user} do
-    send_message(user, "@bot: operable:alias create my-new-alias \"echo My New Alias\"")
 
-    response = send_message(user, "@bot: operable:alias move my-new-alias site")
+  ### Context Functions ###
 
-    assert response == [%{source: %{
-                             name: "my-new-alias",
-                             pipeline: "echo My New Alias",
-                             visibility: "user"},
-                          destination: %{
-                            name: "my-new-alias",
-                            pipeline: "echo My New Alias",
-                            visibility: "site"}}]
+  defp with_user(),
+    do: user("alias_test_user")
+  defp with_user(_),
+    do: [user: with_user()]
 
-    command_alias = Repo.get_by(SiteCommandAlias, name: "my-new-alias")
-
-    assert command_alias.name == "my-new-alias"
+  # User aliases requires a user, so it must be called with context
+  defp with_user_alias(%{user: user}) do
+    with_alias(user, "my-new-alias", "echo My New Alias")
+    :ok
   end
 
-  test "moving an alias to site with short syntax and rename", %{user: user} do
-    send_message(user, "@bot: operable:alias create my-new-alias \"echo My New Alias\"")
-
-    response = send_message(user, "@bot: operable:alias move my-new-alias site:my-renamed-alias")
-
-    assert response == [%{source: %{
-                             name: "my-new-alias",
-                             pipeline: "echo My New Alias",
-                             visibility: "user"},
-                          destination: %{
-                            name: "my-renamed-alias",
-                            pipeline: "echo My New Alias",
-                            visibility: "site"}}]
-
-    command_alias = Repo.get_by(SiteCommandAlias, name: "my-renamed-alias")
-
-    assert command_alias.name == "my-renamed-alias"
+  # Site aliases don't require a user and so can be called with no args
+  defp with_site_alias(context \\ %{})
+  defp with_site_alias(_) do
+    site_alias("my-new-alias", "echo My New Alias")
+    :ok
   end
-
-  test "moving an alias to user with full visibility syntax", %{user: user} do
-    send_message(user, "@bot: operable:alias create my-new-alias \"echo My New Alias\"")
-    send_message(user, "@bot: operable:alias move my-new-alias site")
-
-    response = send_message(user, "@bot: operable:alias move site:my-new-alias user")
-
-    assert response == [%{source: %{
-                             name: "my-new-alias",
-                             pipeline: "echo My New Alias",
-                             visibility: "site"},
-                          destination: %{
-                            name: "my-new-alias",
-                            pipeline: "echo My New Alias",
-                            visibility: "user"}}]
-
-    command_alias = Repo.get_by(UserCommandAlias, name: "my-new-alias")
-
-    assert command_alias.name == "my-new-alias"
-  end
-
-  test "moving an alias to user with full visibility syntax and rename", %{user: user} do
-    send_message(user, "@bot: operable:alias create my-new-alias \"echo My New Alias\"")
-    send_message(user, "@bot: operable:alias move my-new-alias site")
-
-    response = send_message(user, "@bot: operable:alias move site:my-new-alias user:my-renamed-alias")
-
-    assert response == [%{source: %{
-                             name: "my-new-alias",
-                             pipeline: "echo My New Alias",
-                             visibility: "site"},
-                          destination: %{
-                            name: "my-renamed-alias",
-                            pipeline: "echo My New Alias",
-                            visibility: "user"}}]
-
-    command_alias = Repo.get_by(UserCommandAlias, name: "my-renamed-alias")
-
-    assert command_alias.name == "my-renamed-alias"
-  end
-
-  test "moving an alias to user with short syntax", %{user: user} do
-    send_message(user, "@bot: operable:alias create my-new-alias \"echo My New Alias\"")
-    send_message(user, "@bot: operable:alias move my-new-alias site")
-
-    response = send_message(user, "@bot: operable:alias move my-new-alias user")
-
-    assert response == [%{source: %{
-                             name: "my-new-alias",
-                             pipeline: "echo My New Alias",
-                             visibility: "site"},
-                          destination: %{
-                            name: "my-new-alias",
-                            pipeline: "echo My New Alias",
-                            visibility: "user"}}]
-
-    command_alias = Repo.get_by(UserCommandAlias, name: "my-new-alias")
-
-    assert command_alias.name == "my-new-alias"
-  end
-
-  test "moving an alias to user with short syntax and rename", %{user: user} do
-    send_message(user, "@bot: operable:alias create my-new-alias \"echo My New Alias\"")
-    send_message(user, "@bot: operable:alias move my-new-alias site")
-
-    response = send_message(user, "@bot: operable:alias move my-new-alias user:my-renamed-alias")
-
-    assert response == [%{source: %{
-                             name: "my-new-alias",
-                             pipeline: "echo My New Alias",
-                             visibility: "site"},
-                          destination: %{
-                            name: "my-renamed-alias",
-                            pipeline: "echo My New Alias",
-                            visibility: "user"}}]
-
-    command_alias = Repo.get_by(UserCommandAlias, name: "my-renamed-alias")
-
-    assert command_alias.name == "my-renamed-alias"
-  end
-
-  test "renaming an alias in the user visibility", %{user: user} do
-    send_message(user, "@bot: operable:alias create my-new-alias \"echo My New Alias\"")
-
-    response = send_message(user, "@bot: operable:alias move my-new-alias my-renamed-alias")
-
-    assert response == [%{source: %{
-                             name: "my-new-alias",
-                             pipeline: "echo My New Alias",
-                             visibility: "user"},
-                          destination: %{
-                            name: "my-renamed-alias",
-                            pipeline: "echo My New Alias",
-                            visibility: "user"}}]
-
-    command_alias = Repo.get_by(UserCommandAlias, name: "my-renamed-alias")
-
-    assert command_alias.name == "my-renamed-alias"
-  end
-
-  test "renaming an alias in the site visibility", %{user: user} do
-    send_message(user, "@bot: operable:alias create my-new-alias \"echo My New Alias\"")
-    send_message(user, "@bot: operable:alias move my-new-alias site")
-
-    response = send_message(user, "@bot: operable:alias move my-new-alias my-renamed-alias")
-
-    assert response == [%{source: %{
-                             name: "my-new-alias",
-                             pipeline: "echo My New Alias",
-                             visibility: "site"},
-                          destination: %{
-                            name: "my-renamed-alias",
-                            pipeline: "echo My New Alias",
-                            visibility: "site"}}]
-
-    command_alias = Repo.get_by(SiteCommandAlias, name: "my-renamed-alias")
-
-    assert command_alias.name == "my-renamed-alias"
-  end
-
-  test "moving an alias to site when an alias with that name already exists in site", %{user: user} do
-    send_message(user, "@bot: operable:alias create my-new-alias \"echo My New Alias\"")
-    send_message(user, "@bot: operable:alias move my-new-alias site")
-    send_message(user, "@bot: operable:alias create my-new-alias \"echo My New Alias\"")
-
-    response = send_message(user, "@bot: operable:alias move user:my-new-alias site")
-
-    assert_error_message_contains(response, "name: The alias name is already in use.")
-  end
-
-  test "moving an alias to user when an alias with that name already exists in user", %{user: user} do
-    send_message(user, "@bot: operable:alias create my-new-alias \"echo My New Alias\"")
-    send_message(user, "@bot: operable:alias move my-new-alias site")
-    send_message(user, "@bot: operable:alias create my-new-alias \"echo My New Alias\"")
-
-    response = send_message(user, "@bot: operable:alias move site:my-new-alias user")
-
-    assert_error_message_contains(response, "name: The alias name is already in use.")
-  end
-
-  test "list all aliases", %{user: user} do
-    send_message(user, "@bot: operable:alias create my-new-alias \"echo My New Alias\"")
-    send_message(user, "@bot: operable:alias create my-new-alias1 \"echo My New Alias\"")
-    send_message(user, "@bot: operable:alias create my-new-alias2 \"echo My New Alias\"")
-    send_message(user, "@bot: operable:alias create my-new-alias3 \"echo My New Alias\"")
-    send_message(user, "@bot: operable:alias move my-new-alias site")
-
-    response = send_message(user, "@bot: operable:alias list")
-
-    assert response == [%{visibility: "site",
-                          pipeline: "echo My New Alias",
-                          name: "my-new-alias"},
-                        %{visibility: "user",
-                          pipeline: "echo My New Alias",
-                          name: "my-new-alias1"},
-                        %{visibility: "user",
-                          pipeline: "echo My New Alias",
-                          name: "my-new-alias2"},
-                        %{visibility: "user",
-                          pipeline: "echo My New Alias",
-                          name: "my-new-alias3"}]
-  end
-
-  test "list all aliases matching a pattern", %{user: user} do
-    send_message(user, "@bot: operable:alias create my-new-alias \"echo My New Alias\"")
-    send_message(user, "@bot: operable:alias create new-alias \"echo My New Alias\"")
-    send_message(user, "@bot: operable:alias create my-new-alias1 \"echo My New Alias\"")
-    send_message(user, "@bot: operable:alias create new-alias1 \"echo My New Alias\"")
-    send_message(user, "@bot: operable:alias move my-new-alias site")
-
-    response = send_message(user, "@bot: operable:alias list \"my-*\"")
-
-    assert response == [%{visibility: "site",
-                          pipeline: "echo My New Alias",
-                          name: "my-new-alias"},
-                        %{visibility: "user",
-                          pipeline: "echo My New Alias",
-                          name: "my-new-alias1"}]
-  end
-
-  test "listing is the default", %{user: user} do
-    send_message(user, "@bot: operable:alias create new-alias \"echo My New Alias\"")
-    response = send_message(user, "@bot: operable:alias")
-    assert response == [%{visibility: "user",
-                          pipeline: "echo My New Alias",
-                          name: "new-alias"}]
-  end
-
-  test "list all aliases with no matching aliases", %{user: user} do
-    response = send_message(user, "@bot: operable:alias list \"my-*\"")
-    assert "Pipeline executed successfully, but no output was returned" = response
-  end
-
-  test "list all aliases with no aliases", %{user: user} do
-    response = send_message(user, "@bot: operable:alias list")
-    assert "Pipeline executed successfully, but no output was returned" = response
-  end
-
-  test "list aliases with an invalid pattern", %{user: user} do
-    response = send_message(user, "@bot: operable:alias list \"% &my#-*\"")
-
-    assert_error_message_contains(response, "Invalid alias name. Only emoji, letters, numbers, and the following special characters are allowed: *, -, _")
-  end
-
-  test "list aliases with too many wildcards", %{user: user} do
-    response = send_message(user, "@bot: operable:alias list \"*my-*\"")
-
-    assert_error_message_contains(response, "Too many wildcards. You can only include one wildcard in a query")
-  end
-
-  test "list aliases with a bad pattern and too many wildcards", %{user: user} do
-    response = send_message(user, "@bot: operable:alias list \"*m++%y-*\"")
-
-    assert_error_message_contains(response, "Too many wildcards. You can only include one wildcard in a query\nInvalid alias name. Only emoji, letters, numbers, and the following special characters are allowed: *, -, _")
-  end
-
-  test "passing too many args", %{user: user} do
-    response = send_message(user, "@bot: operable:alias create my-invalid-alias \"echo foo\" invalid-arg")
-
-    assert_error_message_contains(response, "Too many args. Arguments required: exactly 2.")
-  end
-
-  test "passing too few args", %{user: user} do
-    response = send_message(user, "@bot: operable:alias create my-invalid-alias")
-
-    assert_error_message_contains(response, "Not enough args. Arguments required: exactly 2.")
-  end
-
-  test "passing an unknown subcommand", %{user: user} do
-    response = send_message(user, "@bot: operable:alias foo")
-
-    assert_error_message_contains(response, "Unknown subcommand 'foo'")
-  end
-
 end

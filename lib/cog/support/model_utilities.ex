@@ -56,6 +56,8 @@ defmodule Cog.Support.ModelUtilities do
   alias Cog.Models.Role
   alias Cog.Models.Token
   alias Cog.Models.User
+  alias Cog.Models.UserCommandAlias
+  alias Cog.Models.SiteCommandAlias
   alias Cog.Repo
   require Logger
 
@@ -319,6 +321,43 @@ defmodule Cog.Support.ModelUtilities do
 
     {relay, bundle_version, relay_group}
   end
+
+  @doc """
+  Creates a command alias in the user namespace
+  Returns user for use in pipelines
+  """
+  def with_alias(user, name, pipeline_text) do
+    %UserCommandAlias{}
+    |> UserCommandAlias.changeset(%{name: name,
+                                    pipeline: pipeline_text,
+                                    user_id: user.id})
+    |> Repo.insert!
+
+    user
+  end
+
+  @doc """
+  Creates a command alias in the site namespace
+  """
+  def site_alias(name, pipeline_text) do
+    %SiteCommandAlias{}
+    |> SiteCommandAlias.changeset(%{name: name,
+                                    pipeline: pipeline_text})
+    |> Repo.insert!
+  end
+
+
+  @doc """
+  Returns a command alias in the site namespace
+  """
+  def get_alias(name),
+    do: Repo.get_by(SiteCommandAlias, name: name)
+
+  @doc """
+  Returns a command alias in the user namespace
+  """
+  def get_alias(name, user_id),
+    do: Repo.get_by(UserCommandAlias, name: name, user_id: user_id)
 
   @doc """
   Remove everything from the database.
