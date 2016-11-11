@@ -1,17 +1,15 @@
 defmodule Cog.Test.Commands.UniqueTest do
-  use Cog.AdapterCase, adapter: "test"
+  use Cog.CommandCase, command_module: Cog.Commands.Unique
 
-  @moduletag :skip
+  test "basic uniquing" do
+    inv_id = "basic_uniquing"
+    memory_accum(inv_id, %{"a" => 1})
+    memory_accum(inv_id, %{"a" => 3})
 
-  setup do
-    user = user("jfrost", first_name: "Jim", last_name: "Frost")
-    |> with_chat_handle_for("test")
+    response = new_req(cog_env: %{"a" => 1}, invocation_id: inv_id)
+               |> send_req()
+               |> unwrap()
 
-    {:ok, %{user: user}}
-  end
-
-  test "basic uniquing", %{user: user} do
-    response = send_message(user, ~s(@bot: seed '[{"a": 1}, {"a": 3}, {"a": 1}]' | unique))
-    assert [%{a: 1}, %{a: 3}] == response
+    assert([%{a: 1}, %{a: 3}] == response)
   end
 end

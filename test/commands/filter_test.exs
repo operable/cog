@@ -1,47 +1,52 @@
 defmodule Cog.Test.Commands.FilterTest do
-  use Cog.AdapterCase, adapter: "test"
+  use Cog.CommandCase, command_module: Cog.Commands.Filter
 
-  @moduletag :skip
+  test "returns an item that matches at a specific key" do
+    data = %{"foo" => %{"bar" => "stuff", "baz" => "other stuff"}}
 
-  setup do
-    user = user("vanstee", first_name: "Patrick", last_name: "Van Stee")
-    |> with_chat_handle_for("test")
+    match = new_req(cog_env: data,
+                    options: %{"path" => "foo.bar",
+                               "matches" => "stuff"})
+            |> send_req()
+            |> unwrap()
 
-    {:ok, %{user: user}}
+    assert(%{foo: %{bar: "stuff",
+                    baz: "other stuff"}} = match)
   end
 
-  test "filters a list of things based on a match", %{user: user} do
-    command = """
-    @bot: seed '[{"foo":{"bar":"stuff", "baz":"other stuff"}}, \
-    {"foo": {"bar":"me", "baz": "not this stuff"}},
-    {"foo": {"bar":"stuff", "baz":"more stuff"}}]' | \
-    filter \
-    --path="foo.bar" \
-    --matches="stuff"
-    """
+  test "returns nothing when an item does not match at a specific key " do
+    data = %{"foo" => %{"bar" => "stuff", "baz" => "other stuff"}}
 
-    response = send_message(user, command)
+    no_match = new_req(cog_env: data,
+                    options: %{"path" => "foo.bar",
+                               "matches" => "no match here"})
+               |> send_req()
+               |> unwrap()
 
-    assert [%{foo: %{bar: "stuff",
-                     baz: "other stuff"}},
-            %{foo: %{bar: "stuff",
-                     baz: "more stuff"}}] = response
+    assert(nil == no_match)
   end
 
-  test "filters a list of things based on a key", %{user: user} do
-    command = """
-    @bot: seed '[{"foo":{"bar":"stuff", "baz":"other stuff"}}, \
-    {"foo": {"bar":"me", "baz": "now this stuff"}},
-    {"foo": {"baz":"more stuff"}}]' | \
-    filter \
-    --path="foo.bar"
-    """
+  test "returns an item based on the presence of a key" do
+    data = %{"foo" => %{"bar" => "stuff"}}
 
-    response = send_message(user, command)
+    match = new_req(cog_env: data,
+                    options: %{"path" => "foo.bar"})
+            |> send_req()
+            |> unwrap()
 
-    assert [%{foo: %{bar: "stuff",
-                     baz: "other stuff"}},
-            %{foo: %{bar: "me",
-                     baz: "now this stuff"}}] = response
+    assert(%{foo: %{bar: "stuff"}} = match)
+  end
+
+  test "returns nothing when the requested key is not present" do
+    data = %{"foo" => %{"bar" => "stuff"}}
+
+    no_match = new_req(cog_env: data,
+                    options: %{"path" => "foo.baz"})
+               |> send_req()
+               |> unwrap()
+
+    assert(nil == no_match)
   end
 end
+
+

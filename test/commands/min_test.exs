@@ -1,32 +1,51 @@
 defmodule Cog.Test.Commands.MinTest do
-  use Cog.AdapterCase, adapter: "test"
+  use Cog.CommandCase, command_module: Cog.Commands.Min
 
-  @moduletag :skip
+  test "basic min" do
+    inv_id = "basic_min"
+    memory_accum(inv_id, %{"a" => 1})
+    memory_accum(inv_id, %{"a" => 3})
 
-  setup do
-    user = user("vanstee", first_name: "Patrick", last_name: "Van Stee")
-    |> with_chat_handle_for("test")
+    response = new_req(invocation_id: inv_id, cog_env: %{"a" => 2})
+               |> send_req()
+               |> unwrap()
 
-    {:ok, %{user: user}}
+    assert(response == %{a: 1})
   end
 
-  test "basic min", %{user: user} do
-    response = send_message(user, ~s(@bot: seed '[{"a": 1}, {"a": 3}, {"a": 2}]' | min))
-    assert response == [%{a: 1}]
+  test "min by simple key" do
+    inv_id = "simple_key_min"
+    memory_accum(inv_id, %{"a" => 1})
+    memory_accum(inv_id, %{"a" => 3})
+
+    response = new_req(invocation_id: inv_id, cog_env: %{"a" => 2}, args: ["a"])
+               |> send_req()
+               |> unwrap()
+
+    assert(response == %{a: 1})
   end
 
-  test "min by simple key", %{user: user} do
-    response = send_message(user, ~s(@bot: seed '[{"a": 1}, {"a": 3}, {"a": 2}]' | min a))
-    assert response == [%{a: 1}]
+  test "min by complex key" do
+    inv_id = "complex_key_min"
+    memory_accum(inv_id, %{"a" => %{"b" => 1}})
+    memory_accum(inv_id, %{"a" => %{"b" => 3}})
+
+    response = new_req(invocation_id: inv_id, cog_env: %{"a" => %{"b" => 2}}, args: ["a.b"])
+               |> send_req()
+               |> unwrap()
+
+    assert(response == %{a: %{b: 1}})
   end
 
-  test "min by complex key", %{user: user} do
-    response = send_message(user, ~s(@bot: seed '[{"a": {"b": 1}}, {"a": {"b": 3}}, {"a": {"b": 2}}]' | min a.b))
-    assert response == [%{a: %{b: 1}}]
-  end
+  test "min by incorrect key" do
+    inv_id = "complex_key_min"
+    memory_accum(inv_id, %{"a" => %{"b" => 1}})
+    memory_accum(inv_id, %{"a" => %{"b" => 3}})
 
-  test "min by incorrect key", %{user: user} do
-    response = send_message(user, ~s(@bot: seed '[{"a": {"b": 1}}, {"a": {"b": 3}}, {"a": {"b": 2}}]' | min c.d))
-    assert_error_message_contains(response, "The path provided does not exist")
+    error = new_req(invocation_id: inv_id, cog_env: %{"a" => %{"b" => 2}}, args: ["c.d"])
+            |> send_req()
+            |> unwrap_error()
+
+    assert(error == "The path provided does not exist")
   end
 end
