@@ -6,8 +6,9 @@ defmodule Cog.Test.Commands.MinTest do
     memory_accum(inv_id, %{"a" => 1})
     memory_accum(inv_id, %{"a" => 3})
 
-    {:ok, response} = new_req(invocation_id: inv_id, cog_env: %{"a" => 2})
-    |> send_req()
+    response = new_req(invocation_id: inv_id, cog_env: %{"a" => 2})
+               |> send_req()
+               |> unwrap()
 
     assert(response == %{a: 1})
   end
@@ -17,8 +18,9 @@ defmodule Cog.Test.Commands.MinTest do
     memory_accum(inv_id, %{"a" => 1})
     memory_accum(inv_id, %{"a" => 3})
 
-    {:ok, response} = new_req(invocation_id: inv_id, cog_env: %{"a" => 2}, args: ["a"])
-    |> send_req()
+    response = new_req(invocation_id: inv_id, cog_env: %{"a" => 2}, args: ["a"])
+               |> send_req()
+               |> unwrap()
 
     assert(response == %{a: 1})
   end
@@ -28,8 +30,9 @@ defmodule Cog.Test.Commands.MinTest do
     memory_accum(inv_id, %{"a" => %{"b" => 1}})
     memory_accum(inv_id, %{"a" => %{"b" => 3}})
 
-    {:ok, response} = new_req(invocation_id: inv_id, cog_env: %{"a" => %{"b" => 2}}, args: ["a.b"])
-    |> send_req()
+    response = new_req(invocation_id: inv_id, cog_env: %{"a" => %{"b" => 2}}, args: ["a.b"])
+               |> send_req()
+               |> unwrap()
 
     assert(response == %{a: %{b: 1}})
   end
@@ -39,8 +42,9 @@ defmodule Cog.Test.Commands.MinTest do
     memory_accum(inv_id, %{"a" => %{"b" => 1}})
     memory_accum(inv_id, %{"a" => %{"b" => 3}})
 
-    {:error, error} = new_req(invocation_id: inv_id, cog_env: %{"a" => %{"b" => 2}}, args: ["c.d"])
-    |> send_req()
+    error = new_req(invocation_id: inv_id, cog_env: %{"a" => %{"b" => 2}}, args: ["c.d"])
+            |> send_req()
+            |> unwrap_error()
 
     assert(error == "The path provided does not exist")
   end
