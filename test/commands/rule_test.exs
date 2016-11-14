@@ -1,175 +1,239 @@
 defmodule Cog.Test.Commands.RuleTest do
-  use Cog.AdapterCase, adapter: "test"
+  use Cog.CommandCase, command_module: Cog.Commands.Rule
 
+  import Cog.Support.ModelUtilities, only: [permission: 1]
+  alias Cog.Repository.Bundles
   alias Cog.Models.Rule
   alias Cog.Repository.Rules
 
-  require Ecto.Query
-
-  @moduletag :skip
+  #require Ecto.Query
 
   @bad_uuid "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
 
-  setup do
-    user = user("belf", first_name: "Buddy", last_name: "Elf")
-    |> with_chat_handle_for("test")
-    |> with_permission("operable:manage_commands")
+  describe "list" do
 
-    {:ok, %{user: user}}
+    setup :with_bundle
+
+    test "listing rules" do
+      response = new_req(options: %{"command" => "test-bundle:st-echo"})
+                 |> send_req()
+                 |> unwrap()
+
+      assert([%{command: "test-bundle:st-echo",
+                rule: "when command is test-bundle:st-echo must have test-bundle:st-echo"}] = response)
+    end
+
+    test "error when listing rules for an unrecognized command" do
+      error = new_req(options: %{"command" => "not_really:a_command"})
+              |> send_req()
+              |> unwrap_error()
+
+      assert(error == ~s(Command "not_really:a_command" could not be found))
+    end
+
+    @tag :with_disabled_bundle
+    test "listing rules for a disabled command fails" do
+      error = new_req(options: %{"command" => "test-bundle:st-echo"})
+              |> send_req()
+              |> unwrap_error()
+
+      assert(error == ~s(test-bundle:st-echo is not enabled. Enable a bundle version and try again))
+    end
+
   end
 
-  ########################################################################
-  # List
+  describe "add" do
 
-  test "listing rules", %{user: user} do
-    [response] = send_message(user, "@bot: rule -c operable:st-echo")
+    setup :with_bundle
 
-    assert response[:command] == "operable:st-echo"
-    assert response[:rule] == "when command is operable:st-echo must have operable:st-echo"
+    test "adding a rule for a command" do
+      permission("site:permission")
+
+      response = new_req(args: ["create", "when command is test-bundle:st-echo must have site:permission"])
+                 |> send_req()
+                 |> unwrap()
+
+      assert_uuid(response[:id])
+      assert(%{command: "test-bundle:st-echo",
+               rule: "when command is test-bundle:st-echo must have site:permission"} = response)
+    end
+
+    test "error when specifying too many arguments for manual rule creation" do
+      error = new_req(args: ["create", "blah", "blah", "blah"])
+              |> send_req()
+              |> unwrap_error()
+
+      assert(error == "Invalid args. Please pass between 1 and 2 arguments.")
+    end
+
+    test "error when creating rule for an unrecognized command" do
+      permission("site:permission")
+
+      error = new_req(args: ["create", "not_really:a_command", "site:permission"])
+              |> send_req()
+              |> unwrap_error()
+
+      assert(error == ~s(Could not create rule: Unrecognized command "not_really:a_command"))
+    end
+
+    test "error when creating rule with an unrecognized permission" do
+      error = new_req(args: ["create", "test-bundle:st-echo", "site:permission"])
+              |> send_req()
+              |> unwrap_error()
+
+      assert(error == ~s(Could not create rule: Unrecognized permission "site:permission"))
+    end
+
+    test "error when creating a rule specifying a permission from an unacceptable namespace" do
+      permission("foo:bar")
+
+      error = new_req(args: ["create", "test-bundle:st-echo", "foo:bar"])
+              |> send_req()
+              |> unwrap_error()
+
+      assert(error == ~s(Could not create rule with permission outside of command bundle or the \"site\" namespace))
+    end
+
+    test "error when manually creating a rule with invalid syntax" do
+      error = new_req(args: ["create",  "this is totally not a valid rule"])
+              |> send_req()
+              |> unwrap_error()
+
+      assert(error == ~s{Could not create rule: \"(Line: 1, Col: 0) syntax error before: \\"this\\".\"})
+    end
   end
 
-  test "error when listing rules for an unrecognized command", %{user: user} do
-    assert_error(user, "@bot: rule -c not_really:a_command",
-                 ~s(Command "not_really:a_command" could not be found))
+  describe "drop" do
+
+    setup :with_bundle
+
+    test "dropping a rule via a rule id" do
+      # Get an ID we can use to drop
+      [%{id: id}] = Rules.rules_for_command("test-bundle:st-echo")
+                    |> unwrap()
+
+      response = new_req(args: ["delete", id])
+                 |> send_req()
+                 |> unwrap()
+
+      assert([%{id: id,
+                command: "test-bundle:st-echo",
+                rule: "when command is test-bundle:st-echo must have test-bundle:st-echo"}] == response)
+
+      rules = Rules.rules_for_command("test-bundle:st-echo")
+              |> unwrap()
+      assert rules == []
+    end
+
+    test "error when dropping rule with non-UUID string id" do
+      error = new_req(args: ["delete", "not-a-uuid"])
+              |> send_req()
+              |> unwrap_error()
+
+      assert(error == ~s(Invalid UUID "not-a-uuid"))
+    end
+
+    test "error when dropping rule with unknown id" do
+      error = new_req(args: ["delete", @bad_uuid])
+              |> send_req()
+              |> unwrap_error()
+
+      assert(error == ~s(Rule "#{@bad_uuid}" could not be found))
+    end
   end
 
-  test "listing rules for a disabled command fails", %{user: user} do
-    # Create a bundle that we won't enable
-    {:ok, _version} = Cog.Repository.Bundles.install(
-      %{"name" => "test-bundle",
-        "version" => "1.0.0",
-        "config_file" => %{
-          "name" => "test-bundle",
-          "version" => "1.0.0",
-          "commands" => %{"hola" => %{"rules" => ["when command is test-bundle:hola allow"]}}}})
+  #########################################################################
 
-    assert_error(user, "@bot: rule -c test-bundle:hola",
-              ~s(test-bundle:hola is not enabled. Enable a bundle version and try again))
-  end
+  test "retrieving a rule by ID works" do
+    %Rule{id: id} = Rules.ingest("when command is operable:rule allow")
+                    |> unwrap()
 
-  ########################################################################
-  # Add
-
-  test "adding a rule for a command", %{user: user} do
-    permission("site:permission")
-
-    [response] = send_message(user, ~s(@bot: rule create "when command is operable:st-echo must have site:permission"))
-
-    assert_uuid(response[:id])
-    assert response[:command] == "operable:st-echo"
-    assert response[:rule] == "when command is operable:st-echo must have site:permission"
-  end
-
-  test "error when specifying too many arguments for manual rule creation", %{user: user} do
-    assert_error(user, ~s(@bot: rule create "blah" "blah" "blah"),
-                 "Invalid args. Please pass between 1 and 2 arguments.")
-  end
-
-  test "error when creating rule for an unrecognized command", %{user: user} do
-    permission("site:permission")
-    assert_error(user, ~s(@bot: rule create "not_really:a_command" "site:permission"),
-                 ~s(Could not create rule: Unrecognized command "not_really:a_command"))
-  end
-
-  test "error when creating rule with an unrecognized permission", %{user: user} do
-    assert_error(user, ~s(@bot: rule create "operable:st-echo" "site:permission"),
-                 ~s(Could not create rule: Unrecognized permission "site:permission"))
-  end
-
-  test "error when creating a rule specifying a permission from an unacceptable namespace", %{user: user} do
-    permission("foo:bar")
-    assert_error(user, ~s(@bot: rule create "operable:st-echo" "foo:bar"),
-                 ~s(Could not create rule with permission outside of command bundle or the \"site\" namespace))
-  end
-
-  test "error when manually creating a rule with invalid syntax", %{user: user} do
-    assert_error(user, ~s(@bot: rule create "this is totally not a valid rule"),
-                 ~s{Could not create rule: \"(Line: 1, Col: 0) syntax error before: \\"this\\".})
-  end
-
-  ########################################################################
-  # Drop
-
-  test "dropping a rule via a rule id", %{user: user} do
-    # Get an ID we can use to drop
-    [response] = send_message(user, "@bot: rule list -c operable:st-echo")
-    id = response[:id]
-    [response] = send_message(user, "@bot: rule delete #{id}")
-
-    # TODO: why is this response not a list?
-    assert response[:id] == id
-    assert response[:command] == "operable:st-echo"
-    assert response[:rule] == "when command is operable:st-echo must have operable:st-echo"
-
-    rules = rules_for_command_name("operable:st-echo")
-    assert rules == []
-  end
-
-  test "error when dropping rule with non-UUID string id", %{user: user} do
-    assert_error(user, "@bot: rule delete not-a-uuid",
-                 ~s(Invalid UUID "not-a-uuid"))
-  end
-
-  test "error when dropping rule with unknown id", %{user: user} do
-    assert_error(user, "@bot: rule delete #{@bad_uuid}",
-                 ~s(Rule "#{@bad_uuid}" could not be found))
-  end
-
-  ########################################################################
-
-  test "retrieving a rule by ID works", %{user: user} do
-    {:ok, %Rule{id: id}} = Rules.ingest("when command is operable:rule allow")
-    [payload] = send_message(user, "@bot: operable:rule info #{id}")
+    payload = new_req(args: ["info", id])
+              |> send_req()
+              |> unwrap()
 
     assert %{id: id,
              command_name: "operable:rule",
              rule: "when command is operable:rule allow"} == payload
   end
 
-  test "retrieving a non-existent rule fails", %{user: user} do
-    response = send_message(user, "@bot: operable:rule info #{@bad_uuid}")
-    assert_error_message_contains(response, "Could not find 'rule' with the id '#{@bad_uuid}")
+  test "retrieving a non-existent rule fails" do
+    error = new_req(args: ["info", @bad_uuid])
+            |> send_req()
+            |> unwrap_error()
+
+    assert(error == "Could not find 'rule' with the id '#{@bad_uuid}'")
   end
 
-  test "retrieving a rule requires an ID", %{user: user} do
-    response = send_message(user, "@bot: operable:rule info")
-    assert_error_message_contains(response, "Not enough args. Arguments required: exactly 1")
+  test "retrieving a rule requires an ID" do
+    error = new_req(args: ["info"])
+            |> send_req()
+            |> unwrap_error()
+
+    assert(error == "Not enough args. Arguments required: exactly 1.")
   end
 
-  test "the ID given for retrieving a rule must be a string and a UUID", %{user: user} do
-    response = send_message(user, "@bot: operable:rule info not_a_uuid")
-    assert_error_message_contains(response, "Invalid UUID \"not_a_uuid\"")
+  test "the ID given for retrieving a rule must be a string and a UUID" do
+    error = new_req(args: ["info", "not_a_uuid"])
+            |> send_req()
+            |> unwrap_error()
 
-    response = send_message(user, "@bot: operable:rule info 123")
-    assert_error_message_contains(response, "Argument must be a string")
+    assert(error == "Invalid UUID \"not_a_uuid\"")
+
+    error = new_req(args: ["info", 123])
+            |> send_req()
+            |> unwrap_error()
+    assert(error == "Argument must be a string")
   end
 
-  test "only one rule can be retrieved at a time", %{user: user} do
-    {:ok, %Rule{id: rule_1_id}} = Rules.ingest("when command is operable:rule allow")
-    {:ok, %Rule{id: rule_2_id}} = Rules.ingest("when command is operable:bundle allow")
+  test "only one rule can be retrieved at a time" do
+    %Rule{id: rule_1_id} = Rules.ingest("when command is operable:rule allow") |> unwrap()
+    %Rule{id: rule_2_id} = Rules.ingest("when command is operable:bundle allow") |> unwrap()
 
-    response = send_message(user, "@bot: operable:rule info #{rule_1_id} #{rule_2_id}")
-    assert_error_message_contains(response, "Too many args. Arguments required: exactly 1")
+    error = new_req(args: ["info", rule_1_id, rule_2_id])
+            |> send_req()
+            |> unwrap_error()
+
+    assert(error == "Too many args. Arguments required: exactly 1.")
   end
 
-  ########################################################################
+  #########################################################################
 
-  test "passing an unknown subcommand fails", %{user: user} do
-    response = send_message(user, "@bot: operable:rule not-a-subcommand")
-    assert_error_message_contains(response, "Unknown subcommand 'not-a-subcommand'")
+  test "passing an unknown subcommand fails" do
+    error = new_req(args: ["not-a-subcommand"])
+            |> send_req()
+            |> unwrap_error()
+
+    assert(error == "Unknown subcommand 'not-a-subcommand'")
   end
 
-  ########################################################################
-  # Helper Functions
+  #### Helper Functions ####
 
   defp assert_uuid(maybe_uuid),
     do: assert Cog.UUID.is_uuid?(maybe_uuid)
 
-  defp assert_error(user, pipeline, expected_message) when is_binary(expected_message),
-    do: assert_error_message_contains(send_message(user, pipeline), expected_message)
+  #### Setup Functions ####
 
-  defp rules_for_command_name(command_name) do
-    {:ok, command} = Cog.Models.Command.parse_name(command_name)
-    Cog.Repo.all(Ecto.assoc(command, :rules) |> Ecto.Query.where(enabled: true))
+  defp with_bundle(context) do
+    config = %{"name" => "test-bundle",
+      "version" => "0.1.0",
+      "cog_bundle_version" => 4,
+      "permissions" => [
+        "test-bundle:st-echo"],
+      "commands" => %{
+        "st-echo" => %{
+          "executable" => "foobar",
+          "description" => "test echo",
+          "rules" => ["when command is test-bundle:st-echo must have test-bundle:st-echo"]}}}
+
+    bundle = Bundles.install(%{"name" => "test-bundle", "version" => "0.1.0", "config_file" => config})
+             |> unwrap()
+
+    # If a test is tagged 'with_disabled_bundle' we don't enable the bundle
+    if context[:with_disabled_bundle] == nil do
+      Bundles.set_bundle_version_status(bundle, :enabled)
+    end
+
+    [bundle: bundle]
   end
 end
