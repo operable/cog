@@ -1,7 +1,7 @@
 defmodule Integration.CommandTest do
   use Cog.AdapterCase, adapter: "test"
 
-  @moduletag :skip
+  @moduletag :integration
 
   setup do
     user = user("vanstee", first_name: "Patrick", last_name: "Van Stee")
@@ -11,9 +11,9 @@ defmodule Integration.CommandTest do
   end
 
   test "running a command with a required option", %{user: user} do
-    response = send_message(user, "@bot: operable:req-opt --req=\"foo\"")
+    [response] = send_message(user, "@bot: operable:req-opt --req=\"foo\"")
 
-    assert response == "req-opt response"
+    assert response.body == ["req-opt response"]
   end
 
   test "running a command with a required option missing", %{user: user} do
@@ -23,38 +23,38 @@ defmodule Integration.CommandTest do
   end
 
   test "running a command with a 'string' option", %{user: user} do
-    response = send_message(user, "@bot: operable:type-test --string=\"a string\"")
+    [response] = send_message(user, "@bot: operable:type-test --string=\"a string\"")
 
-    assert response == "type-test response"
+    assert response.body == ["type-test response"]
   end
 
   test "running a command with a 'bool' option", %{user: user} do
-    response = send_message(user, "@bot: operable:type-test --bool=true")
-    assert response == "type-test response"
+    [response] = send_message(user, "@bot: operable:type-test --bool=true")
+    assert response.body == ["type-test response"]
 
-    response = send_message(user, "@bot: operable:type-test --bool=t")
-    assert response == "type-test response"
+    [response] = send_message(user, "@bot: operable:type-test --bool=t")
+    assert response.body == ["type-test response"]
 
-    response = send_message(user, "@bot: operable:type-test --bool=1")
-    assert response == "type-test response"
+    [response] = send_message(user, "@bot: operable:type-test --bool=1")
+    assert response.body == ["type-test response"]
 
-    response = send_message(user, "@bot: operable:type-test --bool=y")
-    assert response == "type-test response"
+    [response] = send_message(user, "@bot: operable:type-test --bool=y")
+    assert response.body == ["type-test response"]
 
-    response = send_message(user, "@bot: operable:type-test --bool=yes")
-    assert response == "type-test response"
+    [response] = send_message(user, "@bot: operable:type-test --bool=yes")
+    assert response.body == ["type-test response"]
 
-    response = send_message(user, "@bot: operable:type-test --bool=on")
-    assert response == "type-test response"
+    [response] = send_message(user, "@bot: operable:type-test --bool=on")
+    assert response.body == ["type-test response"]
 
-    response = send_message(user, "@bot: operable:type-test --bool")
-    assert response == "type-test response"
+    [response] = send_message(user, "@bot: operable:type-test --bool")
+    assert response.body == ["type-test response"]
   end
 
   test "running a command with an 'int' option", %{user: user} do
-    response = send_message(user, "@bot: operable:type-test --int=1")
+    [response] = send_message(user, "@bot: operable:type-test --int=1")
 
-    assert response == "type-test response"
+    assert response.body == ["type-test response"]
   end
 
   test "running a command with an invalid 'int' option", %{user: user} do
@@ -64,9 +64,9 @@ defmodule Integration.CommandTest do
   end
 
   test "running a command with a 'float' option", %{user: user} do
-    response = send_message(user, "@bot: operable:type-test --float=1.0")
+    [response] = send_message(user, "@bot: operable:type-test --float=1.0")
 
-    assert response == "type-test response"
+    assert response.body == ["type-test response"]
   end
 
   test "running a command with an invalid 'float' option", %{user: user} do
@@ -76,16 +76,16 @@ defmodule Integration.CommandTest do
   end
 
   test "running a command with an 'incr' option", %{user: user} do
-    response = send_message(user, "@bot: operable:type-test --incr")
+    [response] = send_message(user, "@bot: operable:type-test --incr")
 
-    assert response == "type-test response"
+    assert response.body == ["type-test response"]
   end
 
   test "running the st-echo command with permission", %{user: user} do
     user |> with_permission("operable:st-echo")
 
-    response = send_message(user, "@bot: operable:st-echo test")
-    assert response == "test"
+    [response] = send_message(user, "@bot: operable:st-echo test")
+    assert response.body == ["test"]
   end
 
   test "running the st-echo command without permission", %{user: user} do
@@ -95,9 +95,9 @@ defmodule Integration.CommandTest do
   end
 
   test "running the un-enforced t-echo command without permission", %{user: user} do
-    response = send_message(user, "@bot: operable:t-echo test")
+    [response] = send_message(user, "@bot: operable:t-echo test")
 
-    assert response == "test"
+    assert response.body == ["test"]
   end
 
   test "running commands in a pipeline", %{user: user} do
@@ -105,9 +105,9 @@ defmodule Integration.CommandTest do
     |> with_permission("operable:t-echo")
     |> with_permission("operable:st-thorn")
 
-    response = send_message(user, ~s(@bot: operable:t-echo "this is a test" | operable:st-thorn $body[0]))
+    [response] = send_message(user, ~s(@bot: operable:t-echo "this is a test" | operable:st-thorn $body[0]))
 
-    assert response == "þis is a test"
+    assert response.body == ["þis is a test"]
   end
 
   test "running commands in a pipeline without permission", %{user: user} do
@@ -125,15 +125,15 @@ defmodule Integration.CommandTest do
   end
 
   test "running a command in a pipeline with nil output", %{user: user} do
-    response = send_message(user, ~s(@bot: seed '[{"a": "1", "b": "2"}, {"a": "3"}]' | filter --path=b | echo $a))
+    [response] = send_message(user, ~s(@bot: seed '[{"a": "1", "b": "2"}, {"a": "3"}]' | filter --path=b | echo $a))
 
-    assert response == 1
+    assert response.body == ["1"]
   end
 
   test "running a pipeline with a variable that resolves to a command fails with a parse error", %{user: user} do
     response = send_message(user, ~s(@bot: echo "echo" | $body[0] foo))
 
-    assert_error_message_contains(response, "(Line: 1, Col: 15) syntax error before: \"body\".")
+    assert_error_message_contains(response, "The specific error was:\n\nillegal characters \"$\"")
   end
 
   test "reading the path to filter a certain path", %{user: user} do
@@ -186,8 +186,8 @@ defmodule Integration.CommandTest do
   end
 
   test "filter where execution further down the pipeline only executes how many times the output is generated from the filter command", %{user: user} do
-    response = send_message(user, ~s(@bot: seed '[{"key": "foo"}, {"key": "bar"}, {"key": "baz"}]' | operable:filter --path "key" --matches "bar" | operable:echo "do-something-dangerous --option=" $key))
+    [response] = send_message(user, ~s(@bot: seed '[{"key": "foo"}, {"key": "bar"}, {"key": "baz"}]' | operable:filter --path "key" --matches "bar" | operable:echo "do-something-dangerous --option=" $key))
 
-    assert response == "do-something-dangerous --option= bar"
+    assert response.body == ["do-something-dangerous --option= bar"]
   end
 end
