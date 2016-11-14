@@ -4,16 +4,16 @@ defmodule Cog.Test.Support.ProviderCase do
 
   require Logger
 
+  use ExUnit.CaseTemplate
 
-
-  defmacro __using__([provider: provider]) do
+  using([provider: provider]) do
     case client_for_provider(provider) do
       nil ->
         raise RuntimeError, message: "Unknown chat provider #{provider}"
       client_mod ->
         quote do
 
-          @moduletag [unquote(provider), :integration]
+          @moduletag integration: unquote(provider)
 
           require Logger
           use ExUnit.Case, async: false

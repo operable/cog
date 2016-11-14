@@ -1,9 +1,6 @@
 defmodule Integration.HipChatTest do
   use Cog.Test.Support.ProviderCase, provider: :hipchat
 
-  @moduletag :hipchat
-  @moduletag :integration
-
   @user "botci"
 
   @bot "deckard"
