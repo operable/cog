@@ -1,7 +1,7 @@
 defmodule Integration.CommandTest do
   use Cog.AdapterCase, adapter: "test"
 
-  @moduletag :integration
+  @moduletag integration: :general
 
   setup do
     user = user("vanstee", first_name: "Patrick", last_name: "Van Stee")
