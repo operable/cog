@@ -79,7 +79,7 @@ defmodule Cog.CommandCase do
       cog_env: Keyword.get(opts, :cog_env, %{}),
       invocation_step: Keyword.get(opts, :invocation_step, "last"),
       reply_to: Keyword.get(opts, :reply_to, "fake_reply_to"),
-      requestor: Keyword.get(opts, :requestor, %Cog.Chat.User{}),
+      requestor: Keyword.get(opts, :requestor, %Cog.Chat.User{provider: "test"}),
       room: Keyword.get(opts, :room, %Cog.Chat.Room{}),
       service_token: Keyword.get(opts, :service_token, service_token()),
       services_root: Keyword.get(opts, :services_root, services_root()),
