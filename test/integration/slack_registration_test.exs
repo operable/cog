@@ -1,11 +1,10 @@
 defmodule Integration.SlackRegistrationTest do
   use Cog.AdapterCase, adapter: "slack"
 
+  @moduletag integration: :slack
+
   alias Cog.Repository.Users
   alias Cog.Models.User
-
-  @moduletag :slack
-  @moduletag :integration
 
   # Name of the Slack user we'll be interacting with the bot as
   @user "botci"
