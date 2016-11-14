@@ -40,5 +40,14 @@ RUN apk update -U && \
 USER operable
 WORKDIR /home/operable/cog
 
+# API
+EXPOSE 4000
+# Triggers
+EXPOSE 4001
+# Service
+EXPOSE 4002
+# MQTT
+EXPOSE 1883
+
 HEALTHCHECK --interval=30s --timeout=10s \
   CMD ./scripts/healthcheck.sh
