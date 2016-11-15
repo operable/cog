@@ -21,12 +21,15 @@ run_tests()
     unit )
       echo "Running Unit tests...";
       mix test --exclude=integration;;
+    integration )
+      echo "Running general integration tests...";
+      mix test --only=integration:general;;
     slack )
       echo "Running Slack tests...";
-      mix test --only=slack;;
+      mix test --only=integration:slack;;
     hipchat )
       echo "Running HipChat tests...";
-      mix test --only=hipchat;;
+      mix test --only=integration:hipchat;;
     * )
       echo "Running tests...";
       mix test;;

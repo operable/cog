@@ -10,6 +10,14 @@ steps:
     agents:
       - docker=1.12.1
 
+  - command: ".buildkite/scripts/test.sh integration"
+    label: ":cogops: Cog Integration Tests - General"
+    env:
+      BUILDKITE_DOCKER_COMPOSE_CONTAINER: cog
+      BUILDKITE_DOCKER_COMPOSE_FILE: docker-compose.ci.yml
+    agents:
+      - docker=1.12.1
+
   - command: ".buildkite/scripts/test.sh slack"
     label: ":slack: Cog Integration Tests - Slack"
     env:
