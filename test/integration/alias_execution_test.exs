@@ -1,4 +1,4 @@
-defmodule Cog.Test.Commands.AliasExecutionTest do
+defmodule Integration.AliasExecutionTest do
   use Cog.AdapterCase, adapter: "test"
 
   @moduletag integration: :general
