@@ -19,7 +19,7 @@ defmodule Cog.Commands.Helpers do
         bundle_name = Cog.Util.Misc.embedded_bundle
         command_name = Cog.Command.GenCommand.Base.command_name(__MODULE__)
 
-        command_version = bundle_name <> ":" <> command_name
+        [command_version] = bundle_name <> ":" <> command_name
         |> Cog.Repository.Commands.with_status_by_any_name
         |> Cog.Repository.Commands.preloads_for_help
 
