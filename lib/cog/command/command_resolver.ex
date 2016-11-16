@@ -24,6 +24,8 @@ defmodule Cog.Command.CommandResolver do
           {:pipeline, pipeline}
         :not_found ->
           {:error, :not_found}
+        {:bundle_not_found, bundle_name} ->
+          {:error, {:bundle_not_found, bundle_name}}
         {:not_enabled, bundle_name} ->
           {:error, {:not_enabled, bundle_name}}
         {:not_in_bundle, bundle_name} ->
@@ -54,8 +56,14 @@ defmodule Cog.Command.CommandResolver do
   def lookup(bundle_name, command_name, _user, enabled_bundles) do
     case Map.get(enabled_bundles, bundle_name) do
       nil ->
-        # No enabled version of the requested bundle was found
-        {:not_enabled, bundle_name}
+        case Bundles.bundle_by_name(bundle_name) do
+          nil ->
+            # No bundle found
+            {:bundle_not_found, bundle_name}
+          _bundle ->
+            # Bundle exists but isn't enabled
+            {:not_enabled, bundle_name}
+        end
       version ->
         case Bundles.command_for_bundle_version(command_name, bundle_name, version) do
           nil ->
