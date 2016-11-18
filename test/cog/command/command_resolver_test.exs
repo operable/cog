@@ -127,6 +127,36 @@ defmodule Cog.Command.CommandResolver.Test do
     assert result == :not_found
   end
 
+  test "returns an error when the bundle is not found" do
+    user = user("testuser")
+    result = CommandResolver.lookup("fake-bundle", "fake-command", user, enabled_bundles)
+    assert result == {:bundle_not_found, "fake-bundle"}
+  end
+
+  test "returns an error when a command is not in the specified bundle" do
+    user = user("testuser")
+    result = CommandResolver.lookup("operable", "not-a-real-command", user, enabled_bundles)
+    assert result == {:not_in_bundle, "operable"}
+  end
+
+  test "returns an error when a bundle is not enabled" do
+    bundle_name = "disabled_bundle"
+    config = %{
+      "name" => bundle_name,
+      "version" => "0.0.1",
+      "commands" => %{
+        "disabled_echo" => %{
+          "module" => "Cog.Commands.Echo",
+          "documentation" => "does stuff"}}}
+    Cog.Repository.Bundles.install(%{"name" => bundle_name,
+                                     "version" => "0.0.1",
+                                     "config_file" => config})
+
+    user = user("testuser")
+
+    result = CommandResolver.lookup(bundle_name, "disabled_echo", user, enabled_bundles)
+    assert result == {:not_enabled, bundle_name}
+  end
 
   test "appropriately versioned rules and site rules are returned in the parser metadata" do
     user = user("test-user")
