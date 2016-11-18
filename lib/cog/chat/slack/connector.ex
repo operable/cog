@@ -8,6 +8,8 @@ defmodule Cog.Chat.Slack.Connector do
   alias Cog.Chat.Slack.Provider
   alias Cog.Chat.User
 
+  @heartbeat_warn 250
+  @ping_interval 30000
   @provider_name "slack"
 
   def call(connector, token, type, args \\ %{}) do
@@ -23,9 +25,16 @@ defmodule Cog.Chat.Slack.Connector do
   end
 
   def handle_connect(state) do
+    :timer.send_interval(@ping_interval, :send_ping)
     Logger.info("Connected to Slack with handle '#{state.me.name}'.")
   end
 
+  def handle_message(%{type: "pong", ts: send_ts}, _state) do
+    elapsed = System.os_time(:milliseconds) - send_ts
+    if elapsed > @heartbeat_warn do
+      Logger.warn("Slow Slack connection detected. ping/pong took #{elapsed}ms.")
+    end
+  end
   def handle_message(msg, state) do
     case annotate(msg, state) do
       :ignore ->
@@ -36,6 +45,12 @@ defmodule Cog.Chat.Slack.Connector do
     end
   end
 
+  def handle_info(:send_ping, state) do
+    msg = Poison.encode!(%{id: :erlang.rem(System.os_time(:seconds), 10000),
+                           type: :ping,
+                           ts: System.os_time(:milliseconds)})
+    send_raw(msg, state)
+  end
   def handle_info({{ref, sender}, {:join, %{token: token, room: room}}}, state) do
     case lookup_room(room, state.channels, by: :name) do
       nil ->
