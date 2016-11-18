@@ -91,8 +91,25 @@ defmodule Cog.Bootstrap do
   """
   def maybe_bootstrap do
     unless is_bootstrapped? do
-      Repo.transaction fn ->
-        if bootstrap_from_env, do: relay_from_env(System.get_env)
+      result = Repo.transaction fn ->
+        case bootstrap_from_env do
+          {:ok, user} ->
+            relay_from_env(System.get_env)
+            user
+          _ ->
+            :not_bootstrapped
+        end
+      end
+
+      # Associating a chat handle currently takes place within its own
+      # transaction. Here, it's OK if the operation fails. For
+      # expediency, we pull this operation out of the above
+      # transaction.
+      case result do
+        {:ok, %User{}=user} ->
+          maybe_bootstrap_chat_handle_from_env(user, System.get_env("COG_BOOTSTRAP_CHAT_HANDLE"))
+        _ ->
+          :ok
       end
     end
   end
@@ -139,6 +156,19 @@ defmodule Cog.Bootstrap do
   end
   defp relay_from_env(_) do
     :not_configured
+  end
+
+  defp maybe_bootstrap_chat_handle_from_env(_user, nil),
+    do: Logger.info("No chat handle specified for bootstrap user; skipping")
+  defp maybe_bootstrap_chat_handle_from_env(user, handle) do
+    {:ok, provider_name} = Cog.Util.Misc.chat_adapter_module()
+    case Cog.Repository.ChatHandles.set_handle(user, provider_name, handle) do
+      {:ok, _} ->
+        Logger.info("Associated bootstrap user with chat handle '#{handle}'")
+        :ok
+      {:error, reason} ->
+        Logger.error("Failed to associate chat handle '#{handle}' with bootstrap user; chat handle will need to be configured manually. Error: #{reason}")
+    end
   end
 
   # Create a bootstrap admin user from the given parameter map. If
