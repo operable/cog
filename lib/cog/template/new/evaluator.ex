@@ -7,6 +7,8 @@ defmodule Cog.Template.New.Evaluator do
 
   @greenbar_errors [Greenbar.CompileError, Greenbar.EvaluationError]
 
+  @custom_template_whitelist ["error"]
+
   alias Greenbar.Engine
 
   require Logger
@@ -78,7 +80,30 @@ defmodule Cog.Template.New.Evaluator do
   defp data_is_text?(_),
     do: false
 
-  defp fetch_source(bundle_version_id, template) do
+  # When the bundle version id is nil this is a common template.
+  # Common templates can be overridden if the custom_template_dir option is
+  # set and the template is in the whitelist.
+  defp fetch_source(nil, template) when template in @custom_template_whitelist do
+    # First check to see if there is a custom template dir.
+    if dir = Application.get_env(:cog, :custom_template_dir) do
+      # Then generate the path and try to read the template.
+      path = Path.join(dir, template <> Cog.Template.New.extension)
+      case File.read(path) do
+        {:ok, template} ->
+          {:ok, template}
+        {:error, _} ->
+          # If we can't read the file fetch the standard template.
+          fetch_source_from_db(nil, template)
+      end
+    else
+      # If there is no custom template dir set fetch the standard template.
+      fetch_source_from_db(nil, template)
+    end
+  end
+  defp fetch_source(bundle_version_id, template),
+    do: fetch_source_from_db(bundle_version_id, template)
+
+  defp fetch_source_from_db(bundle_version_id, template) do
     source = Queries.Template.template_source(Cog.Template.New.default_provider, bundle_version_id, template)
     |> Repo.one
 
