@@ -167,7 +167,7 @@ defmodule Cog.Bootstrap do
         Logger.info("Associated bootstrap user with chat handle '#{handle}'")
         :ok
       {:error, reason} ->
-        Logger.error("Could not associate bootstrap user with chat handle '#{handle}': #{reason}")
+        Logger.error("Failed to associate chat handle '#{handle}' with bootstrap user; chat handle will need to be configured manually. Error: #{reason}")
     end
   end
 
