@@ -2,7 +2,7 @@ defmodule Carrier.Messaging.GenMqtt do
 
   @infinity_timeout 3600000 # one hour in millis
 
-  use Adz
+  require Logger
   use GenServer
   alias Carrier.Messaging.Connection
   alias Carrier.Messaging.Messages.MqttCall

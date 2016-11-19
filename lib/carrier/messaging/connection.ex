@@ -1,6 +1,6 @@
 defmodule Carrier.Messaging.Connection do
 
-  use Adz
+  require Logger
 
   alias Carrier.Messaging.Messages.MqttCall
   alias Carrier.Messaging.Messages.MqttCast

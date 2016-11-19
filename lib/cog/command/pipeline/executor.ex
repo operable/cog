@@ -109,7 +109,7 @@ defmodule Cog.Command.Pipeline.Executor do
 
   @behaviour :gen_fsm
 
-  use Adz
+  require Logger
 
   def start_link(request),
     do: :gen_fsm.start_link(__MODULE__, [request], [])

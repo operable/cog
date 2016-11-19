@@ -10,7 +10,7 @@ defmodule Cog.Command.Pipeline.Destination do
              output_level: :full,
              adapter: nil,
              room: nil]
-  use Adz
+  require Logger
   alias Cog.Chat.Adapter
 
   @doc """
