@@ -74,6 +74,8 @@ config :cog, Cog.Command.Pipeline,
 config :cog, Cog.Command.Service,
   data_path: data_dir("service_data")
 
+config :cog, :custom_template_dir, System.get_env("COG_CUSTOM_TEMPLATE_DIR")
+
 # Set these to zero (0) to disable caching
 config :cog, :command_cache_ttl, {60, :sec}
 config :cog, :command_rule_ttl, {10, :sec}
