@@ -11,13 +11,4 @@ defmodule Cog.ServiceEndpoint do
 
   plug Cog.ServiceRouter
 
-  def public_url() do
-    case Application.get_env(:cog, :services_url_base) do
-      "" ->
-        url()
-      base ->
-        base
-    end
-  end
-
 end

@@ -150,9 +150,7 @@ config :cog, Carrier.Messaging.Connection,
 
 config :cog, Cog.Endpoint,
   http: [port: System.get_env("COG_API_PORT") || 4000],
-  url: [host: (System.get_env("COG_API_URL_HOST") || "localhost"),
-        path: "/",
-        port: (System.get_env("COG_API_URL_PORT") || 4000)],
+  url: gen_public_url_config(Cog.Endpoint),
   root: Path.dirname(__DIR__),
   debug_errors: false,
   cache_static_lookup: false,
@@ -163,9 +161,7 @@ config :cog, Cog.Endpoint,
 
 config :cog, Cog.TriggerEndpoint,
   http: [port: System.get_env("COG_TRIGGER_PORT") || 4001],
-  url: [host: (System.get_env("COG_TRIGGER_URL_HOST") || "localhost"),
-        path: "/",
-        port: (System.get_env("COG_TRIGGER_URL_PORT") || 4001)],
+  url: gen_public_url_config(Cog.TriggerEndpoint),
   root: Path.dirname(__DIR__),
   debug_errors: false,
   cache_static_lookup: false,
@@ -174,17 +170,12 @@ config :cog, Cog.TriggerEndpoint,
 
 config :cog, Cog.ServiceEndpoint,
   http: [port: System.get_env("COG_SERVICE_PORT") || 4002],
-  url: [host: (System.get_env("COG_SERVICE_URL_HOST") || "localhost"),
-        path: "/",
-        port: (System.get_env("COG_SERVICE_URL_PORT") || 4002)],
+  url: gen_public_url_config(Cog.ServiceEndpoint),
   root: Path.dirname(__DIR__),
   debug_errors: false,
   cache_static_lookup: false,
   check_origin: true,
   render_errors: [accepts: ~w(json)]
-
-config :cog, :trigger_url_base, (String.replace((System.get_env("COG_TRIGGER_URL_BASE") || ""), ~r/\/$/, ""))
-config :cog, :services_url_base, (String.replace((System.get_env("COG_SERVICE_URL_BASE") || ""), ~r/\/$/, ""))
 
 config :cog, :token_lifetime, {1, :week}
 config :cog, :token_reap_period, {1, :day}
