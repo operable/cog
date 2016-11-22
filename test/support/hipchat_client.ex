@@ -20,8 +20,8 @@ defmodule Cog.Test.Support.HipChatClient do
 
   def start_link() do
     api_token = get_env!("HIPCHAT_USER_API_TOKEN")
-    xmpp_jid = get_env!("HIPCHAT_USER_JID")
-    xmpp_password = get_env!("HIPCHAT_USER_PASSWORD")
+    xmpp_jid = get_env!("HIPCHAT_USER_JABBER_ID")
+    xmpp_password = get_env!("HIPCHAT_USER_JABBER_PASSWORD")
     nickname = get_env!("HIPCHAT_USER_NICKNAME")
     GenServer.start_link(__MODULE__, [api_token, xmpp_jid, xmpp_password, nickname])
   end
