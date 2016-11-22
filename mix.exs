@@ -63,9 +63,9 @@ defmodule Cog.Mixfile do
       {:adz, github: "operable/adz", tag: "0.16.0"},
       {:conduit, github: "operable/conduit", tag: "0.16.0"},
       {:fumanchu, github: "operable/fumanchu"},
-      {:greenbar, github: "operable/greenbar", branch: "v0.16.0"},
+      {:greenbar, github: "operable/greenbar", tag: "0.16.2"},
       {:probe, github: "operable/probe", tag: "0.16.0"},
-      {:spanner, github: "operable/spanner", branch: "v0.16.0"},
+      {:spanner, github: "operable/spanner", tag: "0.16.2"},
 
       # MQTT-related
       ########################################################################
