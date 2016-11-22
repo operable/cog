@@ -4,8 +4,7 @@ DOCKER_IMAGE      ?= operable/cog:0.5-dev
 deps:
 	mix deps.get
 
-setup:
-	mix deps.get
+setup: deps
 	mix ecto.setup
 
 # Note: 'run' does not reset the database, in case you have data
@@ -22,18 +21,18 @@ test-rollbacks: reset-db
 	mix do ecto.rollback --all, ecto.drop
 
 test: export MIX_ENV = test
-test: deps reset-db
+test: reset-db
 	mix test $(TEST)
 
 test-all: export MIX_ENV = test
 test-all: unit-tests integration-tests
 
 unit-tests: export MIX_ENV = test
-unit-tests: deps reset-db
+unit-tests: reset-db
 	mix test --exclude=integration
 
 integration-tests: export MIX_ENV = test
-integration-tests: deps reset-db
+integration-tests: reset-db
 	mix test --only=integration
 
 test-watch: export MIX_ENV = test
