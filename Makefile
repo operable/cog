@@ -6,8 +6,7 @@ deps:
 
 setup:
 	mix deps.get
-	mix ecto.create
-	mix ecto.migrate
+	mix ecto.setup
 
 # Note: 'run' does not reset the database, in case you have data
 # you're actively using. If this is your first time, run `make
