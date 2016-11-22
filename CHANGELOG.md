@@ -1,5 +1,20 @@
 #  Changelog
 
+## 0.16.2
+
+### Enhancements
+
+- Allow `help` command to work with non-qualified command names [#1109](https://github.com/operable/cog/issues/1109)
+
+### Bug Fixes
+
+- Invalid bundle config file shouldn't cause `cogctl` to fall back to install from [Bundle Warehouse](https://bundles.operable.io) [#1137](https://github.com/operable/cog/issues/1137)
+- `greenbar` segfaults processing nested triple ticks [#1141](https://github.com/operable/cog/issues/1141) (Reported by @agis-)
+- Cog eventually becomes unresponsive on Slack [#1153](https://github.com/operable/cog/issues/1153) (Reported by @agis-)
+- `operable:group -h` crashes [#1154](https://github.com/operable/cog/issues/1154)
+- Uninstalled bundles can be listed as disabled [#1155](https://github.com/operable/cog/issues/1155)
+- Piping a command alias into other commands or aliases fails [#1166](https://github.com/operable/cog/issues/1166)
+
 ## 0.16.1
 
 ### Bug Fixes
