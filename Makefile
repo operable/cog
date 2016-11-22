@@ -39,11 +39,6 @@ test-watch: export MIX_ENV = test
 test-watch: reset-db
 	mix test.watch $(TEST)
 
-coverage: export MIX_ENV = test
-coverage: reset-db
-coverage:
-	mix coveralls.html
-
 docker:
 	docker build --build-arg MIX_ENV=prod -t $(DOCKER_IMAGE) .
 
