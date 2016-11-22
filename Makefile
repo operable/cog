@@ -1,9 +1,4 @@
-# Is there a better way to do this? (kevsmith 12/4/2015)
-GENERATED_FILES := deps/piper/lib/piper/permissions/piper_rule_lexer.erl \
-		   deps/piper/lib/piper/permissions/piper_rule_parser.erl
-
 .DEFAULT_GOAL := run
-
 DOCKER_IMAGE      ?= operable/cog:0.5-dev
 
 deps:
