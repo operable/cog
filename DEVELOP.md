@@ -11,7 +11,7 @@ Cog depends on a few things to run locally:
 
 With those installed, setup your computer with:
 
-    $ make setup
+    $ mix cog.setup
 
 ## Run Cog
 
@@ -27,17 +27,24 @@ the new go based version, (https://github.com/operable/go-relay)
 
 ## Testing
 
-    $ make test
+Unit Tests:
+
+    $ mix test --exclude=integration
+
+Pipeline Integration Tests:
+
+    $ mix test --only=integration:general
+
+Slack Integration Tests
+
+    $ mix test --only=integration:slack
+
+Hipchat Integration Tests
+
+    $ mix test --only=integration:hipchat
 
 HTTP requests in integration tests are recorded and stubbed out for future test
 runs. Recording new cassettes, json files of serialized requests and responses,
 happens automatically when using the `Cog.VCR.use_cassette` macro. To
 regenerate these stubs by making actual HTTP requests delete the files you wish
 to regenerate and run the tests.
-
-For instance, to update all tests you could run this:
-
-    $ rm test/fixtures/cassettes/* && make test
-
-Just make sure you have the `TEST_SLACK=1` and `TEST_HIPCHAT=1`
-environment variables set.
