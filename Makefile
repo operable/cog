@@ -4,36 +4,10 @@ GENERATED_FILES := deps/piper/lib/piper/permissions/piper_rule_lexer.erl \
 
 .DEFAULT_GOAL := run
 
-ifdef BUILDKITE_BUILD_NUMBER
-# TEST_DATABASE_URL is set in Buildkite; it points to an Amazon RDS
-# PostgreSQL instance we use
-TEST_DATABASE_URL := $(TEST_DATABASE_URL).$(BUILDKITE_BUILD_NUMBER)
-endif
-
 DOCKER_IMAGE      ?= operable/cog:0.5-dev
 
 deps:
 	mix deps.get
-
-ifeq ($(wildcard NO_CI),)
-ci: export MIX_ENV = test
-ci: ci-setup test-all ci-cleanup
-
-ci-reset:
-	@echo "Resetting build environment"
-#	@rm -rf _build
-
-ci-setup: deps ci-reset
-# Nuke mnesia dirs so we don't get borked on emqttd upgrades
-	rm -rf Mnesia.* $(GENERATED_FILES) deps
-
-ci-cleanup:
-	mix ecto.drop
-else
-ci:
-	@echo "NO_CI file found. CI build targets skipped."
-	@exit 0
-endif
 
 setup:
 	mix deps.get
@@ -80,4 +54,4 @@ coverage:
 docker:
 	docker build --build-arg MIX_ENV=prod -t $(DOCKER_IMAGE) .
 
-.PHONY: ci ci-setup ci-cleanup test docker unit-tests integration-tests deps
+.PHONY: test docker unit-tests integration-tests deps
