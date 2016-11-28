@@ -18,19 +18,20 @@ defmodule Cog.Template.New.EvaluatorTest do
 
     test "error template evaluates normally when there is no custom template dir", %{data: data} do
       expected_directives =
-        [%{children: [%{name: :fixed_width_block, text: "this is an error"}],
-             color: "#ff3333", fields: [], name: :attachment,
-             title: "Error Message"},
-           %{children: [], color: "#ff3333",
-             fields: [%{short: false, title: "Started",
-                value: "2016-11-18T20:52:23Z"},
-              %{short: false, title: "Pipeline ID", value: "fake_id"},
-              %{short: false, title: "Pipeline", value: "fake pipeline"},
-              %{short: false, title: "Caller", value: "fake_user"}],
-             name: :attachment}]
+        [%{name: :attachment,
+           title: "Pipeline Error",
+           color: "#ff3333",
+           children: [
+             %{name: :fixed_width_block, text: "this is an error"}
+           ],
+           fields: [
+             %{short: false, title: "Started", value: "2016-11-18T20:52:23Z"},
+             %{short: false, title: "Pipeline ID", value: "fake_id"},
+             %{short: false, title: "Pipeline", value: "fake pipeline"},
+             %{short: false, title: "Caller", value: "fake_user"}
+           ]}]
 
       results = Evaluator.evaluate("error", data)
-
       assert(^expected_directives = results)
     end
 
@@ -68,7 +69,9 @@ defmodule Cog.Template.New.EvaluatorTest do
              "started" => "2016-11-18T20:52:23Z",
              "initiator" => "fake_user",
              "pipeline_text" => "fake pipeline",
-             "error_message" => "this is an error"}]
+             "error_message" => "this is an error",
+             "execution_failure" => "",
+             "planning_failure" => ""}]
 
   end
 end

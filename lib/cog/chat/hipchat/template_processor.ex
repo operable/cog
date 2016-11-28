@@ -1,7 +1,7 @@
 defmodule Cog.Chat.HipChat.TemplateProcessor do
   require Logger
 
-  @attachment_fields ["footer", "children", "fields", "pretext", "author", "title"]
+  @attachment_fields ["footer", "fields", "children", "pretext", "author", "title"]
 
   def render(directives) do
     render_directives(directives)
@@ -91,7 +91,7 @@ defmodule Cog.Chat.HipChat.TemplateProcessor do
       nil ->
         acc
       children ->
-        [render(children)|acc]
+        [render(children) <> "<br/><br/>"|acc]
     end
   end
   defp render_attachment("fields", acc, attachment) do

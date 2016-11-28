@@ -17,30 +17,18 @@ defmodule Cog.Template.New.CommonTest do
                         "pipeline_text" => "echo foo",
                         "error_message" => "bad stuff happened",
                         "planning_failure" => "I can't plan this!",
-                        "execution_failure" => false},
+                        "execution_failure" => ""},
                       [%{"name" => "attachment",
                          "title" => "Pipeline Error",
                          "color" => "#ff3333",
                          "children" => [
-                           %{"name" => "text", "text" => "The pipeline failed planning the invocation:"},
-                           %{"name" => "newline"},
-                           %{"name" => "fixed_width_block", "text" => "I can't plan this!"}
-                         ],
-                         "fields" => []},
-                       %{"name" => "attachment",
-                         "title" => "Error Message",
-                         "color" => "#ff3333",
-                         "children" => [
                            %{"name" => "fixed_width_block", "text" => "bad stuff happened"}
                          ],
-                         "fields" => []},
-                       %{"name" => "attachment",
-                         "color" => "#ff3333",
-                         "children" => [],
                          "fields" => [
                            %{"short" => false, "title" => "Started", "value" => "some time in the past"},
                            %{"short" => false, "title" => "Pipeline ID", "value" => "deadbeef"},
                            %{"short" => false, "title" => "Pipeline", "value" => "echo foo"},
+                           %{"short" => false, "title" => "Failed Planning", "value" => "I can't plan this!"},
                            %{"short" => false, "title" => "Caller", "value" => "somebody"}
                          ]}])
   end
@@ -52,32 +40,20 @@ defmodule Cog.Template.New.CommonTest do
                         "initiator" => "somebody",
                         "pipeline_text" => "echo foo",
                         "error_message" => "bad stuff happened",
-                        "planning_failure" => false,
+                        "planning_failure" => "",
                         "execution_failure" => "I can't execute this!"},
                       [%{"name" => "attachment",
-                         "title" => "Command Error",
-                         "color" => "#ff3333",
-                         "children" => [
-                           %{"name" => "text", "text" => "The pipeline failed executing the command:"},
-                           %{"name" => "newline"},
-                           %{"name" => "fixed_width_block", "text" => "I can't execute this!"}
-                         ],
-                         "fields" => []},
-                       %{"name" => "attachment",
-                         "title" => "Error Message",
+                         "title" => "Command Execution Error",
                          "color" => "#ff3333",
                          "children" => [
                            %{"name" => "fixed_width_block", "text" => "bad stuff happened"}
                          ],
-                         "fields" => []},
-                       %{"name" => "attachment",
-                         "color" => "#ff3333",
-                         "children" => [],
                          "fields" => [
                            %{"short" => false, "title" => "Started", "value" => "some time in the past"},
                            %{"short" => false, "title" => "Pipeline ID", "value" => "deadbeef"},
                            %{"short" => false, "title" => "Pipeline", "value" => "echo foo"},
-                           %{"short" => false, "title" => "Caller", "value" => "somebody"}
+                           %{"short" => false, "title" => "Failed Executing", "value" => "I can't execute this!"},
+                           %{"short" => false, "title" => "Caller", "value" => "somebody"},
                          ]}])
   end
 
