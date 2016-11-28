@@ -134,7 +134,7 @@ defmodule Integration.CommandTest do
   test "running a pipeline with a variable that resolves to a command fails with a parse error", %{user: user} do
     response = send_message(user, ~s(@bot: echo "echo" | $body[0] foo))
 
-    assert_error_message_contains(response, "The specific error was:\n\nillegal characters \"$\"")
+    assert_error_message_contains(response, "illegal characters \"$\"")
   end
 
   test "reading the path to filter a certain path", %{user: user} do
