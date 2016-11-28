@@ -129,7 +129,7 @@ defmodule Cog.CommandCase do
   end
 
   def services_root,
-    do: Cog.ServiceEndpoint.public_url()
+    do: Cog.ServiceEndpoint.url()
 
 
   #### Utility Functions ####

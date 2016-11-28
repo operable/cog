@@ -20,12 +20,7 @@ defmodule Cog.V1.ServiceView do
 
   # Generate a URL where specific service metadata can be obtained.
   defp meta_url(service) do
-    case Application.get_env(:cog, :services_url_base) do
-      "" ->
-        Cog.ServiceRouter.Helpers.service_url(Cog.ServiceEndpoint, :show, service.name)
-      base ->
-        Enum.join([base, Cog.ServiceRouter.Helpers.service_path(Cog.ServiceEndpoint, :show, service.name)])
-    end
+    Cog.ServiceRouter.Helpers.service_url(Cog.ServiceEndpoint, :show, service.name)
   end
 
 end
