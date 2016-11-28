@@ -129,8 +129,7 @@ defmodule Integration.SlackTest do
     assert reply.location.type == :im
     # Since Cog responds when direct messaging it we have to assert
     # that both our marker text and message test exist.
-    #assert_response "here
-    blah", [after: marker, count: 2], "@#{@user}"
+    # assert_response "here\nblah", [after: marker, count: 2], "@#{@user}"
   end
 
   test "redirecting to a specific user", %{user: user, client: client} do
