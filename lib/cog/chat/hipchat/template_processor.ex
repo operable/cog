@@ -48,21 +48,29 @@ defmodule Cog.Chat.HipChat.TemplateProcessor do
     "<li>#{item}</li>"
   end
 
-  defp process_directive(%{"name" => "table", "children" => children}) do
-    "<table>\n#{render(children)}</table>\n"
-  end
+  # Render table as text using TableRex instead of the HTML tags. The HipChat
+  # native table experience is very lacking in terms of style options. So much
+  # so that text tables are preferable. Note, tables MUST have a header.
 
-  defp process_directive(%{"name" => "table_header", "children" => children}) do
-    "<th>#{render(children)}</th>\n"
-  end
+  defp process_directive(%{"name" => "table",
+                           "children" => [%{"name" => "table_header",
+                                            "children" => header}|rows]}) do
+    headers = map(header)
 
-  defp process_directive(%{"name" => "table_row", "children" => children}) do
-    "<tr>#{render(children)}</tr>\n"
+    case map(rows) do
+      [] ->
+        # TableRex doesn't currently like tables without
+        # rows for some reason... so we get to render an
+        # empty table ourselves :/
+        "<pre>#{render_empty_table(headers)}</pre>"
+      rows ->
+        "<pre>#{TableRex.quick_render!(rows, headers)}</pre>"
+    end
   end
-
-  defp process_directive(%{"name" => "table_cell", "children" => children}) do
-    "<td>#{render(children)}</td>"
-  end
+  defp process_directive(%{"name" => "table_row", "children" => children}),
+    do: map(children)
+  defp process_directive(%{"name" => "table_cell", "children" => children}),
+    do: Enum.map_join(children, &process_directive/1)
 
   defp process_directive(%{"text" => text}=directive) do
     Logger.warn("Unrecognized directive; formatting as plain text: #{inspect directive}")
@@ -135,4 +143,29 @@ defmodule Cog.Chat.HipChat.TemplateProcessor do
     end
   end
 
+  # Shortcut for processing a list of directives without additional
+  # context, since it's so common
+  defp map(directives),
+    do: Enum.map(directives, &process_directive/1)
+
+  # This replicates the default TableRex style we use above
+  #
+  # Example:
+  #
+  #    +--------+------+
+  #    | Bundle | Name |
+  #    +--------+------+
+  #
+  defp render_empty_table(headers) do
+    separator_row = "+-#{Enum.map_join(headers, "-+-", &to_hyphens/1)}-+"
+
+    """
+    #{separator_row}
+    | #{Enum.join(headers, " | ")} |
+    #{separator_row}
+    """ |> String.strip
+  end
+
+  defp to_hyphens(name),
+    do: String.duplicate("-", String.length(name))
 end

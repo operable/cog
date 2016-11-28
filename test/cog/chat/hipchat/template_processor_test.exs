@@ -72,13 +72,14 @@ defmodule Cog.Chat.HipChat.TemplateProcessorTest do
     Fascinating. How about some fixed width text?  <code>BEEP BOOP... I AM A ROBOT... BEEP BOOP</code><br/><pre>I AM FROM THE FUTURE. BLEEP. BOOP.</pre>
     Wow, good stuff. And now... AN ASCII TABLE!
 
-    <table>
-    <th><td>Member</td><td>Instrument</td></th>
-    <tr><td>Geddy Lee</td><td>Vocals, Bass, Keyboards</td></tr>
-    <tr><td>Alex Lifeson</td><td>Guitar</td></tr>
-    <tr><td>Neal Peart</td><td>Drums, Percussion</td></tr>
-    </table>
-
+    <pre>+--------------+-------------------------+
+    | Member       | Instrument              |
+    +--------------+-------------------------+
+    | Geddy Lee    | Vocals, Bass, Keyboards |
+    | Alex Lifeson | Guitar                  |
+    | Neal Peart   | Drums, Percussion       |
+    +--------------+-------------------------+
+    </pre>
     How do you like them apples?
     """ |> String.trim
     assert expected == rendered
