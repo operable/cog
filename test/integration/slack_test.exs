@@ -1,9 +1,9 @@
 defmodule Integration.SlackTest do
   use Cog.Test.Support.ProviderCase, provider: :slack
 
-  @user "ash"
+  @user "botci"
 
-  @bot "ash"
+  @bot "deckard"
 
   @ci_room "ci_bot_testing"
 
