@@ -1,29 +1,38 @@
-~if cond=$execution_failure~
-~attachment title="Command Error" color="#ff3333"~
-The pipeline failed executing the command:
-
-```
-~$execution_failure~
-```
-~end~
-~end~
-
-~if cond=$planning_failure~
-~attachment title="Pipeline Error" color="#ff3333"~
-The pipeline failed planning the invocation:
-
-```
-~$planning_failure~
-```
-~end~
-~end~
-
-~attachment title="Error Message" color="#ff3333"~
+~if cond=$execution_failure != ""~
+~if cond=$planning_failure == ""~
+~attachment title="Command Execution Error" color="#ff3333" "Failed Executing"=$execution_failure Caller=$initiator Pipeline=$pipeline_text "Pipeline ID"=$id Started=$started~
 
 ```
 ~$error_message~
 ```
 ~end~
+~end~
+~if cond=$planning_failure != ""~
+~attachment title="Command Execution Error" color="#ff3333" "Failed Executing"=$execution_failure "Failed Planning"=$planning_failure Caller=$initiator Pipeline=$pipeline_text "Pipeline ID"=$id Started=$started~
 
-~attachment color="#ff3333" Caller=$initiator Pipeline=$pipeline_text "Pipeline ID"=$id Started=$started~
+```
+~$error_message~
+```
+~end~
+~end~
+~end~
+~if cond=$planning_failure != ""~
+~if cond=$execution_failure == ""~
+~attachment title="Pipeline Error" color="#ff3333" Caller=$initiator "Failed Planning"=$planning_failure Pipeline=$pipeline_text "Pipeline ID"=$id Started=$started~
+
+```
+~$error_message~
+```
+~end~
+~end~
+~end~
+~if cond=$execution_failure == ""~
+~if cond=$planning_failure == ""~
+~attachment title="Pipeline Error" color="#ff3333" Caller=$initiator Pipeline=$pipeline_text "Pipeline ID"=$id Started=$started~
+
+```
+~$error_message~
+```
+~end~
+~end~
 ~end~

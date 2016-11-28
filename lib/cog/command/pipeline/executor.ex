@@ -583,14 +583,14 @@ defmodule Cog.Command.Pipeline.Executor do
       %{invocations: [%Ast.Invocation{} = planning_failure|_]} ->
         to_string(planning_failure)
       _ ->
-        false
+        ""
     end
 
     execution_failure = case state do
       %{current_plan: %Plan{invocation_text: execution_failure}} ->
         to_string(execution_failure)
       _ ->
-        false
+        ""
     end
 
     %{"id" => id,
