@@ -1,9 +1,9 @@
 defmodule Integration.SlackTest do
   use Cog.Test.Support.ProviderCase, provider: :slack
 
-  @user "botci"
+  @user "ash"
 
-  @bot "deckard"
+  @bot "ash"
 
   @ci_room "ci_bot_testing"
 
@@ -42,6 +42,7 @@ defmodule Integration.SlackTest do
     ```Sorry, you aren't allowed to execute 'operable:st-echo test' :(
      You will need at least one of the following permissions to run this command: 'operable:st-echo'.```
     """ |> String.strip
+
     assert reply.text == expected
     assert reply.location.type == :channel
     assert reply.location.name == @ci_room
@@ -65,14 +66,14 @@ defmodule Integration.SlackTest do
     message = "@#{@bot}: operable:st-echo \"this is a test\" | operable:st-thorn $body"
     {:ok, reply} = ChatClient.chat_wait!(client, [room: @ci_room, message: message, reply_from: @bot])
     expected = """
-    The pipeline failed executing the command:
+    "The pipeline failed executing the command:
 
     ```operable:st-thorn $body```
 
     The specific error was:
 
     ```Sorry, you aren't allowed to execute 'operable:st-thorn $body' :(
-      You will need at least one of the following permissions to run this command: 'operable:st-thorn'.```
+     You will need at least one of the following permissions to run this command: 'operable:st-thorn'.```
      """ |> String.strip
     assert reply.text == expected
     assert reply.location.type == :channel
@@ -128,7 +129,8 @@ defmodule Integration.SlackTest do
     assert reply.location.type == :im
     # Since Cog responds when direct messaging it we have to assert
     # that both our marker text and message test exist.
-    #assert_response "here\nblah", [after: marker, count: 2], "@#{@user}"
+    #assert_response "here
+    blah", [after: marker, count: 2], "@#{@user}"
   end
 
   test "redirecting to a specific user", %{user: user, client: client} do
