@@ -14,9 +14,6 @@ defmodule Cog.Chat.HipChat.Templates.Common.ErrorTest do
     rendered = Cog.Chat.HipChat.TemplateProcessor.render(directives)
 
     assert "<strong>Pipeline Error</strong><br/>" <>
-      "The pipeline failed planning the invocation:<br/>" <>
-      "<pre>I can't plan this!</pre><br/>" <>
-      "<strong>Error Message</strong><br/>" <>
       "<pre>bad stuff happened</pre><br/>" <>
       "<strong>Started:</strong><br/>" <>
       "some time in the past<br/>" <>
@@ -26,6 +23,8 @@ defmodule Cog.Chat.HipChat.Templates.Common.ErrorTest do
       "<br/>" <>
       "<strong>Pipeline:</strong><br/>" <>
       "echo foo<br/>" <>
+      "<strong>Failed Planning:</strong><br/>" <>
+      "<pre>I can't plan this!</pre><br/>" <>
       "<br/>" <>
       "<strong>Caller:</strong><br/>" <>
       "somebody<br/><br/><br/>" == rendered

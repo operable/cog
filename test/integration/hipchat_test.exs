@@ -29,7 +29,7 @@ defmodule Integration.HipChatTest do
     message = "@#{@bot}: operable:st-echo test"
     {:ok, reply} = ChatClient.chat_wait!(client, [room: @ci_room, message: message,
                                                   reply_from: @bot_name, timeout: @timeout])
-    assert String.contains?(reply.text, "<strong>Pipeline:</strong><br/>operable:st-echo test<br/><br/>")
+    assert String.contains?(reply.text, "<strong>Pipeline:</strong><br />operable:st-echo test<br /><br />")
     assert String.contains?(reply.text, "You will need at least one of the following permissions to run this command: " <>
       "'operable:st-echo'")
     assert reply.location.type == :channel
@@ -53,7 +53,7 @@ defmodule Integration.HipChatTest do
 
     message = "@#{@bot}: operable:st-echo \"this is a test\" | operable:st-thorn $body"
     {:ok, reply} = ChatClient.chat_wait!(client, [room: @ci_room, message: message, reply_from: @bot_name, timeout: @timeout])
-    assert String.contains?(reply.text, "<strong>Pipeline:</strong><br/>operable:st-echo \"this is a test\" | operable:st-thorn $body<br/><br/>")
+    assert String.contains?(reply.text, "<strong>Pipeline:</strong><br />operable:st-echo \"this is a test\" | operable:st-thorn $body<br /><br />")
     assert String.contains?(reply.text, "You will need at least one of the following permissions to run this command: " <>
       "'operable:st-thorn'.")
     assert reply.location.type == :channel

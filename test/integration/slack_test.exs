@@ -33,14 +33,8 @@ defmodule Integration.SlackTest do
     {:ok, reply} = ChatClient.chat_wait!(client, [room: @ci_room, message: message,
                                                    reply_from: @bot])
     expected = """
-    The pipeline failed executing the command:
-
-    ```operable:st-echo test```
-
-    The specific error was:
-
-    ```Sorry, you aren't allowed to execute 'operable:st-echo test' :(
-     You will need at least one of the following permissions to run this command: 'operable:st-echo'.```
+    ```Sorry, you aren't allowed to execute 'operable:st-echo test'.
+    You will need at least one of the following permissions to run this command: 'operable:st-echo'.```
     """ |> String.strip
 
     assert reply.text == expected
@@ -66,13 +60,7 @@ defmodule Integration.SlackTest do
     message = "@#{@bot}: operable:st-echo \"this is a test\" | operable:st-thorn $body"
     {:ok, reply} = ChatClient.chat_wait!(client, [room: @ci_room, message: message, reply_from: @bot])
     expected = """
-    "The pipeline failed executing the command:
-
-    ```operable:st-thorn $body```
-
-    The specific error was:
-
-    ```Sorry, you aren't allowed to execute 'operable:st-thorn $body' :(
+    ```Sorry, you aren't allowed to execute 'operable:st-thorn $body'.
      You will need at least one of the following permissions to run this command: 'operable:st-thorn'.```
      """ |> String.strip
     assert reply.text == expected
