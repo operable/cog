@@ -185,7 +185,7 @@ defmodule Cog.Repository.Groups do
 
       case result do
         {:ok, group} ->
-          group
+          Repo.preload(group, @preloads)
         {:error, error} ->
           Repo.rollback(error)
       end
