@@ -1,23 +1,64 @@
-~attachment title="Command Error" color="#ff3333" Caller=$initiator Pipeline=$pipeline_text "Pipeline ID"=$id Started=$started~
-~if cond=$planning_failure ~
-The pipeline failed planning the invocation:
-~br~
-```
-~$planning_failure~
-```
-~end~
-~if cond=$execution_failure~
-The pipeline failed executing the command:
-~br~
-```
-~$execution_failure~
-```
-~end~
-~br~
-~br~
-The specific error was:
-~br~
+#
+# CASE 1: COMMAND EXECUTION FAILURE
+#
+# Command execution returned an error either with or without an additional
+# planning error for failures further in the pipeline.
+#
+~if cond=$execution_failure != ""~
+#
+# No additional pipeline stages after the failed command
+#
+~if cond=$planning_failure == ""~
+~attachment title="Command Execution Error" color="#ff3333" "Failed Executing"=$execution_failure Caller=$initiator Pipeline=$pipeline_text "Pipeline ID"=$id Started=$started~
+
 ```
 ~$error_message~
 ```
+~end~
+~end~
+#
+# There are additional stages in the pipeline after the failed execution that
+# will not be executed due to the command execution failure.
+#
+~if cond=$planning_failure != ""~
+~attachment title="Command Execution Error" color="#ff3333" "Failed Executing"=$execution_failure "Failed Planning"=$planning_failure Caller=$initiator Pipeline=$pipeline_text "Pipeline ID"=$id Started=$started~
+
+```
+~$error_message~
+```
+~end~
+~end~
+~end~
+#
+# CASE 2: PIPELINE PLAN FAILURE
+#
+# Display Pipeline Plan failures as long as there is no execution failure
+# message set. If there is also an execution failure, we skip because we would
+# have handled it above.
+#
+~if cond=$planning_failure != ""~
+~if cond=$execution_failure == ""~
+~attachment title="Pipeline Error" color="#ff3333" Caller=$initiator "Failed Planning"=$planning_failure Pipeline=$pipeline_text "Pipeline ID"=$id Started=$started~
+
+```
+~$error_message~
+```
+~end~
+~end~
+~end~
+#
+# CASE 3: GENERAL ERROR
+#
+# This case is for errors that don't also have an execution or planning failure
+# message included. This is generally things like an invalid command.
+#
+~if cond=$execution_failure == ""~
+~if cond=$planning_failure == ""~
+~attachment title="Pipeline Error" color="#ff3333" Caller=$initiator Pipeline=$pipeline_text "Pipeline ID"=$id Started=$started~
+
+```
+~$error_message~
+```
+~end~
+~end~
 ~end~

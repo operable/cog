@@ -87,7 +87,7 @@ end
 defmodule Cog.Test.Support.SlackClient do
 
   # To avoid Slack throttling
-  @api_wait_interval 750
+  @api_wait_interval 1100
 
   @default_timeout 5000
 
