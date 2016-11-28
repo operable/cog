@@ -125,7 +125,8 @@ defmodule Cog.Mixfile do
   defp elixirc_paths(_),     do: ["lib", "web"]
 
   defp aliases do
-    ["ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
+    ["cog.setup": ["deps.get", "ecto.setup"],
+     "ecto.setup": ["ecto.create", "ecto.migrate"],
      "ecto.reset": ["ecto.drop", "ecto.setup"]]
   end
 end
