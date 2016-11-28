@@ -11,16 +11,20 @@ defmodule Cog.Chat.Slack.Templates.Common.ErrorTest do
              "execution_failure" => false}
 
     directives = directives_for_template(:common, "error", data)
-    {"", [rendered]} = Cog.Chat.Slack.TemplateProcessor.render(directives)
-    assert """
-    The pipeline failed planning the invocation:
+    {"", rendered} = Cog.Chat.Slack.TemplateProcessor.render(directives)
 
-    ```I can't plan this!```
+    expected = [
+      "The pipeline failed planning the invocation:\n```I can't plan this!```",
+      "```bad stuff happened```",
+      ""
+    ]
 
-    The specific error was:
-
-    ```bad stuff happened```
-    """ |> String.strip == Map.get(rendered, "text")
+    expected
+    |> Enum.with_index
+    |> Enum.each(
+         fn({text, idx}) ->
+           assert text == Enum.at(rendered, idx) |> Map.get("text")
+         end)
   end
 
   test "error template; execution failure" do
@@ -33,16 +37,21 @@ defmodule Cog.Chat.Slack.Templates.Common.ErrorTest do
              "planning_failure" => false,
              "execution_failure" => "I can't execute this!"}
     directives = directives_for_template(:common, "error", data)
-    {"", [rendered]} = Cog.Chat.Slack.TemplateProcessor.render(directives)
-    assert """
-    The pipeline failed executing the command:
+    {"", rendered} = Cog.Chat.Slack.TemplateProcessor.render(directives)
 
-    ```I can't execute this!```
 
-    The specific error was:
+    expected = [
+      "The pipeline failed executing the command:\n```I can't execute this!```",
+      "```bad stuff happened```",
+      ""
+    ]
 
-    ```bad stuff happened```
-    """ |> String.strip  == Map.get(rendered, "text")
+    expected
+    |> Enum.with_index
+    |> Enum.each(
+         fn({text, idx}) ->
+           assert text == Enum.at(rendered, idx) |> Map.get("text")
+         end)
   end
 
 end
