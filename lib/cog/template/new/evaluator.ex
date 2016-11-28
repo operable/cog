@@ -152,6 +152,8 @@ defmodule Cog.Template.New.Evaluator do
 
   # public for tests _only_
   def do_evaluate(name, source, data) do
+    IO.puts "in do_evaluate: #{inspect data}"
+    IO.puts "in do_evaluate: #{inspect source}"
     {:ok, engine} = Engine.new
     engine
     |> Engine.compile!(name, source)

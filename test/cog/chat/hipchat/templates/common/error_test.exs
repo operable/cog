@@ -15,7 +15,6 @@ defmodule Cog.Chat.HipChat.Templates.Common.ErrorTest do
     expected =
       "<strong>Pipeline Error</strong><br/>" <>
       "<pre>bad stuff happened</pre><br/>" <>
-      "<br/>" <>
       "<strong>Started:</strong><br/>" <>
       "some time in the past<br/>" <>
       "<br/>" <>
@@ -48,7 +47,6 @@ defmodule Cog.Chat.HipChat.Templates.Common.ErrorTest do
     expected =
       "<strong>Command Execution Error</strong><br/>" <>
       "<pre>bad stuff happened</pre><br/>" <>
-      "<br/>" <>
       "<strong>Started:</strong><br/>" <>
       "some time in the past<br/>" <>
       "<br/>" <>

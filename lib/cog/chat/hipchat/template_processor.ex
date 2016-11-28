@@ -91,7 +91,7 @@ defmodule Cog.Chat.HipChat.TemplateProcessor do
       nil ->
         acc
       children ->
-        [render(children) <> "<br/><br/>"|acc]
+        [render(children) <> "<br/>"|acc]
     end
   end
   defp render_attachment("fields", acc, attachment) do

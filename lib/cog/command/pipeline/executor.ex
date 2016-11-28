@@ -613,7 +613,6 @@ defmodule Cog.Command.Pipeline.Executor do
   # emits a pipeline failure audit event, and terminates the pipeline.
   defp fail_pipeline_with_error({reason, _detail}=error, state) do
     data = user_error(error, state)
-
     ReplyHelper.send("error",
                      data,
                      state.request.room,
