@@ -8,10 +8,11 @@ defmodule Cog.Chat.HipChat.TemplateProcessor do
   end
 
   defp process_directive(%{"name" => "attachment"}=attachment) do
-    @attachment_fields
+    rendered_body = @attachment_fields
     |> Enum.reduce([], &(render_attachment(&1, &2, attachment)))
     |> List.flatten
     |> Enum.join
+    rendered_body <> "<br/>"
   end
   defp process_directive(%{"name" => "text", "text" => text}),
     do: text
@@ -82,7 +83,7 @@ defmodule Cog.Chat.HipChat.TemplateProcessor do
       nil ->
         acc
       footer ->
-        ["<br/>#{footer}<br/>"|acc]
+        ["<br/>#{footer}"|acc]
     end
   end
   defp render_attachment("children", acc, attachment) do
@@ -99,9 +100,9 @@ defmodule Cog.Chat.HipChat.TemplateProcessor do
         acc
       fields ->
         rendered_fields = fields
-        |> Enum.map(fn(%{"title" => title, "value" => value}) -> "<strong>#{title}:</strong> #{value}<br/>" end)
+        |> Enum.map(fn(%{"title" => title, "value" => value}) -> "<strong>#{title}:</strong><br/>#{value}<br/><br/>" end)
         |> Enum.join
-        [rendered_fields <> "<br/>"|acc]
+        [rendered_fields|acc]
     end
   end
   defp render_attachment("pretext", acc, attachment) do
@@ -127,9 +128,9 @@ defmodule Cog.Chat.HipChat.TemplateProcessor do
       title ->
         case Map.get(attachment, "title_url") do
           nil ->
-            ["<strong>#{title}</strong><br/><br/>"|acc]
+            ["<strong>#{title}</strong><br/>"|acc]
           url ->
-            ["<a href=\"#{url}\">title</a><br/><br/>"|acc]
+            ["<strong><a href=\"#{url}\">title</a></strong><br/>"|acc]
         end
     end
   end
