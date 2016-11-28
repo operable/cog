@@ -94,12 +94,23 @@ config :cog, :max_alias_expansion, 5
 # ========================================================================
 # Logging
 
-log_opts = [metadata: [:module, :line], format: {Adz, :text}]
+common_metadata = [:module, :line]
+common_log_format = "$dateT$time $metadata[$level] $levelpad$message\n"
 
 config :logger,
-  backends: [:console, {LoggerFileBackend, :cog_log}],
-  console: log_opts,
-  cog_log: log_opts ++ [path: data_dir("cog.log")]
+  utc_log: true,
+  level: :info,
+  backends: [:console,
+             {LoggerFileBackend, :flywheel_log}]
+
+config :logger, :console,
+  metadata: common_metadata,
+  format: common_log_format
+
+config :logger, :cog_log,
+  metadata: common_metadata,
+  format: common_log_format,
+  path: data_dir("cog.log")
 
 if System.get_env("COG_SASL_LOG") != nil do
 config :logger,

@@ -5,7 +5,7 @@ defmodule Cog.Relay.Relays do
   defstruct [mq_conn: nil,
              tracker: Tracker.new]
 
-  use Adz
+  require Logger
   use GenServer
 
   alias Carrier.Messaging

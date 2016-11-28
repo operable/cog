@@ -5,7 +5,7 @@ defmodule Cog.Chat.Http.Connector do
   alias Cog.Chat.Http.Provider
 
   use GenServer
-  use Adz
+  require Logger
 
   def start_link,
     do: GenServer.start_link(__MODULE__, [], name: __MODULE__)

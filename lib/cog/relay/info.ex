@@ -14,7 +14,7 @@ defmodule Cog.Relay.Info do
 
   defstruct [mq_conn: nil]
 
-  use Adz
+  require Logger
   use GenServer
 
   alias Carrier.Messaging

@@ -1,7 +1,7 @@
 use Mix.Config
 import Cog.Config.Helpers
 
-config :logger, :console,
+config :logger,
   level: :debug
 
 config :lager, :handlers,

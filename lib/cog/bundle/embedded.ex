@@ -4,7 +4,7 @@ defmodule Cog.Bundle.Embedded do
   """
 
   use Supervisor
-  use Adz
+  require Logger
 
   alias Cog.Bundle.Config
   alias Cog.Repository
