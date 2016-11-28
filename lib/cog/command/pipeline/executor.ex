@@ -577,13 +577,18 @@ defmodule Cog.Command.Pipeline.Executor do
     pipeline_text = state.request.text
     error_message = ErrorResponse.render(error)
 
-    {planning_failure, execution_failure} = case state do
-      %{current_plan: %Plan{invocation_text: planning_failure}} ->
-        {to_string(planning_failure), false}
-      %{invocations: [%Ast.Invocation{} = execution_failure|_]} ->
-        {false, to_string(execution_failure)}
+    planning_failure = case state do
+      %{invocations: [%Ast.Invocation{} = planning_failure|_]} ->
+        to_string(planning_failure)
       _ ->
-        {false, false}
+        ""
+    end
+
+    execution_failure = case state do
+      %{current_plan: %Plan{invocation_text: execution_failure}} ->
+        to_string(execution_failure)
+      _ ->
+        ""
     end
 
     %{"id" => id,
