@@ -1,23 +1,29 @@
-~attachment title="Command Error" color="#ff3333" Caller=$initiator Pipeline=$pipeline_text "Pipeline ID"=$id Started=$started~
-~if cond=$planning_failure ~
-The pipeline failed planning the invocation:
-~br~
-```
-~$planning_failure~
-```
-~end~
 ~if cond=$execution_failure~
+~attachment title="Command Error" color="#ff3333"~
 The pipeline failed executing the command:
-~br~
+
 ```
 ~$execution_failure~
 ```
 ~end~
-~br~
-~br~
-The specific error was:
-~br~
+~end~
+
+~if cond=$planning_failure~
+~attachment title="Pipeline Error" color="#ff3333"~
+The pipeline failed planning the invocation:
+
+```
+~$planning_failure~
+```
+~end~
+~end~
+
+~attachment title="Error Message" color="#ff3333"~
+
 ```
 ~$error_message~
 ```
+~end~
+
+~attachment color="#ff3333" Caller=$initiator Pipeline=$pipeline_text "Pipeline ID"=$id Started=$started~
 ~end~
