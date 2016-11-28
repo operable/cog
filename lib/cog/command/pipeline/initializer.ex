@@ -17,7 +17,7 @@ defmodule Cog.Command.Pipeline.Initializer do
   alias Cog.Repository.ChatHandles
   alias Cog.Passwords
 
-  defstruct mq_conn: nil, history: %{}, history_token: ""
+  defstruct mq_conn: nil, history: %{}, previous_command_token: ""
 
   use GenServer
 
@@ -25,11 +25,11 @@ defmodule Cog.Command.Pipeline.Initializer do
     do: GenServer.start_link(__MODULE__, [], name: __MODULE__)
 
   def init(_) do
-    cp = Application.get_env(:cog, :command_prefix)
+    previous_command_token = Application.get_env(:cog, :previous_command_token)
     {:ok, conn} = Connection.connect()
     Connection.subscribe(conn, "/bot/commands")
     Logger.info("Ready.")
-    {:ok, %__MODULE__{mq_conn: conn, history_token: "#{cp}#{cp}"}}
+    {:ok, %__MODULE__{mq_conn: conn, previous_command_token: previous_command_token}}
   end
 
   def handle_info({:publish, "/bot/commands", message}, state) do
@@ -61,7 +61,7 @@ defmodule Cog.Command.Pipeline.Initializer do
   defp check_history(payload, state) do
     uid = payload.sender.id
     text = String.strip(payload.text)
-    if text == state.history_token do
+    if text == state.previous_command_token do
       retrieve_last(uid, payload, state)
     else
       {true, payload, put_in_history(uid, text, state)}
