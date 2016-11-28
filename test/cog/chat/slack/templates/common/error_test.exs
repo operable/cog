@@ -29,8 +29,6 @@ defmodule Cog.Chat.Slack.Templates.Common.ErrorTest do
     directives = directives_for_template(:common, "error", data)
     {"", [rendered]} = Cog.Chat.Slack.TemplateProcessor.render(directives)
 
-    IO.inspect rendered
-
     expected = "```bad stuff happened```"
     assert ^expected = Map.get(rendered, "text")
   end
