@@ -7,10 +7,10 @@ defmodule Cog.TemplateCase do
 
   using do
     quote do
-      # Extract the adapter name from the module. We can then set the @moduletag
-      # to 'template: <adapter>' so we can more easily target adapter specific
+      # Extract the processor name from the module. We can then set the @moduletag
+      # to 'template: <processor>' so we can more easily target processor specific
       # template tests.
-      adapter =
+      processor =
         Module.split(__MODULE__)
         |> Enum.map(&String.downcase/1)
         |> Enum.reduce_while(nil, fn
@@ -20,7 +20,7 @@ defmodule Cog.TemplateCase do
         end)
 
       import unquote(__MODULE__)
-      @moduletag templates: adapter
+      @moduletag templates: processor
     end
   end
 
