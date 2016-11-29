@@ -19,11 +19,13 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.TriggerListTest do
                             "timeout_sec" => 30,
                             "invocation_url" => "https://cog.mycompany.com/invoke_other_stuff"}]}
     expected = """
-    <table>
-    <th><td>ID</td><td>Name</td><td>Description</td><td>Enabled?</td><td>Pipeline</td><td>As User</td><td>Timeout</td><td>Invocation URL</td></th>
-    <tr><td>abc123</td><td>test_trigger</td><td>Tests things!</td><td>true</td><td>echo 'Something just happened'</td><td>bobby_tables</td><td>30</td><td>https://cog.mycompany.com/invoke_stuff</td></tr>
-    <tr><td>abc456</td><td>test_trigger_2</td><td>Tests more things!</td><td>false</td><td>echo 'Something else just happened'</td><td>bobby_tables</td><td>30</td><td>https://cog.mycompany.com/invoke_other_stuff</td></tr>
-    </table>
+    <pre>+--------+----------------+--------------------+----------+-------------------------------------+--------------+---------+----------------------------------------------+
+    | ID     | Name           | Description        | Enabled? | Pipeline                            | As User      | Timeout | Invocation URL                               |
+    +--------+----------------+--------------------+----------+-------------------------------------+--------------+---------+----------------------------------------------+
+    | abc123 | test_trigger   | Tests things!      | true     | echo 'Something just happened'      | bobby_tables | 30      | https://cog.mycompany.com/invoke_stuff       |
+    | abc456 | test_trigger_2 | Tests more things! | false    | echo 'Something else just happened' | bobby_tables | 30      | https://cog.mycompany.com/invoke_other_stuff |
+    +--------+----------------+--------------------+----------+-------------------------------------+--------------+---------+----------------------------------------------+
+    </pre>\
     """
 
     assert_rendered_template(:hipchat, :embedded, "trigger-list", data, expected)
@@ -45,11 +47,13 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.TriggerListTest do
                             "timeout_sec" => 30,
                             "invocation_url" => "https://cog.mycompany.com/invoke_other_stuff"}]}
     expected = """
-    <table>
-    <th><td>ID</td><td>Name</td><td>Description</td><td>Enabled?</td><td>Pipeline</td><td>As User</td><td>Timeout</td><td>Invocation URL</td></th>
-    <tr><td>abc123</td><td>test_trigger</td><td>Tests things!</td><td>true</td><td>echo 'Something just happened'</td><td></td><td>30</td><td>https://cog.mycompany.com/invoke_stuff</td></tr>
-    <tr><td>abc456</td><td>test_trigger_2</td><td></td><td>false</td><td>echo 'Something else just happened'</td><td>bobby_tables</td><td>30</td><td>https://cog.mycompany.com/invoke_other_stuff</td></tr>
-    </table>
+    <pre>+--------+----------------+---------------+----------+-------------------------------------+--------------+---------+----------------------------------------------+
+    | ID     | Name           | Description   | Enabled? | Pipeline                            | As User      | Timeout | Invocation URL                               |
+    +--------+----------------+---------------+----------+-------------------------------------+--------------+---------+----------------------------------------------+
+    | abc123 | test_trigger   | Tests things! | true     | echo 'Something just happened'      |              | 30      | https://cog.mycompany.com/invoke_stuff       |
+    | abc456 | test_trigger_2 |               | false    | echo 'Something else just happened' | bobby_tables | 30      | https://cog.mycompany.com/invoke_other_stuff |
+    +--------+----------------+---------------+----------+-------------------------------------+--------------+---------+----------------------------------------------+
+    </pre>\
     """
 
     assert_rendered_template(:hipchat, :embedded, "trigger-list", data, expected)

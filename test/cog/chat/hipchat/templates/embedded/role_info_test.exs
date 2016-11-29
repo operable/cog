@@ -28,12 +28,14 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.RoleInfoTest do
                           ]}
 
     expected = """
-    <table>
-    <th><td>Name</td><td>ID</td><td>Permissions</td></th>
-    <tr><td>foo</td><td>123</td><td>site:foo</td></tr>
-    <tr><td>bar</td><td>456</td><td>site:foo, operable:blah</td></tr>
-    <tr><td>baz</td><td>789</td><td>site:foo</td></tr>
-    </table>
+    <pre>+------+-----+-------------------------+
+    | Name | ID  | Permissions             |
+    +------+-----+-------------------------+
+    | foo  | 123 | site:foo                |
+    | bar  | 456 | site:foo, operable:blah |
+    | baz  | 789 | site:foo                |
+    +------+-----+-------------------------+
+    </pre>\
     """
 
     assert_rendered_template(:hipchat, :embedded, "role-info", data, expected)

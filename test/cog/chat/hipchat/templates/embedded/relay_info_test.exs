@@ -51,12 +51,14 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.RelayInfoTest do
                              "relay_groups" => [%{"name" => "prod"}]}]}
 
     expected = """
-    <table>
-    <th><td>Name</td><td>Status</td><td>ID</td><td>Created</td><td>Relay Groups</td></th>
-    <tr><td>relay_one</td><td>enabled</td><td>123</td><td>yesterday</td><td></td></tr>
-    <tr><td>relay_two</td><td>disabled</td><td>456</td><td>3 days from now</td><td>prod, preprod, dev</td></tr>
-    <tr><td>relay_three</td><td>enabled</td><td>789</td><td>the beginning of time itself</td><td>prod</td></tr>
-    </table>
+    <pre>+-------------+----------+-----+------------------------------+--------------------+
+    | Name        | Status   | ID  | Created                      | Relay Groups       |
+    +-------------+----------+-----+------------------------------+--------------------+
+    | relay_one   | enabled  | 123 | yesterday                    |                    |
+    | relay_two   | disabled | 456 | 3 days from now              | prod, preprod, dev |
+    | relay_three | enabled  | 789 | the beginning of time itself | prod               |
+    +-------------+----------+-----+------------------------------+--------------------+
+    </pre>\
     """
 
     assert_rendered_template(:hipchat, :embedded, "relay-info", data, expected)
@@ -77,12 +79,14 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.RelayInfoTest do
                              "status" => "enabled"}]}
 
     expected = """
-    <table>
-    <th><td>Name</td><td>Status</td><td>ID</td><td>Created</td></th>
-    <tr><td>relay_one</td><td>enabled</td><td>123</td><td>yesterday</td></tr>
-    <tr><td>relay_two</td><td>disabled</td><td>456</td><td>3 days from now</td></tr>
-    <tr><td>relay_three</td><td>enabled</td><td>789</td><td>the beginning of time itself</td></tr>
-    </table>
+    <pre>+-------------+----------+-----+------------------------------+
+    | Name        | Status   | ID  | Created                      |
+    +-------------+----------+-----+------------------------------+
+    | relay_one   | enabled  | 123 | yesterday                    |
+    | relay_two   | disabled | 456 | 3 days from now              |
+    | relay_three | enabled  | 789 | the beginning of time itself |
+    +-------------+----------+-----+------------------------------+
+    </pre>\
     """
 
     assert_rendered_template(:hipchat, :embedded, "relay-info", data, expected)

@@ -15,12 +15,14 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.RelayListTest do
                              "relay_groups" => [%{"name" => "prod"}]}]}
 
     expected = """
-    <table>
-    <th><td>Name</td><td>Status</td><td>Relay Groups</td></th>
-    <tr><td>relay_one</td><td>enabled</td><td></td></tr>
-    <tr><td>relay_two</td><td>disabled</td><td>prod, preprod, dev</td></tr>
-    <tr><td>relay_three</td><td>enabled</td><td>prod</td></tr>
-    </table>
+    <pre>+-------------+----------+--------------------+
+    | Name        | Status   | Relay Groups       |
+    +-------------+----------+--------------------+
+    | relay_one   | enabled  |                    |
+    | relay_two   | disabled | prod, preprod, dev |
+    | relay_three | enabled  | prod               |
+    +-------------+----------+--------------------+
+    </pre>\
     """
 
     assert_rendered_template(:hipchat, :embedded, "relay-list", data, expected)
@@ -35,12 +37,14 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.RelayListTest do
                              "status" => "enabled"}]}
 
     expected = """
-    <table>
-    <th><td>Name</td><td>Status</td></th>
-    <tr><td>relay_one</td><td>enabled</td></tr>
-    <tr><td>relay_two</td><td>disabled</td></tr>
-    <tr><td>relay_three</td><td>enabled</td></tr>
-    </table>
+    <pre>+-------------+----------+
+    | Name        | Status   |
+    +-------------+----------+
+    | relay_one   | enabled  |
+    | relay_two   | disabled |
+    | relay_three | enabled  |
+    +-------------+----------+
+    </pre>\
     """
 
     assert_rendered_template(:hipchat, :embedded, "relay-list", data, expected)

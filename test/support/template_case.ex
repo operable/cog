@@ -7,8 +7,20 @@ defmodule Cog.TemplateCase do
 
   using do
     quote do
+      # Extract the adapter name from the module. We can then set the @moduletag
+      # to 'template: <adapter>' so we can more easily target adapter specific
+      # template tests.
+      adapter =
+        Module.split(__MODULE__)
+        |> Enum.map(&String.downcase/1)
+        |> Enum.reduce_while(nil, fn
+                               ("hipchat", nil) -> {:halt, :hipchat}
+                               ("slack", nil) -> {:halt, :slack}
+                               (_, nil) -> {:cont, nil}
+        end)
+
       import unquote(__MODULE__)
-      @moduletag :template
+      @moduletag templates: adapter
     end
   end
 

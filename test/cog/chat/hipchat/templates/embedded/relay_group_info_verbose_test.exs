@@ -38,12 +38,14 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.RelayGroupInfoVerboseTest do
                              "bundles" => []}
                           ]}
     expected = """
-    <table>
-    <th><td>Name</td><td>Relays</td><td>Bundles</td><td>Created At</td></th>
-    <tr><td>foo</td><td>my_relay, my_other_relay</td><td>foo, bar, baz</td><td>some point in the past</td></tr>
-    <tr><td>bar</td><td></td><td>foo, bar, baz</td><td>long long ago in a galaxy far away</td></tr>
-    <tr><td>baz</td><td>my_relay, my_other_relay</td><td></td><td>right... NOW</td></tr>
-    </table>
+    <pre>+------+--------------------------+---------------+------------------------------------+
+    | Name | Relays                   | Bundles       | Created At                         |
+    +------+--------------------------+---------------+------------------------------------+
+    | foo  | my_relay, my_other_relay | foo, bar, baz | some point in the past             |
+    | bar  |                          | foo, bar, baz | long long ago in a galaxy far away |
+    | baz  | my_relay, my_other_relay |               | right... NOW                       |
+    +------+--------------------------+---------------+------------------------------------+
+    </pre>\
     """
 
     assert_rendered_template(:hipchat, :embedded, "relay-group-info-verbose", data, expected)

@@ -7,12 +7,14 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.UserGroupListTest do
                            %{"name" => "baz"}]}
 
     expected = """
-    <table>
-    <th><td>Name</td></th>
-    <tr><td>foo</td></tr>
-    <tr><td>bar</td></tr>
-    <tr><td>baz</td></tr>
-    </table>
+    <pre>+------+
+    | Name |
+    +------+
+    | foo  |
+    | bar  |
+    | baz  |
+    +------+
+    </pre>\
     """
 
     assert_rendered_template(:hipchat, :embedded, "user-group-list", data, expected)
