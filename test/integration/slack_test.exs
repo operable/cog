@@ -4,22 +4,20 @@ defmodule Integration.SlackTest do
   @user "botci"
 
   @bot "deckard"
-
   @ci_room "ci_bot_testing"
+  @redirect_channel "ci_bot_redirect_tests"
+  @private_group "group_ci_bot_testing"
 
   setup do
-    # Wait random 1-3 second interval to avoid being throttled by Slack's API
-    interval = :rand.uniform(3) * 1000
-    :timer.sleep(interval)
-
     # The user always interacts with the bot via the `@user` account
     # (see above). Our helper functions set up a user with the same
     # Cog username and Slack handle
     user = user(@user)
     |> with_chat_handle_for("slack")
 
+    :timer.sleep(1000)
     {:ok, client} = ChatClient.new()
-    {:ok, %{user: user, client: client}}
+    {:ok, %{client: client, user: user}}
   end
 
   test "running the st-echo command", %{user: user, client: client} do
@@ -31,7 +29,7 @@ defmodule Integration.SlackTest do
   test "running the st-echo command without permission", %{client: client} do
     message = "@#{@bot}: operable:st-echo test"
     {:ok, reply} = ChatClient.chat_wait!(client, [room: @ci_room, message: message,
-                                                   reply_from: @bot])
+                                                  reply_from: @bot])
     expected = """
     ```Sorry, you aren't allowed to execute 'operable:st-echo test'.
     You will need at least one of the following permissions to run this command: 'operable:st-echo'.```
@@ -70,33 +68,30 @@ defmodule Integration.SlackTest do
 
   test "sending a message to a group", %{user: user, client: client} do
     user |> with_permission("operable:echo")
-    private_group = "group_ci_bot_testing"
 
     message = "@#{@bot}: operable:echo blah"
-    {:ok, reply} = ChatClient.chat_wait!(client, [room: private_group, message: message, reply_from: @bot])
+    {:ok, reply} = ChatClient.chat_wait!(client, [room: @private_group, message: message, reply_from: @bot])
     assert reply.text == "blah"
     assert reply.location.type == :group
-    assert reply.location.name == private_group
+    assert reply.location.name == @private_group
   end
 
   test "redirecting from a private channel", %{user: user, client: client} do
     user |> with_permission("operable:echo")
-    private_channel = "group_ci_bot_testing"
-    message = "@#{@bot}: operable:echo blah > ##{private_channel}"
+    message = "@#{@bot}: operable:echo blah > ##{@private_group}"
     {:ok, reply} = ChatClient.chat_wait!(client, [room: @ci_room, message: message, reply_from: @bot])
     assert reply.location.type == :group
-    assert reply.location.name == private_channel
+    assert reply.location.name == @private_group
     assert reply.text == "blah"
   end
 
   test "redirecting to a private channel", %{user: user, client: client} do
     user |> with_permission("operable:echo")
     time = "#{System.os_time()}"
-    private_channel = "group_ci_bot_testing"
-    message = "@#{@bot}: operable:echo #{time} > ##{private_channel}"
+    message = "@#{@bot}: operable:echo #{time} > ##{@private_group}"
     {:ok, reply} = ChatClient.chat_wait!(client, [room: @ci_room, message: message, reply_from: @bot])
     assert reply.location.type == :group
-    assert reply.location.name == private_channel
+    assert reply.location.name == @private_group
     assert reply.text == time
   end
 
@@ -130,11 +125,10 @@ defmodule Integration.SlackTest do
 
   test "redirecting to another channel", %{user: user, client: client} do
     user |> with_permission("operable:echo")
-    redirect_channel = "ci_bot_redirect_tests"
-    message = "@#{@bot}: operable:echo blah > ##{redirect_channel}"
+    message = "@#{@bot}: operable:echo blah > ##{@redirect_channel}"
     {:ok, reply} = ChatClient.chat_wait!(client, [room: @ci_room, message: message, reply_from: @bot])
     assert reply.location.type == :channel
-    assert reply.location.name == redirect_channel
+    assert reply.location.name == @redirect_channel
     assert reply.text == "blah"
   end
 
