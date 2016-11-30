@@ -57,6 +57,8 @@ defmodule Cog.Chat.Slack.TemplateProcessor do
     do: "`#{text}`"
   defp process_directive(%{"name" => "fixed_width_block", "text" => text}, _),
     do: "```#{text}```\n"
+  defp process_directive(%{"name" => "link", "text" => text, "url" => url}, _),
+    do: "<#{url}|#{text}>"
 
   # Tables _have_ to have a header
   defp process_directive(%{"name" => "table",
