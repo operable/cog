@@ -21,6 +21,7 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.UserInfoTest do
     assert_rendered_template(:hipchat, :embedded, "user-info", data, expected)
   end
 
+  @tag :wip
   test "user-info template with multiple inputs" do
     data = %{"results" => [%{"username" => "cog",
                              "first_name" => "Cog",
@@ -43,11 +44,13 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.UserInfoTest do
                                                   "handle" => "SprocketMcSprocket"}]}
                           ]}
     expected = """
-    <table>
-    <th><td>Username</td><td>First Name</td><td>Last Name</td><td>Email</td><td>Groups</td><td>Handles</td></th>
-    <tr><td>cog</td><td>Cog</td><td>McCog</td><td>cog@example.com</td><td>dev, ops</td><td>the_cog (HipChat)</td></tr>
-    <tr><td>sprocket</td><td>Sprocket</td><td>McSprocket</td><td>sprocket@example.com</td><td>sec, test</td><td>sprocket (HipChat), SprocketMcSprocket (HipChat)</td></tr>
-    </table>
+    <pre>+----------+------------+------------+----------------------+-----------+--------------------------------------------------+
+    | Username | First Name | Last Name  | Email                | Groups    | Handles                                          |
+    +----------+------------+------------+----------------------+-----------+--------------------------------------------------+
+    | cog      | Cog        | McCog      | cog@example.com      | dev, ops  | the_cog (HipChat)                                |
+    | sprocket | Sprocket   | McSprocket | sprocket@example.com | sec, test | sprocket (HipChat), SprocketMcSprocket (HipChat) |
+    +----------+------------+------------+----------------------+-----------+--------------------------------------------------+
+    </pre>\
     """
 
     assert_rendered_template(:hipchat, :embedded, "user-info", data, expected)

@@ -15,12 +15,14 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.UserListTest do
                              "last_name" => "Ops",
                              "email_address" => "chetops@example.com"}]}
     expected = """
-    <table>
-    <th><td>Username</td><td>First Name</td><td>Last Name</td><td>Email</td></th>
-    <tr><td>cog</td><td>Cog</td><td>McCog</td><td>cog@example.com</td></tr>
-    <tr><td>sprocket</td><td>Sprocket</td><td>McCog</td><td>sprocket@example.com</td></tr>
-    <tr><td>chetops</td><td>Chet</td><td>Ops</td><td>chetops@example.com</td></tr>
-    </table>
+    <pre>+----------+------------+-----------+----------------------+
+    | Username | First Name | Last Name | Email                |
+    +----------+------------+-----------+----------------------+
+    | cog      | Cog        | McCog     | cog@example.com      |
+    | sprocket | Sprocket   | McCog     | sprocket@example.com |
+    | chetops  | Chet       | Ops       | chetops@example.com  |
+    +----------+------------+-----------+----------------------+
+    </pre>\
     """
 
     assert_rendered_template(:hipchat, :embedded, "user-list", data, expected)
@@ -36,12 +38,14 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.UserListTest do
                            %{"username" => "chetops",
                              "email_address" => "chetops@example.com"}]}
     expected = """
-    <table>
-    <th><td>Username</td><td>First Name</td><td>Last Name</td><td>Email</td></th>
-    <tr><td>cog</td><td>Cog</td><td></td><td>cog@example.com</td></tr>
-    <tr><td>sprocket</td><td></td><td>McCog</td><td>sprocket@example.com</td></tr>
-    <tr><td>chetops</td><td></td><td></td><td>chetops@example.com</td></tr>
-    </table>
+    <pre>+----------+------------+-----------+----------------------+
+    | Username | First Name | Last Name | Email                |
+    +----------+------------+-----------+----------------------+
+    | cog      | Cog        |           | cog@example.com      |
+    | sprocket |            | McCog     | sprocket@example.com |
+    | chetops  |            |           | chetops@example.com  |
+    +----------+------------+-----------+----------------------+
+    </pre>\
     """
 
     assert_rendered_template(:hipchat, :embedded, "user-list", data, expected)

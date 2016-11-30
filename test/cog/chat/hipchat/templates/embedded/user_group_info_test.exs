@@ -40,12 +40,14 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.UserGroupInfoTest do
                                            %{"username" => "louise"}]}]}
 
     expected = """
-    <table>
-    <th><td>Name</td><td>ID</td><td>Roles</td><td>Members</td></th>
-    <tr><td>foo</td><td>123</td><td>heroku-admin, aws-admin</td><td>larry, moe, curly</td></tr>
-    <tr><td>bar</td><td>456</td><td>bar-admin</td><td>sterling, lana, pam</td></tr>
-    <tr><td>baz</td><td>789</td><td>baz-admin</td><td>tina, gene, louise</td></tr>
-    </table>
+    <pre>+------+-----+-------------------------+---------------------+
+    | Name | ID  | Roles                   | Members             |
+    +------+-----+-------------------------+---------------------+
+    | foo  | 123 | heroku-admin, aws-admin | larry, moe, curly   |
+    | bar  | 456 | bar-admin               | sterling, lana, pam |
+    | baz  | 789 | baz-admin               | tina, gene, louise  |
+    +------+-----+-------------------------+---------------------+
+    </pre>\
     """
 
     assert_rendered_template(:hipchat, :embedded, "user-group-info", data, expected)

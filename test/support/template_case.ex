@@ -7,8 +7,20 @@ defmodule Cog.TemplateCase do
 
   using do
     quote do
+      # Extract the processor name from the module. We can then set the @moduletag
+      # to 'template: <processor>' so we can more easily target processor specific
+      # template tests.
+      processor =
+        Module.split(__MODULE__)
+        |> Enum.map(&String.downcase/1)
+        |> Enum.reduce_while(nil, fn
+                               ("hipchat", nil) -> {:halt, :hipchat}
+                               ("slack", nil) -> {:halt, :slack}
+                               (_, nil) -> {:cont, nil}
+        end)
+
       import unquote(__MODULE__)
-      @moduletag :template
+      @moduletag templates: processor
     end
   end
 

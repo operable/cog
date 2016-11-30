@@ -12,13 +12,15 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.BundleListTest do
                              "enabled_version" => %{"version" => "4.0.0"}}]}
 
     expected = """
-    <table>
-    <th><td>Name</td><td>Enabled Version</td></th>
-    <tr><td>test_bundle1</td><td>1.0.0</td></tr>
-    <tr><td>test_bundle2</td><td>2.0.0</td></tr>
-    <tr><td>test_bundle3</td><td>3.0.0</td></tr>
-    <tr><td>test_bundle4</td><td>4.0.0</td></tr>
-    </table>
+    <pre>+--------------+-----------------+
+    | Name         | Enabled Version |
+    +--------------+-----------------+
+    | test_bundle1 | 1.0.0           |
+    | test_bundle2 | 2.0.0           |
+    | test_bundle3 | 3.0.0           |
+    | test_bundle4 | 4.0.0           |
+    +--------------+-----------------+
+    </pre>\
     """
 
     assert_rendered_template(:hipchat, :embedded, "bundle-list", data, expected)
@@ -31,11 +33,13 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.BundleListTest do
 
 
     expected = """
-    <table>
-    <th><td>Name</td><td>Enabled Version</td></th>
-    <tr><td>test_bundle1</td><td></td></tr>
-    <tr><td>test_bundle2</td><td>2.0.0</td></tr>
-    </table>
+    <pre>+--------------+-----------------+
+    | Name         | Enabled Version |
+    +--------------+-----------------+
+    | test_bundle1 |                 |
+    | test_bundle2 | 2.0.0           |
+    +--------------+-----------------+
+    </pre>\
     """
 
     assert_rendered_template(:hipchat, :embedded, "bundle-list", data, expected)

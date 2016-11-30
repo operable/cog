@@ -17,12 +17,14 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.PermissionInfoTest do
                            %{"id" => "789", "bundle" => "baz_bundle", "name" => "baz"}]}
 
     expected = """
-    <table>
-    <th><td>Bundle</td><td>Name</td><td>ID</td></th>
-    <tr><td>foo_bundle</td><td>foo</td><td>123</td></tr>
-    <tr><td>bar_bundle</td><td>bar</td><td>456</td></tr>
-    <tr><td>baz_bundle</td><td>baz</td><td>789</td></tr>
-    </table>
+    <pre>+------------+------+-----+
+    | Bundle     | Name | ID  |
+    +------------+------+-----+
+    | foo_bundle | foo  | 123 |
+    | bar_bundle | bar  | 456 |
+    | baz_bundle | baz  | 789 |
+    +------------+------+-----+
+    </pre>\
     """
 
     assert_rendered_template(:hipchat, :embedded, "permission-info", data, expected)
