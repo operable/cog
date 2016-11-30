@@ -62,7 +62,7 @@ defmodule Cog.Mixfile do
       ########################################################################
       {:conduit, github: "operable/conduit"},
       {:fumanchu, github: "operable/fumanchu"},
-      {:greenbar, github: "operable/greenbar"},
+      {:greenbar, github: "operable/greenbar", branch: "kevsmith/paragraph-children"},
       {:probe, github: "operable/probe"},
       {:spanner, github: "operable/spanner"},
 
