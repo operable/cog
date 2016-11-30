@@ -12,6 +12,16 @@ __Description__
 ~br~
 ~end~
 
+~if cond=$bundle.commands not_empty?~
+__Commands__
+~br~
+~each var=$bundle.commands as=command~
+* `~$command.name~`~if cond=$command.description~ - ~$command.description~~end~
+
+~end~
+~br~
+~end~
+
 ~if cond=$bundle.config~
 __Configuration__
 ~br~
@@ -22,17 +32,7 @@ __Configuration__
 ~end~
 
 ~each var=$bundle.config.env as=env_var~
-* ~$env_var.var~~if cond=$env_var.description~ - ~$env_var.description~~end~
-
-~end~
-~br~
-~end~
-
-~if cond=$bundle.commands not_empty?~
-__Commands__
-~br~
-~each var=$bundle.commands as=command~
-* ~$command.name~~if cond=$command.description~ - ~$command.description~~end~
+* `~$env_var.var~`~if cond=$env_var.description~ - ~$env_var.description~~end~
 
 ~end~
 ~br~

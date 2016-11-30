@@ -30,7 +30,7 @@ __Synopsis__
 __Required Options__
 ~br~
 ~each var=$command.required_options as=option~
-* ~$option.flag~ ~if cond=$option.description~ - ~$option.description~ ~end~
+* `~$option.flag~` ~if cond=$option.description~ - ~$option.description~ ~end~
 
 ~end~
 ~br~
@@ -40,7 +40,7 @@ __Required Options__
 __Options__
 ~br~
 ~each var=$command.options as=option~
-* ~$option.flag~ ~if cond=$option.description~ - ~$option.description~ ~end~
+* `~$option.flag~` ~if cond=$option.description~ - ~$option.description~ ~end~
 
 ~end~
 ~br~

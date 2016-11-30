@@ -20,11 +20,11 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.HelpBundleTest do
       "test-bundle - Does a thing<br/><br/>" <>
       "<strong>Description</strong><br/><br/>" <>
       "No really, it does a thing<br/><br/>" <>
+      "<strong>Commands</strong><br/><br/>" <>
+      "<ul><li><code>test-command</code> - does just one thing</li></ul><br/>" <>
       "<strong>Configuration</strong><br/><br/>" <>
       "Some notes about config<br/><br/>" <>
-      "<ul><li>VAR1 - description1</li><li>VAR2</li></ul><br/>" <>
-      "<strong>Commands</strong><br/><br/>" <>
-      "<ul><li>test-command - does just one thing</li></ul><br/>" <>
+      "<ul><li><code>VAR1</code> - description1</li><li><code>VAR2</code></li></ul><br/>" <>
       "<strong>Author</strong><br/><br/>" <>
       "vanstee<br/><br/>" <>
       "<strong>Homepage</strong><br/><br/>" <>
@@ -48,7 +48,7 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.HelpBundleTest do
       "<strong>Description</strong><br/><br/>" <>
       "No really, it does a thing<br/><br/>" <>
       "<strong>Commands</strong><br/><br/>" <>
-      "<ul><li>test-command - does just one thing</li></ul><br/>" <>
+      "<ul><li><code>test-command</code> - does just one thing</li></ul><br/>" <>
       "<strong>Author</strong><br/><br/>" <>
       "vanstee<br/><br/>" <>
       "<strong>Homepage</strong><br/><br/>" <>
