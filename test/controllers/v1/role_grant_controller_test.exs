@@ -104,7 +104,7 @@ defmodule Cog.V1.RoleGrantController.Test do
     conn = api_request(requestor, :post, "/v1/groups/#{group.id}/roles",
                        body: %{"roles" => %{"grant" => [existing.name,
                                                         "does_not_exist"]}})
-    assert json_response(conn, 422) == %{"errors" => %{"not_found" => %{"roles" => ["does_not_exist"]}}}
+    assert json_response(conn, 422) == %{"error" => "Cannot find one or more specified roles: does_not_exist"}
 
     refute_role_is_granted(group, existing)
   end
@@ -200,7 +200,7 @@ defmodule Cog.V1.RoleGrantController.Test do
     conn = api_request(requestor, :post, "/v1/groups/#{group.id}/roles",
                        body: %{"roles" => %{"revoke" => [existing.name,
                                                          "does_not_exist"]}})
-    assert json_response(conn, 422) == %{"errors" => %{"not_found" => %{"roles" => ["does_not_exist"]}}}
+    assert json_response(conn, 422) == %{"error" => "Cannot find one or more specified roles: does_not_exist"}
 
     # Still got it
     assert_role_is_granted(group, existing)
@@ -243,9 +243,8 @@ defmodule Cog.V1.RoleGrantController.Test do
     conn = api_request(requestor, :post, "/v1/groups/#{admin_group.id}/roles",
                        body: %{"roles" => %{"revoke" => [admin_role.name]}})
 
-    # TODO: Ideally, I'd like an error here instead... this'll change
-    # when we get to https://github.com/operable/cog/issues/825
-    assert %{"roles" => [%{"name" => unquote(Cog.Util.Misc.admin_role)}]} = json_response(conn, 200)
+    error_msg = "Cannot remove '#{unquote(Cog.Util.Misc.admin_role)}' role from '#{unquote(Cog.Util.Misc.admin_group)}' group"
+    assert %{"error" => ^error_msg} = json_response(conn, 422)
 
     assert_role_is_granted(admin_group, admin_role)
   end
