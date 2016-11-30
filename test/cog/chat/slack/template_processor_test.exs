@@ -111,4 +111,15 @@ defmodule Cog.Chat.Slack.TemplateProcessorTest do
 
     assert expected == rendered
   end
+
+  test "handles link directives" do
+    directives = [
+      %{"name" => "link", "text" => "a link", "url" => "http://www.example.com"}
+    ]
+
+    {rendered, _} = TemplateProcessor.render(directives)
+    expected = "<http://www.example.com|a link>"
+
+    assert expected == rendered
+  end
 end
