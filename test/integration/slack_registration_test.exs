@@ -26,7 +26,7 @@ defmodule Integration.SlackRegistrationTest do
                                                   message: message,
                                                   reply_from: @bot])
 
-    expected = "@#{@user}: I'm terribly sorry, but either I don't have a Cog account for you, or your Slack chat handle has not been registered. Currently, only registered users can interact with me.\n\nYou'll need to ask a Cog administrator to fix this situation and to register your Slack handle."
+    expected = "@#{@user}: I'm terribly sorry, but either I don't have a Cog account for you, or your Slack chat handle has not been registered. Currently, only registered users can interact with me.\n\n\nYou'll need to ask a Cog administrator to fix this situation and to register your Slack handle."
 
     assert reply.text == expected
   end
@@ -96,7 +96,7 @@ defmodule Integration.SlackRegistrationTest do
                                                   reply_from: @bot,
                                                   timeout: 10_000])
 
-    expected = "@#{@user}: Unfortunately I was unable to automatically create a Cog account for your Slack chat handle. Only users with Cog accounts can interact with me.\n\nYou'll need to ask a Cog administrator to investigate the situation and set up your account."
+    expected = "@#{@user}: Unfortunately I was unable to automatically create a Cog account for your Slack chat handle. Only users with Cog accounts can interact with me.\n\n\nYou'll need to ask a Cog administrator to investigate the situation and set up your account."
 
     assert reply.text == expected
   end

@@ -8,11 +8,17 @@ defmodule Cog.Chat.Slack.Templates.Embedded.HelpBundlesTest do
     expected = """
     *Enabled Bundles*
 
-    • operable
+
+       • operable
+
+
 
     *Disabled Bundles*
 
-    • test-bundle
+
+       • test-bundle
+
+
 
     To learn more about a specific bundle and the commands available within it, you can use \"operable:help <bundle>\".
     """ |> String.rstrip

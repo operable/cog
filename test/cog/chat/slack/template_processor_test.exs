@@ -71,6 +71,7 @@ defmodule Cog.Chat.Slack.TemplateProcessorTest do
     That was fun; now let's do bold: *BEHOLD! BOLD!*
     Fascinating. How about some fixed width text?  `BEEP BOOP... I AM A ROBOT... BEEP BOOP`
     ```I AM FROM THE FUTURE. BLEEP. BOOP.```
+
     Wow, good stuff. And now... AN ASCII TABLE!
 
     ```+--------------+-------------------------+
@@ -81,6 +82,8 @@ defmodule Cog.Chat.Slack.TemplateProcessorTest do
     | Neal Peart   | Drums, Percussion       |
     +--------------+-------------------------+
     ```
+
+
     How do you like them apples?
     """ |> String.trim
     assert expected == rendered
@@ -104,7 +107,7 @@ defmodule Cog.Chat.Slack.TemplateProcessorTest do
     ]
 
     {rendered, _} = TemplateProcessor.render(directives)
-    expected = "Important message: \nUnrecognized directive: wat\n"
+    expected = "Important message: \nUnrecognized directive: wat"
 
     assert expected == rendered
   end

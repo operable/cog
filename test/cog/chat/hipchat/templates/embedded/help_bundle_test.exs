@@ -17,16 +17,16 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.HelpBundleTest do
 
 
     expected = "<strong>Name</strong><br/><br/>" <>
-      "test-bundle - Does a thing<br/><br/>" <>
-      "<strong>Description</strong><br/><br/>" <>
-      "No really, it does a thing<br/><br/>" <>
-      "<strong>Commands</strong><br/><br/>" <>
-      "<ul><li><code>test-command</code> - does just one thing</li></ul><br/>" <>
+      "test-bundle - Does a thing<br/><br/><br/>" <>
+      "<strong>Description</strong><br/>" <>
+      "No really, it does a thing<br/><br/><br/>" <>
+      "<strong>Commands</strong><br/>" <>
+      "<ul><li><code>test-command</code> - does just one thing</li></ul><br/><br/>" <>
       "<strong>Configuration</strong><br/><br/>" <>
-      "Some notes about config<br/><br/>" <>
-      "<ul><li><code>VAR1</code> - description1</li><li><code>VAR2</code></li></ul><br/>" <>
+      "Some notes about config<br/>" <>
+      "<ul><li><code>VAR1</code> - description1</li><li><code>VAR2</code></li></ul><br/><br/>" <>
       "<strong>Author</strong><br/><br/>" <>
-      "vanstee<br/><br/>" <>
+      "vanstee<br/><br/><br/>" <>
       "<strong>Homepage</strong><br/><br/>" <>
       "test-bundle.com"
 
@@ -44,13 +44,13 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.HelpBundleTest do
 
 
     expected = "<strong>Name</strong><br/><br/>" <>
-      "test-bundle - Does a thing<br/><br/>" <>
-      "<strong>Description</strong><br/><br/>" <>
-      "No really, it does a thing<br/><br/>" <>
-      "<strong>Commands</strong><br/><br/>" <>
-      "<ul><li><code>test-command</code> - does just one thing</li></ul><br/>" <>
+      "test-bundle - Does a thing<br/><br/><br/>" <>
+      "<strong>Description</strong><br/>" <>
+      "No really, it does a thing<br/><br/><br/>" <>
+      "<strong>Commands</strong><br/>" <>
+      "<ul><li><code>test-command</code> - does just one thing</li></ul><br/><br/>" <>
       "<strong>Author</strong><br/><br/>" <>
-      "vanstee<br/><br/>" <>
+      "vanstee<br/><br/><br/>" <>
       "<strong>Homepage</strong><br/><br/>" <>
       "test-bundle.com"
 

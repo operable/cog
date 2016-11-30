@@ -31,8 +31,8 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.WhichTest do
                              "name" => "bar",
                              "pipeline" => "echo 'bar'"}]}
 
-    expected = "alias - site:foo -> <code>echo 'foo'</code><br/>" <>
-      "command - operable:alias<br/>" <>
+    expected = "alias - site:foo -> <code>echo 'foo'</code><br/><br/>" <>
+      "command - operable:alias<br/><br/>" <>
       "alias - user:bar -> <code>echo 'bar'</code>"
 
     assert_rendered_template(:hipchat, :embedded, "which", data, expected)

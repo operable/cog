@@ -9,15 +9,20 @@ defmodule Cog.Chat.Slack.Templates.Embedded.HelpCommandTest do
     expected = """
     *Name*
 
+
     test - Do a test thing
+
 
     *Synopsis*
 
+
     ```test --do-a-thing```
+
     *Author*
 
+
     vanstee
-    """
+    """ |> String.rstrip
 
     assert_rendered_template(:slack, :embedded, "help-command", data, expected)
   end

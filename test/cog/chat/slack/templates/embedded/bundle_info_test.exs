@@ -13,9 +13,11 @@ defmodule Cog.Chat.Slack.Templates.Embedded.BundleInfoTest do
     expected = """
     ID: aaaa-bbbb-cccc-dddd-eeee-ffff
     Name: my_bundle
+
     Versions: 0.0.1
     0.0.2
     0.0.3
+
     Enabled Version: 0.0.3
     Relay Groups: preprod
     prod

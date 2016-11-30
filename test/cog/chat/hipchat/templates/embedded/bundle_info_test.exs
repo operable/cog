@@ -11,10 +11,10 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.BundleInfoTest do
                              "relay_groups" => [%{"name" => "preprod"},
                                                 %{"name" => "prod"}]}]}
     expected = "ID: aaaa-bbbb-cccc-dddd-eeee-ffff<br/>" <>
-      "Name: my_bundle<br/>" <>
+      "Name: my_bundle<br/><br/>" <>
       "Versions: 0.0.1<br/>" <>
       "0.0.2<br/>" <>
-      "0.0.3<br/>" <>
+      "0.0.3<br/><br/>" <>
       "Enabled Version: 0.0.3<br/>" <>
       "Relay Groups: preprod<br/>" <>
       "prod"

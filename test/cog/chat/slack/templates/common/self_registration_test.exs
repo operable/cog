@@ -17,6 +17,7 @@ defmodule Cog.Chat.Slack.Templates.Common.SelfRegistrationTest do
     expected = """
     @mystery_user: Unfortunately I was unable to automatically create a Cog account for your Slack chat handle. Only users with Cog accounts can interact with me.
 
+
     You'll need to ask a Cog administrator to investigate the situation and set up your account.
     """ |> String.strip
     assert_rendered_template(:slack, :common, "self-registration-failed", data, expected)

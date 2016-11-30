@@ -21,24 +21,30 @@ defmodule Cog.Chat.Slack.Templates.Embedded.HelpBundleTest do
 
     test-bundle - Does a thing
 
-    *Description*
 
+    *Description*
     No really, it does a thing
+
 
     *Commands*
 
-    • `test-command` - does just one thing
+       • `test-command` - does just one thing
+
+
 
     *Configuration*
 
     Some notes about config
 
-    • `VAR1` - description1
-    • `VAR2`
+       • `VAR1` - description1
+       • `VAR2`
+
+
 
     *Author*
 
     vanstee
+
 
     *Homepage*
 
@@ -63,17 +69,21 @@ defmodule Cog.Chat.Slack.Templates.Embedded.HelpBundleTest do
 
     test-bundle - Does a thing
 
-    *Description*
 
+    *Description*
     No really, it does a thing
+
 
     *Commands*
 
-    • `test-command` - does just one thing
+       • `test-command` - does just one thing
+
+
 
     *Author*
 
     vanstee
+
 
     *Homepage*
 
