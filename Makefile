@@ -14,3 +14,18 @@ docker:
 	docker build --build-arg MIX_ENV=prod -t $(DOCKER_IMAGE) .
 
 .PHONY: docker
+
+test-prepare:
+	MIX_ENV=test mix ecto.migrate --no-deps-check
+
+test-unit: test-prepare
+	mix test --exclude=integration
+
+test-integration: test-prepare
+	mix test --only=integration:general
+
+test-slack: test-prepare
+	mix test --only=integration:slack
+
+test-hipchat: test-prepare
+	mix test --only=integration:hipchat
