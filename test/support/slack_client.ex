@@ -61,7 +61,7 @@ defmodule Cog.Test.Support.SlackClient do
 
   # Be a little more liberal with the timeouts to account for
   # potentially several Slack API calls.
-  @default_timeout 10_000
+  @default_timeout (@api_wait_interval * 4) + 2_000
 
   use Slack
 
