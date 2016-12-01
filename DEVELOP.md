@@ -27,21 +27,28 @@ the new go based version, (https://github.com/operable/go-relay)
 
 ## Testing
 
+Preliminary database setup:
+
+    $ MIX_ENV=test make reset-db
+
 Unit Tests:
 
-    $ mix test --exclude=integration
+    $ make test-unit
 
 Pipeline Integration Tests:
 
-    $ mix test --only=integration:general
+    $ make test-integration
 
 Slack Integration Tests
 
-    $ mix test --only=integration:slack
+    $ make test-slack
 
 Hipchat Integration Tests
 
-    $ mix test --only=integration:hipchat
+    $ make test-hipchat
+
+Slack and HipChat tests require credentials provided as environment variables. See the `SLACK_*` and `HIPCHAT_*` variables, respectively, in [The Cog Book](https://cog-book.operable.io/#_cog_server_configuration)
+
 
 HTTP requests in integration tests are recorded and stubbed out for future test
 runs. Recording new cassettes, json files of serialized requests and responses,
