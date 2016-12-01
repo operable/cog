@@ -32,8 +32,10 @@ defmodule Cog.Models.Relay do
 
   def allow_user_defined_id_on_insert(changeset) do
     case {Map.get(changeset.data, :id), get_field(changeset, :id)} do
-      {nil, _changed_id} ->
+      {nil, nil} ->
         changeset
+      {nil, user_defined_id} ->
+        put_change(changeset, :id, String.downcase(user_defined_id))
       {id, id} ->
         changeset
       _ ->

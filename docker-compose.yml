@@ -68,7 +68,6 @@ relay:
     - RELAY_DOCKER_CLEAN_INTERVAL=1m
     - RELAY_COG_HOST=cog
     - RELAY_DYNAMIC_CONFIG_ROOT=/tmp/bundle_configs
-    - RELAY_MANAGED_DYNAMIC_CONFIG=true
   links:
     - cog
   entrypoint: /usr/local/bin/relay
