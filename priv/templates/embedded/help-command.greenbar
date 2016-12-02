@@ -65,6 +65,22 @@ __Examples__
 ~br~
 ~end~
 
+~if cond=$command.output not_empty?~
+__Output__
+~br~
+~if cond=$command.output.description bound?~
+~$command.output.description~
+~br~
+~end~
+~if cond=$command.output.example bound?~
+Example:
+
+```
+~$command.output.example~```
+~end~
+~br~
+~end~
+
 ~if cond=$command.notes~
 __Notes__
 ~br~
