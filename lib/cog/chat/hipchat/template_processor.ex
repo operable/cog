@@ -7,6 +7,12 @@ defmodule Cog.Chat.HipChat.TemplateProcessor do
     render_directives(directives)
   end
 
+  defp render_directives(directives) do
+    directives
+    |> Enum.map_join(&process_directive/1) # Convert all Greenbar directives into their HipChat forms
+    |> String.replace(~r/<br\/>$/, "")
+  end
+
   defp process_directive(%{"name" => "attachment"}=attachment) do
     rendered_body = @attachment_fields
     |> Enum.reduce([], &(render_attachment(&1, &2, attachment)))
@@ -24,6 +30,9 @@ defmodule Cog.Chat.HipChat.TemplateProcessor do
     do: "<code>#{text}</code>"
   defp process_directive(%{"name" => "fixed_width_block", "text" => text}),
     do: "<pre>#{text}</pre>"
+  defp process_directive(%{"name" => "paragraph", "children" => children}) do
+      Enum.map_join(children, &process_directive/1) <> "<br/>"
+  end
 
   defp process_directive(%{"name" => "newline"}), do: "<br/>"
 
@@ -79,11 +88,6 @@ defmodule Cog.Chat.HipChat.TemplateProcessor do
   defp process_directive(%{"name" => name}=directive) do
     Logger.warn("Unrecognized directive; #{inspect directive}")
     "<br/>Unrecognized directive: #{name}<br/>"
-  end
-
-  defp render_directives(directives) do
-    directives
-    |> Enum.map_join(&process_directive/1) # Convert all Greenbar directives into their HipChat forms
   end
 
   defp render_attachment("footer", acc, attachment) do

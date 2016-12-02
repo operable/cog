@@ -10,6 +10,17 @@ defmodule Cog.Chat.Slack.TemplateProcessor do
     render_directives(directives)
   end
 
+  defp render_directives(directives) do
+    {text, attachments} = directives
+                          |> Enum.map(&process_directive/1) # Convert all Greenbar directives into their Slack forms
+                          |> List.flatten                   # Flatten nested lists into a single list
+                          |> consolidate_outputs({"", []})  # Separate message text and attachments into separate lists
+    attachments = Enum.map(attachments, &finalize_attachment/1) # Final attachment post-processing for Slack
+    text = String.replace(text, ~r/\n$/, "")
+    {text, Enum.reverse(attachments)}
+  end
+
+
   ########################################################################
 
   # Directive processing can sometimes require contextual information
@@ -117,15 +128,6 @@ defmodule Cog.Chat.Slack.TemplateProcessor do
   end
   defp consolidate_outputs([%{"name" => "attachment"}=attachment|t], {text, attachments}) do
     consolidate_outputs(t, {text, [attachment|attachments]})
-  end
-
-  defp render_directives(directives) do
-    {text, attachments} = directives
-                          |> Enum.map(&process_directive/1) # Convert all Greenbar directives into their Slack forms
-                          |> List.flatten                   # Flatten nested lists into a single list
-                          |> consolidate_outputs({"", []})  # Separate message text and attachments into separate lists
-    attachments = Enum.map(attachments, &finalize_attachment/1) # Final attachment post-processing for Slack
-    {text, Enum.reverse(attachments)}
   end
 
   defp finalize_attachment(attachment) do
