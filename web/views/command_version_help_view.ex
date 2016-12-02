@@ -13,6 +13,7 @@ defmodule Cog.CommandVersionHelpView do
       subcommands: render_subcommands(command_version),
       examples: command_version.examples,
       notes: command_version.notes,
+      output: command_version.output,
       bundle: %{
         author: command_version.bundle_version.author,
         homepage: command_version.bundle_version.homepage
