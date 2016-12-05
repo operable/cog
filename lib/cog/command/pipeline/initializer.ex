@@ -106,7 +106,7 @@ defmodule Cog.Command.Pipeline.Initializer do
                   error ->
                     Logger.error("Failed to auto-register user '#{sender.handle}': #{inspect error}")
                     self_registration_failed(request, state)
-                    error
+                    :error
                 end
               error ->
                 Logger.error("Failed to auto-register user '#{sender.handle}': #{inspect error}")

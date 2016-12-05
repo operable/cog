@@ -107,6 +107,7 @@ defmodule Cog.Mixfile do
       # The Slack library depends on this Github repo, and not the
       # version in Hex. Thus, we need to declare it manually :(
       {:websocket_client, github: "jeremyong/websocket_client"},
+      {:eper, "0.94.0"},
 
       # Test and Development
       ########################################################################
