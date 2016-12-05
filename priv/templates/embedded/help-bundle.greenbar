@@ -3,6 +3,7 @@
 __Name__
 
 ~$bundle.name~~if cond=$bundle.description~ - ~$bundle.description~~end~
+~br~
 ~if cond=$bundle.long_description~
 __Description__
 ~$bundle.long_description~
@@ -14,11 +15,11 @@ __Commands__
 
 ~each var=$bundle.commands as=command~
 * `~$command.name~`~if cond=$command.description~ - ~$command.description~~end~
-
 ~end~
 ~end~
 
 ~if cond=$bundle.config~
+~br~
 __Configuration__
 ~if cond=$bundle.config.notes~
 ~$bundle.config.notes~
@@ -26,7 +27,6 @@ __Configuration__
 
 ~each var=$bundle.config.env as=env_var~
 * `~$env_var.var~`~if cond=$env_var.description~ - ~$env_var.description~~end~
-
 ~end~
 ~end~
 ~br~

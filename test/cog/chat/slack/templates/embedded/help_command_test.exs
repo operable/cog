@@ -17,7 +17,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.HelpCommandTest do
     *Author*
 
     vanstee
-    """
+    """ |> String.rstrip
 
     assert_rendered_template(:slack, :embedded, "help-command", data, expected)
   end

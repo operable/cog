@@ -103,7 +103,7 @@ defmodule Cog.Chat.HipChat.TemplateProcessorTest do
     ]
 
     rendered = TemplateProcessor.render(directives)
-    expected = "Important message: <br/>Unrecognized directive: wat<br/>"
+    expected = "Important message: <br/>Unrecognized directive: wat"
 
     assert expected == rendered
   end

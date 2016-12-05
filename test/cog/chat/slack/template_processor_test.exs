@@ -104,7 +104,7 @@ defmodule Cog.Chat.Slack.TemplateProcessorTest do
     ]
 
     {rendered, _} = TemplateProcessor.render(directives)
-    expected = "Important message: \nUnrecognized directive: wat\n"
+    expected = "Important message: \nUnrecognized directive: wat"
 
     assert expected == rendered
   end
