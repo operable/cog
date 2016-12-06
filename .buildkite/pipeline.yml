@@ -28,15 +28,15 @@ steps:
     concurrency_group: "cog_slack_integration"
     concurrency: 1
 
-  - command: ".buildkite/scripts/test.sh hipchat"
-    label: ":hipchat: Cog Integration Tests - HipChat"
-    env:
-      BUILDKITE_DOCKER_COMPOSE_CONTAINER: cog
-      BUILDKITE_DOCKER_COMPOSE_FILE: docker-compose.ci.yml
-    agents:
-      - docker=1.12.1
-    concurrency_group: "cog_hipchat_integration"
-    concurrency: 1
+  # - command: ".buildkite/scripts/test.sh hipchat"
+  #   label: ":hipchat: Cog Integration Tests - HipChat"
+  #   env:
+  #     BUILDKITE_DOCKER_COMPOSE_CONTAINER: cog
+  #     BUILDKITE_DOCKER_COMPOSE_FILE: docker-compose.ci.yml
+  #   agents:
+  #     - docker=1.12.1
+  #   concurrency_group: "cog_hipchat_integration"
+  #   concurrency: 1
 
   - wait
 
