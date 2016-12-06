@@ -16,16 +16,22 @@ defmodule Cog.Commands.Help do
 
   View documentation for a bundle:
 
-    operable:help mist
+    operable:help ec2
 
   View documentation for a command:
 
-    operable:help mist:ec2-find
+    operable:help ec2:instance-show
+
+  Test a pipeline with command output:
+
+    operable:help --output ec2:instance-show | echo "Instance $instance_id is of type $instance_type"
   """
 
   @arguments "[<bundle> | <bundle:command>]"
 
   rule "when command is #{Cog.Util.Misc.embedded_bundle}:help allow"
+
+  option "output", short: "o", type: "bool", required: false
 
   # When help is called with no arguments we return the list of installed bundles
   def handle_message(%{args: []} = req, state) do
@@ -35,15 +41,22 @@ defmodule Cog.Commands.Help do
   end
   # When called with arguments the user could be requesting help for either a bundle or
   # a command. We first do a lookup and then return the appropriate help.
-  def handle_message(%{args: args} = req, state) do
+  def handle_message(%{args: args, options: options} = req, state) do
     response = case lookup(args) do
       {:ok, %CommandVersion{bundle_version: %BundleVersion{config_file: %{"cog_bundle_version" => version}}} = command} when version < 4 ->
         command = Commands.preloads_for_help(command)
         {:ok, {:documentation, command.documentation}}
       {:ok, %CommandVersion{} = command} ->
-        command = Commands.preloads_for_help(command)
-        rendered = Cog.CommandVersionHelpView.render("command_version.json", %{command_version: command})
-        {:ok, {:command, rendered}}
+        case {options["output"], command} do
+          {true, command_version = %CommandVersion{output: %{"example" => nil}}} ->
+            {:error, {:example_not_found, CommandVersion.full_name(command_version)}}
+          {true, %CommandVersion{output: %{"example" => example}}} when not(is_nil(example)) ->
+            {:ok, {:output, example}}
+          {_, _} ->
+            command = Commands.preloads_for_help(command)
+            rendered = Cog.CommandVersionHelpView.render("command_version.json", %{command_version: command})
+            {:ok, {:command, rendered}}
+        end
       {:ok, %BundleVersion{config_file: config_file}} ->
         commands = Enum.map(config_file["commands"], fn({name, map}) -> Map.put(map, "name", name) end)
         {:ok, {:bundle, %{config_file | "commands" => commands}}}
@@ -58,6 +71,8 @@ defmodule Cog.Commands.Help do
         {:reply, req.reply_to, "help-command", command, state}
       {:ok, {:documentation, documentation}} ->
         {:reply, req.reply_to, "help-command-documentation", %{documentation: documentation}, state}
+      {:ok, {:output, output}} ->
+        {:reply, req.reply_to, Poison.decode!(output), state}
       {:ok, body} ->
         {:reply, req.reply_to, body, state}
       {:error, error} ->
@@ -151,6 +166,8 @@ defmodule Cog.Commands.Help do
     do: "Could not find a command in any bundle with the name '#{name}'. Check the name and try again."
   defp error_msg({:invalid_bundle, name}),
     do: "Invalid bundle name '#{name}'. Check the name and try again."
+  defp error_msg({:example_not_found, command}),
+    do: "Command #{command} does not have an example included in its documentation"
   defp error_msg({:ambiguous, name, commands}) do
     """
     Multiple bundles contain a command with the name '#{name}'.
