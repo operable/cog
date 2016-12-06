@@ -89,7 +89,7 @@ defmodule Cog.Chat.Slack.TemplateProcessor do
     Enum.join(lines, "") <> "\n\n"
   end
   defp process_directive(%{"name" => "list_item", "children" => children}, bullet: bullet),
-    do: "#{bullet} #{Enum.map_join(children, &process_directive/1)}\n"
+    do: "   #{bullet} #{Enum.map_join(children, &process_directive/1)}\n"
   defp process_directive(%{"name" => "link", "url" => url}, _) do
     "#{url}"
   end
