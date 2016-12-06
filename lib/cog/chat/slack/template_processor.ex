@@ -56,7 +56,7 @@ defmodule Cog.Chat.Slack.TemplateProcessor do
   defp process_directive(%{"name" => "fixed_width", "text" => text}, _),
     do: "`#{text}`"
   defp process_directive(%{"name" => "fixed_width_block", "text" => text}, _),
-    do: "```#{text}```"
+    do: "```#{text}```" <> "\n\n"
 
   # Tables _have_ to have a header
   defp process_directive(%{"name" => "table",
@@ -71,7 +71,7 @@ defmodule Cog.Chat.Slack.TemplateProcessor do
         "```#{render_empty_table(headers)}```"
       rows ->
         "```#{TableRex.quick_render!(rows, headers)}```"
-    end
+    end <> "\n\n"
   end
   defp process_directive(%{"name" => "table_row", "children" => children}, _),
     do: map(children)
@@ -80,13 +80,13 @@ defmodule Cog.Chat.Slack.TemplateProcessor do
   defp process_directive(%{"name" => "newline"}, _),
     do: "\n"
   defp process_directive(%{"name" => "unordered_list", "children" => children}, _),
-    do: Enum.map_join(children, &process_directive(&1, bullet: "•"))
+    do: Enum.map_join(children, &process_directive(&1, bullet: "•")) <> "\n\n"
   defp process_directive(%{"name" => "ordered_list", "children" => children}, _) do
     {lines, _} = Enum.map_reduce(children, 1, fn(child, counter) ->
       line = process_directive(child, bullet: "#{counter}.")
       {line, counter + 1}
     end)
-    lines
+    Enum.join(lines, "") <> "\n\n"
   end
   defp process_directive(%{"name" => "list_item", "children" => children}, bullet: bullet),
     do: "#{bullet} #{Enum.map_join(children, &process_directive/1)}\n"
