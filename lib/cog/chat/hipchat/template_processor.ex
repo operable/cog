@@ -10,7 +10,7 @@ defmodule Cog.Chat.HipChat.TemplateProcessor do
   defp render_directives(directives) do
     directives
     |> Enum.map_join(&process_directive/1) # Convert all Greenbar directives into their HipChat forms
-    |> String.replace(~r/<br\/>\z/, "")
+    |> String.replace(~r/<br\/>\z|<br\/><br\/>\z/, "")
   end
 
   defp process_directive(%{"name" => "attachment"}=attachment) do

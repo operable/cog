@@ -4,7 +4,7 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.UsageTest do
   test "usage template - with error" do
     data = %{"results" => [%{"error" => "Oopsie... something went wrong",
                              "usage" => "Do this instead..."}]}
-    expected = "<strong>Oopsie... something went wrong</strong><br/><br/>" <>
+    expected = "<strong>Oopsie... something went wrong</strong><br/><br/><br/>" <>
       "Do this instead..."
 
     assert_rendered_template(:hipchat, :embedded, "usage", data, expected)

@@ -14,13 +14,16 @@ defmodule Cog.Chat.Slack.Templates.Embedded.AliasListTest do
     expected = """
     Found 3 matching aliases.
 
+
     Name: `awesome_alias`
     Visibility: `user`
     Pipeline: `echo 'awesome!'`
 
+
     Name: `another_awesome_alias`
     Visibility: `user`
     Pipeline: `echo 'more awesome!'`
+
 
     Name: `wow_neat`
     Visibility: `site`

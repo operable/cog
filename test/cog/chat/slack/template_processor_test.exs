@@ -71,6 +71,7 @@ defmodule Cog.Chat.Slack.TemplateProcessorTest do
     That was fun; now let's do bold: *BEHOLD! BOLD!*
     Fascinating. How about some fixed width text?  `BEEP BOOP... I AM A ROBOT... BEEP BOOP`
     ```I AM FROM THE FUTURE. BLEEP. BOOP.```
+
     Wow, good stuff. And now... AN ASCII TABLE!
 
     ```+--------------+-------------------------+

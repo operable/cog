@@ -8,9 +8,11 @@ defmodule Cog.Chat.Slack.Templates.Embedded.HelpBundlesTest do
     expected = """
     *Enabled Bundles*
 
+
     • operable
 
     *Disabled Bundles*
+
 
     • test-bundle
 

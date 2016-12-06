@@ -9,12 +9,17 @@ defmodule Cog.Chat.Slack.Templates.Embedded.HelpCommandTest do
     expected = """
     *Name*
 
+
     test - Do a test thing
+
 
     *Synopsis*
 
+
     ```test --do-a-thing```
+
     *Author*
+
 
     vanstee
     """ |> String.rstrip

@@ -8,11 +8,11 @@ defmodule Cog.Chat.HipChat.Templates.Common.UnregisteredUserTest do
              "user_creators" => ["@larry", "@moe", "@curly"]}
     expected = "@nobody: I'm terribly sorry, but either I don't have a Cog account for you, or your " <>
       "HipChat chat handle has not been registered. Currently, only registered users can interact with me." <>
-      "<br/><br/>" <>
+      "<br/><br/><br/>" <>
       "You'll need to ask a Cog administrator to fix this situation and to register your HipChat handle." <>
-      "<br/><br/>" <>
+      "<br/><br/><br/>" <>
       "The following users can help you right here in chat:" <>
-      "<br/><br/>" <>
+      "<br/><br/><br/>" <>
       "@larry<br/>@moe<br/>@curly"
     assert_rendered_template(:hipchat, :common, "unregistered-user", data, expected)
   end
@@ -24,7 +24,7 @@ defmodule Cog.Chat.HipChat.Templates.Common.UnregisteredUserTest do
              "user_creators" => []}
     expected = "@nobody: I'm terribly sorry, but either I don't have a Cog account for you, or your " <>
       "HipChat chat handle has not been registered. Currently, only registered users can interact with me." <>
-      "<br/><br/>" <>
+      "<br/><br/><br/>" <>
       "You'll need to ask a Cog administrator to fix this situation and to register your HipChat handle."
     assert_rendered_template(:hipchat, :common, "unregistered-user", data, expected)
   end

@@ -16,7 +16,7 @@ defmodule Cog.Chat.Slack.TemplateProcessor do
                           |> List.flatten                   # Flatten nested lists into a single list
                           |> consolidate_outputs({"", []})  # Separate message text and attachments into separate lists
     attachments = Enum.map(attachments, &finalize_attachment/1) # Final attachment post-processing for Slack
-    text = String.replace(text, ~r/\n$/, "")
+    text = String.replace(text, ~r/\n$|\n\n$/, "")
     {text, Enum.reverse(attachments)}
   end
 
@@ -56,7 +56,7 @@ defmodule Cog.Chat.Slack.TemplateProcessor do
   defp process_directive(%{"name" => "fixed_width", "text" => text}, _),
     do: "`#{text}`"
   defp process_directive(%{"name" => "fixed_width_block", "text" => text}, _),
-    do: "```#{text}```" <> "\n\n"
+    do: "```#{text}```\n"
 
   # Tables _have_ to have a header
   defp process_directive(%{"name" => "table",

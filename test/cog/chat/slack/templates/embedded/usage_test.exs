@@ -7,6 +7,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.UsageTest do
     expected = """
     *Oopsie... something went wrong*
 
+
     Do this instead...
     """ |> String.strip
     assert_rendered_template(:slack, :embedded, "usage", data, expected)

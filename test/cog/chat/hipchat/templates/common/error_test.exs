@@ -28,7 +28,7 @@ defmodule Cog.Chat.HipChat.Templates.Common.ErrorTest do
       "I can't plan this!<br/>" <>
       "<br/>" <>
       "<strong>Caller:</strong><br/>" <>
-      "somebody<br/><br/>"
+      "somebody<br/>"
 
     assert expected == rendered
   end
@@ -60,8 +60,7 @@ defmodule Cog.Chat.HipChat.Templates.Common.ErrorTest do
       "I can't execute this!<br/>" <>
       "<br/>" <>
       "<strong>Caller:</strong><br/>" <>
-      "somebody<br/>" <>
-      "<br/>"
+      "somebody<br/>"
 
       assert expected == rendered
   end

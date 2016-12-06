@@ -16,18 +16,18 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.HelpBundleTest do
                              "homepage" => "test-bundle.com"}]}
 
 
-    expected = "<strong>Name</strong><br/>" <>
-      "test-bundle - Does a thing<br/><br/>" <>
+    expected = "<strong>Name</strong><br/><br/>" <>
+      "test-bundle - Does a thing<br/><br/><br/>" <>
       "<strong>Description</strong><br/>" <>
-      "No really, it does a thing<br/><br/>" <>
-      "<strong>Commands</strong><br/>" <>
+      "No really, it does a thing<br/><br/><br/>" <>
+      "<strong>Commands</strong><br/><br/>" <>
       "<ul><li><code>test-command</code> - does just one thing</li></ul><br/>" <>
-      "<strong>Configuration</strong><br/>" <>
-      "Some notes about config<br/>" <>
+      "<strong>Configuration</strong><br/><br/>" <>
+      "Some notes about config<br/><br/>" <>
       "<ul><li><code>VAR1</code> - description1</li><li><code>VAR2</code></li></ul><br/>" <>
-      "<strong>Author</strong><br/>" <>
-      "vanstee<br/><br/>" <>
-      "<strong>Homepage</strong><br/>" <>
+      "<strong>Author</strong><br/><br/>" <>
+      "vanstee<br/><br/><br/>" <>
+      "<strong>Homepage</strong><br/><br/>" <>
       "test-bundle.com"
 
     assert_rendered_template(:hipchat, :embedded, "help-bundle", data, expected)
@@ -43,15 +43,15 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.HelpBundleTest do
                              "homepage" => "test-bundle.com"}]}
 
 
-    expected = "<strong>Name</strong><br/>" <>
-      "test-bundle - Does a thing<br/><br/>" <>
+    expected = "<strong>Name</strong><br/><br/>" <>
+      "test-bundle - Does a thing<br/><br/><br/>" <>
       "<strong>Description</strong><br/>" <>
-      "No really, it does a thing<br/><br/>" <>
-      "<strong>Commands</strong><br/>" <>
+      "No really, it does a thing<br/><br/><br/>" <>
+      "<strong>Commands</strong><br/><br/>" <>
       "<ul><li><code>test-command</code> - does just one thing</li></ul><br/>" <>
-      "<strong>Author</strong><br/>" <>
-      "vanstee<br/><br/>" <>
-      "<strong>Homepage</strong><br/>" <>
+      "<strong>Author</strong><br/><br/>" <>
+      "vanstee<br/><br/><br/>" <>
+      "<strong>Homepage</strong><br/><br/>" <>
       "test-bundle.com"
 
     assert_rendered_template(:hipchat, :embedded, "help-bundle", data, expected)
