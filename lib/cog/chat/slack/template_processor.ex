@@ -98,7 +98,7 @@ defmodule Cog.Chat.Slack.TemplateProcessor do
     text
   end
   defp process_directive(%{"name" => "paragraph", "children" => children}, _) do
-    Enum.map_join(children, &process_directive/1) <> "\n"
+    Enum.map_join(children, &process_directive/1) <> "\n\n"
   end
   defp process_directive(%{"name" => name}=directive, _) do
     Logger.warn("Unrecognized directive; #{inspect directive}")
