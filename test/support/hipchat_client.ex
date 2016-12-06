@@ -35,15 +35,35 @@ defmodule Cog.Test.Support.HipChatClient do
     [hipchat_org|_] = String.split(user_name, "_", parts: 2)
     case Connection.start_link(opts) do
       {:ok, conn} ->
-        Connection.send(conn, Stanza.presence)
-        Connection.send(conn, Stanza.join("#{hipchat_org}_ci_bot_testing@conf.hipchat.com", nickname))
-        Connection.send(conn, Stanza.join("#{hipchat_org}_ci_bot_redirect_tests@conf.hipchat.com", nickname))
-        Connection.send(conn, Stanza.join("#{hipchat_org}_private_ci_testing@conf.hipchat.com", nickname))
+        :ok = Connection.send(conn, Stanza.presence)
+
+        # Rooms that we want to join
+        rooms = [
+          "#{hipchat_org}_ci_bot_testing@conf.hipchat.com",
+          "#{hipchat_org}_ci_bot_redirect_tests@conf.hipchat.com",
+          "#{hipchat_org}_private_ci_testing@conf.hipchat.com"
+        ]
+        Enum.each(rooms, fn(room) ->
+          # Send a message to join the room
+          :ok = Connection.send(conn, Stanza.join(room, nickname))
+          # Wait for a response before continuing
+          :ok = wait_for_join(room)
+        end)
+
         {:ok, %__MODULE__{conn: conn, waiters: %{}, rooms: Rooms.new(@api_root, api_token),
                           users: %Users{}, hipchat_org: hipchat_org,
                           mention_name: nickname}}
       error ->
         error
+    end
+  end
+
+  defp wait_for_join(full) do
+    receive do
+      {:stanza, %Stanza.Message{body: "", from: %Romeo.JID{full: ^full}}} ->
+        :ok
+    after
+        @default_timeout -> raise "Error: Timeout waiting for bot to join room"
     end
   end
 
