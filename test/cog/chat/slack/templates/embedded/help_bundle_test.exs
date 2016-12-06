@@ -28,14 +28,18 @@ defmodule Cog.Chat.Slack.Templates.Embedded.HelpBundleTest do
 
     *Commands*
 
-    • `test-command` - does just one thing
+       • `test-command` - does just one thing
+
+
 
     *Configuration*
 
     Some notes about config
 
-    • `VAR1` - description1
-    • `VAR2`
+       • `VAR1` - description1
+       • `VAR2`
+
+
 
     *Author*
 
@@ -72,7 +76,9 @@ defmodule Cog.Chat.Slack.Templates.Embedded.HelpBundleTest do
 
     *Commands*
 
-    • `test-command` - does just one thing
+       • `test-command` - does just one thing
+
+
 
     *Author*
 
