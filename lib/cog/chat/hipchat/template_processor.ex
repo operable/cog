@@ -10,7 +10,8 @@ defmodule Cog.Chat.HipChat.TemplateProcessor do
   defp render_directives(directives) do
     directives
     |> Enum.map_join(&process_directive/1) # Convert all Greenbar directives into their HipChat forms
-    |> String.replace(~r/<br\/>\z|<br\/><br\/>\z/, "")
+    |> reduce_block_padding                # Remove extra padding above li, ul, pre
+    |> String.replace(~r/(<br\/>)+\z/, "")
   end
 
   defp process_directive(%{"name" => "attachment"}=attachment) do
@@ -38,12 +39,12 @@ defmodule Cog.Chat.HipChat.TemplateProcessor do
 
   defp process_directive(%{"name" => "unordered_list", "children" => children}) do
     items = Enum.map_join(children, &process_directive/1)
-    "<ul>#{items}</ul>"
+    "<ul>#{items}</ul><br/>"
   end
 
   defp process_directive(%{"name" => "ordered_list", "children" => children}) do
     items = Enum.map_join(children, &process_directive/1)
-    "<ol>#{items}</ol>"
+    "<ol>#{items}</ol><br/>"
   end
 
   defp process_directive(%{"name" => "list_item", "children" => children}) do
@@ -172,4 +173,8 @@ defmodule Cog.Chat.HipChat.TemplateProcessor do
 
   defp to_hyphens(name),
     do: String.duplicate("-", String.length(name))
+
+  defp reduce_block_padding(string) do
+    String.replace(string, ~r{<br/>(<ul>|<ol>|<pre>)}, "\\1")
+  end
 end
