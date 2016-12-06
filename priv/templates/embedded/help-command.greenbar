@@ -65,13 +65,6 @@ __Examples__
 ~br~
 ~end~
 
-~if cond=$command.output~
-__Output__
-~br~
-~$command.output~
-~br~
-~end~
-
 ~if cond=$command.notes~
 __Notes__
 ~br~
