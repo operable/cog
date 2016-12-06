@@ -8,8 +8,6 @@ defmodule Cog.Chat.HipChat.TemplateProcessor do
   end
 
   defp render_directives(directives) do
-    Logger.debug("***DIRECTIVES:\n\n#{inspect directives}\n\n\n")
-
     directives
     |> Enum.map_join(&process_directive/1) # Convert all Greenbar directives into their HipChat forms
     |> String.replace(~r/<br\/>\z/, "")
