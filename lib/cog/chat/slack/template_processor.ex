@@ -10,6 +10,17 @@ defmodule Cog.Chat.Slack.TemplateProcessor do
     render_directives(directives)
   end
 
+  defp render_directives(directives) do
+    {text, attachments} = directives
+                          |> Enum.map(&process_directive/1) # Convert all Greenbar directives into their Slack forms
+                          |> List.flatten                   # Flatten nested lists into a single list
+                          |> consolidate_outputs({"", []})  # Separate message text and attachments into separate lists
+    attachments = Enum.map(attachments, &finalize_attachment/1) # Final attachment post-processing for Slack
+    text = String.replace(text, ~r/\n$|\n\n$/, "")
+    {text, Enum.reverse(attachments)}
+  end
+
+
   ########################################################################
 
   # Directive processing can sometimes require contextual information
@@ -45,7 +56,7 @@ defmodule Cog.Chat.Slack.TemplateProcessor do
   defp process_directive(%{"name" => "fixed_width", "text" => text}, _),
     do: "`#{text}`"
   defp process_directive(%{"name" => "fixed_width_block", "text" => text}, _),
-    do: "```#{text}```"
+    do: "```#{text}```\n"
 
   # Tables _have_ to have a header
   defp process_directive(%{"name" => "table",
@@ -60,7 +71,7 @@ defmodule Cog.Chat.Slack.TemplateProcessor do
         "```#{render_empty_table(headers)}```"
       rows ->
         "```#{TableRex.quick_render!(rows, headers)}```"
-    end
+    end <> "\n\n"
   end
   defp process_directive(%{"name" => "table_row", "children" => children}, _),
     do: map(children)
@@ -69,19 +80,25 @@ defmodule Cog.Chat.Slack.TemplateProcessor do
   defp process_directive(%{"name" => "newline"}, _),
     do: "\n"
   defp process_directive(%{"name" => "unordered_list", "children" => children}, _),
-    do: Enum.map_join(children, &process_directive(&1, bullet: "•"))
+    do: Enum.map_join(children, &process_directive(&1, bullet: "•")) <> "\n\n"
   defp process_directive(%{"name" => "ordered_list", "children" => children}, _) do
     {lines, _} = Enum.map_reduce(children, 1, fn(child, counter) ->
       line = process_directive(child, bullet: "#{counter}.")
       {line, counter + 1}
     end)
-    lines
+    Enum.join(lines, "") <> "\n\n"
   end
   defp process_directive(%{"name" => "list_item", "children" => children}, bullet: bullet),
-    do: "#{bullet} #{Enum.map_join(children, &process_directive/1)}"
+    do: "   #{bullet} #{Enum.map_join(children, &process_directive/1)}\n"
+  defp process_directive(%{"name" => "link", "url" => url}, _) do
+    "#{url}"
+  end
   defp process_directive(%{"text" => text}=directive, _) do
     Logger.warn("Unrecognized directive; formatting as plain text: #{inspect directive}")
     text
+  end
+  defp process_directive(%{"name" => "paragraph", "children" => children}, _) do
+    Enum.map_join(children, &process_directive/1) <> "\n\n"
   end
   defp process_directive(%{"name" => name}=directive, _) do
     Logger.warn("Unrecognized directive; #{inspect directive}")
@@ -111,15 +128,6 @@ defmodule Cog.Chat.Slack.TemplateProcessor do
   end
   defp consolidate_outputs([%{"name" => "attachment"}=attachment|t], {text, attachments}) do
     consolidate_outputs(t, {text, [attachment|attachments]})
-  end
-
-  defp render_directives(directives) do
-    {text, attachments} = directives
-                          |> Enum.map(&process_directive/1) # Convert all Greenbar directives into their Slack forms
-                          |> List.flatten                   # Flatten nested lists into a single list
-                          |> consolidate_outputs({"", []})  # Separate message text and attachments into separate lists
-    attachments = Enum.map(attachments, &finalize_attachment/1) # Final attachment post-processing for Slack
-    {text, Enum.reverse(attachments)}
   end
 
   defp finalize_attachment(attachment) do

@@ -8,9 +8,12 @@ defmodule Cog.Chat.Slack.Templates.Embedded.HelpTest do
     expected = """
     Here are the commands I know about:
 
-    1. test:one
-    2. test:two
-    3. test:three
+
+       1. test:one
+       2. test:two
+       3. test:three
+
+
 
     Have a nice day!
     """ |> String.strip

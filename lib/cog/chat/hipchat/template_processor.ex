@@ -7,6 +7,13 @@ defmodule Cog.Chat.HipChat.TemplateProcessor do
     render_directives(directives)
   end
 
+  defp render_directives(directives) do
+    directives
+    |> Enum.map_join(&process_directive/1) # Convert all Greenbar directives into their HipChat forms
+    |> reduce_block_padding                # Remove extra padding above li, ul, pre
+    |> String.replace(~r/(<br\/>)+\z/, "")
+  end
+
   defp process_directive(%{"name" => "attachment"}=attachment) do
     rendered_body = @attachment_fields
     |> Enum.reduce([], &(render_attachment(&1, &2, attachment)))
@@ -24,17 +31,20 @@ defmodule Cog.Chat.HipChat.TemplateProcessor do
     do: "<code>#{text}</code>"
   defp process_directive(%{"name" => "fixed_width_block", "text" => text}),
     do: "<pre>#{text}</pre>"
+  defp process_directive(%{"name" => "paragraph", "children" => children}) do
+      Enum.map_join(children, &process_directive/1) <> "<br/><br/>"
+  end
 
   defp process_directive(%{"name" => "newline"}), do: "<br/>"
 
   defp process_directive(%{"name" => "unordered_list", "children" => children}) do
     items = Enum.map_join(children, &process_directive/1)
-    "<ul>#{items}</ul>"
+    "<ul>#{items}</ul><br/>"
   end
 
   defp process_directive(%{"name" => "ordered_list", "children" => children}) do
     items = Enum.map_join(children, &process_directive/1)
-    "<ol>#{items}</ol>"
+    "<ol>#{items}</ol><br/>"
   end
 
   defp process_directive(%{"name" => "list_item", "children" => children}) do
@@ -79,11 +89,6 @@ defmodule Cog.Chat.HipChat.TemplateProcessor do
   defp process_directive(%{"name" => name}=directive) do
     Logger.warn("Unrecognized directive; #{inspect directive}")
     "<br/>Unrecognized directive: #{name}<br/>"
-  end
-
-  defp render_directives(directives) do
-    directives
-    |> Enum.map_join(&process_directive/1) # Convert all Greenbar directives into their HipChat forms
   end
 
   defp render_attachment("footer", acc, attachment) do
@@ -168,4 +173,8 @@ defmodule Cog.Chat.HipChat.TemplateProcessor do
 
   defp to_hyphens(name),
     do: String.duplicate("-", String.length(name))
+
+  defp reduce_block_padding(string) do
+    String.replace(string, ~r{<br/>(<ul>|<ol>|<pre>)}, "\\1")
+  end
 end

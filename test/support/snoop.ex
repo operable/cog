@@ -136,6 +136,7 @@ defmodule Cog.Snoop do
     directives
     |> Enum.map(&render_directive/1)
     |> Enum.join
+    |> String.replace(~r/\n$/, "")
   end
 
   # The only fixed_width we should see in the tests is from the raw
@@ -149,6 +150,9 @@ defmodule Cog.Snoop do
     do: text
   defp render_directive(%{"name" => "newline"}),
     do: "\n"
+  defp render_directive(%{"name" => "paragraph", "children" => children}) do
+    Enum.map_join(children, &render_directive/1) <> "\n"
+  end
   defp render_directive(%{"name" => "attachment", "children" => children}) do
       Enum.map(children, &render_directive/1)
   end

@@ -16,7 +16,7 @@ defmodule Cog.Chat.HipChat.Templates.Common.SelfRegistrationTest do
              "display_name" => "HipChat"}
     expected = "@mystery_user: Unfortunately I was unable to automatically create a " <>
       "Cog account for your HipChat chat handle. Only users with Cog accounts can interact with me." <>
-      "<br/><br/>" <>
+      "<br/><br/><br/>" <>
       "You'll need to ask a Cog administrator to investigate the situation and set up your account."
     assert_rendered_template(:hipchat, :common, "self-registration-failed", data, expected)
   end

@@ -57,7 +57,8 @@ defmodule Cog.Template.New.EvaluatorTest do
       results = Evaluator.evaluate("error", data)
 
       # Make sure the evaluator called File
-      assert([%{name: :text, text: "fake template body"}] = results)
+      assert([%{children: [%{name: :text, text: "fake template body"}],
+              name: :paragraph}] = results)
     end
 
   end

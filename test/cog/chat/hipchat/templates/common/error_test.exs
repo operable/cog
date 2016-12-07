@@ -13,7 +13,7 @@ defmodule Cog.Chat.HipChat.Templates.Common.ErrorTest do
     directives = directives_for_template(:common, "error", data)
     rendered = Cog.Chat.HipChat.TemplateProcessor.render(directives)
     expected =
-      "<strong>Pipeline Error</strong><br/>" <>
+      "<strong>Pipeline Error</strong>" <>
       "<pre>bad stuff happened</pre><br/>" <>
       "<strong>Started:</strong><br/>" <>
       "some time in the past<br/>" <>
@@ -28,7 +28,7 @@ defmodule Cog.Chat.HipChat.Templates.Common.ErrorTest do
       "I can't plan this!<br/>" <>
       "<br/>" <>
       "<strong>Caller:</strong><br/>" <>
-      "somebody<br/><br/><br/>"
+      "somebody"
 
     assert expected == rendered
   end
@@ -45,7 +45,7 @@ defmodule Cog.Chat.HipChat.Templates.Common.ErrorTest do
     directives = directives_for_template(:common, "error", data)
     rendered = Cog.Chat.HipChat.TemplateProcessor.render(directives)
     expected =
-      "<strong>Command Execution Error</strong><br/>" <>
+      "<strong>Command Execution Error</strong>" <>
       "<pre>bad stuff happened</pre><br/>" <>
       "<strong>Started:</strong><br/>" <>
       "some time in the past<br/>" <>
@@ -60,9 +60,7 @@ defmodule Cog.Chat.HipChat.Templates.Common.ErrorTest do
       "I can't execute this!<br/>" <>
       "<br/>" <>
       "<strong>Caller:</strong><br/>" <>
-      "somebody<br/>" <>
-      "<br/>" <>
-      "<br/>"
+      "somebody"
 
       assert expected == rendered
   end

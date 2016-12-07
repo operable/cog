@@ -33,7 +33,9 @@ defmodule Cog.Chat.Slack.Templates.Embedded.WhichTest do
 
     expected = """
     alias - site:foo -> `echo 'foo'`
+
     command - operable:alias
+
     alias - user:bar -> `echo 'bar'`
     """ |> String.strip
     assert_rendered_template(:slack, :embedded, "which", data, expected)
