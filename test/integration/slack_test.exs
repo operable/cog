@@ -132,6 +132,7 @@ defmodule Integration.SlackTest do
     assert reply.text == "blah"
   end
 
+  @tag :skip
   test "formatting with unicode present", %{user: user, client: client} do
     user |> with_permission("operable:echo")
     {:ok, reply} = ChatClient.chat_wait!(client, [room: @ci_room, message: "@#{@bot} operable:echo \"ϻ https://google.com\"", reply_from: @bot])
