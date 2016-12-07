@@ -55,7 +55,7 @@ end
 defmodule Cog.Test.Support.SlackClient do
 
   # To avoid Slack throttling
-  @api_wait_interval 1_000
+  @api_wait_interval 1_500
   defp api_wait(),
     do: :timer.sleep(@api_wait_interval)
 

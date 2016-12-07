@@ -15,7 +15,7 @@ defmodule Integration.SlackTest do
     user = user(@user)
     |> with_chat_handle_for("slack")
 
-    :timer.sleep(1000)
+    :timer.sleep(1_500)
     {:ok, client} = ChatClient.new()
     {:ok, %{client: client, user: user}}
   end
@@ -135,7 +135,17 @@ defmodule Integration.SlackTest do
   @tag :skip
   test "formatting with unicode present", %{user: user, client: client} do
     user |> with_permission("operable:echo")
-    {:ok, reply} = ChatClient.chat_wait!(client, [room: @ci_room, message: "@#{@bot} operable:echo \"ϻ https://google.com\"", reply_from: @bot])
-    assert reply.text == "ϻ <https://google.com>"
+
+    # We use a different URL each time because we otherwise end up
+    # having to deal with messages from Slack saying "we didn't unfurl
+    # this for you since we already did in the past hour" when we run
+    # lots of tests in a row.
+    #
+    # (I think a user or channel mention would also suffice, since the
+    # regression we're guarding against involves improperly processing
+    # Slack's links.)
+    url = "https://test.operable.io/#{System.system_time(:milliseconds)}"
+    {:ok, reply} = ChatClient.chat_wait!(client, [room: @ci_room, message: "@#{@bot} operable:echo \"ϻ #{url}\"", reply_from: @bot])
+    assert reply.text == "ϻ <#{url}>"
   end
 end
