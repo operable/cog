@@ -14,7 +14,9 @@ config :cog, Cog.Chat.Test.Provider,
 
 config :cog, Cog.Repo,
   pool: Ecto.Adapters.SQL.Sandbox,
-  ownership_timeout: 60000
+  # Bumping timeout up because we might sleep for >60s to get around
+  # Slack API throttling
+  ownership_timeout: 120_000
 
 config :cog,
   :template_cache_ttl, {1, :sec}

@@ -73,9 +73,42 @@ defmodule Cog.Test.Support.SlackClient do
       nil ->
         raise RuntimeError, message: "$SLACK_USER_API_TOKEN not set!"
       token ->
-        {:ok, client} = start_link(token)
-        :ok = initialize(client)
-        {:ok, client}
+        :timer.sleep(@api_wait_interval * 2)
+        try do
+          {:ok, client} = start_link(token)
+          :ok = initialize(client)
+          {:ok, client}
+        rescue
+        e in RuntimeError ->
+          if e.message =~ "You are sending too many requests. Please relax." do
+            # In our current fork of the Elixir library, HTTP 429
+            # responses aren't handled very gracefully. The mainline
+            # library actually now returns an error tuple instead of
+            # raising an exception, but in no case does it return the
+            # value of the Retry-After HTTP header, which is the
+            # number of seconds that you need to wait before
+            # attempting to connect again.
+            #
+            # Absent some tweaking of the Slack library to return this
+            # information, we can catch the exception our fork
+            # currently throws and then sleeping manually. Manual
+            # experiments with the API show that 60 seconds is a
+            # typical value for the Retry-After header.
+            #
+            # Ideally, the Slack library would handle this throttling,
+            # or at least return the Return-After header value to
+            # callers, allowing them to determine how to
+            # proceed. Until that time, we'll give this a shot.
+            Logger.warn("Error connecting to Slack RTM endpoint: #{inspect e, pretty: true}")
+            Logger.warn("Sleeping for a minute (and some change) and retrying")
+            :timer.sleep(70_000)
+            {:ok, client} = start_link(token)
+            :ok = initialize(client)
+            {:ok, client}
+          else
+            throw e
+          end
+        end
     end
   end
 
