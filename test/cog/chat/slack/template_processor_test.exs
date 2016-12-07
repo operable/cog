@@ -72,6 +72,7 @@ defmodule Cog.Chat.Slack.TemplateProcessorTest do
     Fascinating. How about some fixed width text?  `BEEP BOOP... I AM A ROBOT... BEEP BOOP`
     ```I AM FROM THE FUTURE. BLEEP. BOOP.```
 
+
     Wow, good stuff. And now... AN ASCII TABLE!
 
     ```+--------------+-------------------------+
@@ -82,6 +83,8 @@ defmodule Cog.Chat.Slack.TemplateProcessorTest do
     | Neal Peart   | Drums, Percussion       |
     +--------------+-------------------------+
     ```
+
+
     How do you like them apples?
     """ |> String.trim
     assert expected == rendered

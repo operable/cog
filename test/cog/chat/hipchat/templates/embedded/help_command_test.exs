@@ -8,10 +8,10 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.HelpCommandTest do
                              "bundle" => %{"author" => "vanstee"}}]}
     expected = "<strong>Name</strong><br/><br/><br/>" <>
       "test - Do a test thing<br/><br/><br/>" <>
-      "<strong>Synopsis</strong><br/><br/><br/>" <>
+      "<strong>Synopsis</strong><br/><br/>" <>
       "<pre>test --do-a-thing</pre><br/>" <>
       "<strong>Author</strong><br/><br/><br/>" <>
-      "vanstee<br/>"
+      "vanstee"
 
     assert_rendered_template(:hipchat, :embedded, "help-command", data, expected)
   end
