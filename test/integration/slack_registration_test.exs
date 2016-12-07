@@ -15,7 +15,7 @@ defmodule Integration.SlackRegistrationTest do
   @ci_room "ci_bot_testing"
 
   setup do
-    :timer.sleep(1000)
+    :timer.sleep(1_500)
     {:ok, client} = ChatClient.new()
     {:ok, %{client: client}}
   end
