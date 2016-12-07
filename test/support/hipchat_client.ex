@@ -37,7 +37,12 @@ defmodule Cog.Test.Support.HipChatClient do
       {:ok, conn} ->
         :ok = Connection.send(conn, Stanza.presence)
 
-        # Rooms that we want to join
+        # We join each room and then wait for a response from hipchat before
+        # continuing on to the next. We do this to alleviate some intermittent
+        # failures we were seeing in tests. Some tests were failing with a
+        # "not in room" error. Using this method should help guarantee that we
+        # are in the room before sending a message or at least fail earlier
+        # with a more useful error message.
         rooms = [
           "#{hipchat_org}_ci_bot_testing@conf.hipchat.com",
           "#{hipchat_org}_ci_bot_redirect_tests@conf.hipchat.com",
@@ -63,7 +68,8 @@ defmodule Cog.Test.Support.HipChatClient do
       {:stanza, %Stanza.Message{body: "", from: %Romeo.JID{full: ^full}}} ->
         :ok
     after
-        @default_timeout -> raise "Error: Timeout waiting for bot to join room"
+        @default_timeout ->
+          raise "Error: Timeout waiting for bot to join room: #{full}"
     end
   end
 
