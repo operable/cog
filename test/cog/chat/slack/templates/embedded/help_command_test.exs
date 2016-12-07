@@ -18,7 +18,6 @@ defmodule Cog.Chat.Slack.Templates.Embedded.HelpCommandTest do
 
     ```test --do-a-thing```
 
-
     *Author*
 
 
