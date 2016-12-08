@@ -57,8 +57,6 @@ defmodule Cog.Chat.Slack.TemplateProcessor do
     do: "`#{text}`"
   defp process_directive(%{"name" => "fixed_width_block", "text" => text}, _),
     do: "```#{text}```\n"
-  defp process_directive(%{"name" => "link", "text" => text, "url" => url}, _),
-    do: "<#{url}|#{text}>"
 
   # Tables _have_ to have a header
   defp process_directive(%{"name" => "table",
@@ -92,6 +90,8 @@ defmodule Cog.Chat.Slack.TemplateProcessor do
   end
   defp process_directive(%{"name" => "list_item", "children" => children}, bullet: bullet),
     do: "   #{bullet} #{Enum.map_join(children, &process_directive/1)}\n"
+  defp process_directive(%{"name" => "link", "text" => text, "url" => url}, _),
+    do: "<#{url}|#{text}>"
   defp process_directive(%{"name" => "link", "url" => url}, _) do
     "#{url}"
   end
