@@ -125,7 +125,7 @@ defmodule Cog.Chat.HipChat.TemplateProcessorTest do
     ]
 
     rendered = TemplateProcessor.render(directives)
-    expected = "(invalid link! text:\"a link\" url: \"\")"
+    expected = "(invalid link! text:\"a link\" url: \"nil\")"
 
     assert expected == rendered
   end

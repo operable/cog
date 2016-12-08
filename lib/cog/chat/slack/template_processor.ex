@@ -94,7 +94,7 @@ defmodule Cog.Chat.Slack.TemplateProcessor do
   # useful to a user. So instead we'll inform the user of the problem inline and log a warning.
   defp process_directive(%{"name" => "link", "text" => text, "url" => url}=directive, _) when url in [nil, ""] do
     Logger.warn("Invalid link; #{inspect directive}")
-    ~s[(invalid link! text:"#{text}" url: "#{url}")]
+    ~s[(invalid link! text:"#{text}" url: "#{inspect url}")]
   end
   # By default if a link is rendered with nil or blank text only the link is displayed. So
   # we don't have to do anything special like we do in the HipChat processor.

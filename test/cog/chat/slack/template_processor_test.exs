@@ -129,7 +129,7 @@ defmodule Cog.Chat.Slack.TemplateProcessorTest do
     ]
 
     {rendered, _} = TemplateProcessor.render(directives)
-    expected = "(invalid link! text:\"a link\" url: \"\")"
+    expected = "(invalid link! text:\"a link\" url: \"nil\")"
 
     assert expected == rendered
   end

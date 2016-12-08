@@ -41,7 +41,7 @@ defmodule Cog.Chat.HipChat.TemplateProcessor do
   # inform the user inline that there was a problem and log a warning.
   defp process_directive(%{"name" => "link", "text" => text, "url" => url}=directive) when url in [nil, ""] do
     Logger.warn("Invalid link; #{inspect directive}")
-    ~s[(invalid link! text:"#{text}" url: "#{url}")]
+    ~s[(invalid link! text:"#{text}" url: "#{inspect url}")]
   end
   defp process_directive(%{"name" => "link", "text" => text, "url" => url}),
     do: "<a href='#{url}'>#{text}</a>"
