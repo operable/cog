@@ -15,7 +15,6 @@ defmodule Integration.SlackTest do
     user = user(@user)
     |> with_chat_handle_for("slack")
 
-    :timer.sleep(1_500)
     {:ok, client} = ChatClient.new()
     {:ok, %{client: client, user: user}}
   end
