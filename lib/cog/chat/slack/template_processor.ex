@@ -90,12 +90,8 @@ defmodule Cog.Chat.Slack.TemplateProcessor do
   end
   defp process_directive(%{"name" => "list_item", "children" => children}, bullet: bullet),
     do: "   #{bullet} #{Enum.map_join(children, &process_directive/1)}\n"
-  # This is technially the default behavior in Slack. If you try to create a link with blank
-  # text only the link is displayed and is clickable, but it is included here for clarity
-  # and to conform more closely to the hipchat implementation.
-  defp process_directive(%{"name" => "link", "text" => text, "url" => url}, _) when text in [nil, ""] do
-    "<#{url}|#{url}>"
-  end
+  # By default if a link is rendered with nil or blank text only the link is displayed. So
+  # we don't have to do anything special like we do in the HipChat processor.
   defp process_directive(%{"name" => "link", "text" => text, "url" => url}, _) do
     "<#{url}|#{text}>"
   end
