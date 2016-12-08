@@ -11,7 +11,7 @@ defmodule Cog.Chat.HipChat.Templates.Common.ErrorTest do
              "execution_failure" => ""}
 
     directives = directives_for_template(:common, "error", data)
-    rendered = Cog.Chat.HipChat.TemplateProcessor.render(directives)
+    rendered = Greenbar.Renderers.HipChatRenderer.render(directives)
     expected =
       "<strong>Pipeline Error</strong>" <>
       "<pre>bad stuff happened</pre><br/>" <>
@@ -43,7 +43,7 @@ defmodule Cog.Chat.HipChat.Templates.Common.ErrorTest do
              "planning_failure" => "",
              "execution_failure" => "I can't execute this!"}
     directives = directives_for_template(:common, "error", data)
-    rendered = Cog.Chat.HipChat.TemplateProcessor.render(directives)
+    rendered = Greenbar.Renderers.HipChatRenderer.render(directives)
     expected =
       "<strong>Command Execution Error</strong>" <>
       "<pre>bad stuff happened</pre><br/>" <>

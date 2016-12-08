@@ -13,11 +13,13 @@ defmodule Cog.Template.New.Evaluator do
 
   require Logger
 
+  # TODO: Needs to be converted to pass the desired renderer to
+  # Greenbar.Engine.render/3
+
   def evaluate(name, data),
     do: evaluate(nil, name, data)
 
   def evaluate(bundle_version_id, name, data) do
-
     {bundle_version_id, original_template} = case template_name(name, data) do
                                                {:fallback, name} ->
                                                  {nil, name}
@@ -155,7 +157,7 @@ defmodule Cog.Template.New.Evaluator do
     {:ok, engine} = Engine.new
     engine
     |> Engine.compile!(name, source)
-    |> Engine.eval!(name, data)
+    |> Engine.eval!(name, scope: data)
   end
 
 end

@@ -11,7 +11,7 @@ defmodule Cog.Chat.Slack.Templates.Common.ErrorTest do
              "execution_failure" => ""}
 
     directives = directives_for_template(:common, "error", data)
-    {"", [rendered]} = Cog.Chat.Slack.TemplateProcessor.render(directives)
+    {"", [rendered]} = Greenbar.Renderers.SlackRenderer.render(directives)
 
     expected = "```bad stuff happened```"
     assert ^expected = Map.get(rendered, "text")
@@ -27,7 +27,7 @@ defmodule Cog.Chat.Slack.Templates.Common.ErrorTest do
              "planning_failure" => "",
              "execution_failure" => "I can't execute this!"}
     directives = directives_for_template(:common, "error", data)
-    {"", [rendered]} = Cog.Chat.Slack.TemplateProcessor.render(directives)
+    {"", [rendered]} = Greenbar.Renderers.SlackRenderer.render(directives)
 
     expected = "```bad stuff happened```"
     assert ^expected = Map.get(rendered, "text")

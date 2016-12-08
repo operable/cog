@@ -46,9 +46,10 @@ defmodule Cog.Mixfile do
             :postgrex,
             :phoenix_html,
             :comeonin,
+            :greenbar_markdown,
+            :greenbar,
             :spanner,
-            :bamboo,
-            :table_rex]
+            :bamboo]
     if System.get_env("COG_SASL_LOG") != nil do
       [:sasl|apps]
     else
@@ -62,9 +63,9 @@ defmodule Cog.Mixfile do
       ########################################################################
       {:conduit, github: "operable/conduit"},
       {:fumanchu, github: "operable/fumanchu"},
-      {:greenbar, github: "operable/greenbar"},
       {:probe, github: "operable/probe"},
       {:spanner, github: "operable/spanner"},
+      {:greenbar, github: "operable/greenbar", branch: "kevsmith/renderers"},
 
       # MQTT-related
       ########################################################################
@@ -101,7 +102,6 @@ defmodule Cog.Mixfile do
       {:poison, "~> 2.0"},
       {:postgrex, "~> 0.11.2"},
       {:slack, github: "operable/Elixir-Slack"},
-      {:table_rex, "~> 0.8"},
       {:uuid, "~> 1.1.5"},
       {:romeo, github: "operable/romeo", branch: "iq-bodies"},
       # The Slack library depends on this Github repo, and not the
