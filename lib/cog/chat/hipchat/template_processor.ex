@@ -33,6 +33,8 @@ defmodule Cog.Chat.HipChat.TemplateProcessor do
     do: "<pre>#{text}</pre>"
   defp process_directive(%{"name" => "paragraph", "children" => children}),
     do: Enum.map_join(children, &process_directive/1) <> "<br/><br/>"
+  # If you try to render a link with nil or blank text, nothing is displayed to the user.
+  # This way at least a link is rendered.
   defp process_directive(%{"name" => "link", "text" => text, "url" => url}) when text in [nil, ""],
     do: "<a href='#{url}'>#{url}</a>"
   defp process_directive(%{"name" => "link", "text" => text, "url" => url}),
