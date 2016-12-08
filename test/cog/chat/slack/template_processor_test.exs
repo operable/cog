@@ -122,4 +122,26 @@ defmodule Cog.Chat.Slack.TemplateProcessorTest do
 
     assert expected == rendered
   end
+
+  test "handles link directive with a nil url" do
+    directives = [
+      %{"name" => "link", "text" => "a link", "url" => nil}
+    ]
+
+    {rendered, _} = TemplateProcessor.render(directives)
+    expected = "<|a link>"
+
+    assert expected == rendered
+  end
+
+  test "handles link directive with nil text" do
+    directives = [
+      %{"name" => "link", "text" => nil, "url" => "http://www.example.com"}
+    ]
+
+    {rendered, _} = TemplateProcessor.render(directives)
+    expected = "<http://www.example.com|>"
+
+    assert expected == rendered
+  end
 end

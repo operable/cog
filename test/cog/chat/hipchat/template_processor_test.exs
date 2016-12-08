@@ -118,4 +118,26 @@ defmodule Cog.Chat.HipChat.TemplateProcessorTest do
 
     assert expected == rendered
   end
+
+  test "handles link directive with a nil url" do
+    directives = [
+      %{"name" => "link", "text" => "a link", "url" => nil}
+    ]
+
+    rendered = TemplateProcessor.render(directives)
+    expected = "<a href=''>a link</a>"
+
+    assert expected == rendered
+  end
+
+  test "handles link directive with nil text" do
+    directives = [
+      %{"name" => "link", "text" => nil, "url" => "http://www.example.com"}
+    ]
+
+    rendered = TemplateProcessor.render(directives)
+    expected = "<a href='http://www.example.com'>http://www.example.com</a>"
+
+    assert expected == rendered
+  end
 end
