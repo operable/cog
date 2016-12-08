@@ -90,10 +90,8 @@ defmodule Cog.Chat.Slack.TemplateProcessor do
   end
   defp process_directive(%{"name" => "list_item", "children" => children}, bullet: bullet),
     do: "   #{bullet} #{Enum.map_join(children, &process_directive/1)}\n"
-  defp process_directive(%{"name" => "link", "text" => text, "url" => url}, _),
-    do: "<#{url}|#{text}>"
-  defp process_directive(%{"name" => "link", "url" => url}, _) do
-    "#{url}"
+  defp process_directive(%{"name" => "link", "text" => text, "url" => url}, _) do
+    "<#{url}|#{text}>"
   end
   defp process_directive(%{"text" => text}=directive, _) do
     Logger.warn("Unrecognized directive; formatting as plain text: #{inspect directive}")
