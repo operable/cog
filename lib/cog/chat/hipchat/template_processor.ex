@@ -37,6 +37,12 @@ defmodule Cog.Chat.HipChat.TemplateProcessor do
   # This way at least a link is rendered. This basically mirrors the default Slack behavior.
   defp process_directive(%{"name" => "link", "text" => text, "url" => url}) when text in [nil, ""],
     do: "<a href='#{url}'>#{url}</a>"
+  # Rendering a link in HipChat with a nil or blank url will obviously result in an invalid link. We
+  # inform the user inline that there was a problem and log a warning.
+  defp process_directive(%{"name" => "link", "text" => text, "url" => url}=directive) when url in [nil, ""] do
+    Logger.warn("Invalid link; #{inspect directive}")
+    ~s[(invalid link! text:"#{text}" url: "#{url}")]
+  end
   defp process_directive(%{"name" => "link", "text" => text, "url" => url}),
     do: "<a href='#{url}'>#{text}</a>"
 
