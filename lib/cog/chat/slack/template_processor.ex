@@ -90,8 +90,16 @@ defmodule Cog.Chat.Slack.TemplateProcessor do
   end
   defp process_directive(%{"name" => "list_item", "children" => children}, bullet: bullet),
     do: "   #{bullet} #{Enum.map_join(children, &process_directive/1)}\n"
-  defp process_directive(%{"name" => "link", "url" => url}, _) do
-    "#{url}"
+  # Rendering a link in Slack with a nil or blank url just results in '<|text>' which isn't super
+  # useful to a user. So instead we'll inform the user of the problem inline and log a warning.
+  defp process_directive(%{"name" => "link", "text" => text, "url" => url}=directive, _) when url in [nil, ""] do
+    Logger.warn("Invalid link; #{inspect directive}")
+    ~s[(invalid link! text:"#{text}" url: "#{inspect url}")]
+  end
+  # By default if a link is rendered with nil or blank text only the link is displayed. So
+  # we don't have to do anything special like we do in the HipChat processor.
+  defp process_directive(%{"name" => "link", "text" => text, "url" => url}, _) do
+    "<#{url}|#{text}>"
   end
   defp process_directive(%{"text" => text}=directive, _) do
     Logger.warn("Unrecognized directive; formatting as plain text: #{inspect directive}")
