@@ -126,6 +126,8 @@ defmodule Cog.Command.OptionInterpreter do
 
   defp coerce_value(type, %Ast.Variable{value: value}),
     do: coerce_value(type, value)
+  defp coerce_value(type, %Ast.InterpolatedString{}=is),
+    do: coerce_value(type, to_string(is))
   defp coerce_value("int", value) when is_integer(value),
     do: {:ok, value}
   defp coerce_value("int", value) when is_float(value),

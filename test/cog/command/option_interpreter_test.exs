@@ -310,6 +310,16 @@ defmodule Cog.Command.OptionInterpreter.Test do
                                          "layer" => 123}, [456, true, "what"])
   end
 
+  test "interpolated strings can be parts of lists" do
+    opt_args = options_and_args("test-command --foo=bar --foo=$var --foo=\"${blah}-thingie\"",
+                                %{"var" => "monkey",
+                                  "blah" => "interpolated"},
+                                options: [[name: "foo", type: "list"]])
+    assert_options_and_args(opt_args,
+                            %{"foo" => ["bar", "monkey", "interpolated-thingie"]},
+                            [])
+  end
+
   ########################################################################
 
   defp options_and_args(invocation_text, context, command_spec \\ []) do
