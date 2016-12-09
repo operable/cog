@@ -30,7 +30,7 @@
   "getopt": {:git, "https://github.com/jcomellas/getopt.git", "68fe326f2c7585eb32a5b136dffc75428a53fc02", [branch: "master"]},
   "goldrush": {:hex, :goldrush, "0.1.8", "2024ba375ceea47e27ea70e14d2c483b2d8610101b4e852ef7f89163cdb6e649", [:rebar3], []},
   "gproc": {:hex, :gproc, "0.5.0", "2df2d886f8f8a7b81a4b04aa17972b5965bbc5bf0100ea6d8e8ac6a0e7389afe", [:rebar], []},
-  "greenbar": {:git, "https://github.com/operable/greenbar.git", "88ea3e51bb90fc6f7b94c5060568f5065294600f", [branch: "kevsmith/renderers"]},
+  "greenbar": {:git, "https://github.com/operable/greenbar.git", "e0f310ec1f5a618dc2647c4a5b09b782e751d5f0", []},
   "greenbar_markdown": {:git, "https://github.com/operable/greenbar_markdown.git", "ad6d027c92ef095a0461c08847d3eb999659c3a2", []},
   "hackney": {:hex, :hackney, "1.6.1", "ddd22d42db2b50e6a155439c8811b8f6df61a4395de10509714ad2751c6da817", [:rebar3], [{:certifi, "0.4.0", [hex: :certifi, optional: false]}, {:idna, "1.2.0", [hex: :idna, optional: false]}, {:metrics, "1.0.1", [hex: :metrics, optional: false]}, {:mimerl, "1.0.2", [hex: :mimerl, optional: false]}, {:ssl_verify_fun, "1.1.0", [hex: :ssl_verify_fun, optional: false]}]},
   "html_entities": {:hex, :html_entities, "0.3.0", "2f278ffc69c3f0cbd5996628fef37cf922fa715f3e04b9f38924c8adced3f25a", [:mix], []},

@@ -65,7 +65,7 @@ defmodule Cog.Mixfile do
       {:fumanchu, github: "operable/fumanchu"},
       {:probe, github: "operable/probe"},
       {:spanner, github: "operable/spanner"},
-      {:greenbar, github: "operable/greenbar", branch: "kevsmith/renderers"},
+      {:greenbar, github: "operable/greenbar"},
 
       # MQTT-related
       ########################################################################
