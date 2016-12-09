@@ -13,6 +13,7 @@ defmodule Cog.CommandVersionHelpView do
       subcommands: render_subcommands(command_version),
       examples: command_version.examples,
       notes: command_version.notes,
+      output: render_output(command_version),
       bundle: %{
         author: command_version.bundle_version.author,
         homepage: command_version.bundle_version.homepage
@@ -101,5 +102,12 @@ defmodule Cog.CommandVersionHelpView do
       %{command: command,
         description: description}
     end)
+  end
+
+  def render_output(%CommandVersion{output: output}) do
+    %{description: output["description"],
+      example: output["example"]}
+    |> Enum.reject(fn {_key, value} -> is_nil(value) end)
+    |> Enum.into(%{})
   end
 end
