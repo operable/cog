@@ -1,5 +1,5 @@
 defmodule Cog.Command.Service.DataStoreTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
 
   alias Cog.Command.Service.DataStore
 
@@ -7,28 +7,24 @@ defmodule Cog.Command.Service.DataStoreTest do
   @namespace [ "test", "data_store" ]
   @test_keys [ "foo", "foo1", "foo2", "foo3" ]
 
-  setup_all do
+  setup do
     Ecto.Adapters.SQL.Sandbox.checkout(Cog.Repo)
     Ecto.Adapters.SQL.Sandbox.mode(Cog.Repo, {:shared, self()})
 
-    pid = Process.whereis(DataStore)
+    original_pid = Process.whereis(DataStore)
     Process.unregister(DataStore)
 
     on_exit(fn ->
-      Process.register(pid, DataStore)
+      Process.register(original_pid, DataStore)
     end)
 
-    :ok
-  end
-
-  setup do
-    {:ok, pid} = DataStore.start_link(@base_path)
+    {:ok, testing_pid} = DataStore.start_link(@base_path)
 
     # Cleanup any existing objects that are named the same as those
     # that are used in this test to ensure a clean slate to test from.
     Enum.each(@test_keys, fn(k) -> DataStore.delete(@namespace, k) end)
 
-    {:ok, %{pid: pid}}
+    {:ok, %{pid: testing_pid}}
   end
 
   test "fetch an existing key" do
