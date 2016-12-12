@@ -1,7 +1,7 @@
 defmodule Cog.Commands.Trigger do
   use Cog.Command.GenCommand.Base, bundle: Cog.Util.Misc.embedded_bundle
 
-  alias Cog.Commands.Trigger.{Create, Delete, Disable, Enable, Info, List, Update}
+  alias Cog.Commands.Trigger.{Create, Delete, Disable, Enable, Info, Update}
   require Cog.Commands.Helpers, as: Helpers
 
   Helpers.usage(:root)
@@ -40,13 +40,13 @@ defmodule Cog.Commands.Trigger do
                "disable" -> Disable.disable(req, args)
                "enable"  -> Enable.enable(req, args)
                "info"    -> Info.info(req, args)
-               "list"    -> List.list(req, args)
+               #"list"    -> List.list(req, args)
                "update"  -> Update.update(req, args)
                nil ->
                  if Helpers.flag?(req.options, "help") do
                    show_usage
                  else
-                   List.list(req, args)
+                   #List.list(req, args)
                  end
                other ->
                  {:error, {:unknown_subcommand, other}}
