@@ -7,6 +7,8 @@ defmodule Cog.Commands.Trigger.List do
 
   @description "List all triggers."
 
+  permission "manage_triggers"
+
   rule "when command is #{Cog.Util.Misc.embedded_bundle}:trigger-list must have #{Cog.Util.Misc.embedded_bundle}:manage_triggers"
 
   def handle_message(req, state),

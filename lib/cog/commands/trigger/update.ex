@@ -21,6 +21,8 @@ defmodule Cog.Commands.Trigger.Update do
   trigger update my-trigger -d "A friendly greeting"
   """
 
+  permission "manage_triggers"
+
   rule "when command is #{Cog.Util.Misc.embedded_bundle}:trigger-update must have #{Cog.Util.Misc.embedded_bundle}:manage_triggers"
 
   def handle_message(req, state) do

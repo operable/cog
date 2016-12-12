@@ -13,6 +13,8 @@ defmodule Cog.Commands.Trigger.Enable do
   trigger enable my-trigger
   """
 
+  permission "manage_triggers"
+
   rule "when command is #{Cog.Util.Misc.embedded_bundle}:trigger-enable must have #{Cog.Util.Misc.embedded_bundle}:manage_triggers"
 
   def handle_message(req, state) do

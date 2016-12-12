@@ -14,12 +14,14 @@ defmodule Cog.Commands.Trigger.Delete do
   trigger:delete foo bar baz
   """
 
+  permission "manage_triggers"
+
   rule "when command is #{Cog.Util.Misc.embedded_bundle}:trigger-delete must have #{Cog.Util.Misc.embedded_bundle}:manage_triggers"
 
   def handle_message(req, state) do
     result = with {:ok, names} <- Helpers.get_args(req.args, min: 1) do
       {_count, deleted_triggers} = Triggers.delete(names)
-      {:ok, "trigger-delete", deleted_triggers}
+      {:ok, deleted_triggers}
     end
 
     case result do
