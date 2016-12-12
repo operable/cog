@@ -24,6 +24,7 @@
 - Command parsing fails when extended Unicode characters are followed by a URL [#1161](https://github.com/operable/cog/issues/1161)
 - History command (defaults to `!!`) crashes when not used with @-style mention [#1179](https://github.com/operable/cog/issues/1179)
 - Improved error message visibility in stock error template [#1183](https://github.com/operable/cog/issues/1183)
+- Empty command output section visible in command help [#1223](https://github.com/operable/cog/issues/1223)
 
 ### Documentation
 
