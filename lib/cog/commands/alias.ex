@@ -10,6 +10,7 @@ defmodule Cog.Commands.Alias do
   @arguments "[subcommand]"
 
   @subcommands %{
+    "create <alias> <pipeline>" => "Create a new alias visible to the creator",
     "move <alias> <site|user>:<new-alias>" => "Move an alias between user and site visibility and optionally rename alias",
     "delete <alias>" => "Delete alias",
     "list [pattern]" => "List all aliases optionally filtered by a pattern (supports basic wildcard with \"*\")"
@@ -39,6 +40,8 @@ defmodule Cog.Commands.Alias do
     {subcommand, args} = Helpers.get_subcommand(req.args)
 
     result = case subcommand do
+               "create" ->
+                 Alias.Create.create_new_user_command_alias(req, args)
                "move" ->
                  Alias.Move.move_command_alias(req, args)
                "delete" ->
