@@ -139,6 +139,8 @@ defmodule Cog.Command.GenCommand.Base do
       Module.register_attribute(__MODULE__, :permissions, accumulate: true, persist: true)
       Module.register_attribute(__MODULE__, :raw_rules, accumulate: true, persist: false)
       Module.register_attribute(__MODULE__, :rules, accumulate: true, persist: true)
+      Module.register_attribute(__MODULE__, :output_description, accumulate: false, persist: true)
+      Module.register_attribute(__MODULE__, :output_example, accumulate: false, persist: true)
 
       import unquote(__MODULE__), only: [option: 1,
                                          option: 2,
@@ -178,9 +180,17 @@ defmodule Cog.Command.GenCommand.Base do
     attr_value(module, :command_name)
   end
 
-  for attr <- [:description, :long_description, :examples, :notes, :arguments, :subcommands] do
+  for attr <- [:description, :long_description, :examples, :notes, :arguments, :subcommands, :output_description, :output_example] do
     def unquote(attr)(module),
       do: attr_value(module, unquote(attr))
+  end
+
+  @doc """
+  Returns combined output fields for command documentation
+  """
+  def output(module) do
+    %{"description" => attr_value(module, :output_description),
+      "example" => attr_value(module, :output_example)}
   end
 
   @doc """
