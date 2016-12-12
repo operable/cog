@@ -1,22 +1,15 @@
 defmodule Cog.Commands.Trigger.List do
+  use Cog.Command.GenCommand.Base,
+    bundle: Cog.Util.Misc.embedded_bundle,
+    name: "trigger-list"
+
   alias Cog.Repository.Triggers
 
-  require Cog.Commands.Helpers, as: Helpers
+  @description "List all triggers."
 
-  Helpers.usage """
-  List all triggers.
+  rule "when command is #{Cog.Util.Misc.embedded_bundle}:trigger-list must have #{Cog.Util.Misc.embedded_bundle}:manage_triggers"
 
-  USAGE
-    trigger list [FLAGS]
-
-  FLAGS
-    -h, --help  Display this usage info
-  """
-
-  def list(%{options: %{"help" => true}}, _args),
-    do: show_usage
-
-  def list(_req, _args),
-    do: {:ok, "trigger-list", Triggers.all}
+  def handle_message(req, state),
+    do: {:reply, req.reply_to, "trigger-list", Triggers.all, state}
 
 end
