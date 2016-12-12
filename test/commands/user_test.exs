@@ -1,5 +1,7 @@
 defmodule Cog.Test.Commands.UserTest do
-  use Cog.CommandCase, command_module: Cog.Commands.User
+  use Cog.CommandCase, command_tag: :user
+
+  alias Cog.Commands.User.{AttachHandle, DetachHandle, Info, List, ListHandles}
 
   import Cog.Support.ModelUtilities, only: [user: 1,
                                             with_chat_handle_for: 2]
@@ -7,8 +9,8 @@ defmodule Cog.Test.Commands.UserTest do
   setup :with_users
 
   test "listing users" do
-    payload = new_req(args: ["list"])
-              |> send_req()
+    payload = new_req()
+              |> send_req(List)
               |> unwrap()
               |> Enum.sort_by(fn(b) -> b[:username] end)
 
@@ -17,32 +19,32 @@ defmodule Cog.Test.Commands.UserTest do
   end
 
   test "information about a specific user" do
-    payload = new_req(args: ["info", "admin"])
-              |> send_req()
+    payload = new_req(args: ["admin"])
+              |> send_req(Info)
               |> unwrap()
 
     assert %{username: "admin"} = payload
   end
 
   test "information about a missing user fails" do
-    error = new_req(args: ["info", "not-a-real-user"])
-            |> send_req()
+    error = new_req(args: ["not-a-real-user"])
+            |> send_req(Info)
             |> unwrap_error()
 
     assert(error == "Could not find 'user' with the name 'not-a-real-user'")
   end
 
   test "not providing the user to get information about fails" do
-    error = new_req(args: ["info"])
-            |> send_req()
+    error = new_req()
+            |> send_req(Info)
             |> unwrap_error()
 
     assert(error == "Not enough args. Arguments required: exactly 1.")
   end
 
   test "providing multiple users to get information about fails" do
-    error = new_req(args: ["info", "admin", "tester"])
-            |> send_req()
+    error = new_req(args: ["admin", "tester"])
+            |> send_req(Info)
             |> unwrap_error()
 
     assert(error == "Too many args. Arguments required: exactly 1.")
@@ -51,8 +53,8 @@ defmodule Cog.Test.Commands.UserTest do
   test "attaching a chat handle to a user works" do
     user("dummy")
 
-    payload = new_req(args: ["attach-handle", "dummy", "dummy-handle"])
-              |> send_req()
+    payload = new_req(args: ["dummy", "dummy-handle"])
+              |> send_req(AttachHandle)
               |> unwrap()
 
     assert %{chat_provider: %{name: "test"},
@@ -62,24 +64,24 @@ defmodule Cog.Test.Commands.UserTest do
   end
 
   test "attaching a chat handle to a non-existent user fails" do
-    error = new_req(args: ["attach-handle", "not-a-user", "test-handle"])
-            |> send_req()
+    error = new_req(args: ["not-a-user", "test-handle"])
+            |> send_req(AttachHandle)
             |> unwrap_error()
 
     assert(error == "Could not find 'user' with the name 'not-a-user'")
   end
 
   test "attaching a chat handle without specifying a chat handle fails" do
-    error = new_req(args: ["attach-handle", "dummy"])
-            |> send_req()
+    error = new_req(args: ["dummy"])
+            |> send_req(AttachHandle)
             |> unwrap_error()
 
     assert(error == "Not enough args. Arguments required: exactly 2.")
   end
 
   test "attaching a chat handle without specifying a user or chat handle fails" do
-    error = new_req(args: ["attach-handle"])
-            |> send_req()
+    error = new_req()
+            |> send_req(AttachHandle)
             |> unwrap_error()
 
     assert(error == "Not enough args. Arguments required: exactly 2.")
@@ -89,8 +91,8 @@ defmodule Cog.Test.Commands.UserTest do
     user("dummy")
     |> with_chat_handle_for("test")
 
-    payload = new_req(args: ["detach-handle", "dummy"])
-              |> send_req()
+    payload = new_req(args: ["dummy"])
+              |> send_req(DetachHandle)
               |> unwrap()
 
     assert %{chat_provider: %{name: "test"},
@@ -100,8 +102,8 @@ defmodule Cog.Test.Commands.UserTest do
   test "detaching a chat handle works even if there wasn't a handle to begin with" do
     user("dummy")
 
-    payload = new_req(args: ["detach-handle", "dummy"])
-              |> send_req()
+    payload = new_req(args: ["dummy"])
+              |> send_req(DetachHandle)
               |> unwrap()
 
     assert %{chat_provider: %{name: "test"},
@@ -109,16 +111,16 @@ defmodule Cog.Test.Commands.UserTest do
   end
 
   test "detaching a chat handle from a non-existent user fails" do
-    error = new_req(args: ["detach-handle", "not-a-user"])
-            |> send_req()
+    error = new_req(args: ["not-a-user"])
+            |> send_req(DetachHandle)
             |> unwrap_error()
 
     assert(error == "Could not find 'user' with the name 'not-a-user'")
   end
 
   test "detaching a chat handle without specifying a user fails" do
-    error = new_req(args: ["detach-handle"])
-            |> send_req()
+    error = new_req()
+            |> send_req(DetachHandle)
             |> unwrap_error()
 
     assert(error == "Not enough args. Arguments required: exactly 1.")
@@ -127,8 +129,8 @@ defmodule Cog.Test.Commands.UserTest do
   test "listing chat handles works", %{users: users} do
     Enum.each(users, &(with_chat_handle_for(&1, "test")))
 
-    payload = new_req(args: ["list-handles"])
-              |> send_req()
+    payload = new_req()
+              |> send_req(ListHandles)
               |> unwrap()
               |> Enum.sort_by(fn(h) -> h[:username] end)
 
@@ -137,15 +139,6 @@ defmodule Cog.Test.Commands.UserTest do
             %{username: "tester",
               handle: "tester"}] = payload
   end
-
-  test "passing an unknown subcommand fails" do
-    error = new_req(args: ["not-a-subcommand"])
-            |> send_req()
-            |> unwrap_error()
-
-    assert(error == "Unknown subcommand 'not-a-subcommand'")
-  end
-
 
   #### Setup Functions ####
 

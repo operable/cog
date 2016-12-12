@@ -1,23 +1,17 @@
 defmodule Cog.Commands.User.List do
+  use Cog.Command.GenCommand.Base,
+    bundle: Cog.Util.Misc.embedded_bundle,
+    name: "user-list"
+
   alias Cog.Repository.Users
-  require Cog.Commands.Helpers, as: Helpers
 
-  Helpers.usage """
-  List all users.
+  @description "List all users."
 
-  USAGE
-    user list [FLAGS]
+  rule "when command is #{Cog.Util.Misc.embedded_bundle}:user-list must have #{Cog.Util.Misc.embedded_bundle}:manage_users"
 
-  FLAGS
-    -h, --help  Display this usage info
-  """
-
-  def list(%{options: %{"help" => true}}, _args) do
-    show_usage
-  end
-  def list(_req, _args) do
+  def handle_message(req, state) do
     rendered = Cog.V1.UserView.render("index.json", %{users: Users.all})
-    {:ok, "user-list", rendered[:users]}
+    {:reply, req.reply_to, "user-list", rendered[:users], state}
   end
 
 end
