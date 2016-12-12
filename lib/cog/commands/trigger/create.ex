@@ -37,7 +37,7 @@ defmodule Cog.Commands.Trigger.Create do
 
     case results do
       {:ok, data} ->
-        {:reply, req.reply_to, "trigger-create", data, state}
+        {:reply, req.reply_to, "trigger-create", Cog.Command.Trigger.Helpers.convert(data), state}
       {:error, error} ->
         {:error, req.reply_to, Helpers.error(error), state}
     end

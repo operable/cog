@@ -24,7 +24,7 @@ defmodule Cog.Commands.Trigger.Delete do
 
     case result do
       {:ok, data} ->
-        {:reply, req.reply_to, "trigger-delete", data, state}
+        {:reply, req.reply_to, "trigger-delete", Cog.Command.Trigger.Helpers.convert(data), state}
       {:error, error} ->
         {:error, req.reply_to, Helpers.error(error), state}
     end
