@@ -42,7 +42,7 @@ cog:
   extends:
     file: docker-compose.common.yml
     service: common
-  image: operable/cog:0.17-beta2
+  image: operable/cog:0.17
   environment:
     - COG_MQTT_HOST=0.0.0.0
     - DATABASE_URL=ecto://cog:cog@postgres:5432/cog
@@ -59,7 +59,7 @@ relay:
   extends:
     file: docker-compose.common.yml
     service: common
-  image: operable/relay:0.17-beta1
+  image: operable/relay:0.17
   privileged: true
   volumes:
     - /var/run/docker.sock:/var/run/docker.sock
