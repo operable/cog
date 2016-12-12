@@ -31,7 +31,7 @@ defmodule Cog.Commands.Help do
 
   @output_description """
   Returns the highest version of each enabled and disabled bundle, a
-  specifc bundle, or a specific command depending on the args passed to the
+  specific bundle, or a specific command depending on the args passed to the
   command. The example below shows the output for the "raw" command.
   """
 
