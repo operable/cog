@@ -19,6 +19,8 @@ defmodule Cog.Commands.Trigger.Create do
   option "timeout-sec", type: "int", short: "t", description: "Amount of time Cog will wait for execution to finish. Defaults to 30. Must be greater than 0"
   option "as-user", type: "string", short: "u", description: "The Cog username the trigger will execute as. Defaults to nil."
 
+  rule "when command is #{Cog.Util.Misc.embedded_bundle}:trigger-create must have #{Cog.Util.Misc.embedded_bundle}:manage_triggers"
+
   def handle_message(req, state) do
     results = with {:ok, [name, pipeline]} <- Helpers.get_args(req.args, 2) do
       params = Cog.Command.Trigger.Helpers.normalize_params(req.options)
