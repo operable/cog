@@ -11,6 +11,8 @@ defmodule Cog.Commands.Trigger.Info do
 
   @arguments "<name>"
 
+  permission "manage_triggers"
+
   rule "when command is #{Cog.Util.Misc.embedded_bundle}:trigger-info must have #{Cog.Util.Misc.embedded_bundle}:manage_triggers"
 
   def handle_message(req, state) do
