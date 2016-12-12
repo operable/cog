@@ -29,7 +29,7 @@ defmodule Cog.Commands.Trigger.Disable do
 
     case result do
       {:ok, data} ->
-        {:reply, req.reply_to, "trigger-disable", data, state}
+        {:reply, req.reply_to, "trigger-disable", Cog.Command.Trigger.Helpers.convert(data), state}
       {:error, error} ->
         {:error, req.reply_to, Helpers.error(error), state}
     end

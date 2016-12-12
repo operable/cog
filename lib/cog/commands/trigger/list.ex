@@ -10,6 +10,6 @@ defmodule Cog.Commands.Trigger.List do
   rule "when command is #{Cog.Util.Misc.embedded_bundle}:trigger-list must have #{Cog.Util.Misc.embedded_bundle}:manage_triggers"
 
   def handle_message(req, state),
-    do: {:reply, req.reply_to, "trigger-list", Triggers.all, state}
+    do: {:reply, req.reply_to, "trigger-list", Cog.Command.Trigger.Helpers.convert(Triggers.all), state}
 
 end
