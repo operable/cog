@@ -9,32 +9,6 @@ defmodule Cog.Test.Commands.AliasTest do
 
   setup :with_user
 
-  describe "alias creation" do
-    test "with standard args", %{user: user} do
-      {:ok, response} = new_req(user: %{"id" => user.id}, args: ["create", "my-new-alias", "echo My New Alias"])
-      |> send_req()
-
-      assert(%{name: "my-new-alias",
-               pipeline: "echo My New Alias",
-               visibility: "user"} = response)
-
-      created_alias = get_alias("my-new-alias", user.id)
-
-      assert(%{name: "my-new-alias",
-               pipeline: "echo My New Alias",
-               visibility: "user"} = created_alias)
-    end
-
-    test "with an existing name", %{user: user}=context do
-      with_user_alias(context)
-
-      {:error, error} = new_req(user: %{"id" => user.id}, args: ["create", "my-new-alias", "echo My New Alias"])
-      |> send_req()
-
-      assert(error == "name: The alias name is already in use.")
-    end
-  end
-
   describe "alias removal" do
     setup :with_user_alias
 
@@ -354,20 +328,6 @@ defmodule Cog.Test.Commands.AliasTest do
   end
 
   describe "alias args" do
-    test "passing too many", %{user: user} do
-      {:error, error} = new_req(user: %{"id" => user.id}, args: ["create", "my-invalid-alias", "echo foo", "invalid-arg"])
-      |> send_req()
-
-      assert(error == "Too many args. Arguments required: exactly 2.")
-    end
-
-    test "passing too few", %{user: user} do
-      {:error, error} = new_req(user: %{"id" => user.id}, args: ["create", "my-invalid-alias"])
-      |> send_req()
-
-      assert(error == "Not enough args. Arguments required: exactly 2.")
-    end
-
     test "passing an unknown subcommand", %{user: user} do
       {:error, error} = new_req(user: %{"id" => user.id}, args: ["foo"])
       |> send_req()

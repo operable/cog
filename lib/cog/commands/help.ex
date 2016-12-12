@@ -29,6 +29,31 @@ defmodule Cog.Commands.Help do
 
   @arguments "[<bundle> | <bundle:command>]"
 
+  @output_description """
+  Returns the highest version of each enabled and disabled bundle, a
+  specific bundle, or a specific command depending on the args passed to the
+  command. The example below shows the output for the "raw" command.
+  """
+
+  @output_example """
+  {
+    "synopsis": "operable:raw",
+    "subcommands": [],
+    "required_options": [],
+    "output": {},
+    "options": [],
+    "notes": null,
+    "name": "raw",
+    "long_description": "Even if a template was provided by the previous command, the raw output\nwill be returned. Useful as a debugging tool for command authors.\n",
+    "examples": "echo foo | raw\n> {\n    \"body\": [\n      \"foo\"\n    ]\n  }\n",
+    "description": "Show raw output without templating",
+    "bundle": {
+      "homepage": "operable.io",
+      "author": "Operable <support@operable.io>"
+    }
+  }
+  """
+
   rule "when command is #{Cog.Util.Misc.embedded_bundle}:help allow"
 
   option "output", short: "o", type: "bool", required: false
@@ -167,7 +192,7 @@ defmodule Cog.Commands.Help do
   defp error_msg({:invalid_bundle, name}),
     do: "Invalid bundle name '#{name}'. Check the name and try again."
   defp error_msg({:example_not_found, command}),
-    do: "Command #{command} does not have an example included in its documentation"
+    do: "Command #{command} does not have an output example included in its documentation"
   defp error_msg({:ambiguous, name, commands}) do
     """
     Multiple bundles contain a command with the name '#{name}'.

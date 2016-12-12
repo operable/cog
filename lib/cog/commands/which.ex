@@ -32,6 +32,18 @@ defmodule Cog.Commands.Which do
   be returned.
   """
 
+  @output_description """
+  Returns a few high-level details of the matching command or alias.
+  """
+
+  @output_example """
+  {
+    "type": "command",
+    "scope": "operable",
+    "name": "help"
+  }
+  """
+
   rule "when command is #{Cog.Util.Misc.embedded_bundle}:which allow"
 
   def handle_message(req, state) do
