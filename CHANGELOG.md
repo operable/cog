@@ -1,5 +1,36 @@
 #  Changelog
 
+## 0.17.0
+
+### Enhancements
+
+- First release of `gbexec` [#952](https://github.com/operable/cog/issues/952)
+- Added support for Markdown links in Greenbar templates [#1076](https://github.com/operable/cog/issues/1076)
+- Relay reopens log files on `SIGHUP` [#1126](https://github.com/operable/cog/issues/1126)
+- Streamlined Cog's URL generation [#1139](https://github.com/operable/cog/issues/1139), [#1158](https://github.com/operable/cog/issues/1158)
+- Made global error template user customizable [#1142](https://github.com/operable/cog/issues/1142)
+- Default managed dynamic config to enabled; Automatically downcase Relay UUIDs [#1147](https://github.com/operable/cog/issues/1147)
+- Expose user email to command invocation environment variables [#1152](https://github.com/operable/cog/issues/1152)
+- Replaced custom request id with `Plug.RequestId` [#1160](https://github.com/operable/cog/issues/1160)
+- Improved HipChat attachment rendering [#1182](https://github.com/operable/cog/issues/1182)
+- Made history token user configurable [#1184](https://github.com/operable/cog/issues/1184)
+- Unified HipChat and Slack table rendering [#1186](https://github.com/operable/cog/issues/1186)
+- Added Markdown paragraph support to Greenbar [#1200](https://github.com/operable/cog/issues/1200)
+
+### Bug Fixes
+
+- Updated role API to handle role revocation failures [#825](https://github.com/operable/cog/issues/825)
+- Re-added Relay support for per-command environment variables [#1143](https://github.com/operable/cog/issues/1143)
+- Command parsing fails when extended Unicode characters are followed by a URL [#1161](https://github.com/operable/cog/issues/1161)
+- History command (defaults to `!!`) crashes when not used with @-style mention [#1179](https://github.com/operable/cog/issues/1179)
+- Improved error message visibility in stock error template [#1183](https://github.com/operable/cog/issues/1183)
+
+### Documentation
+
+- Added command execution environment [#953](https://github.com/operable/cog/issues/953), [#1207](https://github.com/operable/cog/issues/1207)
+- Added Greenbar tempate engine [#1188](https://github.com/operable/cog/issues/1188)
+
+
 ## 0.16.2
 
 ### Enhancements
