@@ -23,26 +23,9 @@ defmodule Cog.Commands.Trigger.Update do
 
   rule "when command is #{Cog.Util.Misc.embedded_bundle}:trigger-update must have #{Cog.Util.Misc.embedded_bundle}:manage_triggers"
 
-  def update(req, [name]),
-    do: do_update(name, req.options)
-  def update(_req, _args),
-    do: {:error, :invalid_args}
-  require Logger
-
   def handle_message(req, state) do
-    result = with {:ok, [name]} <- Helpers.get_args(req.args, 1) do
-      case Triggers.by_name(name) do
-        {:ok, trigger} ->
-          params = Cog.Command.Trigger.Helpers.normalize_params(options)
-          case Triggers.update(trigger, params) do
-            {:ok, trigger} ->
-              {:ok, trigger}
-            {:error, error} ->
-              {:error, {:trigger_invalid, error}}
-          end
-        {:error, :not_found} ->
-          {:error, {:resource_not_found, "trigger", name}}
-      end
+    result = with {:ok, args} <- Helpers.get_args(req.args, 1) do
+      update(req, args)
     end
 
     case result do
@@ -51,6 +34,22 @@ defmodule Cog.Commands.Trigger.Update do
       {:error, error} ->
         {:error, req.reply_to, Helpers.error(error), state}
     end
-
   end
+
+  # This is broken out into a public function because it is accessed in the enable and disable command modules
+  def update(req, [name]) do
+    case Triggers.by_name(name) do
+      {:ok, trigger} ->
+        params = Cog.Command.Trigger.Helpers.normalize_params(req.options)
+        case Triggers.update(trigger, params) do
+          {:ok, trigger} ->
+            {:ok, trigger}
+          {:error, error} ->
+            {:error, {:trigger_invalid, error}}
+        end
+      {:error, :not_found} ->
+        {:error, {:resource_not_found, "trigger", name}}
+    end
+  end
+
 end
