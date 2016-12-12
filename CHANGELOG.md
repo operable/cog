@@ -11,7 +11,6 @@
 - Made global error template user customizable [#1142](https://github.com/operable/cog/issues/1142)
 - Default managed dynamic config to enabled; Automatically downcase Relay UUIDs [#1147](https://github.com/operable/cog/issues/1147)
 - Expose user email to command invocation environment variables [#1152](https://github.com/operable/cog/issues/1152)
-- Replaced custom request id with `Plug.RequestId` [#1160](https://github.com/operable/cog/issues/1160)
 - Improved HipChat attachment rendering [#1182](https://github.com/operable/cog/issues/1182)
 - Made history token user configurable [#1184](https://github.com/operable/cog/issues/1184)
 - Unified HipChat and Slack table rendering [#1186](https://github.com/operable/cog/issues/1186)
@@ -37,6 +36,7 @@
 ### Enhancements
 
 - Allow `help` command to work with non-qualified command names [#1109](https://github.com/operable/cog/issues/1109)
+- Allow bootstrapping to set a chat handle [#1226](https://github.com/operable/cog/issues/1226)
 
 ### Bug Fixes
 
