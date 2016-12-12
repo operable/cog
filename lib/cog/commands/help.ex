@@ -167,7 +167,7 @@ defmodule Cog.Commands.Help do
   defp error_msg({:invalid_bundle, name}),
     do: "Invalid bundle name '#{name}'. Check the name and try again."
   defp error_msg({:example_not_found, command}),
-    do: "Command #{command} does not have an example included in its documentation"
+    do: "Command #{command} does not have an output example included in its documentation"
   defp error_msg({:ambiguous, name, commands}) do
     """
     Multiple bundles contain a command with the name '#{name}'.
