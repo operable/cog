@@ -40,8 +40,6 @@ defmodule Cog.Commands.Alias do
     {subcommand, args} = Helpers.get_subcommand(req.args)
 
     result = case subcommand do
-               "move" ->
-                 Alias.Move.move_command_alias(req, args)
                "delete" ->
                  Alias.Delete.delete_command_alias(req, args)
                "list" ->
