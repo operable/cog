@@ -29,8 +29,6 @@ defmodule Cog.Commands.Group do
     {subcommand, args} = Helpers.get_subcommand(req.args)
 
     result = case subcommand do
-      "delete" ->
-        Group.Delete.delete_group(req, args)
       "member" ->
         Group.Member.manage_members(req, args)
       "rename" ->
