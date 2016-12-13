@@ -26,7 +26,3 @@ defmodule Cog.Test.Commands.User.ListHandlesTest do
     [users: [user("admin"), user("tester")]]
   end
 end
-
-
-
-
