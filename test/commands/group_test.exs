@@ -1,7 +1,7 @@
 defmodule Cog.Test.Commands.GroupTest do
   use Cog.CommandCase, command_module: Cog.Commands.Group
 
-  alias Cog.Commands.Group.{List}
+  alias Cog.Commands.Group.{List, Create}
   import Cog.Support.ModelUtilities, only: [user: 1,
                                             group: 1,
                                             role: 1,
@@ -22,8 +22,8 @@ defmodule Cog.Test.Commands.GroupTest do
 
     test "can be created" do
       {:ok, response} =
-        new_req(args: ["create", "created_group"])
-        |> send_req()
+        new_req(args: ["created_group"])
+        |> send_req(Create)
 
       assert(%{name: "created_group"} = response)
     end
@@ -76,8 +76,8 @@ defmodule Cog.Test.Commands.GroupTest do
       group("duplicate_group")
 
       {:error, error} =
-        new_req(args: ["create", "duplicate_group"])
-        |> send_req()
+        new_req(args: ["duplicate_group"])
+        |> send_req(Create)
 
       assert(error == "name: has already been taken")
     end
