@@ -1,7 +1,7 @@
 defmodule Cog.Test.Commands.BundleTest do
   use Cog.CommandCase, command_module: Cog.Commands.Bundle
 
-  alias Cog.Commands.Bundle.{List, Versions, Info, Enable, Disable}
+  alias Cog.Commands.Bundle.{List, Versions, Info, Enable, Disable, Install}
   alias Cog.Repository.Bundles
   import Cog.Support.ModelUtilities, only: [bundle_version: 1,
                                             bundle_version: 2]
@@ -60,13 +60,6 @@ defmodule Cog.Test.Commands.BundleTest do
     refute(Bundles.enabled?(bundle_version))
   end
 
-  test "passing an unknown subcommand fails" do
-    {:error, error} = new_req(args: ["not-a-subcommand"])
-    |> send_req()
-
-    assert(error == "Unknown subcommand 'not-a-subcommand'")
-  end
-
   test "installing a bundle via the registry" do
     bundle = "heroku"
     version = "0.0.4"
@@ -87,8 +80,8 @@ defmodule Cog.Test.Commands.BundleTest do
 
     Bundles.bundles()
 
-    {:ok, response} = new_req(args: ["install", bundle, version])
-    |> send_req()
+    {:ok, response} = new_req(args: [bundle, version])
+    |> send_req(Install)
 
     assert(%{name: ^bundle, versions: [%{version: ^version}]} = response)
     assert(:meck.validate(Bundles))
