@@ -29,8 +29,6 @@ defmodule Cog.Commands.RelayGroup.Member do
     {subcommand, args} = Helpers.get_subcommand(arg_list)
 
     case subcommand do
-      "add" ->
-        Member.Add.add_relays(req, args)
       "remove" ->
         Member.Remove.remove_relays(req, args)
       "assign" ->
