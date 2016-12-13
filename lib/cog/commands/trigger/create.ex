@@ -14,6 +14,23 @@ defmodule Cog.Commands.Trigger.Create do
   trigger create my-trigger "echo 'Hello World'" -d "A friendly greeting"
   """
 
+  @output_description "Returns the json for the newly created trigger."
+
+  @output_example """
+  [
+    {
+      "timeout_sec": 30,
+      "pipeline": "echo fizbaz",
+      "name": "foobar",
+      "invocation_url": "http://localhost:4001/v1/triggers/00000000-0000-0000-0000-000000000000",
+      "id": "00000000-0000-0000-0000-000000000000",
+      "enabled": true,
+      "description": null,
+      "as_user": null
+    }
+  ]
+  """
+
   option "enabled", type: "bool", short: "e", description: "Should the trigger be created in an enabled state, or not? Defaults to true."
   option "description", type: "string", short: "d", description: "Free text description of the trigger. Defaults to nil."
   option "timeout-sec", type: "int", short: "t", description: "Amount of time Cog will wait for execution to finish. Defaults to 30. Must be greater than 0"
