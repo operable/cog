@@ -32,12 +32,12 @@ defmodule Cog.Test.Commands.WhichTest do
   end
 
   test "a command", %{user: user} do
-    {:ok, response} = new_req(user: %{"id" => user.id}, args: ["alias"])
+    {:ok, response} = new_req(user: %{"id" => user.id}, args: ["echo"])
     |> send_req()
 
     assert(response == %{type: "command",
                          scope: "operable",
-                         name: "alias"})
+                         name: "echo"})
   end
 
   test "an unknown", %{user: user} do
