@@ -31,8 +31,6 @@ defmodule Cog.Commands.Group do
     result = case subcommand do
       "member" ->
         Group.Member.manage_members(req, args)
-      "rename" ->
-        Group.Rename.rename(req, args)
       "role" ->
         Group.Role.manage_roles(req, args)
       "info" ->
