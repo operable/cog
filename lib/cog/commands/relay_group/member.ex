@@ -29,8 +29,6 @@ defmodule Cog.Commands.RelayGroup.Member do
     {subcommand, args} = Helpers.get_subcommand(arg_list)
 
     case subcommand do
-      "assign" ->
-        Member.Assign.assign_bundles(req, args)
       "unassign" ->
         Member.Unassign.unassign_bundles(req, args)
       invalid ->
