@@ -27,7 +27,6 @@ defmodule Cog.Commands.Permission do
   rule "when command is #{Cog.Util.Misc.embedded_bundle}:permission with arg[0] == create must have #{Cog.Util.Misc.embedded_bundle}:manage_permissions"
   rule "when command is #{Cog.Util.Misc.embedded_bundle}:permission with arg[0] == delete must have #{Cog.Util.Misc.embedded_bundle}:manage_permissions"
   rule "when command is #{Cog.Util.Misc.embedded_bundle}:permission with arg[0] == info must have #{Cog.Util.Misc.embedded_bundle}:manage_permissions"
-  rule "when command is #{Cog.Util.Misc.embedded_bundle}:permission with arg[0] == list must have #{Cog.Util.Misc.embedded_bundle}:manage_permissions"
   rule "when command is #{Cog.Util.Misc.embedded_bundle}:permission with arg[0] == grant must have #{Cog.Util.Misc.embedded_bundle}:manage_roles"
   rule "when command is #{Cog.Util.Misc.embedded_bundle}:permission with arg[0] == revoke must have #{Cog.Util.Misc.embedded_bundle}:manage_roles"
 
@@ -39,13 +38,12 @@ defmodule Cog.Commands.Permission do
                "delete" -> Delete.delete(req, args)
                "grant"  -> Grant.grant(req, args)
                "info"   -> Info.info(req, args)
-               "list"   -> List.list(req, args)
                "revoke" -> Revoke.revoke(req, args)
                nil ->
                  if Helpers.flag?(req.options, "help") do
                    show_usage
                  else
-                   List.list(req, args)
+                   List.handle_message(req, state)
                  end
                other ->
                  {:error, {:unknown_subcommand, other}}
