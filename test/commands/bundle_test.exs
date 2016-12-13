@@ -1,7 +1,7 @@
 defmodule Cog.Test.Commands.BundleTest do
   use Cog.CommandCase, command_module: Cog.Commands.Bundle
 
-  alias Cog.Commands.Bundle.{List, Versions}
+  alias Cog.Commands.Bundle.{List, Versions, Info}
   alias Cog.Repository.Bundles
   import Cog.Support.ModelUtilities, only: [bundle_version: 1,
                                             bundle_version: 2]
@@ -20,8 +20,8 @@ defmodule Cog.Test.Commands.BundleTest do
   end
 
   test "information about a single bundle" do
-    {:ok, response} = new_req(args: ["info", "operable"])
-    |> send_req()
+    {:ok, response} = new_req(args: ["operable"])
+    |> send_req(Info)
 
     version = Application.fetch_env!(:cog, :embedded_bundle_version)
 
