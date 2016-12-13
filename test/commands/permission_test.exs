@@ -1,6 +1,7 @@
 defmodule Cog.Test.Commands.PermissionTest do
   use Cog.CommandCase, command_module: Cog.Commands.Permission
 
+  alias Cog.Commands.Permission.{List}
   alias Cog.Repository.Permissions
 
   import Cog.Support.ModelUtilities, only: [permission: 1,
@@ -11,8 +12,8 @@ defmodule Cog.Test.Commands.PermissionTest do
                                     refute_permission_is_granted: 2]
 
   test "listing permissions works" do
-    payload = new_req(args: ["list"])
-              |> send_req()
+    payload = new_req(args: [])
+              |> send_req(List)
               |> unwrap()
               |> Enum.sort_by(fn(p) -> "#{p[:bundle]}:#{p[:name]}" end)
 
@@ -27,6 +28,7 @@ defmodule Cog.Test.Commands.PermissionTest do
             %{bundle: "operable", name: "st-thorn"}] = payload
   end
 
+  @tag :skip
   test "listing is the default action" do
     payload = new_req()
               |> send_req()
