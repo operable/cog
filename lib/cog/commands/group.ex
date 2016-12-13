@@ -29,8 +29,6 @@ defmodule Cog.Commands.Group do
     {subcommand, args} = Helpers.get_subcommand(req.args)
 
     result = case subcommand do
-      "create" ->
-        Group.Create.create_group(req, args)
       "delete" ->
         Group.Delete.delete_group(req, args)
       "member" ->
@@ -61,11 +59,11 @@ defmodule Cog.Commands.Group do
     end
   end
 
-  defp error(:wrong_type),
+  def error(:wrong_type),
     do: "Arguments must be strings"
-  defp error({:protected_group, name}),
+  def error({:protected_group, name}),
     do: "Cannot alter protected group #{name}"
-  defp error(error),
+  def error(error),
     do: Helpers.error(error)
 
 end
