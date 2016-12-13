@@ -1,7 +1,7 @@
 defmodule Cog.Test.Commands.PermissionTest do
   use Cog.CommandCase, command_module: Cog.Commands.Permission
 
-  alias Cog.Commands.Permission.{List, Create}
+  alias Cog.Commands.Permission.{List, Create, Delete}
   alias Cog.Repository.Permissions
 
   import Cog.Support.ModelUtilities, only: [permission: 1,
@@ -159,8 +159,8 @@ defmodule Cog.Test.Commands.PermissionTest do
   test "deleting a permission works" do
     permission("site:foo")
 
-    payload = new_req(args: ["delete", "site:foo"])
-              |> send_req()
+    payload = new_req(args: ["site:foo"])
+              |> send_req(Delete)
               |> unwrap()
 
     assert %{bundle: "site", name: "foo"} = payload
@@ -169,8 +169,8 @@ defmodule Cog.Test.Commands.PermissionTest do
   end
 
   test "deleting a non-existent permission fails" do
-    error = new_req(args: ["delete", "site:wat"])
-            |> send_req()
+    error = new_req(args: ["site:wat"])
+            |> send_req(Delete)
             |> unwrap_error()
 
     assert(error == "Could not find 'permission' with the name 'site:wat'")
@@ -180,8 +180,8 @@ defmodule Cog.Test.Commands.PermissionTest do
     permission("site:foo")
     permission("site:bar")
 
-    error = new_req(args: ["delete", "site:foo", "site", "bar"])
-            |> send_req()
+    error = new_req(args: ["site:foo", "site", "bar"])
+            |> send_req(Delete)
             |> unwrap_error()
 
     assert(error == "Too many args. Arguments required: exactly 1.")
@@ -190,16 +190,16 @@ defmodule Cog.Test.Commands.PermissionTest do
   end
 
   test "to delete a permission a name must be given" do
-    error = new_req(args: ["delete"])
-            |> send_req()
+    error = new_req(args: [])
+            |> send_req(Delete)
             |> unwrap_error()
 
     assert(error == "Not enough args. Arguments required: exactly 1.")
   end
 
   test "only site permissions may be deleted" do
-    error = new_req(args: ["delete", "operable:manage_permissions"])
-            |> send_req()
+    error = new_req(args: ["operable:manage_permissions"])
+            |> send_req(Delete)
             |> unwrap_error()
 
     message = """
