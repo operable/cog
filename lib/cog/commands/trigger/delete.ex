@@ -14,6 +14,23 @@ defmodule Cog.Commands.Trigger.Delete do
   trigger:delete foo bar baz
   """
 
+  @output_description "Returns the json for the trigger that has just been deleted."
+
+  @output_example """
+  [
+    {
+      "timeout_sec": 30,
+      "pipeline": "echo fizbaz",
+      "name": "foobar",
+      "invocation_url": "http://localhost:4001/v1/triggers/00000000-0000-0000-0000-000000000000",
+      "id": "00000000-0000-0000-0000-000000000000",
+      "enabled": true,
+      "description": null,
+      "as_user": null
+    }
+  ]
+  """
+
   permission "manage_triggers"
 
   rule "when command is #{Cog.Util.Misc.embedded_bundle}:trigger-delete must have #{Cog.Util.Misc.embedded_bundle}:manage_triggers"
