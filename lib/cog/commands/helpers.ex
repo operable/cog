@@ -131,8 +131,6 @@ defmodule Cog.Commands.Helpers do
     do: "Could not find 'rule' with the id '#{id}'"
   def error({:resource_not_found, resource_type, resource_name}),
     do: "Could not find '#{resource_type}' with the name '#{resource_name}'"
-  def error(:invalid_handle),
-    do: "Invalid chat handle"
 
   @doc """
   Returns an alias. If the visibility isn't passed we first search for a user

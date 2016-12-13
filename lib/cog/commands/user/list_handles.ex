@@ -1,19 +1,25 @@
 defmodule Cog.Commands.User.ListHandles do
-  use Cog.Command.GenCommand.Base,
-    bundle: Cog.Util.Misc.embedded_bundle,
-    name: "user-list-handles"
-
   alias Cog.Repository.ChatHandles
+  require Cog.Commands.Helpers, as: Helpers
 
-  @description "List all chat handles attached to users for the active chat adapter."
+  Helpers.usage """
+  List all chat handles attached to users for the active chat adapter.
 
-  rule "when command is #{Cog.Util.Misc.embedded_bundle}:user-list-handles must have #{Cog.Util.Misc.embedded_bundle}:manage_users"
+  USAGE
+    user list-handles [FLAGS]
 
-  def handle_message(req, state) do
-    data = req.requestor.provider
-           |> ChatHandles.for_provider()
-           |> Enum.map(&Cog.V1.ChatHandleView.render("show.json", %{chat_handle: &1}))
-    {:reply, req.reply_to, "user-list-handles", data, state}
+  FLAGS
+    -h, --help  Display this usage info
+  """
+
+  def list(%{options: %{"help" => true}}, _args),
+    do: show_usage
+  def list(%Cog.Messages.Command{}=command, _args) do
+    provider_name = command.requestor.provider
+    handles = ChatHandles.for_provider(provider_name)
+    {:ok, "user-list-handles",
+     Enum.map(handles,
+              &Cog.V1.ChatHandleView.render("show.json", %{chat_handle: &1}))}
   end
 
 end
