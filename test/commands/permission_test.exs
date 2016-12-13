@@ -1,7 +1,7 @@
 defmodule Cog.Test.Commands.PermissionTest do
   use Cog.CommandCase, command_module: Cog.Commands.Permission
 
-  alias Cog.Commands.Permission.{List, Create, Delete, Info}
+  alias Cog.Commands.Permission.{List, Create, Delete, Info, Grant}
   alias Cog.Repository.Permissions
 
   import Cog.Support.ModelUtilities, only: [permission: 1,
@@ -215,8 +215,8 @@ defmodule Cog.Test.Commands.PermissionTest do
     role = role("admin")
     permission = permission("site:foo")
 
-    payload = new_req(args: ["grant", "site:foo", "admin"])
-              |> send_req()
+    payload = new_req(args: ["site:foo", "admin"])
+              |> send_req(Grant)
               |> unwrap()
 
     assert %{permission: %{bundle: "site", name: "foo"},
@@ -233,8 +233,8 @@ defmodule Cog.Test.Commands.PermissionTest do
 
     foo = permission("site:foo")
 
-    error = new_req(args: ["grant", "site:foo", "dev", "ops"])
-            |> send_req()
+    error = new_req(args: ["site:foo", "dev", "ops"])
+            |> send_req(Grant)
             |> unwrap_error()
 
     assert(error == "Too many args. Arguments required: exactly 2.")
@@ -247,8 +247,8 @@ defmodule Cog.Test.Commands.PermissionTest do
   test "granting a permission to a role requires an existing permission" do
     role("admin")
 
-    error = new_req(args: ["grant", "site:wat", "admin"])
-            |> send_req()
+    error = new_req(args: ["site:wat", "admin"])
+            |> send_req(Grant)
             |> unwrap_error()
 
     assert(error == "Could not find 'permission' with the name 'site:wat'")
@@ -257,8 +257,8 @@ defmodule Cog.Test.Commands.PermissionTest do
   test "granting a permission to a role requires an existing role" do
     permission("site:foo")
 
-    error = new_req(args: ["grant", "site:foo", "wat"])
-            |> send_req()
+    error = new_req(args: ["site:foo", "wat"])
+            |> send_req(Grant)
             |> unwrap_error()
 
     assert(error == "Could not find 'role' with the name 'wat'")
@@ -267,16 +267,16 @@ defmodule Cog.Test.Commands.PermissionTest do
   test "granting a permission to a role requires the role" do
     permission("site:foo")
 
-    error = new_req(args: ["grant", "site:foo"])
-            |> send_req()
+    error = new_req(args: ["site:foo"])
+            |> send_req(Grant)
             |> unwrap_error()
 
     assert(error == "Not enough args. Arguments required: exactly 2.")
   end
 
   test "granting permissions requires string arguments" do
-    error = new_req(args: ["grant", 123, 456])
-            |> send_req()
+    error = new_req(args: [123, 456])
+            |> send_req(Grant)
             |> unwrap_error()
 
     assert(error == "Arguments must be strings")
