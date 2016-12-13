@@ -37,26 +37,11 @@ defmodule Cog.Commands.Alias do
   rule "when command is #{Cog.Util.Misc.embedded_bundle}:alias allow"
 
   def handle_message(req, state) do
-    {subcommand, args} = Helpers.get_subcommand(req.args)
-
-    result = case subcommand do
-               "list" ->
-                 Alias.List.list_command_aliases(req, args)
-               nil ->
-                 if Helpers.flag?(req.options, "help") do
-                   show_usage
-                 else
-                   Alias.List.list_command_aliases(req, args)
-                 end
-               other ->
-                 {:error, {:unknown_subcommand, other}}
-             end
-
-    case result do
-      {:ok, template, data} ->
-        {:reply, req.reply_to, template, data, state}
-      {:error, err} ->
-        {:error, req.reply_to, Helpers.error(err), state}
+    if Helpers.flag?(req.options, "help") do
+      {:ok, template, data} = show_usage
+      {:reply, req.reply_to, template, data, state}
+    else
+      Alias.List.handle_message(req, state)
     end
   end
 
