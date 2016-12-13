@@ -15,7 +15,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.TriggerInfoTest do
     *Name*: test_trigger
     *Description*: Tests things!
     *Enabled?*: true
-    *Pipeline*: echo 'Something just happened'
+    *Pipeline*: `echo 'Something just happened'`
     *As User*: bobby_tables
     *Timeout (sec)*: 30
     *Invocation URL*: https://cog.mycompany.com/invoke_stuff
@@ -35,7 +35,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.TriggerInfoTest do
     *ID*: abc123
     *Name*: test_trigger
     *Description*: \n*Enabled?*: true
-    *Pipeline*: echo 'Something just happened'
+    *Pipeline*: `echo 'Something just happened'`
     *As User*: \n*Timeout (sec)*: 30
     *Invocation URL*: https://cog.mycompany.com/invoke_stuff
     """ |> String.strip
