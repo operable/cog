@@ -1,45 +1,53 @@
 defmodule Cog.Commands.Relay.Update do
-  alias Cog.Repository.Relays
+  use Cog.Command.GenCommand.Base,
+    bundle: Cog.Util.Misc.embedded_bundle,
+    name: "relay-update"
+
   require Cog.Commands.Helpers, as: Helpers
-
+  alias Cog.Commands.Relay
   alias Cog.Commands.Relay.ViewHelpers
+  alias Cog.Repository.Relays
 
-  Helpers.usage """
-  Updates relay name and/or description.
+  @description "Updates relay name and/or description"
 
-  USAGE
-    relay update <relay name> [FLAGS]
+  @arguments "<relay-name>"
 
-  FLAGS
-    -h, --help           Display this usage info
-    -n, --name           Update the relay's name
-    -d, --description    Update the relay's description
+  @output_description "Returns the serialized relay with updated attributes"
+
+  @output_example """
+  [
+    {
+      "status": "enabled",
+      "name": "production",
+      "id": "9e173ffd-b247-4833-80d4-a87c4175732d",
+      "created_at": "2016-12-13T14:33:48"
+    }
+  ]
   """
 
-  @doc """
-  Updates relays. Accepts a cog request and args. Returns either
-  a success tuple or an error.
-  """
-  @spec update_relay(%Cog.Messages.Command{}, List.t) :: {:ok, String.t, Map.t} | {:error, any()}
-  def update_relay(req, arg_list) do
-    if Helpers.flag?(req.options, "help") do
-      show_usage
-    else
-      case Helpers.get_args(arg_list, 1) do
-        {:ok, [relay_name]} ->
-          case Relays.by_name(relay_name) do
-            {:ok, relay} ->
-              do_update(req, relay)
-            {:error, :not_found} ->
-              {:error, {:relay_not_found, relay_name}}
-          end
-        {:error, {:not_enough_args, _count}} ->
-          show_usage("Missing required argument: relay name")
-        {:error, {:too_many_args, _count}} ->
-          show_usage("Too many arguments. You can only update one relay at a time.")
-        error ->
-          error
-      end
+  rule "when command is #{Cog.Util.Misc.embedded_bundle}:relay-update must have #{Cog.Util.Misc.embedded_bundle}:manage_relays"
+
+  option "name", type: "string"
+  option "description", type: "string"
+
+  def handle_message(req, state) do
+    result = case Helpers.get_args(req.args, 1) do
+      {:ok, [relay_name]} ->
+        case Relays.by_name(relay_name) do
+          {:ok, relay} ->
+            do_update(req, relay)
+          {:error, :not_found} ->
+            {:error, {:relay_not_found, relay_name}}
+        end
+      error ->
+        error
+    end
+
+    case result do
+      {:ok, template, data} ->
+        {:reply, req.reply_to, template, data, state}
+      {:error, err} ->
+        {:error, req.reply_to, Relay.error(err), state}
     end
   end
 
