@@ -188,7 +188,7 @@ defmodule Cog.Test.Commands.RuleTest do
 
   test "only one rule can be retrieved at a time" do
     %Rule{id: rule_1_id} = Rules.ingest("when command is operable:rule allow") |> unwrap()
-    %Rule{id: rule_2_id} = Rules.ingest("when command is operable:bundle allow") |> unwrap()
+    %Rule{id: rule_2_id} = Rules.ingest("when command is operable:bundle-list allow") |> unwrap()
 
     error = new_req(args: ["info", rule_1_id, rule_2_id])
             |> send_req()
