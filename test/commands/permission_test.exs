@@ -1,7 +1,7 @@
 defmodule Cog.Test.Commands.PermissionTest do
   use Cog.CommandCase, command_module: Cog.Commands.Permission
 
-  alias Cog.Commands.Permission.{List}
+  alias Cog.Commands.Permission.{List, Create}
   alias Cog.Repository.Permissions
 
   import Cog.Support.ModelUtilities, only: [permission: 1,
@@ -94,8 +94,8 @@ defmodule Cog.Test.Commands.PermissionTest do
   end
 
   test "creating a permission works" do
-    payload = new_req(args: ["create", "site:foo"])
-              |> send_req()
+    payload = new_req(args: ["site:foo"])
+              |> send_req(Create)
               |> unwrap()
 
     assert %{bundle: "site", name: "foo"} = payload
@@ -103,8 +103,8 @@ defmodule Cog.Test.Commands.PermissionTest do
   end
 
   test "creating a non-site permission fails" do
-    error = new_req(args: ["create", "operavle:naughty"])
-            |> send_req()
+    error = new_req(args: ["operavle:naughty"])
+            |> send_req(Create)
             |> unwrap_error()
 
     message = """
@@ -116,8 +116,8 @@ defmodule Cog.Test.Commands.PermissionTest do
   end
 
   test "giving a bare name without a bundle name fails" do
-    error = new_req(args: ["create", "wat"])
-            |> send_req()
+    error = new_req(args: ["wat"])
+            |> send_req(Create)
             |> unwrap_error()
 
     message = """
@@ -131,24 +131,24 @@ defmodule Cog.Test.Commands.PermissionTest do
   test "creating a permission that already exists fails" do
     permission("site:foo")
 
-    error = new_req(args: ["create", "site:foo"])
-            |> send_req()
+    error = new_req(args: ["site:foo"])
+            |> send_req(Create)
             |> unwrap_error()
 
     assert(error == "name has already been taken")
   end
 
   test "to create a permission a name must be given" do
-    error = new_req(args: ["create"])
-            |> send_req()
+    error = new_req(args: [])
+            |> send_req(Create)
             |> unwrap_error()
 
     assert(error == "Not enough args. Arguments required: exactly 1.")
   end
 
   test "only one permission can be created at a time" do
-    error = new_req(args: ["create", "site:foo", "site:bar"])
-            |> send_req()
+    error = new_req(args: ["site:foo", "site:bar"])
+            |> send_req(Create)
             |> unwrap_error()
 
     assert(error == "Too many args. Arguments required: exactly 1.")
