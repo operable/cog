@@ -1,7 +1,7 @@
 defmodule Cog.Commands.Permission do
   use Cog.Command.GenCommand.Base, bundle: Cog.Util.Misc.embedded_bundle
   require Cog.Commands.Helpers, as: Helpers
-  alias Cog.Commands.Permission.{Create, Delete, Grant, Info, List, Revoke}
+  alias Cog.Commands.Permission.{Delete, Grant, Info, List, Revoke}
 
   Helpers.usage(:root)
 
@@ -24,7 +24,6 @@ defmodule Cog.Commands.Permission do
   # first rule is for default list scenario
   rule "when command is #{Cog.Util.Misc.embedded_bundle}:permission must have #{Cog.Util.Misc.embedded_bundle}:manage_permissions"
 
-  rule "when command is #{Cog.Util.Misc.embedded_bundle}:permission with arg[0] == create must have #{Cog.Util.Misc.embedded_bundle}:manage_permissions"
   rule "when command is #{Cog.Util.Misc.embedded_bundle}:permission with arg[0] == delete must have #{Cog.Util.Misc.embedded_bundle}:manage_permissions"
   rule "when command is #{Cog.Util.Misc.embedded_bundle}:permission with arg[0] == info must have #{Cog.Util.Misc.embedded_bundle}:manage_permissions"
   rule "when command is #{Cog.Util.Misc.embedded_bundle}:permission with arg[0] == grant must have #{Cog.Util.Misc.embedded_bundle}:manage_roles"
@@ -34,7 +33,6 @@ defmodule Cog.Commands.Permission do
     {subcommand, args} = Helpers.get_subcommand(req.args)
 
     result = case subcommand do
-               "create" -> Create.create(req, args)
                "delete" -> Delete.delete(req, args)
                "grant"  -> Grant.grant(req, args)
                "info"   -> Info.info(req, args)
@@ -59,11 +57,11 @@ defmodule Cog.Commands.Permission do
     end
   end
 
-  defp error(:invalid_permission),
+  def error(:invalid_permission),
     do: "Only permissions in the `site` namespace can be created or deleted; please specify permission as `site:<NAME>`"
-  defp error(:wrong_type),
+  def error(:wrong_type),
     do: "Arguments must be strings"
-  defp error(error),
+  def error(error),
     do: Helpers.error(error)
 
 end
