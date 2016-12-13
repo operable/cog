@@ -1,7 +1,7 @@
 defmodule Cog.Test.Commands.AliasTest do
   use Cog.CommandCase, command_module: Cog.Commands.Alias
 
-  alias Cog.Commands.Alias.{Create}
+  alias Cog.Commands.Alias.{Create, Move}
   import Cog.Support.ModelUtilities, only: [site_alias: 2,
                                             with_alias: 3,
                                             get_alias: 1,
@@ -64,8 +64,8 @@ defmodule Cog.Test.Commands.AliasTest do
     setup :with_user_alias
 
     test "using full visibility syntax", %{user: user} do
-      {:ok, response} = new_req(user: %{"id" => user.id}, args: ["move", "user:my-new-alias", "site"])
-      |> send_req()
+      {:ok, response} = new_req(user: %{"id" => user.id}, args: ["user:my-new-alias", "site"])
+      |> send_req(Move)
 
       assert(%{source: %{
                    name: "my-new-alias",
@@ -82,8 +82,8 @@ defmodule Cog.Test.Commands.AliasTest do
     end
 
     test "using full visibility syntax and rename", %{user: user} do
-      {:ok, response} = new_req(user: %{"id" => user.id}, args: ["move", "user:my-new-alias", "site:my-renamed-alias"])
-      |> send_req()
+      {:ok, response} = new_req(user: %{"id" => user.id}, args: ["user:my-new-alias", "site:my-renamed-alias"])
+      |> send_req(Move)
 
       assert(%{source: %{
                   name: "my-new-alias",
@@ -99,8 +99,8 @@ defmodule Cog.Test.Commands.AliasTest do
     end
 
     test "with short syntax", %{user: user} do
-      {:ok, response} = new_req(user: %{"id" => user.id}, args: ["move", "my-new-alias", "site"])
-      |> send_req()
+      {:ok, response} = new_req(user: %{"id" => user.id}, args: ["my-new-alias", "site"])
+      |> send_req(Move)
 
       assert(%{source: %{
                   name: "my-new-alias",
@@ -115,8 +115,8 @@ defmodule Cog.Test.Commands.AliasTest do
     end
 
     test "with short syntax and rename", %{user: user} do
-      {:ok, response} = new_req(user: %{"id" => user.id}, args: ["move", "my-new-alias", "site:my-renamed-alias"])
-      |> send_req()
+      {:ok, response} = new_req(user: %{"id" => user.id}, args: ["my-new-alias", "site:my-renamed-alias"])
+      |> send_req(Move)
 
       assert(%{source: %{
                   name: "my-new-alias",
@@ -133,8 +133,8 @@ defmodule Cog.Test.Commands.AliasTest do
     test "when an alias with that name already exists in site", %{user: user}do
       with_site_alias()
 
-      {:error, error} = new_req(user: %{"id" => user.id}, args: ["move", "user:my-new-alias", "site"])
-      |> send_req()
+      {:error, error} = new_req(user: %{"id" => user.id}, args: ["user:my-new-alias", "site"])
+      |> send_req(Move)
 
       assert(error == "name: The alias name is already in use.")
     end
@@ -145,8 +145,8 @@ defmodule Cog.Test.Commands.AliasTest do
     setup :with_site_alias
 
     test "with full visibility syntax", %{user: user}  do
-      {:ok, response} = new_req(user: %{"id" => user.id}, args: ["move", "site:my-new-alias", "user"])
-      |> send_req()
+      {:ok, response} = new_req(user: %{"id" => user.id}, args: ["site:my-new-alias", "user"])
+      |> send_req(Move)
 
       assert(%{source: %{
                   name: "my-new-alias",
@@ -164,8 +164,8 @@ defmodule Cog.Test.Commands.AliasTest do
     end
 
     test "with full visibility syntax and rename", %{user: user} do
-      {:ok, response} = new_req(user: %{"id" => user.id}, args: ["move", "site:my-new-alias", "user:my-renamed-alias"])
-      |> send_req()
+      {:ok, response} = new_req(user: %{"id" => user.id}, args: ["site:my-new-alias", "user:my-renamed-alias"])
+      |> send_req(Move)
 
       assert(%{source: %{
                   name: "my-new-alias",
@@ -181,8 +181,8 @@ defmodule Cog.Test.Commands.AliasTest do
     end
 
     test "with short syntax", %{user: user} do
-      {:ok, response} = new_req(user: %{"id" => user.id}, args: ["move", "my-new-alias", "user"])
-      |> send_req()
+      {:ok, response} = new_req(user: %{"id" => user.id}, args: ["my-new-alias", "user"])
+      |> send_req(Move)
 
       assert(%{source: %{
                   name: "my-new-alias",
@@ -198,8 +198,8 @@ defmodule Cog.Test.Commands.AliasTest do
     end
 
     test "with short syntax and rename", %{user: user} do
-      {:ok, response} = new_req(user: %{"id" => user.id}, args: ["move", "my-new-alias", "user:my-renamed-alias"])
-      |> send_req()
+      {:ok, response} = new_req(user: %{"id" => user.id}, args: ["my-new-alias", "user:my-renamed-alias"])
+      |> send_req(Move)
 
       assert(%{source: %{
                   name: "my-new-alias",
@@ -217,8 +217,8 @@ defmodule Cog.Test.Commands.AliasTest do
     test "when an alias with that name already exists in user", %{user: user}=context do
       with_user_alias(context)
 
-      {:error, error} = new_req(user: %{"id" => user.id}, args: ["move", "site:my-new-alias", "user"])
-      |> send_req()
+      {:error, error} = new_req(user: %{"id" => user.id}, args: ["site:my-new-alias", "user"])
+      |> send_req(Move)
 
       assert(error == "name: The alias name is already in use.")
     end
@@ -229,8 +229,8 @@ defmodule Cog.Test.Commands.AliasTest do
     test "renaming an alias in the user visibility", %{user: user}=context do
       with_user_alias(context)
 
-      {:ok, response} = new_req(user: %{"id" => user.id}, args: ["move", "my-new-alias", "my-renamed-alias"])
-      |> send_req()
+      {:ok, response} = new_req(user: %{"id" => user.id}, args: ["my-new-alias", "my-renamed-alias"])
+      |> send_req(Move)
 
       assert(%{source: %{
                   name: "my-new-alias",
@@ -248,8 +248,8 @@ defmodule Cog.Test.Commands.AliasTest do
     test "renaming an alias in the site visibility", %{user: user} do
       with_site_alias()
 
-      {:ok, response} = new_req(user: %{"id" => user.id}, args: ["move", "my-new-alias", "my-renamed-alias"])
-      |> send_req()
+      {:ok, response} = new_req(user: %{"id" => user.id}, args: ["my-new-alias", "my-renamed-alias"])
+      |> send_req(Move)
 
       assert(%{source: %{
                   name: "my-new-alias",
