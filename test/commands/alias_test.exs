@@ -306,17 +306,6 @@ defmodule Cog.Test.Commands.AliasTest do
                 name: "my-new-alias2"}] == response)
     end
 
-    test "is the default action", %{user: user}=context do
-      with_user_alias(context)
-
-      {:ok, response} = new_req(user: %{"id" => user.id})
-      |> send_req()
-
-      assert([%{visibility: "user",
-                pipeline: "echo My New Alias",
-                name: "my-new-alias"}] == response)
-    end
-
     test "with no matching pattern", %{user: user} do
       with_site_alias()
       {:ok, response} = new_req(user: %{"id" => user.id}, args: ["their-*"])
@@ -327,7 +316,7 @@ defmodule Cog.Test.Commands.AliasTest do
 
     test "with no aliases", %{user: user} do
       {:ok, response} = new_req(user: %{"id" => user.id})
-      |> send_req()
+      |> send_req(List)
 
       assert([] == response)
     end
