@@ -1,41 +1,56 @@
 defmodule Cog.Commands.Permission.Create do
+  use Cog.Command.GenCommand.Base,
+    bundle: Cog.Util.Misc.embedded_bundle,
+    name: "permission-create"
+
+  alias Cog.Commands.Permission
   alias Cog.Repository.Permissions
-  require Cog.Commands.Helpers, as: Helpers
 
-  Helpers.usage """
-  Create a new site permission.
+  @description "Create a new site permission"
 
-  USAGE
-    permission create [FLAGS] site:<name>
+  @arguments "site:<name>"
 
-  FLAGS
-    -h, --help  Display this usage info
-
-  ARGS
-    name     The name of the permission to create.
-
-  EXAMPLE
+  @examples """
+  Creating a site permission:
 
     permission create site:foo
-
   """
 
-  def create(%{options: %{"help" => true}}, _args),
-    do: show_usage
-  def create(_req, [<<"site:", name :: binary>>]) do
-    case Permissions.create_permission(name) do
+  @output_description "Returns newly created serialized permission"
+
+  @output_example """
+  [
+    {
+      "name": "deploy",
+      "id": "e96a0fa8-e1d3-4b65-9c9a-6badc4f9b8df",
+      "bundle": "site"
+    }
+  ]
+  """
+
+  rule "when command is #{Cog.Util.Misc.embedded_bundle}:permission-create must have #{Cog.Util.Misc.embedded_bundle}:manage_permissions"
+
+  def handle_message(req = %{args: [<<"site:", name :: binary>>]}, state) do
+    result = case Permissions.create_permission(name) do
       {:ok, permission} ->
         rendered = Cog.V1.PermissionView.render("show.json", %{permission: permission})
         {:ok, "permission-create", rendered[:permission]}
       {:error, _}=error ->
         error
     end
+
+    case result do
+      {:ok, template, data} ->
+        {:reply, req.reply_to, template, data, state}
+      {:error, err} ->
+        {:error, req.reply_to, Permission.error(err), state}
+    end
   end
-  def create(_req, [_invalid_permission]),
-    do: {:error, :invalid_permission}
-  def create(_req, []),
-    do: {:error, {:not_enough_args, 1}}
-  def create(_req, _),
-    do: {:error, {:too_many_args, 1}}
+  def handle_message(req = %{args: [_invalid_permission]}, state),
+    do: {:error, req.reply_to, Permission.error(:invalid_permission), state}
+  def handle_message(req = %{args: []}, state),
+    do: {:error, req.reply_to, Permission.error({:not_enough_args, 1}), state}
+  def handle_message(req, state),
+    do: {:error, req.reply_to, Permission.error({:too_many_args, 1}), state}
 
 end
