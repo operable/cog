@@ -26,8 +26,6 @@ defmodule Cog.Commands.RelayGroup do
     {subcommand, args} = Helpers.get_subcommand(req.args)
 
     result = case subcommand do
-      "create" ->
-        RelayGroup.Create.create_relay_group(req, args)
       "rename" ->
         RelayGroup.Rename.rename_relay_group(req, args)
       "delete" ->
