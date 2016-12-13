@@ -25,6 +25,7 @@ defmodule Cog.Commands.Group.Member.Remove do
   ]
   """
 
+  rule ~s(when command is #{Cog.Util.Misc.embedded_bundle}:group-member-remove must have #{Cog.Util.Misc.embedded_bundle}:manage_groups)
   rule ~s(when command is #{Cog.Util.Misc.embedded_bundle}:group-member-remove must have #{Cog.Util.Misc.embedded_bundle}:manage_users)
 
   def handle_message(req, state) do

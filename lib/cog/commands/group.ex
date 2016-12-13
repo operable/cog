@@ -25,28 +25,11 @@ defmodule Cog.Commands.Group do
   rule ~s(when command is #{Cog.Util.Misc.embedded_bundle}:group must have #{Cog.Util.Misc.embedded_bundle}:manage_groups)
 
   def handle_message(req, state) do
-    {subcommand, args} = Helpers.get_subcommand(req.args)
-
-    result = case subcommand do
-      "role" ->
-        Group.Role.manage_roles(req, args)
-      nil ->
-        if Helpers.flag?(req.options, "help") do
-          show_usage
-        else
-          Group.List.handle_message(req, state)
-        end
-      other ->
-        {:error, {:unknown_subcommand, other}}
-    end
-
-    case result do
-      {:ok, template, data} ->
-        {:reply, req.reply_to, template, data, state}
-      {:ok, message} ->
-        {:reply, req.reply_to, message, state}
-      {:error, err} ->
-        {:error, req.reply_to, error(err), state}
+    if Helpers.flag?(req.options, "help") do
+      {:ok, template, data} = show_usage
+      {:reply, req.reply_to, template, data, state}
+    else
+      Group.List.handle_message(req, state)
     end
   end
 
