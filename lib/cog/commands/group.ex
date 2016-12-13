@@ -25,15 +25,10 @@ defmodule Cog.Commands.Group do
   rule ~s(when command is #{Cog.Util.Misc.embedded_bundle}:group must have #{Cog.Util.Misc.embedded_bundle}:manage_groups)
   rule ~s(when command is #{Cog.Util.Misc.embedded_bundle}:group with arg[0] == 'member' must have #{Cog.Util.Misc.embedded_bundle}:manage_users)
 
-  # list options
-  option "verbose", type: "bool", short: "v"
-
   def handle_message(req, state) do
     {subcommand, args} = Helpers.get_subcommand(req.args)
 
     result = case subcommand do
-      "list" ->
-        Group.List.list_groups(req, args)
       "create" ->
         Group.Create.create_group(req, args)
       "delete" ->
@@ -50,7 +45,7 @@ defmodule Cog.Commands.Group do
         if Helpers.flag?(req.options, "help") do
           show_usage
         else
-          Group.List.list_groups(req, args)
+          Group.List.handle_message(req, state)
         end
       other ->
         {:error, {:unknown_subcommand, other}}
