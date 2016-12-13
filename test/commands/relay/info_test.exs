@@ -1,50 +1,8 @@
-defmodule Cog.Test.Commands.RelayTest do
+defmodule Cog.Test.Commands.Relay.InfoTest do
   use Cog.CommandCase, command_module: Cog.Commands.Relay
 
-  import Cog.Support.ModelUtilities, only: [relay: 2,
-                                            relay_group: 1,
-                                            add_relay_to_group: 2]
-  alias Cog.Commands.Relay.{Info, List, Update}
-  alias Cog.Repository.Relays
-
-  test "listing relays" do
-    relay("foo", "footoken")
-    relay("foo2", "otherfootoken")
-
-    response = new_req(args: [])
-               |> send_req(List)
-               |> unwrap()
-
-    assert([%{name: "foo"},
-            %{name: "foo2"}] = response)
-  end
-
-  test "listing relays with groups" do
-    relay = relay("foo", "footoken")
-    group = relay_group("foogroup")
-    add_relay_to_group(group.id, relay.id)
-
-    response = new_req(args: [], options: %{"group" => true})
-               |> send_req(List)
-               |> unwrap()
-
-    assert([%{name: "foo",
-              relay_groups: [%{name: "foogroup"}]}] = response)
-  end
-
-  test "updating a relay name" do
-    relay("foo", "footoken")
-
-    response = new_req(args: ["foo"], options: %{"name" => "bar"})
-               |> send_req(Update)
-               |> unwrap()
-
-    assert(%{name: "bar"} = response)
-
-    relay = Relays.by_id(response.id)
-            |> unwrap()
-    assert(%{name: "bar"} = relay)
-  end
+  import Cog.Support.ModelUtilities, only: [relay: 2]
+  alias Cog.Commands.Relay.Info
 
   test "getting information on a single relay works" do
     relay("foo", "footoken")
