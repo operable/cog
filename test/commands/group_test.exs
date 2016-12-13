@@ -1,7 +1,7 @@
 defmodule Cog.Test.Commands.GroupTest do
   use Cog.CommandCase, command_module: Cog.Commands.Group
 
-  alias Cog.Commands.Group.{List, Create}
+  alias Cog.Commands.Group.{List, Create, Delete}
   import Cog.Support.ModelUtilities, only: [user: 1,
                                             group: 1,
                                             role: 1,
@@ -32,8 +32,8 @@ defmodule Cog.Test.Commands.GroupTest do
       group("deleted_group")
 
       {:ok, response} =
-        new_req(args: ["delete", "deleted_group"])
-        |> send_req()
+        new_req(args: ["deleted_group"])
+        |> send_req(Delete)
 
       assert(%{name: "deleted_group"} = response)
     end
