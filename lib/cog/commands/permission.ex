@@ -1,7 +1,7 @@
 defmodule Cog.Commands.Permission do
   use Cog.Command.GenCommand.Base, bundle: Cog.Util.Misc.embedded_bundle
   require Cog.Commands.Helpers, as: Helpers
-  alias Cog.Commands.Permission.{List, Revoke}
+  alias Cog.Commands.Permission.List
 
   Helpers.usage(:root)
 
@@ -21,33 +21,14 @@ defmodule Cog.Commands.Permission do
   permission "manage_permissions"
   permission "manage_roles"
 
-  # first rule is for default list scenario
   rule "when command is #{Cog.Util.Misc.embedded_bundle}:permission must have #{Cog.Util.Misc.embedded_bundle}:manage_permissions"
 
-  rule "when command is #{Cog.Util.Misc.embedded_bundle}:permission with arg[0] == revoke must have #{Cog.Util.Misc.embedded_bundle}:manage_roles"
-
   def handle_message(req, state) do
-    {subcommand, args} = Helpers.get_subcommand(req.args)
-
-    result = case subcommand do
-               "revoke" -> Revoke.revoke(req, args)
-               nil ->
-                 if Helpers.flag?(req.options, "help") do
-                   show_usage
-                 else
-                   List.handle_message(req, state)
-                 end
-               other ->
-                 {:error, {:unknown_subcommand, other}}
-             end
-
-    case result do
-      {:ok, template, data} ->
-         {:reply, req.reply_to, template, data, state}
-      {:ok, data} ->
-        {:reply, req.reply_to, data, state}
-      {:error, err} ->
-        {:error, req.reply_to, error(err), state}
+    if Helpers.flag?(req.options, "help") do
+      {:ok, template, data} =  show_usage
+      {:reply, req.reply_to, template, data, state}
+    else
+      List.handle_message(req, state)
     end
   end
 
