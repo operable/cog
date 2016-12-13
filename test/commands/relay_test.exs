@@ -4,7 +4,7 @@ defmodule Cog.Test.Commands.RelayTest do
   import Cog.Support.ModelUtilities, only: [relay: 2,
                                             relay_group: 1,
                                             add_relay_to_group: 2]
-  alias Cog.Commands.Relay.{Info, List}
+  alias Cog.Commands.Relay.{Info, List, Update}
   alias Cog.Repository.Relays
 
   test "listing relays" do
@@ -35,8 +35,8 @@ defmodule Cog.Test.Commands.RelayTest do
   test "updating a relay name" do
     relay("foo", "footoken")
 
-    response = new_req(args: ["update", "foo"], options: %{"name" => "bar"})
-               |> send_req()
+    response = new_req(args: ["foo"], options: %{"name" => "bar"})
+               |> send_req(Update)
                |> unwrap()
 
     assert(%{name: "bar"} = response)
@@ -93,14 +93,6 @@ defmodule Cog.Test.Commands.RelayTest do
             |> unwrap_error()
 
     assert(error == "Arguments must be strings")
-  end
-
-  test "passing an unknown subcommand fails" do
-    error = new_req(args: ["not-a-subcommand"])
-            |> send_req()
-            |> unwrap_error()
-
-    assert(error == "Unknown subcommand 'not-a-subcommand'")
   end
 
 end
