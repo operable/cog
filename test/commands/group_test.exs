@@ -1,7 +1,7 @@
 defmodule Cog.Test.Commands.GroupTest do
   use Cog.CommandCase, command_module: Cog.Commands.Group
 
-  alias Cog.Commands.Group.{List, Create, Delete, Rename, Info}
+  alias Cog.Commands.Group.{List, Create, Delete, Rename, Info, Member}
   import Cog.Support.ModelUtilities, only: [user: 1,
                                             group: 1,
                                             role: 1,
@@ -134,8 +134,8 @@ defmodule Cog.Test.Commands.GroupTest do
 
     test "can be added to a group", %{user: user, group: group} do
       {:ok, response} =
-        new_req(args: ["member", "add", group.name, user.username])
-        |> send_req()
+        new_req(args: [group.name, user.username])
+        |> send_req(Member.Add)
 
       assert(is_group_user?(response, user.username))
     end
@@ -157,16 +157,16 @@ defmodule Cog.Test.Commands.GroupTest do
 
     test "can not add an unknown user to a group", %{group: group} do
       {:error, error} =
-        new_req(args: ["member", "add", group.name, "bob"])
-        |> send_req()
+        new_req(args: [group.name, "bob"])
+        |> send_req(Member.Add)
 
       assert(error == "Could not find 'user' with the name 'bob'")
     end
 
     test "can not add to an unknown group", %{user: user} do
       {:error, error} =
-        new_req(args: ["member", "add", "bad_group", user.username])
-        |> send_req()
+        new_req(args: ["bad_group", user.username])
+        |> send_req(Member.Add)
 
       assert(error == "Could not find 'user group' with the name 'bad_group'")
     end
@@ -174,11 +174,11 @@ defmodule Cog.Test.Commands.GroupTest do
     test "must supply the proper number of args", %{group: group} do
       # TODO: This should probably return an error instead of a map with an
       # error key. Probably something left over from the early templating days.
-      {:ok, response} =
-        new_req(args: ["member", "add", group.name])
-        |> send_req()
+      {:error, error} =
+        new_req(args: [group.name])
+        |> send_req(Member.Add)
 
-      assert(response.error == "Missing required args. At a minimum you must include the user group and at least one user name to add")
+      assert(error == "Not enough args. Arguments required: minimum of 2.")
     end
 
   end
