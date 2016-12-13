@@ -4,14 +4,15 @@ defmodule Cog.Test.Commands.RelayTest do
   import Cog.Support.ModelUtilities, only: [relay: 2,
                                             relay_group: 1,
                                             add_relay_to_group: 2]
+  alias Cog.Commands.Relay.{Info, List}
   alias Cog.Repository.Relays
 
   test "listing relays" do
     relay("foo", "footoken")
     relay("foo2", "otherfootoken")
 
-    response = new_req(args: ["list"])
-               |> send_req()
+    response = new_req(args: [])
+               |> send_req(List)
                |> unwrap()
 
     assert([%{name: "foo"},
@@ -23,8 +24,8 @@ defmodule Cog.Test.Commands.RelayTest do
     group = relay_group("foogroup")
     add_relay_to_group(group.id, relay.id)
 
-    response = new_req(args: ["list"], options: %{"group" => true})
-               |> send_req()
+    response = new_req(args: [], options: %{"group" => true})
+               |> send_req(List)
                |> unwrap()
 
     assert([%{name: "foo",
@@ -48,8 +49,8 @@ defmodule Cog.Test.Commands.RelayTest do
   test "getting information on a single relay works" do
     relay("foo", "footoken")
 
-    response = new_req(args: ["info", "foo"])
-               |> send_req()
+    response = new_req(args: ["foo"])
+               |> send_req(Info)
                |> unwrap()
 
     assert(%{id: _,
@@ -60,16 +61,16 @@ defmodule Cog.Test.Commands.RelayTest do
   end
 
   test "getting information on a non-existent relay fails" do
-    error = new_req(args: ["info", "not-here"])
-            |> send_req()
+    error = new_req(args: ["not-here"])
+            |> send_req(Info)
             |> unwrap_error()
 
     assert(error == "Could not find 'relay' with the name 'not-here'")
   end
 
   test "getting information on a relay requires a relay name" do
-    error = new_req(args: ["info"])
-            |> send_req()
+    error = new_req(args: [])
+            |> send_req(Info)
             |> unwrap_error()
 
     assert(error == "Not enough args. Arguments required: exactly 1.")
@@ -79,16 +80,16 @@ defmodule Cog.Test.Commands.RelayTest do
     relay("foo", "footoken")
     relay("bar", "bartoken")
 
-    error = new_req(args: ["info", "foo", "bar"])
-            |> send_req()
+    error = new_req(args: ["foo", "bar"])
+            |> send_req(Info)
             |> unwrap_error()
 
     assert(error == "Too many args. Arguments required: exactly 1.")
   end
 
   test "getting information on a relay requires a string argument" do
-    error = new_req(args: ["info", 123])
-            |> send_req()
+    error = new_req(args: [123])
+            |> send_req(Info)
             |> unwrap_error()
 
     assert(error == "Arguments must be strings")
