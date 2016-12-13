@@ -37,6 +37,8 @@ defmodule Cog.Commands.Group.Info do
   ]
   """
 
+  permission "manage_groups"
+
   rule ~s(when command is #{Cog.Util.Misc.embedded_bundle}:group-info must have #{Cog.Util.Misc.embedded_bundle}:manage_groups)
 
   def handle_message(req, state) do
