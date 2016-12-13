@@ -1,6 +1,7 @@
 defmodule Cog.Test.Commands.BundleTest do
   use Cog.CommandCase, command_module: Cog.Commands.Bundle
 
+  alias Cog.Commands.Bundle.{List}
   alias Cog.Repository.Bundles
   import Cog.Support.ModelUtilities, only: [bundle_version: 1,
                                             bundle_version: 2]
@@ -8,8 +9,8 @@ defmodule Cog.Test.Commands.BundleTest do
   test "listing bundles" do
     bundle_version("test_bundle")
 
-    {:ok, response} = new_req(args: ["list"])
-    |> send_req()
+    {:ok, response} = new_req(args: [])
+    |> send_req(List)
 
     bundles = Enum.map(response, &Map.take(&1, [:name]))
     |> Enum.sort
