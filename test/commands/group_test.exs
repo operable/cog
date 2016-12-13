@@ -1,7 +1,7 @@
 defmodule Cog.Test.Commands.GroupTest do
   use Cog.CommandCase, command_module: Cog.Commands.Group
 
-  alias Cog.Commands.Group.{List, Create, Delete}
+  alias Cog.Commands.Group.{List, Create, Delete, Rename}
   import Cog.Support.ModelUtilities, only: [user: 1,
                                             group: 1,
                                             role: 1,
@@ -42,8 +42,8 @@ defmodule Cog.Test.Commands.GroupTest do
       group("renamed_group")
 
       {:ok, response} =
-        new_req(args: ["rename", "renamed_group", "has_been_renamed"])
-        |> send_req()
+        new_req(args: ["renamed_group", "has_been_renamed"])
+        |> send_req(Rename)
 
       assert(%{name: "has_been_renamed"} = response)
     end
@@ -87,16 +87,16 @@ defmodule Cog.Test.Commands.GroupTest do
       group("already_named")
 
       {:error, error} =
-        new_req(args: ["rename", "group_to_rename", "already_named"])
-        |> send_req()
+        new_req(args: ["group_to_rename", "already_named"])
+        |> send_req(Rename)
 
       assert(error == "name has already been taken")
     end
 
     test "can't rename a group that doesn't exist" do
       {:error, error} =
-        new_req(args: ["rename", "not-here", "monkeys"])
-        |> send_req()
+        new_req(args: ["not-here", "monkeys"])
+        |> send_req(Rename)
 
       assert(error == "Could not find 'group' with the name 'not-here'")
     end
@@ -105,14 +105,14 @@ defmodule Cog.Test.Commands.GroupTest do
       group("not_enough_args")
 
       {:error, error} =
-        new_req(args: ["rename", "not_enough_args"])
-        |> send_req()
+        new_req(args: ["not_enough_args"])
+        |> send_req(Rename)
 
       assert(error == "Not enough args. Arguments required: exactly 2.")
 
       {:error, error} =
-        new_req(args: ["rename"])
-        |> send_req()
+        new_req(args: [])
+        |> send_req(Rename)
 
       assert(error == "Not enough args. Arguments required: exactly 2.")
     end
@@ -121,8 +121,8 @@ defmodule Cog.Test.Commands.GroupTest do
       group("number_group")
 
       {:error, error} =
-        new_req(args: ["rename", "number_group", 123])
-        |> send_req()
+        new_req(args: ["number_group", 123])
+        |> send_req(Rename)
 
       assert(error == "Arguments must be strings")
     end
