@@ -1,41 +1,59 @@
 defmodule Cog.Commands.RelayGroup.Delete do
+  use Cog.Command.GenCommand.Base,
+    bundle: Cog.Util.Misc.embedded_bundle,
+    name: "relay-group-delete"
+
   require Cog.Commands.Helpers, as: Helpers
   alias Cog.Repository.RelayGroups
   alias Cog.Commands.RelayGroup
 
-  Helpers.usage """
-  Deletes relay groups
+  @description "Deletes relay groups"
 
-  USAGE
-    relay-group delete [FLAGS] <group_name>
+  @arguments "<group_name>"
 
-  ARGS
-    group_name    The name of the relay group to delete
+  @output_description "Returns the seralized relay group that was deleted"
 
-  FLAGS
-    -h, --help      Display this usage info
+  @output_example """
+  [
+    {
+      "relays": [
+        {
+          "status": "enabled",
+          "name": "production",
+          "id": "9e173ffd-b247-4833-80d4-a87c4175732d",
+          "created_at": "2016-12-13T14:33:48"
+        }
+      ],
+      "name": "default",
+      "id": "ee3d7b91-9c66-487d-b250-8df47e7f7a32",
+      "created_at": "2016-12-14T00:11:14",
+      "bundles": []
+    }
+  ]
   """
 
-  @spec delete_relay_group(%Cog.Messages.Command{}, List.t) :: {:ok, String.t, Map.t} | {:error, any()}
-  def delete_relay_group(req, arg_list) do
-    if Helpers.flag?(req.options, "help") do
-      show_usage
-    else
-      case Helpers.get_args(arg_list, 1) do
-        {:ok, [group_name]} ->
-          case RelayGroups.by_name(group_name) do
-            {:ok, relay_group} ->
-              delete(relay_group)
-            {:error, :not_found} ->
-              {:error, {:relay_group_not_found, group_name}}
-          end
-        {:error, {:not_enough_args, _count}} ->
-          show_usage("Missing required arguments: group name")
-        {:error, {:too_many_args, _count}} ->
-          show_usage("Too many arguments. You can only delete one relay group at a time")
-        error ->
-          error
-      end
+  permission "manage_relays"
+
+  rule "when command is #{Cog.Util.Misc.embedded_bundle}:relay-group-delete must have #{Cog.Util.Misc.embedded_bundle}:manage_relays"
+
+  def handle_message(req, state) do
+    result = case Helpers.get_args(req.args, 1) do
+      {:ok, [group_name]} ->
+        case RelayGroups.by_name(group_name) do
+          {:ok, relay_group} ->
+            delete(relay_group)
+          {:error, :not_found} ->
+            {:error, {:relay_group_not_found, group_name}}
+        end
+      error ->
+        error
+    end
+
+    case result do
+      {:ok, template, data} ->
+        {:reply, req.reply_to, template, data, state}
+      {:error, err} ->
+        {:error, req.reply_to, Helpers.error(err), state}
     end
   end
 
