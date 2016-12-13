@@ -1,25 +1,31 @@
 defmodule Cog.Commands.Bundle.Versions do
+  use Cog.Command.GenCommand.Base,
+    bundle: Cog.Util.Misc.embedded_bundle,
+    name: "bundle-versions"
+
+  alias Cog.Commands.Bundle
   alias Cog.Repository.Bundles
-  require Cog.Commands.Helpers, as: Helpers
 
-  Helpers.usage """
-  Lists currently installed versions of a given bundle.
+  @description "Lists currently installed versions of a given bundle"
 
-  USAGE
-    bundle versions [FLAGS] <bundle>
+  @arguments "<bundle>"
 
-  ARGS
-    bundle   The name of a bundle
+  @output_description "Returns serialized bundle versions. Bundle attributes are trucated in example."
 
-  FLAGS
-    -h, --help  Display this usage info
+  @output_example """
+  [
+    {
+      "version": "0.17.0",
+      "updated_at": "2016-12-13T06:15:40",
+      "name": "operable",
+    }
+  ]
   """
 
-  def versions(%{options: %{"help" => true}}, _args) do
-    show_usage
-  end
-  def versions(_req, [bundle_name]) do
-    case Bundles.bundle_by_name(bundle_name) do
+  rule "when command is #{Cog.Util.Misc.embedded_bundle}:bundle-versions must have #{Cog.Util.Misc.embedded_bundle}:manage_commands"
+
+  def handle_message(req = %{args: [bundle_name]}, state) do
+    result = case Bundles.bundle_by_name(bundle_name) do
       nil ->
         {:error, {:resource_not_found, "bundle", bundle_name}}
       bundle ->
@@ -27,10 +33,17 @@ defmodule Cog.Commands.Bundle.Versions do
         rendered = Cog.V1.BundleVersionView.render("index.json", %{bundle_versions: versions})
         {:ok, "bundle-versions", rendered[:bundle_versions]}
     end
+
+    case result do
+      {:ok, template, data} ->
+        {:reply, req.reply_to, template, data, state}
+      {:error, err} ->
+        {:error, req.reply_to, Bundle.error(err), state}
+    end
   end
-  def versions(_req, []),
-    do: {:error, {:not_enough_args, 1}}
-  def versions(_req, _),
-    do: {:error, {:too_many_args, 1}}
+  def handle_message(req = %{args: []}, state),
+    do: {:error, req.reply_to, Bundle.error({:not_enough_args, 1}), state}
+  def handle_message(req, state),
+    do: {:error, req.reply_to, Bundle.error({:too_many_args, 1}), state}
 
 end

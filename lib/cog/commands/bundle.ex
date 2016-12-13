@@ -3,7 +3,7 @@ defmodule Cog.Commands.Bundle do
     bundle: Cog.Util.Misc.embedded_bundle
 
   alias Cog.Models.{Bundle, BundleVersion}
-  alias Cog.Commands.Bundle.{List, Versions, Info, Enable, Disable, Install}
+  alias Cog.Commands.Bundle.{List, Info, Enable, Disable, Install}
 
   require Cog.Commands.Helpers, as: Helpers
   require Logger
@@ -31,7 +31,6 @@ defmodule Cog.Commands.Bundle do
     {subcommand, args} = Helpers.get_subcommand(req.args)
 
     result = case subcommand do
-               "versions" -> Versions.versions(req, args)
                "info"     -> Info.info(req, args)
                "disable"  -> Disable.disable(req, args)
                "enable"   -> Enable.enable(req, args)
