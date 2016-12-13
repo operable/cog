@@ -19,34 +19,12 @@ defmodule Cog.Commands.Relay do
 
   rule "when command is #{Cog.Util.Misc.embedded_bundle}:relay must have #{Cog.Util.Misc.embedded_bundle}:manage_relays"
 
-
-  # update options
-  option "name", type: "string"
-  option "description", type: "string"
-
   def handle_message(req, state) do
-    {subcommand, args} = Helpers.get_subcommand(req.args)
-
-    result = case subcommand do
-               "update" ->
-                 Relay.Update.update_relay(req, args)
-               nil ->
-                 if Helpers.flag?(req.options, "help") do
-                   show_usage
-                 else
-                   Relay.List.handle_message(req, state)
-                 end
-               other ->
-                 {:error, {:unknown_subcommand, other}}
-             end
-
-    case result do
-      {:ok, template, data} ->
-        {:reply, req.reply_to, template, data, state}
-      {:ok, message} ->
-        {:reply, req.reply_to, message, state}
-      {:error, err} ->
-        {:error, req.reply_to, error(err), state}
+    if Helpers.flag?(req.options, "help") do
+      {:ok, template, data} = show_usage
+      {:reply, req.reply_to, template, data, state}
+    else
+      Relay.List.handle_message(req, state)
     end
   end
 
