@@ -29,6 +29,8 @@ defmodule Cog.Commands.Permission.Delete do
   ]
   """
 
+  permission "manage_permissions"
+
   rule "when command is #{Cog.Util.Misc.embedded_bundle}:permission-delete must have #{Cog.Util.Misc.embedded_bundle}:manage_permissions"
 
   def handle_message(req = %{args: [<<"site:", _name :: binary>>=permission_name]}, state) do

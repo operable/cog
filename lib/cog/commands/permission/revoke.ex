@@ -41,6 +41,9 @@ defmodule Cog.Commands.Permission.Revoke do
   ]
   """
 
+  permission "manage_permissions"
+  permission "manage_roles"
+
   rule "when command is #{Cog.Util.Misc.embedded_bundle}:permission-revoke must have #{Cog.Util.Misc.embedded_bundle}:manage_permissions"
   rule "when command is #{Cog.Util.Misc.embedded_bundle}:permission-revoke must have #{Cog.Util.Misc.embedded_bundle}:manage_roles"
 

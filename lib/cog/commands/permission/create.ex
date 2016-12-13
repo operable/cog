@@ -28,6 +28,8 @@ defmodule Cog.Commands.Permission.Create do
   ]
   """
 
+  permission "manage_permissions"
+
   rule "when command is #{Cog.Util.Misc.embedded_bundle}:permission-create must have #{Cog.Util.Misc.embedded_bundle}:manage_permissions"
 
   def handle_message(req = %{args: [<<"site:", name :: binary>>]}, state) do

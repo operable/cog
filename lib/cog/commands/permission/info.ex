@@ -29,6 +29,8 @@ defmodule Cog.Commands.Permission.Info do
   ]
   """
 
+  permission "manage_permissions"
+
   rule "when command is #{Cog.Util.Misc.embedded_bundle}:permission-info must have #{Cog.Util.Misc.embedded_bundle}:manage_permissions"
 
   def handle_message(req = %{args: [name]}, state) when is_binary(name) do
