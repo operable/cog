@@ -1,6 +1,7 @@
 defmodule Cog.Test.Commands.GroupTest do
   use Cog.CommandCase, command_module: Cog.Commands.Group
 
+  alias Cog.Commands.Group.{List}
   import Cog.Support.ModelUtilities, only: [user: 1,
                                             group: 1,
                                             role: 1,
@@ -61,8 +62,8 @@ defmodule Cog.Test.Commands.GroupTest do
       Enum.each(1..3, &group("group#{&1}"))
 
       {:ok, response} =
-        new_req(args: ["list"])
-        |> send_req()
+        new_req(args: [])
+        |> send_req(List)
 
       response = Enum.sort_by(response, &(&1.name))
 
