@@ -28,8 +28,6 @@ defmodule Cog.Commands.Group.Role do
     {subcommand, args} = Helpers.get_subcommand(arg_list)
 
     case subcommand do
-      "add" ->
-        Role.Add.add_role(req, args)
       "remove" ->
         Role.Remove.remove_role(req, args)
       invalid ->

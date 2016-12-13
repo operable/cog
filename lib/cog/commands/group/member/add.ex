@@ -33,6 +33,7 @@ defmodule Cog.Commands.Group.Member.Add do
   ]
   """
 
+  rule ~s(when command is #{Cog.Util.Misc.embedded_bundle}:group-member-add must have #{Cog.Util.Misc.embedded_bundle}:manage_groups)
   rule ~s(when command is #{Cog.Util.Misc.embedded_bundle}:group-member-add must have #{Cog.Util.Misc.embedded_bundle}:manage_users)
 
   def handle_message(req, state) do
