@@ -6,17 +6,6 @@ defmodule Cog.Test.Commands.GroupTest do
                                             group: 1,
                                             role: 1,
                                             add_to_group: 2]
-  describe "group subcommands" do
-
-    test "can't pass an unknown subcommand" do
-      {:error, error} =
-        new_req(args: ["not-a-subcommand"])
-        |> send_req()
-
-      assert(error == "Unknown subcommand 'not-a-subcommand'")
-    end
-
-  end
 
   describe "group CRUD" do
 
@@ -204,8 +193,8 @@ defmodule Cog.Test.Commands.GroupTest do
 
       # Then remove it via the group command
       {:ok, response} =
-        new_req(args: ["role", "remove", group.name, role.name])
-        |> send_req()
+        new_req(args: [group.name, role.name])
+        |> send_req(Role.Remove)
 
       refute(is_group_role?(response, role.name))
     end
