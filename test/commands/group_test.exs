@@ -1,7 +1,7 @@
 defmodule Cog.Test.Commands.GroupTest do
   use Cog.CommandCase, command_module: Cog.Commands.Group
 
-  alias Cog.Commands.Group.{List, Create, Delete, Rename}
+  alias Cog.Commands.Group.{List, Create, Delete, Rename, Info}
   import Cog.Support.ModelUtilities, only: [user: 1,
                                             group: 1,
                                             role: 1,
@@ -52,8 +52,8 @@ defmodule Cog.Test.Commands.GroupTest do
       group("info_group")
 
       {:ok, response} =
-        new_req(args: ["info", "info_group"])
-        |> send_req()
+        new_req(args: ["info_group"])
+        |> send_req(Info)
 
       assert(%{name: "info_group"} = response)
     end
