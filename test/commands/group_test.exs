@@ -149,8 +149,8 @@ defmodule Cog.Test.Commands.GroupTest do
 
       # Then remove it via the group command
       {:ok, response} =
-        new_req(args: ["member", "remove", group.name, user.username])
-        |> send_req()
+        new_req(args: [group.name, user.username])
+        |> send_req(Member.Remove)
 
       refute(is_group_user?(response, user.username))
     end

@@ -23,14 +23,11 @@ defmodule Cog.Commands.Group do
   permission "manage_users"
 
   rule ~s(when command is #{Cog.Util.Misc.embedded_bundle}:group must have #{Cog.Util.Misc.embedded_bundle}:manage_groups)
-  rule ~s(when command is #{Cog.Util.Misc.embedded_bundle}:group with arg[0] == 'member' must have #{Cog.Util.Misc.embedded_bundle}:manage_users)
 
   def handle_message(req, state) do
     {subcommand, args} = Helpers.get_subcommand(req.args)
 
     result = case subcommand do
-      "member" ->
-        Group.Member.manage_members(req, args)
       "role" ->
         Group.Role.manage_roles(req, args)
       nil ->
