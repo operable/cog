@@ -21,7 +21,6 @@ defmodule Cog.Commands.RelayGroup do
   Helpers.usage(:root)
 
   # list options
-  option "verbose", type: "bool", short: "v"
 
   def handle_message(req, state) do
     {subcommand, args} = Helpers.get_subcommand(req.args)
@@ -29,8 +28,6 @@ defmodule Cog.Commands.RelayGroup do
     result = case subcommand do
       "info" ->
         RelayGroup.Info.relay_group_info(req, args)
-      "list" ->
-        RelayGroup.List.list(req, args)
       "create" ->
         RelayGroup.Create.create_relay_group(req, args)
       "rename" ->
@@ -43,7 +40,7 @@ defmodule Cog.Commands.RelayGroup do
         if Helpers.flag?(req.options, "help") do
           show_usage
         else
-          RelayGroup.List.list(req, args)
+          RelayGroup.List.handle_message(req, state)
         end
       other ->
         {:error, {:unknown_subcommand, other}}
