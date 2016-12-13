@@ -1,7 +1,7 @@
 defmodule Cog.Test.Commands.AliasTest do
   use Cog.CommandCase, command_module: Cog.Commands.Alias
 
-  alias Cog.Commands.Alias.{Create, Move}
+  alias Cog.Commands.Alias.{Create, Move, Delete}
   import Cog.Support.ModelUtilities, only: [site_alias: 2,
                                             with_alias: 3,
                                             get_alias: 1,
@@ -40,8 +40,8 @@ defmodule Cog.Test.Commands.AliasTest do
     setup :with_user_alias
 
     test "removing an alias", %{user: user} do
-      {:ok, response} = new_req(user: %{"id" => user.id}, args: ["delete", "my-new-alias"])
-      |> send_req()
+      {:ok, response} = new_req(user: %{"id" => user.id}, args: ["my-new-alias"])
+      |> send_req(Delete)
 
       assert(%{name: "my-new-alias",
                pipeline: "echo My New Alias",
@@ -53,8 +53,8 @@ defmodule Cog.Test.Commands.AliasTest do
     end
 
     test "removing an alias that does not exist", %{user: user} do
-      {:error, error} = new_req(user: %{"id" => user.id}, args: ["delete", "my-non-existant-alias"])
-      |> send_req()
+      {:error, error} = new_req(user: %{"id" => user.id}, args: ["my-non-existant-alias"])
+      |> send_req(Delete)
 
       assert(error == "I can't find 'my-non-existant-alias'. Please try again")
     end
