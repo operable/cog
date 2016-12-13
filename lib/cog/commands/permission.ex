@@ -1,7 +1,7 @@
 defmodule Cog.Commands.Permission do
   use Cog.Command.GenCommand.Base, bundle: Cog.Util.Misc.embedded_bundle
   require Cog.Commands.Helpers, as: Helpers
-  alias Cog.Commands.Permission.{Grant, Info, List, Revoke}
+  alias Cog.Commands.Permission.{Grant, List, Revoke}
 
   Helpers.usage(:root)
 
@@ -24,7 +24,6 @@ defmodule Cog.Commands.Permission do
   # first rule is for default list scenario
   rule "when command is #{Cog.Util.Misc.embedded_bundle}:permission must have #{Cog.Util.Misc.embedded_bundle}:manage_permissions"
 
-  rule "when command is #{Cog.Util.Misc.embedded_bundle}:permission with arg[0] == info must have #{Cog.Util.Misc.embedded_bundle}:manage_permissions"
   rule "when command is #{Cog.Util.Misc.embedded_bundle}:permission with arg[0] == grant must have #{Cog.Util.Misc.embedded_bundle}:manage_roles"
   rule "when command is #{Cog.Util.Misc.embedded_bundle}:permission with arg[0] == revoke must have #{Cog.Util.Misc.embedded_bundle}:manage_roles"
 
@@ -33,7 +32,6 @@ defmodule Cog.Commands.Permission do
 
     result = case subcommand do
                "grant"  -> Grant.grant(req, args)
-               "info"   -> Info.info(req, args)
                "revoke" -> Revoke.revoke(req, args)
                nil ->
                  if Helpers.flag?(req.options, "help") do
