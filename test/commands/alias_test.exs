@@ -1,6 +1,7 @@
 defmodule Cog.Test.Commands.AliasTest do
   use Cog.CommandCase, command_module: Cog.Commands.Alias
 
+  alias Cog.Commands.Alias.{Create}
   import Cog.Support.ModelUtilities, only: [site_alias: 2,
                                             with_alias: 3,
                                             get_alias: 1,
@@ -11,8 +12,8 @@ defmodule Cog.Test.Commands.AliasTest do
 
   describe "alias creation" do
     test "with standard args", %{user: user} do
-      {:ok, response} = new_req(user: %{"id" => user.id}, args: ["create", "my-new-alias", "echo My New Alias"])
-      |> send_req()
+      {:ok, response} = new_req(user: %{"id" => user.id}, args: ["my-new-alias", "echo My New Alias"])
+      |> send_req(Create)
 
       assert(%{name: "my-new-alias",
                pipeline: "echo My New Alias",
@@ -28,8 +29,8 @@ defmodule Cog.Test.Commands.AliasTest do
     test "with an existing name", %{user: user}=context do
       with_user_alias(context)
 
-      {:error, error} = new_req(user: %{"id" => user.id}, args: ["create", "my-new-alias", "echo My New Alias"])
-      |> send_req()
+      {:error, error} = new_req(user: %{"id" => user.id}, args: ["my-new-alias", "echo My New Alias"])
+      |> send_req(Create)
 
       assert(error == "name: The alias name is already in use.")
     end
@@ -355,15 +356,15 @@ defmodule Cog.Test.Commands.AliasTest do
 
   describe "alias args" do
     test "passing too many", %{user: user} do
-      {:error, error} = new_req(user: %{"id" => user.id}, args: ["create", "my-invalid-alias", "echo foo", "invalid-arg"])
-      |> send_req()
+      {:error, error} = new_req(user: %{"id" => user.id}, args: ["my-invalid-alias", "echo foo", "invalid-arg"])
+      |> send_req(Create)
 
       assert(error == "Too many args. Arguments required: exactly 2.")
     end
 
     test "passing too few", %{user: user} do
-      {:error, error} = new_req(user: %{"id" => user.id}, args: ["create", "my-invalid-alias"])
-      |> send_req()
+      {:error, error} = new_req(user: %{"id" => user.id}, args: ["my-invalid-alias"])
+      |> send_req(Create)
 
       assert(error == "Not enough args. Arguments required: exactly 2.")
     end
