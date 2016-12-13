@@ -33,6 +33,8 @@ defmodule Cog.Commands.Group.Rename do
   ]
   """
 
+  permission "manage_groups"
+
   rule ~s(when command is #{Cog.Util.Misc.embedded_bundle}:group-rename must have #{Cog.Util.Misc.embedded_bundle}:manage_groups)
 
   def handle_message(req = %{args: [old, new]}, state) when is_binary(old) and is_binary(new) do
