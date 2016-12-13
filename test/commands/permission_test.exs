@@ -1,7 +1,7 @@
 defmodule Cog.Test.Commands.PermissionTest do
   use Cog.CommandCase, command_module: Cog.Commands.Permission
 
-  alias Cog.Commands.Permission.{List, Create, Delete, Info, Grant}
+  alias Cog.Commands.Permission.{List, Create, Delete, Info, Grant, Revoke}
   alias Cog.Repository.Permissions
 
   import Cog.Support.ModelUtilities, only: [permission: 1,
@@ -28,7 +28,6 @@ defmodule Cog.Test.Commands.PermissionTest do
             %{bundle: "operable", name: "st-thorn"}] = payload
   end
 
-  @tag :skip
   test "listing is the default action" do
     payload = new_req()
               |> send_req()
@@ -286,8 +285,8 @@ defmodule Cog.Test.Commands.PermissionTest do
     permission = permission("site:foo")
     role = role("admin") |> with_permission(permission)
 
-    payload = new_req(args: ["revoke", "site:foo", "admin"])
-              |> send_req()
+    payload = new_req(args: ["site:foo", "admin"])
+              |> send_req(Revoke)
               |> unwrap()
 
     assert %{permission: %{bundle: "site", name: "foo"},
@@ -303,8 +302,8 @@ defmodule Cog.Test.Commands.PermissionTest do
       role(name) |> with_permission(foo)
     end
 
-    error = new_req(args: ["revoke", "site:foo", "sec", "dev", "ops"])
-            |> send_req()
+    error = new_req(args: ["site:foo", "sec", "dev", "ops"])
+            |> send_req(Revoke)
             |> unwrap_error()
 
     assert(error == "Too many args. Arguments required: exactly 2.")
@@ -317,8 +316,8 @@ defmodule Cog.Test.Commands.PermissionTest do
   test "revoking a permission from a role requires an existing permission" do
     role("admin")
 
-    error = new_req(args: ["revoke", "site:wat", "admin"])
-            |> send_req()
+    error = new_req(args: ["site:wat", "admin"])
+            |> send_req(Revoke)
             |> unwrap_error()
 
     assert(error == "Could not find 'permission' with the name 'site:wat'")
@@ -327,8 +326,8 @@ defmodule Cog.Test.Commands.PermissionTest do
   test "revoking a permission from a role requires an existing role" do
     permission("site:foo")
 
-    error = new_req(args: ["revoke", "site:foo", "wat"])
-            |> send_req()
+    error = new_req(args: ["site:foo", "wat"])
+            |> send_req(Revoke)
             |> unwrap_error()
 
     assert(error == "Could not find 'role' with the name 'wat'")
@@ -337,27 +336,19 @@ defmodule Cog.Test.Commands.PermissionTest do
   test "revoking a permission from a role requires the role" do
     permission("site:foo")
 
-    error = new_req(args: ["revoke", "site:foo"])
-            |> send_req()
+    error = new_req(args: ["site:foo"])
+            |> send_req(Revoke)
             |> unwrap_error()
 
     assert(error == "Not enough args. Arguments required: exactly 2.")
   end
 
   test "revoking permissions requires string arguments" do
-    error = new_req(args: ["revoke", 123, 456])
-            |> send_req()
+    error = new_req(args: [123, 456])
+            |> send_req(Revoke)
             |> unwrap_error()
 
     assert(error == "Arguments must be strings")
-  end
-
-  test "providing an unrecognized subcommand fails" do
-    error = new_req(args: ["do-something"])
-            |> send_req()
-            |> unwrap_error()
-
-    assert(error == "Unknown subcommand 'do-something'")
   end
 
 end
