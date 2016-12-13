@@ -19,9 +19,6 @@ defmodule Cog.Commands.Relay do
 
   rule "when command is #{Cog.Util.Misc.embedded_bundle}:relay must have #{Cog.Util.Misc.embedded_bundle}:manage_relays"
 
-  # list options
-  option "group", type: "bool", short: "g"
-  option "verbose", type: "bool", short: "v"
 
   # update options
   option "name", type: "string"
@@ -31,17 +28,13 @@ defmodule Cog.Commands.Relay do
     {subcommand, args} = Helpers.get_subcommand(req.args)
 
     result = case subcommand do
-               "info" ->
-                 Relay.Info.info(req, args)
-               "list" ->
-                 Relay.List.list_relays(req)
                "update" ->
                  Relay.Update.update_relay(req, args)
                nil ->
                  if Helpers.flag?(req.options, "help") do
                    show_usage
                  else
-                   Relay.List.list_relays(req)
+                   Relay.List.handle_message(req, state)
                  end
                other ->
                  {:error, {:unknown_subcommand, other}}
@@ -57,8 +50,8 @@ defmodule Cog.Commands.Relay do
     end
   end
 
-  defp error(:wrong_type),
+  def error(:wrong_type),
     do: "Arguments must be strings"
-  defp error(error),
+  def error(error),
     do: Helpers.error(error)
 end
