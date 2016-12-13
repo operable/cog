@@ -28,23 +28,6 @@ defmodule Cog.Test.Commands.PermissionTest do
             %{bundle: "operable", name: "st-thorn"}] = payload
   end
 
-  test "listing is the default action" do
-    payload = new_req()
-              |> send_req()
-              |> unwrap()
-              |> Enum.sort_by(fn(p) -> "#{p[:bundle]}:#{p[:name]}" end)
-
-    assert [%{bundle: "operable", name: "manage_commands"},
-            %{bundle: "operable", name: "manage_groups"},
-            %{bundle: "operable", name: "manage_permissions"},
-            %{bundle: "operable", name: "manage_relays"},
-            %{bundle: "operable", name: "manage_roles"},
-            %{bundle: "operable", name: "manage_triggers"},
-            %{bundle: "operable", name: "manage_users"},
-            %{bundle: "operable", name: "st-echo"},
-            %{bundle: "operable", name: "st-thorn"}] = payload
-  end
-
   test "getting information on a permission works" do
     permission("site:foo")
 

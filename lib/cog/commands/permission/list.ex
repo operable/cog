@@ -29,6 +29,8 @@ defmodule Cog.Commands.Permission.List do
   ]
   """
 
+  permission "manage_permissions"
+
   rule "when command is #{Cog.Util.Misc.embedded_bundle}:permission-list must have #{Cog.Util.Misc.embedded_bundle}:manage_permissions"
 
   def handle_message(req, state) do
