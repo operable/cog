@@ -2,7 +2,7 @@ defmodule Cog.Commands.Rule do
   use Cog.Command.GenCommand.Base,
     bundle: Cog.Util.Misc.embedded_bundle
 
-  alias Cog.Commands.Rule.{List}
+  #alias Cog.Commands.Rule.{List}
   require Cog.Commands.Helpers, as: Helpers
 
   Helpers.usage(:root)
@@ -25,13 +25,13 @@ defmodule Cog.Commands.Rule do
   rule "when command is #{Cog.Util.Misc.embedded_bundle}:rule must have #{Cog.Util.Misc.embedded_bundle}:manage_commands"
 
   def handle_message(req, state) do
-    {subcommand, args} = Helpers.get_subcommand(req.args)
+    {subcommand, _args} = Helpers.get_subcommand(req.args)
 
     result = case subcommand do
       #"info" ->
         #Info.info(req, args)
-      "list" ->
-        List.list(req, args)
+      #"list" ->
+        #List.list(req, args)
       #"create" ->
         #Create.create(req, args)
       #"delete" ->
@@ -40,7 +40,7 @@ defmodule Cog.Commands.Rule do
         if Helpers.flag?(req.options, "help") do
           show_usage
         else
-          List.list(req, args)
+          #List.list(req, args)
         end
       other ->
         {:error, {:unknown_subcommand, other}}
