@@ -2,7 +2,7 @@ defmodule Cog.Commands.Role do
   use Cog.Command.GenCommand.Base, bundle: Cog.Util.Misc.embedded_bundle
   require Cog.Commands.Helpers, as: Helpers
 
-  alias Cog.Commands.Role.{Create, Delete, Grant, Info, List, Rename, Revoke}
+  alias Cog.Commands.Role.{Create, Delete, Grant, Info, Rename, Revoke}
 
   Helpers.usage(:root)
 
@@ -40,15 +40,10 @@ defmodule Cog.Commands.Role do
                "delete" -> Delete.delete(req, args)
                "grant"  -> Grant.grant(req, args)
                "info"   -> Info.info(req, args)
-               "list"   -> List.list(req, args)
                "rename" -> Rename.rename(req, args)
                "revoke" -> Revoke.revoke(req, args)
                nil ->
-                 if Helpers.flag?(req.options, "help") do
-                   show_usage
-                 else
-                   List.list(req, args)
-                 end
+                 show_usage
                other ->
                  {:error, {:unknown_subcommand, other}}
              end
