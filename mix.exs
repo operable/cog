@@ -62,7 +62,6 @@ defmodule Cog.Mixfile do
       # Operable Code
       ########################################################################
       {:conduit, github: "operable/conduit"},
-      {:fumanchu, github: "operable/fumanchu"},
       {:probe, github: "operable/probe"},
       {:spanner, github: "operable/spanner"},
       {:greenbar, github: "operable/greenbar"},

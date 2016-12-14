@@ -68,9 +68,6 @@ defmodule Cog.Commands.Help do
   # a command. We first do a lookup and then return the appropriate help.
   def handle_message(%{args: args, options: options} = req, state) do
     response = case lookup(args) do
-      {:ok, %CommandVersion{bundle_version: %BundleVersion{config_file: %{"cog_bundle_version" => version}}} = command} when version < 4 ->
-        command = Commands.preloads_for_help(command)
-        {:ok, {:documentation, command.documentation}}
       {:ok, %CommandVersion{} = command} ->
         case {options["output"], command} do
           {true, command_version = %CommandVersion{output: %{"example" => nil}}} ->

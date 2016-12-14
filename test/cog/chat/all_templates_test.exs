@@ -60,7 +60,7 @@ defmodule Cog.Chat.AllTemplatesTest do
   end
 
   def embedded_template_names do
-    Cog.Template.New.template_dir(:embedded)
+    Cog.Template.template_dir(:embedded)
     |> Cog.Repository.Templates.templates_from_files
     |> Map.keys
     |> Enum.sort
