@@ -1,39 +1,53 @@
 defmodule Cog.Commands.Group.Role.Remove do
+  use Cog.Command.GenCommand.Base,
+    bundle: Cog.Util.Misc.embedded_bundle,
+    name: "group-role-remove"
+
   require Cog.Commands.Helpers, as: Helpers
+  alias Cog.Commands.Group
   alias Cog.Repository.Groups
 
-  Helpers.usage """
-  Remove roles from user groups.
+  @description "Remove roles from user groups"
 
-  USAGE
-    group role remove [FLAGS] <group-name> <role-name ...>
+  @arguments "<group-name> <role-name ...>"
 
-  ARGS
-    group-name    The group to remove roles from
-    role-name     List of one or more roles to remove from the group
+  @output_description "Returns the serialized group without the removed role"
 
-  FLAGS
-    -h, --help    Display this usage info
+  @output_example """
+  [
+    {
+      "roles": [],
+      "name": "engineering",
+      "members": [],
+      "id": "0640f71f-3c1b-4d47-8b8b-c8765b115872"
+    }
+  ]
   """
 
-  @spec remove_role(%Cog.Messages.Command{}, List.t) :: {:ok, String.t, Map.t} | {:error, any()}
-  def remove_role(req, arg_list) do
-    if Helpers.flag?(req.options, "help") do
-      show_usage
-    else
-      case Helpers.get_args(arg_list, min: 2) do
-        {:ok, [group_name | role_names]} ->
-          case remove(group_name, role_names) do
-            {:ok, group} ->
-              {:ok, "user-group-update-success", group}
-            {:error, {:not_found, {kind, bad_names}}} ->
-              {:error, {:resource_not_found, kind, Enum.join(bad_names, ", ")}}
-            {:error, error} ->
-              {:error, {:db_errors, error}}
-          end
-        {:error, {:under_min_args, _min}} ->
-          show_usage(error(:missing_args))
-      end
+  permission "manage_groups"
+
+  rule ~s(when command is #{Cog.Util.Misc.embedded_bundle}:group-role-remove must have #{Cog.Util.Misc.embedded_bundle}:manage_groups)
+
+  def handle_message(req, state) do
+    result = case Helpers.get_args(req.args, min: 2) do
+      {:ok, [group_name | role_names]} ->
+        case remove(group_name, role_names) do
+          {:ok, group} ->
+            {:ok, "user-group-update-success", group}
+          {:error, {:not_found, {kind, bad_names}}} ->
+            {:error, {:resource_not_found, kind, Enum.join(bad_names, ", ")}}
+          {:error, error} ->
+            {:error, {:db_errors, error}}
+        end
+      error ->
+        error
+    end
+
+    case result do
+      {:ok, template, data} ->
+        {:reply, req.reply_to, template, data, state}
+      {:error, err} ->
+        {:error, req.reply_to, Group.error(err), state}
     end
   end
 
@@ -44,9 +58,5 @@ defmodule Cog.Commands.Group.Role.Remove do
       {:error, :not_found} ->
         {:error, {:resource_not_found, "user group", group_name}}
     end
-  end
-
-  defp error(:missing_args) do
-    "Missing required args. At a minimum you must include the user group and at least one role name to remove"
   end
 end

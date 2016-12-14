@@ -1,40 +1,51 @@
 defmodule Cog.Commands.Group.Create do
+  use Cog.Command.GenCommand.Base,
+    bundle: Cog.Util.Misc.embedded_bundle,
+    name: "group-create"
+
   require Cog.Commands.Helpers, as: Helpers
+  alias Cog.Commands.Group
   alias Cog.Repository.Groups
 
-  Helpers.usage """
-  Creates new user groups.
+  @description "Creates new user groups"
 
-  USAGE
-    group create [FLAGS] <group-name>
+  @arguments "<group-name>"
 
-  ARGS
-    group-name    The name of the user group to create
+  @output_description "Returns the newly created serialized group"
 
-  FLAGS
-    -h, --help    Display this usage info
+  @output_example """
+  [
+    {
+      "roles": [],
+      "name": "ops",
+      "members": [],
+      "id": "e47cced6-0f7b-4e11-8c06-bb8db6f30147"
+    }
+  ]
   """
 
-  @spec create_group(%Cog.Messages.Command{}, List.t) :: {:ok, String.t, Map.t} | {:error, any()}
-  def create_group(req, arg_list) do
-    if Helpers.flag?(req.options, "help") do
-      show_usage
-    else
-      case Helpers.get_args(arg_list, 1) do
-        {:ok, [group_name]} ->
-          case Groups.new(%{name: group_name}) do
-            {:ok, group} ->
-              {:ok, "user-group-create", group}
-            {:error, changeset} ->
-              {:error, {:db_errors, changeset.errors}}
-          end
-        {:error, {:not_enough_args, _}} ->
-          show_usage("Missing required argument: group_name")
-        {:error, {:too_many_args, _}} ->
-          show_usage("Too many arguments. You can only create one user group at a time.")
-        error ->
-          error
-      end
+  permission "manage_groups"
+
+  rule ~s(when command is #{Cog.Util.Misc.embedded_bundle}:group-create must have #{Cog.Util.Misc.embedded_bundle}:manage_groups)
+
+  def handle_message(req, state) do
+    result = case Helpers.get_args(req.args, 1) do
+      {:ok, [group_name]} ->
+        case Groups.new(%{name: group_name}) do
+          {:ok, group} ->
+            {:ok, "user-group-create", group}
+          {:error, changeset} ->
+            {:error, {:db_errors, changeset.errors}}
+        end
+      error ->
+        error
+    end
+
+    case result do
+      {:ok, template, data} ->
+        {:reply, req.reply_to, template, data, state}
+      {:error, err} ->
+        {:error, req.reply_to, Group.error(err), state}
     end
   end
 end
