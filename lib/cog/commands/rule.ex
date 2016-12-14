@@ -1,6 +1,6 @@
 defmodule Cog.Commands.Rule do
 
-  require Cog.Commands.Helpers, as: Helpers
+  alias Cog.Commands.Helpers
 
   def error({:disabled, command}),
     do: "#{command} is not enabled. Enable a bundle version and try again"
