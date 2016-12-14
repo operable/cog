@@ -1,34 +1,45 @@
 defmodule Cog.Commands.Rule.Delete do
+  use Cog.Command.GenCommand.Base,
+    bundle: Cog.Util.Misc.embedded_bundle,
+    name: "rule-delete"
+
+  alias Cog.Commands.Rule
   alias Cog.Repository.Rules
-  require Cog.Commands.Helpers, as: Helpers
 
-  Helpers.usage """
-  Deletes rules by id.
+  @description "Deletes rules by id."
 
-  USAGE
-    rule delete [FLAGS] <id...>
+  @arguments "<id...>"
 
-  ARGS
-    id  Specifies the rule to delete
+  @output_description "Returns the rule that was just deleted."
 
-  FLAGS
-    -h, --help  Display this usage info
-
+  @output_example """
+  [
+    {
+      "rule": "when command is operable:min allow",
+      "id": "00000000-0000-0000-0000-000000000000",
+      "command": "operable:min"
+    }
+  ]
   """
 
-  def delete(%{options: %{"help" => true}}, _args) do
-    show_usage
-  end
+  permission "manage_commands"
 
-  def delete(_req, []) do
-    {:error, {:under_min_args, 1}}
-  end
+  rule "when command is #{Cog.Util.Misc.embedded_bundle}:rule-delete must have #{Cog.Util.Misc.embedded_bundle}:manage_commands"
 
-  def delete(_req, args) do
-    with {:ok, uuids} <- validate_uuids(args),
+  def handle_message(%{args: []}, _state),
+    do: {:error, {:under_min_args, 1}}
+  def handle_message(req, state) do
+    result = with {:ok, uuids} <- validate_uuids(req.args),
          {:ok, rules} <- find_rules(uuids),
          delete_rules(rules),
-         do: {:ok, "rule-delete", rules}
+         do: {:ok, rules}
+
+    case result do
+      {:ok, rules} ->
+        {:reply, req.reply_to, "rule-delete", rules, state}
+      {:error, error} ->
+        {:error, req.reply_to, Rule.error(error), state}
+    end
   end
 
   defp validate_uuids(uuids) do

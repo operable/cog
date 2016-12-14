@@ -2,7 +2,7 @@ defmodule Cog.Commands.Rule do
   use Cog.Command.GenCommand.Base,
     bundle: Cog.Util.Misc.embedded_bundle
 
-  alias Cog.Commands.Rule.{Info, List, Delete}
+  alias Cog.Commands.Rule.{Info, List}
   require Cog.Commands.Helpers, as: Helpers
 
   Helpers.usage(:root)
@@ -34,8 +34,8 @@ defmodule Cog.Commands.Rule do
         List.list(req, args)
       #"create" ->
         #Create.create(req, args)
-      "delete" ->
-        Delete.delete(req, args)
+      #"delete" ->
+        #Delete.delete(req, args)
       nil ->
         if Helpers.flag?(req.options, "help") do
           show_usage
