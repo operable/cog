@@ -2,7 +2,7 @@ defmodule Cog.Commands.Role do
   use Cog.Command.GenCommand.Base, bundle: Cog.Util.Misc.embedded_bundle
   require Cog.Commands.Helpers, as: Helpers
 
-  alias Cog.Commands.Role.{Rename, Revoke}
+  alias Cog.Commands.Role.{Revoke}
 
   Helpers.usage(:root)
 
@@ -36,7 +36,6 @@ defmodule Cog.Commands.Role do
     {subcommand, args} = Helpers.get_subcommand(req.args)
 
     result = case subcommand do
-               "rename" -> Rename.rename(req, args)
                "revoke" -> Revoke.revoke(req, args)
                nil ->
                  show_usage
