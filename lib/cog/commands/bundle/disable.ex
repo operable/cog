@@ -1,47 +1,62 @@
 defmodule Cog.Commands.Bundle.Disable do
-  require Cog.Commands.Helpers, as: Helpers
+  use Cog.Command.GenCommand.Base,
+    bundle: Cog.Util.Misc.embedded_bundle,
+    name: "bundle-disable"
 
-  alias Cog.Repository.Bundles
+  alias Cog.Commands.Bundle
   alias Cog.Models.BundleVersion
+  alias Cog.Repository.Bundles
 
-  Helpers.usage """
-  Disable a bundle.
+  @description "Disable a bundle"
 
+  @long_description """
   Disabling a bundle prevents commands from being routed to it. The
   bundle is not uninstalled, and all custom rules remain intact. The
   bundle still exists, but commands in it will not be executed.
 
-  A disabled bundle can be re-enabled using this the `enable`
-  sub-command.
+  A disabled bundle can be re-enabled using the `bundle enable` command.
 
   Cannot be used on the `#{Cog.Util.Misc.embedded_bundle}` bundle.
-
-  USAGE
-    bundle disable [FLAGS] <name>
-
-  ARGS
-    name  Specifies the bundle to disable.
-
-  FLAGS
-    -h, --help  Display this usage info
-
-  EXAMPLES
-
-    bundle disable my-bundle
   """
 
-  def disable(%{options: %{"help" => true}}, _args),
-    do: show_usage
-  def disable(_req, [bundle_name]) do
-    with({:ok, bundle} <- find_enabled_bundle(bundle_name),
-         {:ok, bundle} <- disable_bundle(bundle)) do
+  @arguments "<name>"
+
+  @examples """
+  Disable the cfn bundle:
+
+    bundle disable cfn
+  """
+
+  @output_description "Returns top-level data about the bundle and its new state"
+
+  @output_example """
+  [
+    {
+      "version": "0.5.0",
+      "status": "disabled",
+      "name": "cfn"
+    }
+  ]
+  """
+  rule "when command is #{Cog.Util.Misc.embedded_bundle}:bundle-disable must have #{Cog.Util.Misc.embedded_bundle}:manage_commands"
+
+  def handle_message(req = %{args: [bundle_name]}, state) do
+    result = with {:ok, bundle} <- find_enabled_bundle(bundle_name),
+                  {:ok, bundle} <- disable_bundle(bundle) do
       {:ok, "bundle-disable", Map.put(bundle, :status, :disabled)}
     end
+
+    case result do
+      {:ok, template, data} ->
+        {:reply, req.reply_to, template, data, state}
+      {:error, err} ->
+        {:error, req.reply_to, Bundle.error(err), state}
+    end
   end
-  def disable(_req, []),
-    do: {:error, {:not_enough_args, 1}}
-  def disable(_req, _),
-    do: {:error, {:too_many_args, 1}}
+  def handle_message(req = %{args: []}, state),
+    do: {:error, req.reply_to, Bundle.error({:not_enough_args, 1}), state}
+  def handle_message(req, state),
+    do: {:error, req.reply_to, Bundle.error({:too_many_args, 1}), state}
 
   ########################################################################
 
