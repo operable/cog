@@ -1,31 +1,41 @@
 defmodule Cog.Commands.Role.Rename do
-  require Cog.Commands.Helpers, as: Helpers
+  use Cog.Command.GenCommand.Base,
+    bundle: Cog.Util.Misc.embedded_bundle,
+    name: "role-rename"
 
-  alias Cog.Repository.Roles
+  alias Cog.Commands
   alias Cog.Models.Role
+  alias Cog.Repository.Roles
 
-  Helpers.usage """
-  Rename a role
+  @description "Rename a role"
 
-  USAGE
-    role rename [FLAGS] <name> <new-name>
+  @arguments "<name> <new-name>"
 
-  ARGS
-    name      The role to rename
-    new-name  The name you want to change to
-
-  FLAGS
-    -h, --help    Display this usage info
-
-  EXAMPLES
+  @examples """
+  Rename a role from aws-admin to cloud-commander:
 
     role rename aws-admin cloud-commander
   """
 
-  def rename(%{options: %{"help" => true}}, _args),
-    do: show_usage
-  def rename(_req, [old, new]) when is_binary(old) and is_binary(new) do
-    case Roles.by_name(old) do
+  @output_description "Returns the serialized role including an old name attribute"
+
+  @output_example """
+  [
+    {
+      "permissions": [],
+      "old_name": "administration",
+      "name": "admin",
+      "id": "b711d91a-dcbe-4adc-862f-ea9144438955"
+    }
+  ]
+  """
+
+  permission "manage_roles"
+
+  rule "when command is #{Cog.Util.Misc.embedded_bundle}:role-rename must have #{Cog.Util.Misc.embedded_bundle}:manage_roles"
+
+  def handle_message(req = %{args: [old, new]}, state) when is_binary(old) and is_binary(new) do
+    result = case Roles.by_name(old) do
       %Role{}=role ->
         case Roles.rename(role, new) do
           {:ok, role} ->
@@ -37,12 +47,18 @@ defmodule Cog.Commands.Role.Rename do
       nil ->
         {:error, {:resource_not_found, "role", old}}
     end
-  end
-  def rename(_, [_,_]),
-    do: {:error, :wrong_type}
-  def rename(_, args) do
-    error = if length(args) > 2, do: :too_many_args, else: :not_enough_args
-    {:error, {error, 2}}
-  end
 
+    case result do
+      {:ok, template, data} ->
+        {:reply, req.reply_to, template, data, state}
+      {:error, err} ->
+        {:error, req.reply_to, Commands.Role.error(err), state}
+    end
+  end
+  def handle_message(req = %{args: [_, _]}, state),
+    do: {:error, req.reply_to, Commands.Role.error(:wrong_type), state}
+  def handle_message(req = %{args: args}, state) when length(args) < 2,
+    do: {:error, req.reply_to, Commands.Role.error({:not_enough_args, 2}), state}
+  def handle_message(req, state),
+    do: {:error, req.reply_to, Commands.Role.error({:too_many_args, 2}), state}
 end
