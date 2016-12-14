@@ -1,4 +1,8 @@
 defmodule Cog.Commands.Alias.List do
+  use Cog.Command.GenCommand.Base,
+    bundle: Cog.Util.Misc.embedded_bundle,
+    name: "alias-list"
+
   alias Cog.Models.UserCommandAlias
   alias Cog.Models.SiteCommandAlias
   alias Cog.Queries
@@ -6,45 +10,47 @@ defmodule Cog.Commands.Alias.List do
 
   require Cog.Commands.Helpers, as: Helpers
 
-  Helpers.usage """
-  Lists aliases. Subcommand for alias.
+  @description "Lists aliases"
+
+  @long_description """
   Optionally takes a pattern supporting basic wildcards.
+  """
 
-  USAGE
-    alias list [FLAGS] [ARGS]
+  @arguments "[pattern]"
 
-  FLAGS
-    -h, --help  Display this usage info
+  @examples """
+  Listing all aliases:
 
-  ARGS
-    pattern  The pattern to filter aliases by.
-
-  EXAMPLES
     alias list
-    > Name: my_alias
-      Visibility: user
-      Pipeline: echo my new alias
-    > Name: foo
-      Visibility: user
-      Pipeline: echo foo
+
+  Listing aliases starting with "my-":
 
     alias list "my-*"
-    > Name: my_alias
-      Visibility: user
-      Pipeline: echo my new alias
   """
 
-  @doc """
-  Entry point for listing aliases.
-  Accepts a cog request and argument list.
-  Returns {:ok, <alias list>} on success and {:error, <err>} on failure.
+  @output_description "Returns a list of serialized aliases"
+
+  @output_example """
+  [
+    {
+      "visibility": "user",
+      "pipeline": "echo \\\"My Awesome Alias\\\"",
+      "name": "my-awesome-alias"
+    },
+    {
+      "visibility": "user",
+      "pipeline": "echo \\\"My Not So Awesome Alias\\\"",
+      "name": "my-not-so-awesome-alias"
+    }
+  ]
   """
-  def list_command_aliases(%{options: %{"help" => true}}, _args),
-    do: show_usage
-  def list_command_aliases(req, arg_list) do
+
+  rule "when command is #{Cog.Util.Misc.embedded_bundle}:alias-list allow"
+
+  def handle_message(req, state) do
     user_id = req.user["id"]
 
-    case Helpers.get_args(arg_list, max: 1) do
+    result = case Helpers.get_args(req.args, max: 1) do
       {:ok, [pattern]} ->
         case do_list_command_aliases(user_id, pattern) do
           {:ok, response} ->
@@ -61,6 +67,13 @@ defmodule Cog.Commands.Alias.List do
         end
       error ->
         error
+    end
+
+    case result do
+      {:ok, template, data} ->
+        {:reply, req.reply_to, template, data, state}
+      {:error, err} ->
+        {:error, req.reply_to, Helpers.error(err), state}
     end
   end
 

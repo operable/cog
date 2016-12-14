@@ -1,36 +1,44 @@
 defmodule Cog.Commands.Alias.Delete do
+  use Cog.Command.GenCommand.Base,
+    bundle: Cog.Util.Misc.embedded_bundle,
+    name: "alias-delete"
+
   alias Cog.Repo
   require Cog.Commands.Helpers, as: Helpers
 
-  Helpers.usage """
-  Removes an alias. Subcommand for alias.
+  @description "Removes an alias"
+
+  @long_description """
   If a visibility is not passed the user visibility is first searched and then
   the site visibility.
+  """
 
-  USAGE
-    alias delete [FLAGS] <alias-name>
+  @arguments "<alias-name>"
 
-  FLAGS
-    -h, --help  Display this usage info
+  @examples """
+  Deleting an alias:
 
-  EXAMPLE
     alias delete my-awesome-alias
-    > Successfully removed 'user:my-awesome-alias'
-
   """
 
-  @doc """
-  Entry point for removing an alias.
+  @output_description "Returns the serialized alias that was deleted"
 
-  Takes a cog request and an argument list.
-  Returns {:ok, <msg>} on success and {:error, <err>} on failure.
+  @output_example """
+  [
+    {
+      "visibility": "user",
+      "pipeline": "echo \\\"My Awesome Alias\\\"",
+      "name": "my-awesome-alias"
+    }
+  ]
   """
-  def delete_command_alias(%{options: %{"help" => true}}, _args),
-    do: show_usage
-  def delete_command_alias(req, arg_list) do
+
+  rule "when command is #{Cog.Util.Misc.embedded_bundle}:alias-delete allow"
+
+  def handle_message(req, state) do
     user_id = req.user["id"]
 
-    case Helpers.get_args(arg_list, 1) do
+    result = case Helpers.get_args(req.args, 1) do
       {:ok, [alias]} ->
         case Helpers.get_command_alias(user_id, alias) do
           nil ->
@@ -45,6 +53,13 @@ defmodule Cog.Commands.Alias.Delete do
         end
         error ->
           error
+    end
+
+    case result do
+      {:ok, template, data} ->
+        {:reply, req.reply_to, template, data, state}
+      {:error, err} ->
+        {:error, req.reply_to, Helpers.error(err), state}
     end
   end
 
