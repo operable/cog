@@ -2,7 +2,7 @@ defmodule Cog.Commands.Rule do
   use Cog.Command.GenCommand.Base,
     bundle: Cog.Util.Misc.embedded_bundle
 
-  alias Cog.Commands.Rule.{Info, List, Create, Delete}
+  alias Cog.Commands.Rule.{Info, List, Delete}
   require Cog.Commands.Helpers, as: Helpers
 
   Helpers.usage(:root)
@@ -32,8 +32,8 @@ defmodule Cog.Commands.Rule do
         Info.info(req, args)
       "list" ->
         List.list(req, args)
-      "create" ->
-        Create.create(req, args)
+      #"create" ->
+        #Create.create(req, args)
       "delete" ->
         Delete.delete(req, args)
       nil ->
@@ -56,30 +56,30 @@ defmodule Cog.Commands.Rule do
     end
   end
 
-  defp error({:disabled, command}),
+  def error({:disabled, command}),
     do: "#{command} is not enabled. Enable a bundle version and try again"
-  defp error({:command_not_found, command}),
+  def error({:command_not_found, command}),
     do: "Command #{inspect command} could not be found"
-  defp error({:ambiguous, command}),
+  def error({:ambiguous, command}),
     do: "Command #{inspect command} refers to multiple commands. Please include a bundle in a fully qualified command name."
-  defp error({:rule_invalid, {:invalid_rule_syntax, error}}),
+  def error({:rule_invalid, {:invalid_rule_syntax, error}}),
     do: "Could not create rule: #{inspect error}"
-  defp error({:rule_invalid, {:unrecognized_command, command}}),
+  def error({:rule_invalid, {:unrecognized_command, command}}),
     do: "Could not create rule: Unrecognized command #{inspect command}"
-  defp error({:rule_invalid, {:unrecognized_permission, permission}}),
+  def error({:rule_invalid, {:unrecognized_permission, permission}}),
     do: "Could not create rule: Unrecognized permission #{inspect permission}"
-  defp error({:rule_invalid, {:permission_bundle_mismatch, _permission}}),
+  def error({:rule_invalid, {:permission_bundle_mismatch, _permission}}),
     do: "Could not create rule with permission outside of command bundle or the \"site\" namespace"
-  defp error({:rule_invalid, error}),
+  def error({:rule_invalid, error}),
     do: "Could not create rule: #{inspect error}"
-  defp error({:rule_not_found, [uuid]}),
+  def error({:rule_not_found, [uuid]}),
     do: "Rule #{inspect uuid} could not be found"
-  defp error({:rule_not_found, uuids}),
+  def error({:rule_not_found, uuids}),
     do: "Rules #{Enum.map_join(uuids, ", ", &inspect/1)} could not be found"
-  defp error({:rule_uuid_invalid, uuid}),
+  def error({:rule_uuid_invalid, uuid}),
     do: "Invalid UUID #{inspect uuid}"
-  defp error(:wrong_type),
+  def error(:wrong_type),
     do: "Argument must be a string"
-  defp error(error),
+  def error(error),
     do: Helpers.error(error)
 end
