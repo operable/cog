@@ -2,7 +2,7 @@ defmodule Cog.Commands.Role do
   use Cog.Command.GenCommand.Base, bundle: Cog.Util.Misc.embedded_bundle
   require Cog.Commands.Helpers, as: Helpers
 
-  alias Cog.Commands.Role.{Create, Delete, Grant, Info, Rename, Revoke}
+  alias Cog.Commands.Role.{Delete, Grant, Info, Rename, Revoke}
 
   Helpers.usage(:root)
 
@@ -36,7 +36,6 @@ defmodule Cog.Commands.Role do
     {subcommand, args} = Helpers.get_subcommand(req.args)
 
     result = case subcommand do
-               "create" -> Create.create(req, args)
                "delete" -> Delete.delete(req, args)
                "grant"  -> Grant.grant(req, args)
                "info"   -> Info.info(req, args)
@@ -60,13 +59,13 @@ defmodule Cog.Commands.Role do
 
   ########################################################################
 
-  defp error({:permanent_role_grant, role_name, group_name}),
+  def error({:permanent_role_grant, role_name, group_name}),
     do: "Cannot revoke role #{inspect role_name} from group #{inspect group_name}: grant is permanent"
-  defp error({:protected_role, name}),
+  def error({:protected_role, name}),
     do: "Cannot alter protected role #{name}"
-  defp error(:wrong_type), # TODO: put this into helpers, take it out of permission.ex
+  def error(:wrong_type), # TODO: put this into helpers, take it out of permission.ex
     do: "Arguments must be strings"
-  defp error(error),
+  def error(error),
     do: Helpers.error(error)
 
 end
