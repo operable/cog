@@ -1,36 +1,53 @@
 defmodule Cog.Commands.Trigger.Info do
+  use Cog.Command.GenCommand.Base,
+    bundle: Cog.Util.Misc.embedded_bundle,
+    name: "trigger-info"
+
   require Cog.Commands.Helpers, as: Helpers
   alias Cog.Repository.Triggers
   require Logger
 
-  Helpers.usage """
-  Get detailed information about a trigger.
+  @description "Get detailed information about a trigger."
 
-  USAGE
-    trigger info [FLAGS] <name>
+  @arguments "<name>"
 
-  ARGS
-    name    The trigger to get info about
+  @output_description "Returns the json representation of the trigger."
 
-  FLAGS
-    -h, --help    Display this usage info
-
-  EXAMPLES
-
-    trigger info my-trigger
+  @output_example """
+  [
+    {
+      "timeout_sec": 30,
+      "pipeline": "echo fobar",
+      "name": "foo",
+      "invocation_url": "http://localhost:4001/v1/triggers/00000000-0000-0000-0000-000000000000",
+      "id": "00000000-0000-0000-0000-000000000000",
+      "enabled": false,
+      "description": null,
+      "as_user": null
+    }
+  ]
   """
 
-  def info(%{options: %{"help" => true}}, _args),
-    do: show_usage
-  def info(_req, [name]) do
-    case Triggers.by_name(name) do
-      {:ok, trigger} ->
-        {:ok, "trigger-info", trigger}
-      {:error, :not_found} ->
-        {:error, {:resource_not_found, "trigger", name}}
+  permission "manage_triggers"
+
+  rule "when command is #{Cog.Util.Misc.embedded_bundle}:trigger-info must have #{Cog.Util.Misc.embedded_bundle}:manage_triggers"
+
+  def handle_message(req, state) do
+    result = with {:ok, [name]} <- Helpers.get_args(req.args, 1) do
+      case Triggers.by_name(name) do
+        {:ok, trigger} ->
+          {:ok, trigger}
+        {:error, :not_found} ->
+          {:error, {:resource_not_found, "trigger", name}}
+      end
+    end
+
+    case result do
+      {:ok, data} ->
+        {:reply, req.reply_to, "trigger-info", Cog.Command.Trigger.Helpers.convert(data), state}
+      {:error, error} ->
+        {:error, req.reply_to, Helpers.error(error), state}
     end
   end
-  def info(_, _),
-    do: {:error, {:not_enough_args, 1}}
 
 end
