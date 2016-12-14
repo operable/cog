@@ -2,7 +2,7 @@ defmodule Cog.Commands.Rule do
   use Cog.Command.GenCommand.Base,
     bundle: Cog.Util.Misc.embedded_bundle
 
-  alias Cog.Commands.Rule.{Info, List}
+  alias Cog.Commands.Rule.{List}
   require Cog.Commands.Helpers, as: Helpers
 
   Helpers.usage(:root)
@@ -28,8 +28,8 @@ defmodule Cog.Commands.Rule do
     {subcommand, args} = Helpers.get_subcommand(req.args)
 
     result = case subcommand do
-      "info" ->
-        Info.info(req, args)
+      #"info" ->
+        #Info.info(req, args)
       "list" ->
         List.list(req, args)
       #"create" ->
