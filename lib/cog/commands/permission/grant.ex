@@ -1,36 +1,60 @@
 defmodule Cog.Commands.Permission.Grant do
-  alias Cog.Repository.Permissions
-  alias Cog.Repository.Roles
+  use Cog.Command.GenCommand.Base,
+    bundle: Cog.Util.Misc.embedded_bundle,
+    name: "permission-grant"
 
-  alias Cog.Models.Permission
-  alias Cog.Models.Role
+  alias Cog.Commands
+  alias Cog.Models.{Permission, Role}
+  alias Cog.Repository.{Permissions, Roles}
 
-  require Cog.Commands.Helpers, as: Helpers
+  @description "Grant a permission to a role"
 
-  Helpers.usage """
-  Grant a permission to a role. Unlike `create` and `delete`, you can
-  grant any permission to a role, not just site permissions.
-
-  USAGE
-    permission grant [FLAGS] <permission> <role>
-
-  FLAGS
-    -h, --help  Display this usage info
-
-  ARGS
-    permission   The name of the permission to grant. Must be the full, bundle-scoped name
-    role         The name of the role to grant the permission to
-
-  EXAMPLE
-
-    permission grant site:foo dev
-
+  @long_description """
+  Unlike `create` and `delete`, you can grant any permission to a role, not
+  just site permissions.
   """
 
-  def grant(%{options: %{"help" => true}}, _args),
-    do: show_usage
-  def grant(_req, [permission, role]) when is_binary(permission) and is_binary(role) do
-    case Permissions.by_name(permission) do
+  @arguments "<permission> <role>"
+
+  @examples """
+  Grant a permission to a role:
+
+    permission grant site:foo dev
+  """
+
+  @output_description "Returns the serialized permission and role to which it was granted"
+
+  @output_example """
+  [
+    {
+      "role": {
+        "permissions": [
+          {
+            "name": "deploy",
+            "id": "0f8c194b-7d4d-4723-8e9a-ca184f8d44fa",
+            "bundle": "site"
+          }
+        ],
+        "name": "engineering",
+        "id": "87ae871e-2835-4241-b6de-1fa43e554503"
+      },
+      "permission": {
+        "name": "deploy",
+        "id": "0f8c194b-7d4d-4723-8e9a-ca184f8d44fa",
+        "bundle": "site"
+      }
+    }
+  ]
+  """
+
+  permission "manage_permissions"
+  permission "manage_roles"
+
+  rule "when command is #{Cog.Util.Misc.embedded_bundle}:permission-grant must have #{Cog.Util.Misc.embedded_bundle}:manage_permissions"
+  rule "when command is #{Cog.Util.Misc.embedded_bundle}:permission-grant must have #{Cog.Util.Misc.embedded_bundle}:manage_roles"
+
+  def handle_message(req = %{args: [permission, role]}, state) when is_binary(permission) and is_binary(role) do
+    result = case Permissions.by_name(permission) do
       %Permission{}=permission ->
         case Roles.by_name(role) do
           %Role{}=role ->
@@ -45,14 +69,19 @@ defmodule Cog.Commands.Permission.Grant do
       nil ->
         {:error, {:resource_not_found, "permission", permission}}
     end
+
+    case result do
+      {:ok, template, data} ->
+        {:reply, req.reply_to, template, data, state}
+      {:error, err} ->
+        {:error, req.reply_to, Commands.Permission.error(err), state}
+    end
   end
-  def grant(_req, [_, _]),
-    do: {:error, :wrong_type}
-  def grant(_req, []),
-    do: {:error, {:not_enough_args, 2}}
-  def grant(_req, [_]),
-    do: {:error, {:not_enough_args, 2}}
-  def grant(_req, _),
-    do: {:error, {:too_many_args, 2}}
+  def handle_message(req = %{args: [_, _]}, state),
+    do: {:error, req.reply_to, Commands.Permission.error(:wrong_type), state}
+  def handle_message(req = %{args: args}, state) when length(args) < 2,
+    do: {:error, req.reply_to, Commands.Permission.error({:not_enough_args, 2}), state}
+  def handle_message(req, state),
+    do: {:error, req.reply_to, Commands.Permission.error({:too_many_args, 2}), state}
 
 end
