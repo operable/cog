@@ -1,42 +1,58 @@
 defmodule Cog.Commands.Role.Info do
-  require Cog.Commands.Helpers, as: Helpers
+  use Cog.Command.GenCommand.Base,
+    bundle: Cog.Util.Misc.embedded_bundle,
+    name: "role-info"
 
   alias Cog.Repository.Roles
   alias Cog.Models.Role
+  alias Cog.Commands
 
-  Helpers.usage """
-  Get detailed information about a role.
+  @description "Get detailed information about a role"
 
-  USAGE
-    role info [FLAGS] <name>
+  @arguments "<name>"
 
-  ARGS
-    name    The role to get info about
+  @examples """
+  View info for the admin role:
 
-  FLAGS
-    -h, --help    Display this usage info
-
-  EXAMPLES
-
-    role info foo
+    role info admin
   """
 
-  def info(%{options: %{"help" => true}}, _args),
-    do: show_usage
-  def info(_req, [name]) when is_binary(name) do
-    case Roles.by_name(name) do
+  @output_description "Returns the serialized role"
+
+  @output_example """
+  [
+    {
+      "permissions": [],
+      "name": "admin",
+      "id": "b711d91a-dcbe-4adc-862f-ea9144438955"
+    }
+  ]
+  """
+
+  permission "manage_roles"
+
+  rule "when command is #{Cog.Util.Misc.embedded_bundle}:role-info must have #{Cog.Util.Misc.embedded_bundle}:manage_roles"
+
+  def handle_message(req = %{args: [name]}, state) when is_binary(name) do
+    result = case Roles.by_name(name) do
       %Role{}=role ->
         rendered = Cog.V1.RoleView.render("show.json", %{role: role})
         {:ok, "role-info", rendered[:role]}
       nil ->
         {:error, {:resource_not_found, "role", name}}
     end
-  end
-  def info(_, [_]),
-    do: {:error, :wrong_type}
-  def info(_, []),
-    do: {:error, {:not_enough_args, 1}}
-  def info(_, _),
-    do: {:error, {:too_many_args, 1}}
 
+    case result do
+      {:ok, template, data} ->
+        {:reply, req.reply_to, template, data, state}
+      {:error, err} ->
+        {:error, req.reply_to, Commands.Role.error(err), state}
+    end
+  end
+  def handle_message(req = %{args: [_]}, state),
+    do: {:error, req.reply_to, Commands.Role.error(:wrong_type), state}
+  def handle_message(req = %{args: []}, state),
+    do: {:error, req.reply_to, Commands.Role.error({:not_enough_args, 1}), state}
+  def handle_message(req, state),
+    do: {:error, req.reply_to, Commands.Role.error({:too_many_args, 1}), state}
 end
