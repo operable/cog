@@ -67,7 +67,7 @@ defmodule Cog.Command.Pipeline.Executor do
   @type state :: %__MODULE__{
     id: String.t,
     topic: String.t,
-    started: :erlang.timestamp(),
+    started: DateTime.t,
     mq_conn: Carrier.Messaging.Connection.connection(),
     request: %Cog.Messages.AdapterRequest{}, # TODO: needs to be a type
     destinations: [Destination.t],
@@ -138,7 +138,7 @@ defmodule Cog.Command.Pipeline.Executor do
                                     service_token: service_token,
                                     user_permissions: perms,
                                     output: initial_context,
-                                    started: :os.timestamp(),
+                                    started: DateTime.utc_now(),
                                     command_timeout: command_timeout}
             initialization_event(loop_data)
             {:ok, :parse, loop_data, 0}
@@ -443,39 +443,28 @@ defmodule Cog.Command.Pipeline.Executor do
     do: {:stop, :shutdown, %{state | error_type: error, error_message: message}}
 
   defp initialization_event(%__MODULE__{id: id, request: request,
-                                        user: user}) do
-
-    PipelineEvent.initialized(id, request.text, request.adapter,
+                                        started: started, user: user}) do
+    PipelineEvent.initialized(id, started, request.text, request.adapter,
                               user.username, request.sender.handle)
     |> Probe.notify
   end
 
   defp dispatch_event(%__MODULE__{id: id, current_plan: plan}=state, relay) do
-    PipelineEvent.dispatched(id, elapsed(state),
+    PipelineEvent.dispatched(id, state.started,
                              plan.invocation_text,
                              relay, plan.cog_env)
     |> Probe.notify
   end
 
-  defp success_event(%__MODULE__{id: id, output: output}=state) do
-    elapsed_time = elapsed(state)
-    elapsed_time_ms = round(elapsed_time / 1000)
-    Logger.info("Pipeline #{id} ran for #{elapsed_time_ms} ms.")
-    PipelineEvent.succeeded(id, elapsed_time, strip_templates(output))
+  defp success_event(%__MODULE__{id: id, output: output, started: started}) do
+    PipelineEvent.succeeded(id, started, strip_templates(output))
     |> Probe.notify
   end
 
-  defp failure_event(%__MODULE__{id: id}=state) do
-    elapsed_time = elapsed(state)
-    elapsed_time_ms = round(elapsed_time / 1000)
-    Logger.info("Pipeline #{id} ran for #{elapsed_time_ms} ms.")
-    PipelineEvent.failed(id, elapsed_time, state.error_type, state.error_message)
+  defp failure_event(state) do
+    PipelineEvent.failed(state.id, state.started, state.error_type, state.error_message)
     |> Probe.notify
   end
-
-  # Return elapsed microseconds from when the pipeline started
-  defp elapsed(%__MODULE__{started: started}),
-    do: :timer.now_diff(:os.timestamp(), started)
 
   ########################################################################
   # Unregistered User Functions
@@ -572,7 +561,6 @@ defmodule Cog.Command.Pipeline.Executor do
 
   defp user_error(error, state) do
     id = state.id
-    started = Cog.Events.Util.ts_iso8601_utc(state.started)
     initiator = sender_name(state)
     pipeline_text = state.request.text
     error_message = ErrorResponse.render(error)
@@ -592,7 +580,7 @@ defmodule Cog.Command.Pipeline.Executor do
     end
 
     %{"id" => id,
-      "started" => started,
+      "started" => Calendar.ISO.to_string(state.started),
       "initiator" => initiator,
       "pipeline_text" => pipeline_text,
       "error_message" => error_message,
