@@ -4,7 +4,7 @@ defmodule Cog.Events.Util do
   """
 
   # ISO-8601 UTC
-  @date_format "~.4.0w-~.2.0w-~.2.0wT~.2.0w:~.2.0w:~.2.0wZ"
+  @date_format "~.4.0w-~.2.0w-~.2.0wT~.2.0w:~.2.0w:~.2.0w.~wZ"
 
   @typedoc "Unique correlation ID"
   @type correlation_id :: String.t
@@ -32,9 +32,9 @@ defmodule Cog.Events.Util do
 
   """
   @spec ts_iso8601_utc(:erlang.timestamp) :: binary()
-  def ts_iso8601_utc(ts) do
+  def ts_iso8601_utc({_, _, microsecs}=ts) do
     {{year, month, day}, {hour, min, sec}} = :calendar.now_to_universal_time(ts)
-    :io_lib.format(@date_format, [year, month, day, hour, min, sec])
+    :io_lib.format(@date_format, [year, month, day, hour, min, sec, microsecs])
     |> IO.iodata_to_binary
   end
 
