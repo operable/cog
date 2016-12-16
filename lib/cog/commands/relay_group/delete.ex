@@ -3,7 +3,7 @@ defmodule Cog.Commands.RelayGroup.Delete do
     bundle: Cog.Util.Misc.embedded_bundle,
     name: "relay-group-delete"
 
-  require Cog.Commands.Helpers, as: Helpers
+  alias Cog.Commands.Helpers
   alias Cog.Repository.RelayGroups
   alias Cog.Commands.RelayGroup
 
@@ -53,7 +53,7 @@ defmodule Cog.Commands.RelayGroup.Delete do
       {:ok, template, data} ->
         {:reply, req.reply_to, template, data, state}
       {:error, err} ->
-        {:error, req.reply_to, Helpers.error(err), state}
+        {:error, req.reply_to, RelayGroup.error(err), state}
     end
   end
 

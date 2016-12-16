@@ -3,7 +3,8 @@ defmodule Cog.Commands.Trigger.Info do
     bundle: Cog.Util.Misc.embedded_bundle,
     name: "trigger-info"
 
-  require Cog.Commands.Helpers, as: Helpers
+  alias Cog.Commands.Trigger
+  alias Cog.Commands.Helpers
   alias Cog.Repository.Triggers
   require Logger
 
@@ -46,7 +47,7 @@ defmodule Cog.Commands.Trigger.Info do
       {:ok, data} ->
         {:reply, req.reply_to, "trigger-info", Cog.Command.Trigger.Helpers.convert(data), state}
       {:error, error} ->
-        {:error, req.reply_to, Helpers.error(error), state}
+        {:error, req.reply_to, Trigger.error(error), state}
     end
   end
 

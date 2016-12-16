@@ -3,7 +3,8 @@ defmodule Cog.Commands.Trigger.Disable do
     bundle: Cog.Util.Misc.embedded_bundle,
     name: "trigger-disable"
 
-  require Cog.Commands.Helpers, as: Helpers
+  alias Cog.Commands.Trigger
+  alias Cog.Commands.Helpers
 
   @description "Disable a pipeline trigger. Provided as a convenient alternative to `trigger update <trigger-name> --enabled=false`."
 
@@ -50,7 +51,7 @@ defmodule Cog.Commands.Trigger.Disable do
       {:ok, data} ->
         {:reply, req.reply_to, "trigger-disable", Cog.Command.Trigger.Helpers.convert(data), state}
       {:error, error} ->
-        {:error, req.reply_to, Helpers.error(error), state}
+        {:error, req.reply_to, Trigger.error(error), state}
     end
   end
 

@@ -3,7 +3,7 @@ defmodule Cog.Commands.RelayGroup.Info do
     bundle: Cog.Util.Misc.embedded_bundle,
     name: "relay-group-info"
 
-  require Cog.Commands.Helpers, as: Helpers
+  alias Cog.Commands.Helpers
   alias Cog.Repository.RelayGroups
   alias Cog.Commands.RelayGroup
 

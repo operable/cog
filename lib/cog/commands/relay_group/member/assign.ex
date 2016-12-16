@@ -49,7 +49,7 @@ defmodule Cog.Commands.RelayGroup.Member.Assign do
       {:ok, template, data} ->
         {:reply, req.reply_to, template, data, state}
       {:error, err} ->
-        {:error, req.reply_to, Helpers.error(err), state}
+        {:error, req.reply_to, RelayGroup.error(err), state}
     end
   end
 

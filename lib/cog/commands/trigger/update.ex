@@ -4,7 +4,8 @@ defmodule Cog.Commands.Trigger.Update do
     name: "trigger-update"
 
   alias Cog.Repository.Triggers
-  require Cog.Commands.Helpers, as: Helpers
+  alias Cog.Commands.Trigger
+  alias Cog.Commands.Helpers
 
   @description "Update a pipeline trigger."
 
@@ -51,7 +52,7 @@ defmodule Cog.Commands.Trigger.Update do
       {:ok, data} ->
         {:reply, req.reply_to, "trigger-update", Cog.Command.Trigger.Helpers.convert(data), state}
       {:error, error} ->
-        {:error, req.reply_to, Helpers.error(error), state}
+        {:error, req.reply_to, Trigger.error(error), state}
     end
   end
 

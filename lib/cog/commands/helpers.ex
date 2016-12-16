@@ -62,22 +62,10 @@ defmodule Cog.Commands.Helpers do
     do: "Invalid args. Please pass between #{min} and #{max} arguments."
   def error(:invalid_args),
     do: "Invalid argument list"
-  def error({:relay_not_found, relay_name}),
-    do: "No relay with name '#{relay_name}' could be found"
-  def error({:relays_not_found, missing_relays}),
-    do: "Some relays could not be found: '#{Enum.join(missing_relays, ", ")}'"
-  def error({:bundles_not_found, missing_bundles}),
-    do: "Some bundles could not be found: '#{Enum.join(missing_bundles, ", ")}'"
-  def error({:relay_group_not_found, relay_group_name}),
-    do: "No relay group with name '#{relay_group_name}' could be found"
   def error({:resource_not_found, "rule", id}),
     do: "Could not find 'rule' with the id '#{id}'"
   def error({:resource_not_found, resource_type, resource_name}),
     do: "Could not find '#{resource_type}' with the name '#{resource_name}'"
-  def error(:invalid_handle),
-    do: "Invalid chat handle"
-  def error({:trigger_invalid, %Ecto.Changeset{}=changeset}),
-    do: changeset_errors(changeset)
 
   @doc """
   We can potentially get poison errors when encoding models with nil fields.
@@ -87,17 +75,7 @@ defmodule Cog.Commands.Helpers do
   def jsonify(data),
     do: EctoJson.render(data)
 
-  # Special errors that come when there are issues with the database.
-  defp db_errors(errors) do
-    Enum.map_join(errors, "\n", fn
-      {key, {message, []}} ->
-        "#{key}: #{message}"
-      {key, message} ->
-        "#{key}: #{message}"
-    end)
-  end
-
-  defp changeset_errors(changeset) do
+  def changeset_errors(changeset) do
     msg_map = Ecto.Changeset.traverse_errors(changeset,
                                              fn
                                                {msg, opts} ->
@@ -111,6 +89,16 @@ defmodule Cog.Commands.Helpers do
     msg_map
     |> Enum.map(fn({field, msg}) -> "#{field} #{msg}" end)
     |> Enum.join("\n")
+  end
+
+  # Special errors that come when there are issues with the database.
+  defp db_errors(errors) do
+    Enum.map_join(errors, "\n", fn
+      {key, {message, []}} ->
+        "#{key}: #{message}"
+      {key, message} ->
+        "#{key}: #{message}"
+    end)
   end
 
 end

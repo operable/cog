@@ -3,7 +3,7 @@ defmodule Cog.Commands.Relay.Update do
     bundle: Cog.Util.Misc.embedded_bundle,
     name: "relay-update"
 
-  require Cog.Commands.Helpers, as: Helpers
+  alias Cog.Commands.Helpers
   alias Cog.Commands.Relay
   alias Cog.Commands.Relay.ViewHelpers
   alias Cog.Repository.Relays
