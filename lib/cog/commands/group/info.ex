@@ -46,7 +46,7 @@ defmodule Cog.Commands.Group.Info do
       {:ok, [group_name]} ->
         case Groups.by_name(group_name) do
           {:ok, group} ->
-            {:ok, "user-group-info", group}
+            {:ok, "group-info", group}
           {:error, :not_found} ->
             {:error, {:resource_not_found, "user group", group_name}}
         end

@@ -5,6 +5,7 @@ defmodule Cog.Commands.Group.Role.Add do
 
   require Cog.Commands.Helpers, as: Helpers
   alias Cog.Commands.Group
+  alias Cog.V1.GroupView
   alias Cog.Repository.Groups
 
   @description "Add roles to user groups"
@@ -38,7 +39,8 @@ defmodule Cog.Commands.Group.Role.Add do
       {:ok, [group_name | role_names]} ->
         case add(group_name, role_names) do
           {:ok, group} ->
-            {:ok, "user-group-update-success", group}
+            data = GroupView.render("command.json", %{group: group})
+            {:ok, "group-role-add", Map.put(data, :roles_added, role_names)}
           {:error, {:not_found, {kind, bad_names}}} ->
             {:error, {:resource_not_found, kind, Enum.join(bad_names, ", ")}}
           {:error, error} ->

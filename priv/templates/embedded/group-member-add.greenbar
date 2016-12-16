@@ -1,0 +1,5 @@
+~each var=$results as=group~
+~each var=$group.members_added as=username~
+Added user '~$username~' to group '~$group.name~'
+~end~
+~end~
