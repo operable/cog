@@ -1,6 +1,6 @@
 defmodule Cog.Command.ReplyHelper do
   alias Cog.Chat.Adapter
-  alias Cog.Template.New.Evaluator
+  alias Cog.Template.Evaluator
 
   @doc """
   Utility function for sending data formatted by a common template

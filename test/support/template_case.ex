@@ -1,7 +1,7 @@
 defmodule Cog.TemplateCase do
   use ExUnit.CaseTemplate, async: true
 
-  alias Cog.Template.New
+  alias Cog.Template
   alias Greenbar.Renderers.SlackRenderer
   alias Greenbar.Renderers.HipChatRenderer
 
@@ -58,7 +58,7 @@ defmodule Cog.TemplateCase do
 
   def directives_for_template(bundle, template_name, data) do
     source = template_source(template_name, bundle)
-    case Cog.Template.New.Evaluator.do_evaluate(template_name, source, data) do
+    case Cog.Template.Evaluator.do_evaluate(template_name, source, data) do
       {:error, reason} ->
         flunk "Greenbar evaluation error: #{reason}"
       directives ->
@@ -72,8 +72,8 @@ defmodule Cog.TemplateCase do
     do: input |> Poison.encode! |> Poison.decode!
 
   def template_source(template_name, bundle) when bundle in [:common, :embedded] do
-    New.template_dir(bundle)
-    |> Path.join("#{template_name}#{New.extension}")
+    Template.template_dir(bundle)
+    |> Path.join("#{template_name}#{Template.extension}")
     |> File.read!
   end
 

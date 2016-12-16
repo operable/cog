@@ -1,4 +1,4 @@
-defmodule Cog.Template.New.Evaluator do
+defmodule Cog.Template.Evaluator do
   alias Cog.Queries
   alias Cog.Repo
 
@@ -89,7 +89,7 @@ defmodule Cog.Template.New.Evaluator do
     # First check to see if there is a custom template dir.
     if dir = Application.get_env(:cog, :custom_template_dir) do
       # Then generate the path and try to read the template.
-      path = Path.join(dir, template <> Cog.Template.New.extension)
+      path = Path.join(dir, template <> Cog.Template.extension)
       case File.read(path) do
         {:ok, template} ->
           {:ok, template}
@@ -106,7 +106,7 @@ defmodule Cog.Template.New.Evaluator do
     do: fetch_source_from_db(bundle_version_id, template)
 
   defp fetch_source_from_db(bundle_version_id, template) do
-    source = Queries.Template.template_source(Cog.Template.New.default_provider, bundle_version_id, template)
+    source = Queries.Template.template_source(Cog.Template.default_provider, bundle_version_id, template)
     |> Repo.one
 
     case source do
