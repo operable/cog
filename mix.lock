@@ -60,7 +60,7 @@
   "ranch": {:hex, :ranch, "1.2.1", "a6fb992c10f2187b46ffd17ce398ddf8a54f691b81768f9ef5f461ea7e28c762", [:make], []},
   "romeo": {:git, "https://github.com/operable/romeo.git", "65106b94f134a12791ec63fa284b0ce5e9358538", [branch: "iq-bodies"]},
   "slack": {:git, "https://github.com/operable/Elixir-Slack.git", "4d6a3c4036ec4129e8d77e55cd1d3e62093cc001", []},
-  "spanner": {:git, "https://github.com/operable/spanner.git", "646eed9a885053d21bb43323e6551518b3b0cec2", []},
+  "spanner": {:git, "https://github.com/operable/spanner.git", "86635b34f4feadcd88105e6cfa04017f6b0a5a76", []},
   "ssl_verify_fun": {:hex, :ssl_verify_fun, "1.1.0", "edee20847c42e379bf91261db474ffbe373f8acb56e9079acb6038d4e0bf414f", [:rebar, :make], []},
   "table_rex": {:hex, :table_rex, "0.8.3", "1c68dfc6886d6f118f5047b0449d6402ae0ac5709064789e578c2f4659f4064b", [:mix], []},
   "uuid": {:hex, :uuid, "1.1.5", "96cb36d86ee82f912efea4d50464a5df606bf3f1163d6bdbb302d98474969369", [], []},
