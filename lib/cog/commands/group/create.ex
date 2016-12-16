@@ -33,7 +33,7 @@ defmodule Cog.Commands.Group.Create do
       {:ok, [group_name]} ->
         case Groups.new(%{name: group_name}) do
           {:ok, group} ->
-            {:ok, "user-group-create", group}
+            {:ok, "group-create", group}
           {:error, changeset} ->
             {:error, {:db_errors, changeset.errors}}
         end

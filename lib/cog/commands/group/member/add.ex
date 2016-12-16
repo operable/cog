@@ -5,6 +5,7 @@ defmodule Cog.Commands.Group.Member.Add do
 
   require Cog.Commands.Helpers, as: Helpers
   alias Cog.Commands.Group
+  alias Cog.V1.GroupView
   alias Cog.Repository.Groups
   alias Cog.Repository.Users
 
@@ -44,7 +45,8 @@ defmodule Cog.Commands.Group.Member.Add do
       {:ok, [group_name | usernames]} ->
         case add(group_name, usernames) do
           {:ok, group} ->
-            {:ok, "user-group-update-success", group}
+            data = GroupView.render("command.json", %{group: group})
+            {:ok, "group-member-add", Map.put(data, :members_added, usernames)}
           error ->
             error
         end

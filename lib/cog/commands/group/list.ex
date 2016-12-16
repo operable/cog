@@ -58,9 +58,9 @@ defmodule Cog.Commands.Group.List do
 
   defp get_template(options) do
     if Helpers.flag?(options, "verbose") do
-      "user-group-list-verbose"
+      "group-list-verbose"
     else
-      "user-group-list"
+      "group-list"
     end
   end
 end

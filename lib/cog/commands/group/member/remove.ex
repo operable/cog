@@ -5,6 +5,7 @@ defmodule Cog.Commands.Group.Member.Remove do
 
   require Cog.Commands.Helpers, as: Helpers
   alias Cog.Commands.Group
+  alias Cog.V1.GroupView
   alias Cog.Repository.Groups
   alias Cog.Repository.Users
 
@@ -36,7 +37,8 @@ defmodule Cog.Commands.Group.Member.Remove do
       {:ok, [group_name | usernames]} ->
         case remove(group_name, usernames) do
           {:ok, group} ->
-            {:ok, "user-group-update-success", group}
+            data = GroupView.render("command.json", %{group: group})
+            {:ok, "group-member-remove", Map.put(data, :members_removed, usernames)}
           error ->
             error
         end

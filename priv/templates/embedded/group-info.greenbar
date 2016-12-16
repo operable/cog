@@ -1,0 +1,7 @@
+~each var=$results as=group~
+**Name:** ~$group.name~
+**ID:** ~$group.id~
+**Roles:** ~if cond=$group.roles empty?~Unassigned~end~~join var=$group.roles with=", "~~$item.name~~end~
+
+**Members:** ~if cond=$group.members empty?~No members~end~~join var=$group.members with=", "~~$item.username~~end~
+~end~

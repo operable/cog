@@ -1,0 +1,5 @@
+~each var=$results as=group~
+~each var=$group.roles_removed as=role~
+Removed role '~$role~' from group '~$group.name~'
+~end~
+~end~

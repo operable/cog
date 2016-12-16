@@ -1,0 +1,5 @@
+~each var=$results as=group~
+~each var=$group.members_removed as=username~
+Removed user '~$username~' from group '~$group.name~'
+~end~
+~end~
