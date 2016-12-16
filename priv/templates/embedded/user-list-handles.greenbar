@@ -1,6 +1,7 @@
-# TODO: This should be a mention name; shouldn't have a "@" in here
-# TODO: offload mention names to the provider rendering process??
-| Username | Handle |
-|----------|--------|
-~each var=$results~|~$item.username~|@~$item.handle~|
+~each var=$results as=user~
+~attachment color="gray"~
+**Username:** ~$user.username~
+**Handle:** @~$user.handle~
+**Chat Provider:** ~$user.chat_provider.name~
+~end~
 ~end~
