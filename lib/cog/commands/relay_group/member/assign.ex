@@ -57,7 +57,10 @@ defmodule Cog.Commands.RelayGroup.Member.Assign do
     member_spec = %{"bundles" => %{"add" => Enum.map(bundles, &(&1.id))}}
     case RelayGroups.manage_association(relay_group, member_spec) do
       {:ok, relay_group} ->
-        {:ok, "relay-group-update-success", RelayGroup.json(relay_group)}
+        data = relay_group
+        |> RelayGroup.json
+        |> Map.put("bundles_assigned", Enum.map(bundles, &(&1.name)))
+        {:ok, "relay-group-member-assign", data}
       error ->
         {:error, error}
     end

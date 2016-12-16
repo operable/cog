@@ -52,7 +52,10 @@ defmodule Cog.Commands.RelayGroup.Member.Remove do
     member_spec = %{"relays" => %{"remove" => Enum.map(relays, &(&1.id))}}
     case RelayGroups.manage_association(relay_group, member_spec) do
       {:ok, relay_group} ->
-        {:ok, "relay-group-update-success", RelayGroup.json(relay_group)}
+        data = relay_group
+        |> RelayGroup.json
+        |> Map.put("relays_removed", Enum.map(relays, &(&1.name)))
+        {:ok, "relay-group-member-remove", data}
       error ->
         {:error, error}
     end
