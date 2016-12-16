@@ -3,7 +3,6 @@ defmodule Cog.Commands.RelayGroup.Info do
     bundle: Cog.Util.Misc.embedded_bundle,
     name: "relay-group-info"
 
-  require Cog.Commands.Helpers, as: Helpers
   alias Cog.Repository.RelayGroups
   alias Cog.Commands.RelayGroup
 
@@ -32,8 +31,6 @@ defmodule Cog.Commands.RelayGroup.Info do
   ]
   """
 
-  option "verbose", type: "bool", short: "v"
-
   permission "manage_relays"
 
   rule "when command is #{Cog.Util.Misc.embedded_bundle}:relay-group-info must have #{Cog.Util.Misc.embedded_bundle}:manage_relays"
@@ -46,15 +43,7 @@ defmodule Cog.Commands.RelayGroup.Info do
       [] ->
         {:reply, req.reply_to, "No relay groups configured with name in '#{Enum.join(req.args, ", ")}'", state}
       relay_groups ->
-        {:reply, req.reply_to, get_template(req.options), relay_groups, state}
-    end
-  end
-
-  defp get_template(options) do
-    if Helpers.flag?(options, "verbose") do
-      "relay-group-info-verbose"
-    else
-      "relay-group-info"
+        {:reply, req.reply_to, "relay-group-info", relay_groups, state}
     end
   end
 end

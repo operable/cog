@@ -3,6 +3,7 @@ defmodule Cog.Commands.RelayGroup.List do
     bundle: Cog.Util.Misc.embedded_bundle,
     name: "relay-group-list"
 
+  require Cog.Commands.Helpers, as: Helpers
   alias Cog.Repository.RelayGroups
   alias Cog.Commands.RelayGroup
 
@@ -29,6 +30,8 @@ defmodule Cog.Commands.RelayGroup.List do
   ]
   """
 
+  option "verbose", type: "bool", short: "v"
+
   permission "manage_relays"
 
   rule "when command is #{Cog.Util.Misc.embedded_bundle}:relay-group-list must have #{Cog.Util.Misc.embedded_bundle}:manage_relays"
@@ -37,6 +40,14 @@ defmodule Cog.Commands.RelayGroup.List do
     relay_groups = RelayGroups.all
     |> Enum.map(&RelayGroup.json/1)
 
-    {:reply, req.reply_to, "relay-group-list", relay_groups, state}
+    {:reply, req.reply_to, get_template(req.options), relay_groups, state}
+  end
+
+  def get_template(options) do
+    if Helpers.flag?(options, "verbose") do
+      "relay-group-list-verbose"
+    else
+      "relay-group-list"
+    end
   end
 end

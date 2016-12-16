@@ -52,7 +52,10 @@ defmodule Cog.Commands.RelayGroup.Member.Unassign do
     member_spec = %{"bundles" => %{"remove" => Enum.map(bundles, &(&1.id))}}
     case RelayGroups.manage_association(relay_group, member_spec) do
       {:ok, relay_group} ->
-        {:ok, "relay-group-update-success", RelayGroup.json(relay_group)}
+        data = relay_group
+        |> RelayGroup.json
+        |> Map.put("bundles_unassigned", Enum.map(bundles, &(&1.name)))
+        {:ok, "relay-group-member-unassign", data}
       error ->
         {:error, error}
     end
