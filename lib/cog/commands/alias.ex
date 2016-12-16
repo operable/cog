@@ -27,12 +27,8 @@ defmodule Cog.Commands.Alias do
   def get_command_alias(_, "site:" <> site_alias),
     do: Repo.get_by(SiteCommandAlias, name: site_alias)
   def get_command_alias(user_id, alias) do
-    case get_command_alias(user_id, "user:#{alias}") do
-      nil ->
-        get_command_alias(user_id, "site:#{alias}")
-      src_alias ->
-        src_alias
-    end
+    get_command_alias(user_id, "user:#{alias}") ||
+      get_command_alias(user_id, "site:#{alias}")
   end
 
 end
