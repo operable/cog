@@ -1,4 +1,21 @@
-| ID | Name | Description | Enabled? | Pipeline | As User | Timeout | Invocation URL |
-|----|------|-------------|----------|----------|---------|---------|----------------|
-~each var=$results~|~$item.id~|~$item.name~|~if cond=$item.description bound?~~$item.description~~end~|~$item.enabled~|`~$item.pipeline~`|~if cond=$item.as_user~~$item.as_user~~end~|~$item.timeout_sec~|~$item.invocation_url~|
+~each var=$results as=trigger~
+
+~if cond=$trigger.enabled == true~
+~attachment color="green"~
+**Name:** ~$trigger.name~
+**ID:** ~$trigger.id~
+**Invocation URL:** ~$trigger.invocation_url~
+**Pipeline:** `~$trigger.pipeline~`
+~end~
+~end~
+
+~if cond=$trigger.enabled == false~
+~attachment color="red"~
+**Name:** ~$trigger.name~
+**ID:** ~$trigger.id~
+**Invocation URL:** ~$trigger.invocation_url~
+**Pipeline:** `~$trigger.pipeline~`
+~end~
+~end~
+
 ~end~
