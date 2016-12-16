@@ -1,3 +1,3 @@
 ~each var=$results~
-Alias 'user:~$item.name~' has been created
+Created alias '~$item.visibility~:~$item.name~'
 ~end~

@@ -1,3 +1,3 @@
 ~each var=$results~
-Successfully moved ~$item.source.visibility~:~$item.source.name~ to ~$item.destination.visibility~:~$item.destination.name~
+Moved alias '~$item.source.visibility~:~$item.source.name~' to '~$item.destination.visibility~:~$item.destination.name~'
 ~end~
