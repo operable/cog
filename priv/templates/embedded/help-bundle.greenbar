@@ -18,14 +18,14 @@ __Commands__
 ~end~
 ~end~
 
-~if cond=$bundle.config~
+~if cond=$bundle.config_file.config~
 ~br~
 __Configuration__
-~if cond=$bundle.config.notes~
-~$bundle.config.notes~
+~if cond=$bundle.config_file.config.notes~
+~$bundle.config_file.config.notes~
 ~end~
 
-~each var=$bundle.config.env as=env_var~
+~each var=$bundle.config_file.config.env as=env_var~
 * `~$env_var.var~`~if cond=$env_var.description~ - ~$env_var.description~~end~
 ~end~
 ~end~

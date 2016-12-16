@@ -74,6 +74,7 @@ defmodule Cog.Test.Commands.HelpTest do
       response = new_req(args: ["test-ambiguous"])
                  |> send_req()
                  |> unwrap()
+                 |> Map.get(:config_file)
 
       # The existance of the 'cog_bundle_version' key denotes this as a bundle version.
       assert(%{cog_bundle_version: _,
