@@ -14,7 +14,7 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.TriggerInfoTest do
       "<strong>Name</strong>: test_trigger<br/>" <>
       "<strong>Description</strong>: Tests things!<br/>" <>
       "<strong>Enabled?</strong>: true<br/>" <>
-      "<strong>Pipeline</strong>: echo 'Something just happened'<br/>" <>
+      "<strong>Pipeline</strong>: <code>echo 'Something just happened'</code><br/>" <>
       "<strong>As User</strong>: bobby_tables<br/>" <>
       "<strong>Timeout (sec)</strong>: 30<br/>" <>
       "<strong>Invocation URL</strong>: https://cog.mycompany.com/invoke_stuff"
@@ -34,7 +34,7 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.TriggerInfoTest do
       "<strong>Name</strong>: test_trigger<br/>" <>
       "<strong>Description</strong>: <br/>" <>
       "<strong>Enabled?</strong>: true<br/>" <>
-      "<strong>Pipeline</strong>: echo 'Something just happened'<br/>" <>
+      "<strong>Pipeline</strong>: <code>echo 'Something just happened'</code><br/>" <>
       "<strong>As User</strong>: <br/>" <>
       "<strong>Timeout (sec)</strong>: 30<br/>" <>
       "<strong>Invocation URL</strong>: https://cog.mycompany.com/invoke_stuff"
