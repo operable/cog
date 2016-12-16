@@ -7,48 +7,6 @@ defmodule Cog.Commands.Helpers do
   A collection of helper functions and macros for working with commands.
   """
 
-  # In addition to the standard usage bits this also
-  # add the 'help' option. Note that this will fail
-  # if used outside of a gen_command
-  defmacro usage(:root) do
-
-    quote do
-      option "help", type: "bool", short: "h"
-
-      def show_usage(error \\ nil) do
-        bundle_name = Cog.Util.Misc.embedded_bundle
-        command_name = Cog.Command.GenCommand.Base.command_name(__MODULE__)
-
-        [command_version] = bundle_name <> ":" <> command_name
-        |> Cog.Repository.Commands.with_status_by_any_name
-        |> Cog.Repository.Commands.preloads_for_help
-
-        rendered = Cog.CommandVersionHelpView.render("command_version.json", %{command_version: command_version})
-        Map.merge(rendered, %{error: error})
-
-        {:ok, "help-command", rendered}
-      end
-    end
-  end
-
-  # Adds moduledoc and the show_usage function
-  defmacro usage(usage) do
-    quote do
-      defp show_usage(error \\ nil) do
-        {:ok, "usage", %{usage: "```#{unquote(usage)}```", error: error}}
-      end
-    end
-  end
-
-  @doc """
-  Returns a tuple containing the subcommand and remaining args
-  """
-  @spec get_subcommand(List.t) :: {String.t, List.t}
-  def get_subcommand([]),
-    do: {nil, []}
-  def get_subcommand([subcommand | args]),
-    do: {subcommand, args}
-
   @doc """
   If flag exists and is true will return true, otherwise returns false. Flags
   are defined as boolean options. Options that are not.
