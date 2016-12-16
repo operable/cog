@@ -6,7 +6,8 @@ defmodule Cog.Commands.Alias.Create do
   alias Cog.Repo
   alias Cog.Models.UserCommandAlias
 
-  require Cog.Commands.Helpers, as: Helpers
+  alias Cog.Commands.Alias
+  alias Cog.Commands.Helpers
 
   @description "Create new aliases. Subcommand for alias."
 
@@ -52,7 +53,7 @@ defmodule Cog.Commands.Alias.Create do
       {:ok, template, data} ->
         {:reply, req.reply_to, template, data, state}
       {:error, err} ->
-        {:error, req.reply_to, Helpers.error(err), state}
+        {:error, req.reply_to, Alias.error(err), state}
     end
   end
 end

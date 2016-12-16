@@ -4,7 +4,8 @@ defmodule Cog.Commands.Alias.Delete do
     name: "alias-delete"
 
   alias Cog.Repo
-  require Cog.Commands.Helpers, as: Helpers
+  alias Cog.Commands.Alias
+  alias Cog.Commands.Helpers
 
   @description "Removes an alias"
 
@@ -40,7 +41,7 @@ defmodule Cog.Commands.Alias.Delete do
 
     result = case Helpers.get_args(req.args, 1) do
       {:ok, [alias]} ->
-        case Helpers.get_command_alias(user_id, alias) do
+        case Alias.get_command_alias(user_id, alias) do
           nil ->
             {:error, {:alias_not_found, alias}}
           command_alias ->
@@ -59,7 +60,7 @@ defmodule Cog.Commands.Alias.Delete do
       {:ok, template, data} ->
         {:reply, req.reply_to, template, data, state}
       {:error, err} ->
-        {:error, req.reply_to, Helpers.error(err), state}
+        {:error, req.reply_to, Alias.error(err), state}
     end
   end
 

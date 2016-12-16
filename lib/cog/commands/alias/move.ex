@@ -7,7 +7,8 @@ defmodule Cog.Commands.Alias.Move do
   alias Cog.Models.UserCommandAlias
   alias Cog.Models.SiteCommandAlias
 
-  require Cog.Commands.Helpers, as: Helpers
+  alias Cog.Commands.Alias
+  alias Cog.Commands.Helpers
 
   @description "Moves aliases between visibilities"
 
@@ -58,7 +59,7 @@ defmodule Cog.Commands.Alias.Move do
 
     result = case Helpers.get_args(req.args, 2) do
       {:ok, [src, dest]} ->
-        case Helpers.get_command_alias(user_id, src) do
+        case Alias.get_command_alias(user_id, src) do
           nil ->
             {:error, {:alias_not_found, src}}
           src_alias ->
@@ -88,7 +89,7 @@ defmodule Cog.Commands.Alias.Move do
       {:ok, template, data} ->
         {:reply, req.reply_to, template, data, state}
       {:error, err} ->
-        {:error, req.reply_to, Helpers.error(err), state}
+        {:error, req.reply_to, Alias.error(err), state}
     end
   end
 

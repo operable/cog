@@ -1,6 +1,5 @@
 defmodule Cog.Commands.Helpers do
-  alias Cog.Repo
-  alias Cog.Models.{UserCommandAlias, SiteCommandAlias, EctoJson}
+  alias Cog.Models.EctoJson
   require Cog.Util.Misc
 
   @moduledoc """
@@ -71,20 +70,6 @@ defmodule Cog.Commands.Helpers do
     do: "Some bundles could not be found: '#{Enum.join(missing_bundles, ", ")}'"
   def error({:relay_group_not_found, relay_group_name}),
     do: "No relay group with name '#{relay_group_name}' could be found"
-  def error(:alias_in_user),
-    do: "Alias is already in the 'user' namespace."
-  def error(:alias_in_site),
-    do: "Alias is already in the 'site' namespace."
-  def error({:alias_not_found, alias}),
-    do: "I can't find '#{alias}'. Please try again"
-  def error(:bad_pattern),
-    do: "Invalid alias name. Only emoji, letters, numbers, and the following special characters are allowed: *, -, _"
-  def error(:too_many_wildcards),
-    do: "Too many wildcards. You can only include one wildcard in a query"
-  def error(:no_subcommand),
-    do: "I don't what to do, please specify a subcommand"
-  def error({:unknown_subcommand, subcommand}),
-    do: "Unknown subcommand '#{subcommand}'"
   def error({:resource_not_found, "rule", id}),
     do: "Could not find 'rule' with the id '#{id}'"
   def error({:resource_not_found, resource_type, resource_name}),
@@ -93,23 +78,6 @@ defmodule Cog.Commands.Helpers do
     do: "Invalid chat handle"
   def error({:trigger_invalid, %Ecto.Changeset{}=changeset}),
     do: changeset_errors(changeset)
-
-  @doc """
-  Returns an alias. If the visibility isn't passed we first search for a user
-  alias and if that isn't found we search for a site alias.
-  """
-  def get_command_alias(user_id, "user:" <> user_alias),
-    do: Repo.get_by(UserCommandAlias, name: user_alias, user_id: user_id)
-  def get_command_alias(_, "site:" <> site_alias),
-    do: Repo.get_by(SiteCommandAlias, name: site_alias)
-  def get_command_alias(user_id, alias) do
-    case get_command_alias(user_id, "user:#{alias}") do
-      nil ->
-        get_command_alias(user_id, "site:#{alias}")
-      src_alias ->
-        src_alias
-    end
-  end
 
   @doc """
   We can potentially get poison errors when encoding models with nil fields.

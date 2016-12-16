@@ -8,7 +8,8 @@ defmodule Cog.Commands.Alias.List do
   alias Cog.Queries
   alias Cog.Repo
 
-  require Cog.Commands.Helpers, as: Helpers
+  alias Cog.Commands.Alias
+  alias Cog.Commands.Helpers
 
   @description "Lists aliases"
 
@@ -73,7 +74,7 @@ defmodule Cog.Commands.Alias.List do
       {:ok, template, data} ->
         {:reply, req.reply_to, template, data, state}
       {:error, err} ->
-        {:error, req.reply_to, Helpers.error(err), state}
+        {:error, req.reply_to, Alias.error(err), state}
     end
   end
 

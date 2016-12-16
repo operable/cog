@@ -1,6 +1,7 @@
 defmodule Cog.Commands.Which do
   use Cog.Command.GenCommand.Base, bundle: Cog.Util.Misc.embedded_bundle
   alias Cog.Commands.Helpers
+  alias Cog.Commands.Alias
   alias Cog.Models.UserCommandAlias
   alias Cog.Models.SiteCommandAlias
   alias Cog.Models.Command
@@ -64,7 +65,7 @@ defmodule Cog.Commands.Which do
   # Note: If an alias shadows a command the alias will be returned, not the
   # command.
   defp which(user_id, arg) do
-    case Helpers.get_command_alias(user_id, arg) do
+    case Alias.get_command_alias(user_id, arg) do
       nil ->
         case Repo.get_by(Command, name: arg) do
           nil ->
