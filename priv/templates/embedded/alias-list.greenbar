@@ -1,8 +1,19 @@
-# Won't ever have 0 here, because Cog handles that situation for us
-Found ~count var=$results~ matching aliases.
 ~each var=$results~
-~br~
-Name: `~$item.name~`
-Visibility: `~$item.visibility~`
-Pipeline: `~$item.pipeline~`
+
+~if cond=$item.visibility == "user"~
+~attachment color="blue"~
+**Name:** ~$item.name~
+**Visibility:** ~$item.visibility~
+**Pipeline:** `~$item.pipeline~`
+~end~
+~end~
+
+~if cond=$item.visibility == "site"~
+~attachment color="gray"~
+**Name:** ~$item.name~
+**Visibility:** ~$item.visibility~
+**Pipeline:** `~$item.pipeline~`
+~end~
+~end~
+
 ~end~
