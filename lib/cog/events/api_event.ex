@@ -10,8 +10,7 @@ defmodule Cog.Events.ApiEvent do
 
   alias Plug.Conn
 
-  import Cog.Events.Util, only: [elapsed: 1,
-                                 now_iso8601_utc: 0]
+  import Cog.Events.Util, only: [elapsed: 2]
   import Cog.Plug.Util, only: [get_request_id: 1,
                                get_start_time: 1,
                                get_user: 1]
@@ -98,15 +97,20 @@ defmodule Cog.Events.ApiEvent do
 
   # Centralize common event creation logic
   defp new(conn, event, data \\ %{}) do
+    start = get_start_time(conn)
+    {now, elapsed_us} = case event do
+                          :api_request_started -> {start, 0}
+                          _ ->
+                            now = DateTime.utc_now()
+                            {now, elapsed(start, now)}
+                        end
+
     %__MODULE__{request_id: get_request_id(conn),
                 http_method: conn.method,
                 path: conn.request_path,
                 event: event,
-                timestamp: now_iso8601_utc,
-                elapsed_microseconds: case event do
-                                        :api_request_started -> 0
-                                        _ -> elapsed(get_start_time(conn))
-                                      end,
+                timestamp: Calendar.ISO.to_string(now),
+                elapsed_microseconds: elapsed_us,
                 data: data}
   end
 

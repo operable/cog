@@ -28,12 +28,12 @@ defmodule Cog.Plug.Util do
   """
   @spec stamp_start_time(%Conn{}) :: %Conn{}
   def stamp_start_time(%Conn{}=conn),
-    do: assign(conn, :start_time, Cog.Events.Util.now)
+    do: assign(conn, :start_time, DateTime.utc_now())
 
   @doc """
   Retrieve the timestamp when processing of the request began.
   """
-  @spec get_start_time(%Conn{}) :: :erlang.timestamp() | nil
+  @spec get_start_time(%Conn{}) :: DateTime.t | nil
   def get_start_time(%Conn{}=conn),
     do: conn.assigns[:start_time]
 

@@ -91,42 +91,49 @@ defmodule Cog.Events.PipelineEvent do
   @doc """
   Create a `pipeline_initialized` event
   """
-  def initialized(pipeline_id, text, adapter, cog_user, handle) do
-    new(pipeline_id, :pipeline_initialized, 0, %{command_text: text,
-                                                 cog_user: cog_user,
-                                                 adapter: adapter,
-                                                 chat_handle: handle})
+  def initialized(pipeline_id, start, text, adapter, cog_user, handle) do
+    new(pipeline_id, :pipeline_initialized, start, %{command_text: text,
+                                                     cog_user: cog_user,
+                                                     adapter: adapter,
+                                                     chat_handle: handle})
   end
 
   @doc """
   Create a `command_dispatched` event
   """
-  def dispatched(pipeline_id, elapsed, command, relay, cog_env) do
-    new(pipeline_id, :command_dispatched, elapsed, %{command_text: command,
-                                                     relay: relay,
-                                                     cog_env: cog_env})
+  def dispatched(pipeline_id, start, command, relay, cog_env) do
+    new(pipeline_id, :command_dispatched, start, %{command_text: command,
+                                                   relay: relay,
+                                                   cog_env: cog_env})
   end
 
   @doc """
   Create a `pipeline_succeeded` event
   """
-  def succeeded(pipeline_id, elapsed, result),
-    do: new(pipeline_id, :pipeline_succeeded, elapsed, %{result: result})
+  def succeeded(pipeline_id, start, result),
+    do: new(pipeline_id, :pipeline_succeeded, start, %{result: result})
 
   @doc """
   Create a `pipeline_failed` event
   """
-  def failed(pipeline_id, elapsed, error, message) do
-    new(pipeline_id, :pipeline_failed, elapsed, %{error: error,
-                                                  message: message})
+  def failed(pipeline_id, start, error, message) do
+    new(pipeline_id, :pipeline_failed, start, %{error: error,
+                                                message: message})
   end
 
   # Centralize common event creation logic
-  defp new(pipeline_id, label, elapsed, data) do
+  defp new(pipeline_id, event, start, data) do
+    {now, elapsed_us} = case event do
+                          :pipeline_initialized -> {start, 0}
+                          _ ->
+                            now = DateTime.utc_now()
+                            {now, elapsed(start, now)}
+                        end
+
     %__MODULE__{pipeline_id: pipeline_id,
-                event: label,
-                elapsed_microseconds: elapsed,
-                timestamp: now_iso8601_utc,
+                event: event,
+                elapsed_microseconds: elapsed_us,
+                timestamp: Calendar.ISO.to_string(now),
                 data: data}
   end
 
