@@ -7,11 +7,12 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.HelpBundleTest do
                              "long_description" => "No really, it does a thing",
                              "commands" => [%{"name" => "test-command",
                                               "description" => "does just one thing"}],
-                             "config" => %{
-                               "notes" => "Some notes about config",
-                               "env" => [%{"var" => "VAR1", "description" => "description1"},
-                                         %{"var" => "VAR2"}]
-                             },
+                             "config_file" => %{
+                               "config" => %{
+                                 "notes" => "Some notes about config",
+                                 "env" => [%{"var" => "VAR1", "description" => "description1"},
+                                           %{"var" => "VAR2"}]
+                               }},
                              "author" => "vanstee",
                              "homepage" => "test-bundle.com"}]}
 
@@ -39,6 +40,7 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.HelpBundleTest do
                              "long_description" => "No really, it does a thing",
                              "commands" => [%{"name" => "test-command",
                                               "description" => "does just one thing"}],
+                             "config_file" => %{},
                              "author" => "vanstee",
                              "homepage" => "test-bundle.com"}]}
 

@@ -79,16 +79,16 @@ defmodule Cog.Commands.Help do
             rendered = Cog.CommandVersionHelpView.render("command_version.json", %{command_version: command})
             {:ok, {:command, rendered}}
         end
-      {:ok, %BundleVersion{config_file: config_file}} ->
-        commands = Enum.map(config_file["commands"], fn({name, map}) -> Map.put(map, "name", name) end)
-        {:ok, {:bundle, %{config_file | "commands" => commands}}}
+      {:ok, %BundleVersion{}=bundle_version} ->
+        rendered = Cog.BundleVersionHelpView.render("bundle_version.json", %{bundle_version: bundle_version})
+        {:ok, {:bundle, rendered}}
       error ->
         error
     end
 
     case response do
-      {:ok, {:bundle, bundle_config}} ->
-        {:reply, req.reply_to, "help-bundle", bundle_config, state}
+      {:ok, {:bundle, bundle_version}} ->
+        {:reply, req.reply_to, "help-bundle", bundle_version, state}
       {:ok, {:command, command}} ->
         {:reply, req.reply_to, "help-command", command, state}
       {:ok, {:documentation, documentation}} ->
@@ -168,7 +168,7 @@ defmodule Cog.Commands.Help do
     # are spaces in the bundle name it is invalid.
     do: {:error, {:invalid_bundle, Enum.join(args, " ")}}
   defp lookup_bundle(name) do
-    case Bundles.with_status_by_name(name) do
+    case Bundles.for_help(name) do
       nil ->
         {:error, {:bundle_not_found, name}}
       %BundleVersion{} = bundle ->
