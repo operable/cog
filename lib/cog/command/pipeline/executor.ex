@@ -14,16 +14,11 @@ defmodule Cog.Command.Pipeline.Executor do
   alias Cog.Relay.Relays
   alias Cog.Repo
   alias Cog.ServiceEndpoint
-  alias Cog.Template.New, as: NewTemplate
-  alias Cog.Template.New.Evaluator
+  alias Cog.Template
+  alias Cog.Template.Evaluator
   alias Piper.Command.Ast
   alias Piper.Command.Parser
   alias Piper.Command.ParserOptions
-
-  # Last bundle configuration version that accepts the old
-  # Mustache-based templates; later versions are processed
-  # differently.
-  @old_template_version 3
 
   @type adapter_name :: String.t
 
@@ -49,10 +44,6 @@ defmodule Cog.Command.Pipeline.Executor do
   * `:template` - The single template to render a response for bundles
     v4 and higher. This is defined as the last template received from
     a command response. Not used for v3 bundles and earlier.
-  * `:template_version` - ONLY used until v3 bundles and earlier are
-    phased out. This is the version of the bundle from which the
-    template in `:template` comes from; we need to know in order to
-    figure out how to do the final processing.
   * `:user` - the Cog User model for the invoker of the pipeline
   * `:user_permissions` - a list of the fully-qualified names of all
     permissions that `user` has (recursively). Used for permission
@@ -75,9 +66,8 @@ defmodule Cog.Command.Pipeline.Executor do
     invocations: [%Piper.Command.Ast.Invocation{}], # TODO: needs to be a type
     current_plan: Cog.Command.Pipeline.Plan.t,
     plans: [Cog.Command.Pipeline.Plan.t],
-    output: [{Map.t, String.t}], # {output, template}
+    output: [Map.t],
     template: String.t, # Only used for bundles v4 and higher
-    template_version: integer(), # ONLY used until v3 and earlier are phased out!
     user: %Cog.Models.User{},
     user_permissions: [String.t],
     service_token: String.t,
@@ -96,7 +86,6 @@ defmodule Cog.Command.Pipeline.Executor do
     current_plan: nil,
     plans: [],
     template: nil,
-    template_version: nil,
     output: [],
     started: nil,
     user: nil,
@@ -189,8 +178,8 @@ defmodule Cog.Command.Pipeline.Executor do
     # If a previous command generated output, we don't need to retain
     # any templating information, because the current command now
     # controls how the output will be presented
-    context = strip_templates(previous_output)
-    state = %{state | template: nil, template_version: nil}
+    context = previous_output
+    state = %{state | template: nil}
 
     case Cog.Command.Pipeline.Planner.plan(current_invocation, context, permissions) do
       {:ok, plans} ->
@@ -259,10 +248,18 @@ defmodule Cog.Command.Pipeline.Executor do
         # the output and update the state in the same way, so we'll
         # just encapsulate that logic here.
         update_state = fn(resp, state) ->
-          collected_output = collect_output(resp, state.output)
+          # If there wasn't any response body, there's nothing to collect.
+          # If there is, it can be a map or a list of maps; if the latter, we
+          # want to accumulate it into one flat list
+          collected_output = case resp.body do
+                               nil ->
+                                 state.output
+                               body ->
+                                 state.output ++ List.wrap(body)
+                             end
+
           %{state | output: collected_output,
-            template: resp.template,
-            template_version: state.current_plan.parser_meta.bundle_config_version}
+                    template: resp.template}
         end
 
         case resp.status do
@@ -295,75 +292,17 @@ defmodule Cog.Command.Pipeline.Executor do
     do: failure_event(state)
 
   ########################################################################
-  # Private functions
-
-  ########################################################################
-  defp collect_output(resp, output) do
-    case resp.body do
-      nil ->
-        # If there wasn't any output,
-        # there's nothing to collect
-        output
-      body ->
-        output ++ Enum.map(List.wrap(body),
-                           &store_with_template(&1, resp.template))
-        # body may be a map or a list
-        # of maps; if the latter, we
-        # want to accumulate it into
-        # one flat list
-    end
-  end
-
-  # Redirection Resolution Functions
-
-
-  ########################################################################
   # Response Rendering Functions
 
   # TODO: remove bundle and room from command resp so commands can't excape their bundle.
 
   # Given pipeline output, apply templating as appropriate for each
   # adapter/destination it is to be sent to, and send it to each.
-  defp respond(%__MODULE__{template_version: version}=state)
-  when is_integer(version) and version <= @old_template_version do
-    ########################################################################
-    # THIS IS THE OLD TEMPLATE PROCESSING
-    ########################################################################
 
-    output = state.output
-    parser_meta = state.current_plan.parser_meta
-    by_output_level = Enum.group_by(state.destinations, &(&1.output_level))
 
-    # Render full output first
-    full = Map.get(by_output_level, :full, [])
-    adapters = full |> Enum.map(&(&1.adapter)) |> Enum.uniq
-
-    case Cog.Template.Old.Renderer.render_for_adapters(adapters, parser_meta, output) do
-      {:error, {error, template, adapter}} ->
-        # TODO: need to send error, THEN fail at the end, since we may
-        # need to do it for status-only destinations
-        fail_pipeline_with_error({:template_rendering_error, {error, template, adapter}}, state)
-      messages ->
-        Enum.each(full, fn(dest) ->
-          msg = Map.fetch!(messages, dest.adapter)
-          publish_response(msg, dest.room, dest.adapter, state)
-        end)
-    end
-
-    # Now for status only
-    # No rendering, just status map
-    by_output_level
-    |> Map.get(:status_only, [])
-    |> Enum.each(fn(dest) ->
-      publish_response("ok", dest.room, dest.adapter, state)
-    end)
-  end
-  defp respond(%__MODULE__{template_version: version}=state) when is_integer(version) do
-    ########################################################################
-    # NEW TEMPLATE PROCESSING
-    ########################################################################
+  defp respond(state) do
     template_name = state.template
-    output        = strip_templates(state.output)
+    output        = state.output
     parser_meta   = state.current_plan.parser_meta
     by_output_level = Enum.group_by(state.destinations, &(&1.output_level))
 
@@ -372,7 +311,7 @@ defmodule Cog.Command.Pipeline.Executor do
 
     directives = Evaluator.evaluate(parser_meta.bundle_version_id,
                                     template_name,
-                                    NewTemplate.with_envelope(output))
+                                    Template.with_envelope(output))
 
     Enum.each(full, fn(dest) ->
       # TODO: Might want to push this iteration into the provider
@@ -457,7 +396,7 @@ defmodule Cog.Command.Pipeline.Executor do
   end
 
   defp success_event(%__MODULE__{id: id, output: output, started: started}) do
-    PipelineEvent.succeeded(id, started, strip_templates(output))
+    PipelineEvent.succeeded(id, started, output)
     |> Probe.notify
   end
 
@@ -535,29 +474,11 @@ defmodule Cog.Command.Pipeline.Executor do
     context = List.wrap(request.initial_context)
 
     if Enum.all?(context, &is_map/1) do
-      {:ok, Enum.map(context, &store_with_template(&1, nil))}
+      {:ok, context}
     else
       :error
     end
   end
-
-  # We need to track command output plus the specified template (if
-  # any) needed to render it.
-  #
-  # See remove_templates/1 for inverse
-  defp store_with_template(data, template),
-    do: {data, template}
-
-  # Templates only really matter at the very end of a pipeline; when
-  # manipulating binding contexts inside the pipeline, we can safely
-  # ignore them.
-  #
-  # See store_with_template/2 for inverse
-  defp remove_template({data, _template}),
-    do: data
-
-  defp strip_templates(accumulated_output),
-    do: Enum.map(accumulated_output, &remove_template/1)
 
   defp user_error(error, state) do
     id = state.id

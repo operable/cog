@@ -1,5 +1,4 @@
-
-defmodule Cog.Template.New.CommonTest do
+defmodule Cog.Template.CommonTest do
   use Cog.TemplateCase
 
   test "raw template directives" do

@@ -47,12 +47,14 @@ defmodule Cog.V1.BundlesControllerTest do
       # upload the config
       conn = api_request(requestor, :post, "/v1/bundles", body: %{bundle: %{config_file: upload}}, content_type: :multipart)
 
+      assert(conn.status == 201,
+             "Expected successful upload; instead got #{inspect conn.status}: #{inspect conn.resp_body}")
+
       bundle_id = Poison.decode!(conn.resp_body) |> get_in(["bundle_version", "id"])
 
       bundle_version = Cog.Repo.get_by(Cog.Models.BundleVersion, id: bundle_id) |> Repo.preload(:bundle)
       config = Spanner.Config.Parser.read_from_file!(config_path)
 
-      assert conn.status == 201
       [location_header] = Plug.Conn.get_resp_header(conn, "location")
       assert "/v1/bundles/#{bundle_version.bundle.id}/versions/#{bundle_version.id}" == location_header
 
@@ -400,10 +402,11 @@ defmodule Cog.V1.BundlesControllerTest do
     """
     ---
     # Format version
-    cog_bundle_version: 3
+    cog_bundle_version: 4
 
     name: test_bundle
     version: "0.1.0"
+    description: "tests some stuff"
     permissions:
     - test_bundle:date
     - test_bundle:time
@@ -427,9 +430,9 @@ defmodule Cog.V1.BundlesControllerTest do
         - when command is test_bundle:time must have test_bundle:time
     templates:
       time:
-        slack: "{{time}}"
+        body: "{{time}}"
       date:
-        slack: "{{date}}"
+        body: "{{date}}"
     """
   end
 end

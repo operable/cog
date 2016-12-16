@@ -1,9 +1,9 @@
-defmodule Cog.Template.New.EvaluatorTest do
+defmodule Cog.Template.EvaluatorTest do
   use ExUnit.Case
 
   @moduletag templates: :evaluator
 
-  alias Cog.Template.New.Evaluator
+  alias Cog.Template.Evaluator
 
   setup do
     # We manually checkout the DB connection each time.
