@@ -8,11 +8,12 @@ defmodule Cog.Chat.Slack.Templates.Embedded.HelpBundleTest do
                              "commands" => [%{"name" => "test-command",
                                               "description" => "does just one thing"}],
                              "author" => "vanstee",
-                             "config" => %{
-                               "notes" => "Some notes about config",
-                               "env" => [%{"var" => "VAR1", "description" => "description1"},
-                                         %{"var" => "VAR2"}]
-                             },
+                             "config_file" => %{
+                               "config" => %{
+                                 "notes" => "Some notes about config",
+                                 "env" => [%{"var" => "VAR1", "description" => "description1"},
+                                           %{"var" => "VAR2"}]
+                               }},
                              "homepage" => "test-bundle.com"}]}
 
 
@@ -61,7 +62,8 @@ defmodule Cog.Chat.Slack.Templates.Embedded.HelpBundleTest do
                              "commands" => [%{"name" => "test-command",
                                               "description" => "does just one thing"}],
                              "author" => "vanstee",
-                             "homepage" => "test-bundle.com"}]}
+                             "homepage" => "test-bundle.com",
+                             "config_file" => %{}}]}
 
 
     expected = """
