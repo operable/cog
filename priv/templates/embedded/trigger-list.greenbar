@@ -1,21 +1,10 @@
 ~each var=$results as=trigger~
 
-~if cond=$trigger.enabled == true~
-~attachment color="green"~
+~attachment color="gray"~
 **Name:** ~$trigger.name~
 **ID:** ~$trigger.id~
 **Invocation URL:** ~$trigger.invocation_url~
 **Pipeline:** `~$trigger.pipeline~`
-~end~
-~end~
-
-~if cond=$trigger.enabled == false~
-~attachment color="red"~
-**Name:** ~$trigger.name~
-**ID:** ~$trigger.id~
-**Invocation URL:** ~$trigger.invocation_url~
-**Pipeline:** `~$trigger.pipeline~`
-~end~
 ~end~
 
 ~end~
