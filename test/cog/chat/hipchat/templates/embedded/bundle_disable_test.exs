@@ -4,7 +4,7 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.BundleDisableTest do
   test "bundle-disable template" do
     data = %{"results" => [%{"name" => "foo",
                              "version" => "1.0.0"}]}
-    expected = ~s(Bundle "foo" version "1.0.0" has been disabled.)
+    expected = ~s(Disabled bundle 'foo' version '1.0.0')
     assert_rendered_template(:hipchat, :embedded, "bundle-disable", data, expected)
   end
 
@@ -12,9 +12,13 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.BundleDisableTest do
     data = %{"results" => [%{"name" => "foo", "version" => "1.0.0"},
                            %{"name" => "bar", "version" => "2.0.0"},
                            %{"name" => "baz", "version" => "3.0.0"}]}
-    expected = "Bundle \"foo\" version \"1.0.0\" has been disabled.<br/>" <>
-      "Bundle \"bar\" version \"2.0.0\" has been disabled.<br/>" <>
-      "Bundle \"baz\" version \"3.0.0\" has been disabled."
+
+    expected = """
+    Disabled bundle 'foo' version '1.0.0'<br/>
+    Disabled bundle 'bar' version '2.0.0'<br/>
+    Disabled bundle 'baz' version '3.0.0'
+    """ |> String.replace("\n", "")
+
     assert_rendered_template(:hipchat, :embedded, "bundle-disable", data, expected)
   end
 

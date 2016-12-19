@@ -11,17 +11,20 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.BundleListTest do
                            %{"name" => "test_bundle4",
                              "enabled_version" => %{"version" => "4.0.0"}}]}
 
+
     expected = """
-    <pre>+--------------+-----------------+
-    | Name         | Enabled Version |
-    +--------------+-----------------+
-    | test_bundle1 | 1.0.0           |
-    | test_bundle2 | 2.0.0           |
-    | test_bundle3 | 3.0.0           |
-    | test_bundle4 | 4.0.0           |
-    +--------------+-----------------+
-    </pre>\
-    """
+    <strong>Name:</strong> test_bundle1<br/>
+    <strong>Version Enabled:</strong> 1.0.0<br/>
+    <br/>
+    <strong>Name:</strong> test_bundle2<br/>
+    <strong>Version Enabled:</strong> 2.0.0<br/>
+    <br/>
+    <strong>Name:</strong> test_bundle3<br/>
+    <strong>Version Enabled:</strong> 3.0.0<br/>
+    <br/>
+    <strong>Name:</strong> test_bundle4<br/>
+    <strong>Version Enabled:</strong> 4.0.0
+    """ |> String.replace("\n", "")
 
     assert_rendered_template(:hipchat, :embedded, "bundle-list", data, expected)
   end
@@ -33,14 +36,12 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.BundleListTest do
 
 
     expected = """
-    <pre>+--------------+-----------------+
-    | Name         | Enabled Version |
-    +--------------+-----------------+
-    | test_bundle1 |                 |
-    | test_bundle2 | 2.0.0           |
-    +--------------+-----------------+
-    </pre>\
-    """
+    <strong>Name:</strong> test_bundle1<br/>
+    <strong>Version Enabled:</strong> Disabled<br/>
+    <br/>
+    <strong>Name:</strong> test_bundle2<br/>
+    <strong>Version Enabled:</strong> 2.0.0
+    """ |> String.replace("\n", "")
 
     assert_rendered_template(:hipchat, :embedded, "bundle-list", data, expected)
   end

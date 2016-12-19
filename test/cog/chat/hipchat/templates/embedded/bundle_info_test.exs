@@ -10,14 +10,15 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.BundleInfoTest do
                              "enabled_version" => %{"version" => "0.0.3"},
                              "relay_groups" => [%{"name" => "preprod"},
                                                 %{"name" => "prod"}]}]}
-    expected = "ID: aaaa-bbbb-cccc-dddd-eeee-ffff<br/>" <>
-      "Name: my_bundle<br/><br/>" <>
-      "Versions: 0.0.1<br/>" <>
-      "0.0.2<br/>" <>
-      "0.0.3<br/><br/>" <>
-      "Enabled Version: 0.0.3<br/>" <>
-      "Relay Groups: preprod<br/>" <>
-      "prod"
+
+    expected = """
+    <strong>ID:</strong> aaaa-bbbb-cccc-dddd-eeee-ffff<br/>
+    <strong>Name:</strong> my_bundle<br/>
+    <strong>Versions:</strong> 0.0.1, 0.0.2, 0.0.3<br/>
+    <strong>Version Enabled:</strong> 0.0.3<br/>
+    <strong>Relay Groups:</strong> preprod, prod
+    """ |> String.replace("\n", "")
+
     assert_rendered_template(:hipchat, :embedded, "bundle-info", data, expected)
   end
 
