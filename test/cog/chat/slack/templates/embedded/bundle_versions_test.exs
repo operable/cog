@@ -14,19 +14,27 @@ defmodule Cog.Chat.Slack.Templates.Embedded.BundleVersionsTest do
                            %{"name" => "test_bundle1",
                              "version" => "0.0.7",
                              "enabled" => false}]}
-    expected = """
-    ```+---------+----------+
-    | Version | Enabled? |
-    +---------+----------+
-    | 1.0.0   | true     |
-    | 0.0.9   | false    |
-    | 0.0.8   | false    |
-    | 0.0.7   | false    |
-    +---------+----------+
-    ```
-    """ |> String.strip
 
-    assert_rendered_template(:slack, :embedded, "bundle-versions", data, expected)
+    attachments = [
+      """
+      *Version:* 1.0.0
+      *Enabled:* true
+      """,
+      """
+      *Version:* 0.0.9
+      *Enabled:* false
+      """,
+      """
+      *Version:* 0.0.8
+      *Enabled:* false
+      """,
+      """
+      *Version:* 0.0.7
+      *Enabled:* false
+      """
+    ] |> Enum.map(&String.strip/1)
+
+    assert_rendered_template(:slack, :embedded, "bundle-versions", data, {"", attachments})
   end
 
 end
