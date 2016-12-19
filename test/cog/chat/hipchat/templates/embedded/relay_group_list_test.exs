@@ -7,10 +7,10 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.RelayGroupListTest do
                            %{"name" => "baz"}]}
 
     expected = """
-    foo<br/>\
-    bar<br/>\
+    foo<br/>
+    bar<br/>
     baz
-    """ |> String.strip()
+    """ |> String.replace("\n", "")
 
     assert_rendered_template(:hipchat, :embedded, "relay-group-list", data, expected)
   end

@@ -9,7 +9,11 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.RelayGroupInfoTest do
                              "bundles" => [%{"name" => "foo"},
                                            %{"name" => "bar"},
                                            %{"name" => "baz"}]}]}
-    expected = "<strong>Name</strong>: foo"
+    expected = """
+    <strong>Name:</strong> foo<br/>
+    <strong>Relays:</strong> my_relay, my_other_relay<br/>
+    <strong>Bundles:</strong> foo, bar, baz
+    """ |> String.replace("\n", "")
 
     assert_rendered_template(:hipchat, :embedded, "relay-group-info", data, expected)
   end
@@ -34,16 +38,20 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.RelayGroupInfoTest do
                                           %{"name" => "my_other_relay"}],
                              "bundles" => []}
                           ]}
+
     expected = """
-    <pre>+------+
-    | Name |
-    +------+
-    | foo  |
-    | bar  |
-    | baz  |
-    +------+
-    </pre>\
-    """
+    <strong>Name:</strong> foo<br/>
+    <strong>Relays:</strong> my_relay, my_other_relay<br/>
+    <strong>Bundles:</strong> foo, bar, baz<br/>
+    <br/>
+    <strong>Name:</strong> bar<br/>
+    <strong>Relays:</strong> No relays<br/>
+    <strong>Bundles:</strong> foo, bar, baz<br/>
+    <br/>
+    <strong>Name:</strong> baz<br/>
+    <strong>Relays:</strong> my_relay, my_other_relay<br/>
+    <strong>Bundles:</strong> No bundles assigned
+    """ |> String.replace("\n", "")
 
     assert_rendered_template(:hipchat, :embedded, "relay-group-info", data, expected)
   end
