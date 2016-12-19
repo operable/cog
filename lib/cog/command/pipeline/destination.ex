@@ -1,28 +1,36 @@
 defmodule Cog.Command.Pipeline.Destination do
 
-  @type output_level :: :full | :status_only
-
+  @type classification :: :chat | :trigger | :status_only
   @type t :: %__MODULE__{raw: String.t,
-                         output_level: output_level,
                          adapter: String.t,
-                         room: %Cog.Chat.Room{}}
+                         room: %Cog.Chat.Room{},
+                         classification: classification}
   defstruct [raw: nil,
-             output_level: :full,
              adapter: nil,
-             room: nil]
+             room: nil,
+             classification: nil]
+
   require Logger
   alias Cog.Chat.Adapter
 
   @doc """
   Given a list of raw pipeline destinations, resolve them all to the
-  appropriate adapter-specific destinations, or return error tuples
-  for each that were invalid.
+  appropriate adapter-specific destinations, grouped by their output
+  disposition classification, or return error tuples for each that
+  were invalid.
   """
   def process(raw_destinations, sender, origin_room, origin_adapter) when is_binary(origin_adapter) do
-    raw_destinations
+    result = raw_destinations
     |> Enum.map(&make_destination/1)
     |> maybe_add_origin(origin_adapter)
     |> resolve(sender, origin_room, origin_adapter)
+
+    case result do
+      {:ok, destinations} ->
+        {:ok, Enum.group_by(destinations, &(&1.classification))}
+      {:error, _}=error ->
+        error
+    end
   end
 
   ########################################################################
@@ -52,7 +60,7 @@ defmodule Cog.Command.Pipeline.Destination do
     if originator_is_destination?(destinations) || Adapter.is_chat_provider?(origin_adapter) do
       destinations
     else
-      [%{make_destination("here") | output_level: :status_only} | destinations]
+      [%{make_destination("here") | classification: :status_only} | destinations]
     end
   end
 
@@ -80,28 +88,28 @@ defmodule Cog.Command.Pipeline.Destination do
     end)
   end
 
-  defp resolve_destination(%__MODULE__{raw: "here"}=dest, _sender, origin_room, adapter),
-    do: {:ok, %{dest | adapter: adapter, room: origin_room}}
+  defp resolve_destination(%__MODULE__{raw: "here"}=dest, _sender, origin_room, adapter) do
+    # If we had to add a "here" destination, it'll already have been
+    # classified; we need to respect that
+    {:ok, %{dest | adapter: adapter, room: origin_room,
+            classification: Map.get(dest, :classification) || classify_adapter(adapter)}}
+  end
   defp resolve_destination(%__MODULE__{raw: "me"}=dest, sender, _origin_room, adapter) do
     # TODO: handle the pathological case of the sender ID not actually
     # resolving to a destination... also need to handle the case where
     # "me" isn't a recognized destination (e.g., for HTTP adapter)
-    {:ok, room} = Cog.Chat.Adapter.lookup_room(adapter, id: sender.id)
-    {:ok, %{dest | adapter: adapter, room: room}}
+    {:ok, room} = Adapter.lookup_room(adapter, id: sender.id)
+    {:ok, %{dest | adapter: adapter, room: room, classification: classify_adapter(adapter)}}
   end
   defp resolve_destination(%__MODULE__{raw: redir}=dest, _sender, _origin_room, origin_adapter) do
-
     {adapter, destination} = adapter_destination(redir, origin_adapter)
-
-    case Cog.Chat.Adapter.lookup_room(adapter, name: destination) do
+    case Adapter.lookup_room(adapter, name: destination) do
       {:error, reason} ->
         {:error, {reason, redir}}
       {:ok, room} ->
-        {:ok, %{dest | adapter: adapter, room: room}}
+        {:ok, %{dest | adapter: adapter, room: room, classification: classify_adapter(adapter)}}
     end
   end
-
-
 
   # Redirect destinations may be targeted to an adapter different from
   # where they originated from.
@@ -117,5 +125,14 @@ defmodule Cog.Command.Pipeline.Destination do
   defp adapter_destination(destination, origin_adapter),
     do: {origin_adapter, destination}
 
+
+  # TODO: perhaps let Adapter handle this logic instead
+  defp classify_adapter(adapter) do
+    if Adapter.is_chat_provider?(adapter) do
+      :chat
+    else
+      :trigger
+    end
+  end
 
 end

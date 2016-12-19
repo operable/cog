@@ -34,21 +34,21 @@ defmodule Cog.V1.TriggerExecutionController do
                         body: get_parsed_body(conn)}
 
             requestor = to_chat_user(user)
-
-            case Connector.submit_request(requestor, request_id, context, trigger.pipeline, timeout) do
-              "ok" ->
+            response = Connector.submit_request(requestor, request_id, context, trigger.pipeline, timeout)
+            case response do
+              %{"status" => "success", "pipeline_output" => _} ->
+                conn |> put_status(:ok) |> json(response)
+              %{"status" => "success"} ->
                 conn |> send_resp(:no_content, "")
+              %{"status" => "aborted"} ->
+                conn |> put_status(:unprocessable_entity) |> json(response)
+              %{"status" => "error"} ->
+                conn |> put_status(:internal_server_error) |> json(response)
               {:error, :timeout} ->
                 conn
                 |> put_status(:accepted)
                 |> json(%{status: "Request accepted and still processing after #{trigger.timeout_sec} seconds",
                           id: request_id})
-              response ->
-                if is_map(response) and Map.has_key?(response, "error_message") do
-                  conn |> put_status(:internal_server_error) |> json(%{errors: response})
-                else
-                  conn |> put_status(:ok) |> json(response)
-                end
             end
           nil ->
             # Don't know which user to run this as, but the response
