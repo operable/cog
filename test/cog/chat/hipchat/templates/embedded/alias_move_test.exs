@@ -6,7 +6,7 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.AliasMoveTest do
                                            "name" => "awesome"},
                              "destination" => %{"visibility" => "site",
                                                 "name" => "awesome"}}]}
-    expected = "Successfully moved user:awesome to site:awesome"
+    expected = "Moved alias 'user:awesome' to 'site:awesome'"
     assert_rendered_template(:hipchat, :embedded, "alias-move", data, expected)
   end
 
@@ -23,9 +23,12 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.AliasMoveTest do
                                            "name" => "thingie"},
                              "destination" => %{"visibility" => "site",
                                                 "name" => "dohickey"}}]}
-    expected = "Successfully moved user:awesome to site:awesome<br/>" <>
-      "Successfully moved user:do_stuff to site:do_stuff<br/>" <>
-      "Successfully moved user:thingie to site:dohickey"
+    expected = """
+    Moved alias 'user:awesome' to 'site:awesome'<br/>
+    Moved alias 'user:do_stuff' to 'site:do_stuff'<br/>
+    Moved alias 'user:thingie' to 'site:dohickey'
+    """ |> String.replace("\n", "")
+
     assert_rendered_template(:hipchat, :embedded, "alias-move", data, expected)
   end
 

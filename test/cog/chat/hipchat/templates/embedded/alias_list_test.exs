@@ -11,16 +11,19 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.AliasListTest do
                            %{"visibility" => "site",
                              "name" => "wow_neat",
                              "pipeline" => "echo 'wow, neat!'"}]}
-    expected = "Found 3 matching aliases.<br/><br/><br/>" <>
-      "Name: <code>awesome_alias</code><br/>" <>
-      "Visibility: <code>user</code><br/>" <>
-      "Pipeline: <code>echo 'awesome!'</code><br/><br/><br/>" <>
-      "Name: <code>another_awesome_alias</code><br/>" <>
-      "Visibility: <code>user</code><br/>" <>
-      "Pipeline: <code>echo 'more awesome!'</code><br/><br/><br/>" <>
-      "Name: <code>wow_neat</code><br/>" <>
-      "Visibility: <code>site</code><br/>" <>
-      "Pipeline: <code>echo 'wow, neat!'</code>"
+    expected = """
+    <strong>Name:</strong> awesome_alias<br/>
+    <strong>Visibility:</strong> user<br/>
+    <strong>Pipeline:</strong> <code>echo 'awesome!'</code><br/>
+    <br/>
+    <strong>Name:</strong> another_awesome_alias<br/>
+    <strong>Visibility:</strong> user<br/>
+    <strong>Pipeline:</strong> <code>echo 'more awesome!'</code><br/>
+    <br/>
+    <strong>Name:</strong> wow_neat<br/>
+    <strong>Visibility:</strong> site<br/>
+    <strong>Pipeline:</strong> <code>echo 'wow, neat!'</code>
+    """ |> String.replace("\n", "")
 
     assert_rendered_template(:hipchat, :embedded, "alias-list", data, expected)
   end
