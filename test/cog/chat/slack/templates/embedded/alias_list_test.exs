@@ -11,26 +11,25 @@ defmodule Cog.Chat.Slack.Templates.Embedded.AliasListTest do
                            %{"visibility" => "site",
                              "name" => "wow_neat",
                              "pipeline" => "echo 'wow, neat!'"}]}
-    expected = """
-    Found 3 matching aliases.
+    attachments = [
+      """
+      *Name:* awesome_alias
+      *Visibility:* user
+      *Pipeline:* `echo 'awesome!'`
+      """,
+      """
+      *Name:* another_awesome_alias
+      *Visibility:* user
+      *Pipeline:* `echo 'more awesome!'`
+      """,
+      """
+      *Name:* wow_neat
+      *Visibility:* site
+      *Pipeline:* `echo 'wow, neat!'`
+      """
+    ] |> Enum.map(&String.strip/1)
 
-
-    Name: `awesome_alias`
-    Visibility: `user`
-    Pipeline: `echo 'awesome!'`
-
-
-    Name: `another_awesome_alias`
-    Visibility: `user`
-    Pipeline: `echo 'more awesome!'`
-
-
-    Name: `wow_neat`
-    Visibility: `site`
-    Pipeline: `echo 'wow, neat!'`
-    """ |> String.strip
-
-    assert_rendered_template(:slack, :embedded, "alias-list", data, expected)
+    assert_rendered_template(:slack, :embedded, "alias-list", data, {"", attachments})
   end
 
 end

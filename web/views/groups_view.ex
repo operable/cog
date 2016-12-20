@@ -18,6 +18,13 @@ defmodule Cog.V1.GroupView do
     %{group: render_one(group, __MODULE__, "group.json")}
   end
 
+  def render("command.json", %{group: group}) do
+    %{id: group.id,
+      name: group.name,
+      roles: render_roles(group.roles),
+      members: render_users(group.direct_user_members)}
+  end
+
   defp render_roles(roles) when is_list(roles) do
     Enum.map(roles, fn(role) ->
         %{id: role.id,

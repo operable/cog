@@ -6,7 +6,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.AliasMoveTest do
                                            "name" => "awesome"},
                              "destination" => %{"visibility" => "site",
                                                 "name" => "awesome"}}]}
-    expected = "Successfully moved user:awesome to site:awesome"
+    expected = "Moved alias 'user:awesome' to 'site:awesome'"
     assert_rendered_template(:slack, :embedded, "alias-move", data, expected)
   end
 
@@ -24,10 +24,11 @@ defmodule Cog.Chat.Slack.Templates.Embedded.AliasMoveTest do
                              "destination" => %{"visibility" => "site",
                                                 "name" => "dohickey"}}]}
     expected = """
-    Successfully moved user:awesome to site:awesome
-    Successfully moved user:do_stuff to site:do_stuff
-    Successfully moved user:thingie to site:dohickey
+    Moved alias 'user:awesome' to 'site:awesome'
+    Moved alias 'user:do_stuff' to 'site:do_stuff'
+    Moved alias 'user:thingie' to 'site:dohickey'
     """ |> String.strip
+
     assert_rendered_template(:slack, :embedded, "alias-move", data, expected)
   end
 

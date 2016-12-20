@@ -11,19 +11,26 @@ defmodule Cog.Chat.Slack.Templates.Embedded.BundleListTest do
                            %{"name" => "test_bundle4",
                              "enabled_version" => %{"version" => "4.0.0"}}]}
 
-    expected = """
-    ```+--------------+-----------------+
-    | Name         | Enabled Version |
-    +--------------+-----------------+
-    | test_bundle1 | 1.0.0           |
-    | test_bundle2 | 2.0.0           |
-    | test_bundle3 | 3.0.0           |
-    | test_bundle4 | 4.0.0           |
-    +--------------+-----------------+
-    ```
-    """ |> String.strip
+    attachments = [
+      """
+      *Name:* test_bundle1
+      *Version Enabled:* 1.0.0
+      """,
+      """
+      *Name:* test_bundle2
+      *Version Enabled:* 2.0.0
+      """,
+      """
+      *Name:* test_bundle3
+      *Version Enabled:* 3.0.0
+      """,
+      """
+      *Name:* test_bundle4
+      *Version Enabled:* 4.0.0
+      """
+    ] |> Enum.map(&String.strip/1)
 
-    assert_rendered_template(:slack, :embedded, "bundle-list", data, expected)
+    assert_rendered_template(:slack, :embedded, "bundle-list", data, {"", attachments})
   end
 
   test "handles disabled bundles properly" do
@@ -32,21 +39,18 @@ defmodule Cog.Chat.Slack.Templates.Embedded.BundleListTest do
                              "enabled_version" => %{"version" => "2.0.0"}}]}
 
 
-    expected = """
-    ```+--------------+-----------------+
-    | Name         | Enabled Version |
-    +--------------+-----------------+
-    | test_bundle1 |                 |
-    | test_bundle2 | 2.0.0           |
-    +--------------+-----------------+
-    ```
-    """ |> String.strip
+    attachments = [
+      """
+      *Name:* test_bundle1
+      *Version Enabled:* Disabled
+      """,
+      """
+      *Name:* test_bundle2
+      *Version Enabled:* 2.0.0
+      """,
+    ] |> Enum.map(&String.strip/1)
 
-    assert_rendered_template(:slack, :embedded, "bundle-list", data, {expected, []})
-
-
-
-
+    assert_rendered_template(:slack, :embedded, "bundle-list", data, {"", attachments})
   end
 
 end

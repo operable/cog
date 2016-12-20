@@ -1,47 +1,66 @@
 defmodule Cog.Commands.Alias.Move do
+  use Cog.Command.GenCommand.Base,
+    bundle: Cog.Util.Misc.embedded_bundle,
+    name: "alias-move"
+
   alias Cog.Repo
   alias Cog.Models.UserCommandAlias
   alias Cog.Models.SiteCommandAlias
 
   require Cog.Commands.Helpers, as: Helpers
 
-  Helpers.usage """
-  Moves aliases between visibilities. Optionally renames the alias. Subcommand
-  for alias. If a visibility is not specified the user visibility is first searched
-  and then the site visibility.
+  @description "Moves aliases between visibilities"
 
-  USAGE
-    alias move [FLAGS] <alias-src> <alias-destination>
+  @long_descrption """
+  Can also be used to rename an alias. If a visibility is not specified the
+  user visibility is first searched and then the site visibility.
+  """
 
-  FLAGS
-    -h, --help  Display this usage info
+  @arguments "<alias-source> <alias-destination>"
 
-  EXAMPLES
+  @examples """
+  Move alias from user to site:
+
     alias move user:my-awesome-alias site
-    > Successfully moved user:my-awesome-alias to site
+
+  Move and rename alias:
 
     alias move user:my-awesome-alias site:my-really-awesome-alias
-    > Successfully moved user:my-awesome-alias to site:my-really-awesome-alias
+
+  Rename alias:
 
     alias move my-awesome-alias my-really-awesome-alias
-    > Successfully moved user:my-awesome-alias to user:my-really-awesome-alias
   """
 
-  @doc """
-  Entry point for moving an alias.
-  Takes a cog request and argument list.
-  returns {:ok, <msg>} on success {:error, <err>} on failure.
+  @output_description "Returns serialized aliases for both the source and destination"
+
+  @output_example """
+  [
+    {
+      "source": {
+        "visibility": "user",
+        "pipeline": "echo \\\"My Awesome Alias\\\"",
+        "name": "my-awesome-alias"
+      },
+      "destination": {
+        "visibility": "site",
+        "pipeline": "echo \\\"My Awesome Alias\\\"",
+        "name": "my-awesome-alias"
+      }
+    }
+  ]
   """
-  def move_command_alias(%{options: %{"help" => true}}, _args),
-    do: show_usage
-  def move_command_alias(req, arg_list) do
+
+  rule "when command is #{Cog.Util.Misc.embedded_bundle}:alias-move allow"
+
+  def handle_message(req, state) do
     user_id = req.user["id"]
 
-    case Helpers.get_args(arg_list, 2) do
+    result = case Helpers.get_args(req.args, 2) do
       {:ok, [src, dest]} ->
         case Helpers.get_command_alias(user_id, src) do
           nil ->
-            Helpers.error({:alias_not_found, src})
+            {:error, {:alias_not_found, src}}
           src_alias ->
             results = Repo.transaction(fn ->
               case generate_changeset(user_id, src_alias, dest) do
@@ -63,6 +82,13 @@ defmodule Cog.Commands.Alias.Move do
         end
       error ->
         error
+    end
+
+    case result do
+      {:ok, template, data} ->
+        {:reply, req.reply_to, template, data, state}
+      {:error, err} ->
+        {:error, req.reply_to, Helpers.error(err), state}
     end
   end
 

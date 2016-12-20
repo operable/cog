@@ -1,23 +1,6 @@
-~if cond=length($results) == 1~
-**ID**: ~$results[0].id~
-**Created**: ~$results[0].created_at~
-**Name**: ~$results[0].name~
-**Status**: ~$results[0].status~
-~if cond=$results[0].relay_groups bound?~**Relay Groups**: ~join var=$results[0].relay_groups~~$item.name~~end~~end~
-~end~
-~if cond=length($results) > 1~
-~if cond=$results[0].relay_groups bound?~
-| Name | Status | ID | Created | Relay Groups |
-|------|--------|----|---------|--------------|
-~each var=$results~
-|~$item.name~|~$item.status~|~$item.id~|~$item.created_at~|~join var=$item.relay_groups as=g ~~$g.name~~end~|
-~end~
-~end~
-~if cond=$results[0].relay_groups not_bound?~
-| Name | Status | ID | Created |
-|------|--------|----|---------|
-~each var=$results~
-|~$item.name~|~$item.status~|~$item.id~|~$item.created_at~|
-~end~
-~end~
+~each var=$results as=relay~
+**Name:** ~$relay.name~
+**ID:** ~$relay.id~
+**Status:** ~$relay.status~
+~if cond=$relay.relay_groups bound?~**Relay Groups:** ~if cond=$relay.relay_groups empty?~No relay groups~end~~join var=$relay.relay_groups with=", "~~$item.name~~end~~end~
 ~end~

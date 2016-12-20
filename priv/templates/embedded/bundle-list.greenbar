@@ -1,4 +1,17 @@
-| Name | Enabled Version |
-|------|-----------------|
-~each var=$results~|~$item.name~|~if cond=$item.enabled_version bound?~~$item.enabled_version.version~~end~|
+~each var=$results~
+
+~if cond=$item.enabled_version bound?~
+~attachment color="green"~
+**Name:** ~$item.name~
+**Version Enabled:** ~$item.enabled_version.version~
+~end~
+~end~
+
+~if cond=$item.enabled_version not_bound?~
+~attachment color="red"~
+**Name:** ~$item.name~
+**Version Enabled:** Disabled
+~end~
+~end~
+
 ~end~

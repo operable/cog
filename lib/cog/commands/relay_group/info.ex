@@ -1,45 +1,49 @@
 defmodule Cog.Commands.RelayGroup.Info do
-  require Cog.Commands.Helpers, as: Helpers
+  use Cog.Command.GenCommand.Base,
+    bundle: Cog.Util.Misc.embedded_bundle,
+    name: "relay-group-info"
+
   alias Cog.Repository.RelayGroups
   alias Cog.Commands.RelayGroup
 
-  Helpers.usage """
-  Get info on one or more relay groups.
+  @description "Get info on one or more relay groups"
 
-  USAGE
-    relay-group info [FLAGS] [group_name ...]
+  @arguments "<group-name> [<group-name> ...]"
 
-  ARGS
-    group_name    List of group names to show info for
+  @output_description "Returns the serialized relay group"
 
-  FLAGS
-    -h, --help      Display this usage info
-    -v, --verbose   Include addition relay group details
+  @output_example """
+  [
+    {
+      "relays": [
+        {
+          "status": "enabled",
+          "name": "production",
+          "id": "9e173ffd-b247-4833-80d4-a87c4175732d",
+          "created_at": "2016-12-13T14:33:48"
+        }
+      ],
+      "name": "default",
+      "id": "ee3d7b91-9c66-487d-b250-8df47e7f7a32",
+      "created_at": "2016-12-14T00:11:14",
+      "bundles": []
+    }
+  ]
   """
 
-  @spec relay_group_info(%Cog.Messages.Command{}, List.t) :: {:ok, String.t, Map.t} | {:error, any()}
-  def relay_group_info(req, args) do
-    if Helpers.flag?(req.options, "help") do
-      show_usage
-    else
-      case RelayGroups.all_by_name(args) do
-        [] ->
-          {:ok, "No relay groups configured with name in '#{Enum.join(args, ", ")}'"}
-        relay_groups ->
-          {:ok, get_template(req.options), generate_response(relay_groups)}
-      end
+  permission "manage_relays"
+
+  rule "when command is #{Cog.Util.Misc.embedded_bundle}:relay-group-info must have #{Cog.Util.Misc.embedded_bundle}:manage_relays"
+
+  def handle_message(req, state) do
+    relay_groups = RelayGroups.all_by_name(req.args)
+    |> Enum.map(&RelayGroup.json/1)
+
+    case relay_groups do
+      [] ->
+        {:reply, req.reply_to, "No relay groups configured with name in '#{Enum.join(req.args, ", ")}'", state}
+      relay_groups ->
+        {:reply, req.reply_to, "relay-group-info", relay_groups, state}
     end
   end
-
-  defp generate_response(relay_groups),
-    do: Enum.map(relay_groups, &RelayGroup.json/1)
-
-  defp get_template(options) do
-    if Helpers.flag?(options, "verbose") do
-      "relay-group-info-verbose"
-    else
-      "relay-group-info"
-    end
-  end
-
 end

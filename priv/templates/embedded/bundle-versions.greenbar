@@ -1,4 +1,8 @@
-| Version | Enabled? |
-|---------|----------|
-~each var=$results~|~$item.version~|~$item.enabled~|
+~each var=$results~
+
+~attachment color="gray"~
+**Version:** ~$item.version~
+**Enabled:** ~$item.enabled~
+~end~
+
 ~end~

@@ -9,11 +9,14 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.RelayInfoTest do
                              "relay_groups" => [%{"name" => "prod"},
                                                 %{"name" => "preprod"},
                                                 %{"name" => "dev"}]}]}
-    expected = "<strong>ID</strong>: 123<br/>" <>
-      "<strong>Created</strong>: sometime<br/>" <>
-      "<strong>Name</strong>: relay_one<br/>" <>
-      "<strong>Status</strong>: enabled<br/>" <>
-      "<strong>Relay Groups</strong>: prod, preprod, dev"
+
+
+    expected = """
+    <strong>Name:</strong> relay_one<br/>
+    <strong>ID:</strong> 123<br/>
+    <strong>Status:</strong> enabled<br/>
+    <strong>Relay Groups:</strong> prod, preprod, dev
+    """ |> String.replace("\n", "")
 
     assert_rendered_template(:hipchat, :embedded, "relay-info", data, expected)
   end
@@ -23,10 +26,12 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.RelayInfoTest do
                              "name" => "relay_one",
                              "created_at" => "sometime",
                              "status" => "enabled"}]}
-    expected = "<strong>ID</strong>: 123<br/>" <>
-      "<strong>Created</strong>: sometime<br/>" <>
-      "<strong>Name</strong>: relay_one<br/>" <>
-      "<strong>Status</strong>: enabled"
+
+    expected = """
+    <strong>Name:</strong> relay_one<br/>
+    <strong>ID:</strong> 123<br/>
+    <strong>Status:</strong> enabled
+    """ |> String.replace("\n", "")
 
     assert_rendered_template(:hipchat, :embedded, "relay-info", data, expected)
   end
@@ -50,16 +55,21 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.RelayInfoTest do
                              "status" => "enabled",
                              "relay_groups" => [%{"name" => "prod"}]}]}
 
+
     expected = """
-    <pre>+-------------+----------+-----+------------------------------+--------------------+
-    | Name        | Status   | ID  | Created                      | Relay Groups       |
-    +-------------+----------+-----+------------------------------+--------------------+
-    | relay_one   | enabled  | 123 | yesterday                    |                    |
-    | relay_two   | disabled | 456 | 3 days from now              | prod, preprod, dev |
-    | relay_three | enabled  | 789 | the beginning of time itself | prod               |
-    +-------------+----------+-----+------------------------------+--------------------+
-    </pre>\
-    """
+    <strong>Name:</strong> relay_one<br/>
+    <strong>ID:</strong> 123<br/>
+    <strong>Status:</strong> enabled<br/>
+    <strong>Relay Groups:</strong> No relay groups<br/>
+    <strong>Name:</strong> relay_two<br/>
+    <strong>ID:</strong> 456<br/>
+    <strong>Status:</strong> disabled<br/>
+    <strong>Relay Groups:</strong> prod, preprod, dev<br/>
+    <strong>Name:</strong> relay_three<br/>
+    <strong>ID:</strong> 789<br/>
+    <strong>Status:</strong> enabled<br/>
+    <strong>Relay Groups:</strong> prod
+    """ |> String.replace("\n", "")
 
     assert_rendered_template(:hipchat, :embedded, "relay-info", data, expected)
   end
@@ -79,15 +89,18 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.RelayInfoTest do
                              "status" => "enabled"}]}
 
     expected = """
-    <pre>+-------------+----------+-----+------------------------------+
-    | Name        | Status   | ID  | Created                      |
-    +-------------+----------+-----+------------------------------+
-    | relay_one   | enabled  | 123 | yesterday                    |
-    | relay_two   | disabled | 456 | 3 days from now              |
-    | relay_three | enabled  | 789 | the beginning of time itself |
-    +-------------+----------+-----+------------------------------+
-    </pre>\
-    """
+    <strong>Name:</strong> relay_one<br/>
+    <strong>ID:</strong> 123<br/>
+    <strong>Status:</strong> enabled<br/>
+    <br/>
+    <strong>Name:</strong> relay_two<br/>
+    <strong>ID:</strong> 456<br/>
+    <strong>Status:</strong> disabled<br/>
+    <br/>
+    <strong>Name:</strong> relay_three<br/>
+    <strong>ID:</strong> 789<br/>
+    <strong>Status:</strong> enabled
+    """ |> String.replace("\n", "")
 
     assert_rendered_template(:hipchat, :embedded, "relay-info", data, expected)
   end

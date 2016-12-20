@@ -1,12 +1,17 @@
-~if cond=$results[0].relay_groups bound?~
-| Name | Status | Relay Groups |
-|------|--------|--------------|
-~each var=$results~|~$item.name~|~$item.status~|~join var=$item.relay_groups as=g ~~$g.name~~end~|
+~each var=$results as=relay~
+
+~if cond=$relay.status == "enabled"~
+~attachment color="green"~
+**Name:** ~$relay.name~
+**Status:** ~$relay.status~
 ~end~
 ~end~
-~if cond=$results[0].relay_groups not_bound?~
-| Name | Status |
-|------|--------|
-~each var=$results~|~$item.name~|~$item.status~|
+
+~if cond=$relay.status == "disabled"~
+~attachment color="red"~
+**Name:** ~$relay.name~
+**Status:** ~$relay.status~
 ~end~
+~end~
+
 ~end~

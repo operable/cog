@@ -7,15 +7,10 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.RoleListTest do
                            %{"name" => "baz"}]}
 
     expected = """
-    <pre>+------+
-    | Name |
-    +------+
-    | foo  |
-    | bar  |
-    | baz  |
-    +------+
-    </pre>\
-    """
+    foo<br/>
+    bar<br/>
+    baz
+    """ |> String.replace("\n", "")
 
     assert_rendered_template(:hipchat, :embedded, "role-list", data, expected)
   end

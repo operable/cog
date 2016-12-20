@@ -1,0 +1,5 @@
+~each var=$results as=relay_group~
+~each var=$relay_group.bundles_assigned as=bundle~
+Assigned bundle '~$bundle~' to relay group '~$relay_group.name~'
+~end~
+~end~

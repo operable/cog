@@ -1,4 +1,3 @@
-| Name |
-|------|
-~each var=$results~|~$item.name~|
+~each var=$results as=role~
+~$role.name~
 ~end~

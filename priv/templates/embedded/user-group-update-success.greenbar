@@ -1,3 +1,0 @@
-~each var=$results~
-User group '~$item.name~' was successfully updated
-~end~

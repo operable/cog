@@ -1,36 +1,50 @@
 defmodule Cog.Commands.RelayGroup.Member.Unassign do
+  use Cog.Command.GenCommand.Base,
+    bundle: Cog.Util.Misc.embedded_bundle,
+    name: "relay-group-member-unassign"
+
   require Cog.Commands.Helpers, as: Helpers
   alias Cog.Repository.RelayGroups
   alias Cog.Commands.RelayGroup
 
-  Helpers.usage """
-  Unassigns bundles from relay groups
+  @description "Unassigns bundles from relay groups"
 
-  USAGE
-    relay-group member unassign [FLAGS] <group_name> <bundle_name ...>
+  @arguments "<group-name> <bundle-name> [<bundle-name> ...]"
 
-  ARGS
-    group_name   The relay group to unassign bundles from
-    bundle_name  The list of bundle names to unassign from the relay group
+  @output_description "Returns the serialized relay group with the unassigned bundle removed"
 
-  FLAGS
-    -h, --help      Display this usage info
+  @output_example """
+  [
+    {
+      "relays": [],
+      "name": "production",
+      "id": "ee3d7b91-9c66-487d-b250-8df47e7f7a32",
+      "created_at": "2016-12-14T00:11:14",
+      "bundles": []
+    }
+  ]
   """
 
-  @spec unassign_bundles(%Cog.Messages.Command{}, List.t) :: {:ok, String.t, Map.t} | {:error, any()}
-  def unassign_bundles(req, arg_list) do
-    if Helpers.flag?(req.options, "help") do
-      show_usage
-    else
-      case Helpers.get_args(arg_list, min: 2) do
-        {:ok, [group_name | bundle_names]} ->
-          with {:ok, relay_group} <- RelayGroup.Helpers.get_relay_group(group_name),
-               {:ok, bundles} <- RelayGroup.Helpers.get_bundles(bundle_names) do
-                 unassign(relay_group, bundles)
-          end
-        {:error, {:under_min_args, _min}} ->
-          show_usage(error(:missing_args))
-      end
+  permission "manage_relays"
+
+  rule "when command is #{Cog.Util.Misc.embedded_bundle}:relay-group-member-unassign must have #{Cog.Util.Misc.embedded_bundle}:manage_relays"
+
+  def handle_message(req, state) do
+    result = case Helpers.get_args(req.args, min: 2) do
+      {:ok, [group_name | bundle_names]} ->
+        with {:ok, relay_group} <- RelayGroup.Helpers.get_relay_group(group_name),
+             {:ok, bundles} <- RelayGroup.Helpers.get_bundles(bundle_names) do
+               unassign(relay_group, bundles)
+        end
+      error ->
+        error
+    end
+
+    case result do
+      {:ok, template, data} ->
+        {:reply, req.reply_to, template, data, state}
+      {:error, err} ->
+        {:error, req.reply_to, Helpers.error(err), state}
     end
   end
 
@@ -38,14 +52,12 @@ defmodule Cog.Commands.RelayGroup.Member.Unassign do
     member_spec = %{"bundles" => %{"remove" => Enum.map(bundles, &(&1.id))}}
     case RelayGroups.manage_association(relay_group, member_spec) do
       {:ok, relay_group} ->
-        {:ok, "relay-group-update-success", RelayGroup.json(relay_group)}
+        data = relay_group
+        |> RelayGroup.json
+        |> Map.put("bundles_unassigned", Enum.map(bundles, &(&1.name)))
+        {:ok, "relay-group-member-unassign", data}
       error ->
         {:error, error}
     end
   end
-
-  defp error(:missing_args) do
-    "Missing required args. At a minimum you must include the relay group name and at least one bundle name"
-  end
-
 end

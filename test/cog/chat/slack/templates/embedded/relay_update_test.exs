@@ -3,7 +3,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.RelayUpdateTest do
 
   test "relay-update with one input" do
     data = %{"results" => [%{"name" => "relay_one"}]}
-    expected = "Relay 'relay_one' has been updated"
+    expected = "Updated relay 'relay_one'"
     assert_rendered_template(:slack, :embedded, "relay-update", data, expected)
   end
 
@@ -12,9 +12,9 @@ defmodule Cog.Chat.Slack.Templates.Embedded.RelayUpdateTest do
                            %{"name" => "relay_two"},
                            %{"name" => "relay_three"}]}
     expected = """
-    Relay 'relay_one' has been updated
-    Relay 'relay_two' has been updated
-    Relay 'relay_three' has been updated
+    Updated relay 'relay_one'
+    Updated relay 'relay_two'
+    Updated relay 'relay_three'
     """ |> String.strip
 
     assert_rendered_template(:slack, :embedded, "relay-update", data, expected)

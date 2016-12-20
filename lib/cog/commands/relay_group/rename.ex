@@ -1,42 +1,62 @@
 defmodule Cog.Commands.RelayGroup.Rename do
+  use Cog.Command.GenCommand.Base,
+    bundle: Cog.Util.Misc.embedded_bundle,
+    name: "relay-group-rename"
+
   require Cog.Commands.Helpers, as: Helpers
   alias Cog.Repository.RelayGroups
   alias Cog.Commands.RelayGroup
 
-  Helpers.usage """
-  Renames relay groups
+  @description "Renames relay groups"
 
-  USAGE
-    relay-group rename [FLAGS] <old_relay_name> <new_relay_name>
+  @arguments "<old_relay_name> <new_relay_name>"
 
-  ARGS
-    old_relay_name    The name of the relay to rename
-    new_relay_name    The new name for the relay
+  @output_description "Returns the serialized relay group with the new name including an old_name attribute"
 
-  FLAGS
-    -h, --help      Display this usage info
+  @output_example """
+  [
+    {
+      "relay_group": {
+        "relays": [
+          {
+            "status": "enabled",
+            "name": "production",
+            "id": "9e173ffd-b247-4833-80d4-a87c4175732d",
+            "created_at": "2016-12-13T14:33:48"
+          }
+        ],
+        "name": "staging",
+        "id": "ee3d7b91-9c66-487d-b250-8df47e7f7a32",
+        "created_at": "2016-12-14T00:11:14",
+        "bundles": []
+      },
+      "old_name": "production"
+    }
+  ]
   """
 
-  @spec rename_relay_group(%Cog.Messages.Command{}, List.t) :: {:ok, String.t, Map.t} | {:error, any()}
-  def rename_relay_group(req, arg_list) do
-    if Helpers.flag?(req.options, "help") do
-      show_usage
-    else
-      case Helpers.get_args(arg_list, 2) do
-        {:ok, [old_name, new_name]} ->
-          case RelayGroups.by_name(old_name) do
-            {:ok, relay_group} ->
-              rename(relay_group, new_name)
-            {:error, :not_found} ->
-              {:error, {:relay_group_not_found, old_name}}
-          end
-        {:error, {:not_enough_args, _count}} ->
-          show_usage("Missing required arguments. Old relay name and new relay name are both required.")
-        {:error, {:too_many_args, _count}} ->
-          show_usage("Too many arguments. You can only rename one relay group at a time")
-        error ->
-          error
-      end
+  permission "manage_relays"
+
+  rule "when command is #{Cog.Util.Misc.embedded_bundle}:relay-group-rename must have #{Cog.Util.Misc.embedded_bundle}:manage_relays"
+
+  def handle_message(req, state) do
+    result = case Helpers.get_args(req.args, 2) do
+      {:ok, [old_name, new_name]} ->
+        case RelayGroups.by_name(old_name) do
+          {:ok, relay_group} ->
+            rename(relay_group, new_name)
+          {:error, :not_found} ->
+            {:error, {:relay_group_not_found, old_name}}
+        end
+      error ->
+        error
+    end
+
+    case result do
+      {:ok, template, data} ->
+        {:reply, req.reply_to, template, data, state}
+      {:error, err} ->
+        {:error, req.reply_to, Helpers.error(err), state}
     end
   end
 

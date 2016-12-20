@@ -1,4 +1,0 @@
-| Name |
-|------|
-~each var=$results~|~$item.name~|
-~end~

@@ -7,9 +7,9 @@ defmodule Cog.Chat.Slack.Templates.Embedded.RoleInfoTest do
                              "permissions" => [%{"bundle" => "site", "name" => "foo"}]}]}
 
     expected = """
-    *ID*: 123
-    *Name*: foo
-    *Permissions*: site:foo
+    *Name:* foo
+    *ID:* 123
+    *Permissions:* site:foo
     """ |> String.strip
 
     assert_rendered_template(:slack, :embedded, "role-info", data, {expected, []})
@@ -25,23 +25,21 @@ defmodule Cog.Chat.Slack.Templates.Embedded.RoleInfoTest do
                                                %{"bundle" => "operable", "name" => "blah"}]},
                            %{"id" => "789",
                              "name" => "baz",
-                             "permissions" => [%{"bundle" => "site", "name" => "foo"}]}
-
-                          ]}
+                             "permissions" => [%{"bundle" => "site", "name" => "foo"}]}]}
 
     expected = """
-    ```+------+-----+-------------------------+
-    | Name | ID  | Permissions             |
-    +------+-----+-------------------------+
-    | foo  | 123 | site:foo                |
-    | bar  | 456 | site:foo, operable:blah |
-    | baz  | 789 | site:foo                |
-    +------+-----+-------------------------+
-    ```
+    *Name:* foo
+    *ID:* 123
+    *Permissions:* site:foo
+    *Name:* bar
+    *ID:* 456
+    *Permissions:* site:foo, operable:blah
+    *Name:* baz
+    *ID:* 789
+    *Permissions:* site:foo
     """ |> String.strip
 
     assert_rendered_template(:slack, :embedded, "role-info", data, expected)
   end
-
 
 end

@@ -291,6 +291,65 @@ defmodule Cog.Repository.Bundles do
     end
   end
 
+  @doc """
+  Function specifically for querying bundle versions for the help command.
+  """
+  def for_help(bundle_name) do
+    # NOTE: This is kind of a complicated query that we're only using in one place,
+    # so I put everything here to make it more explicit and hopefully less
+    # confusing.
+    # This should also decrease the number of queries we make when users request help
+    # for a bundle
+
+    # This query returns a single bundle version from the db
+    # We make two queries. One to get the bundle version and another to load the
+    # bundle version's commands.
+    bundle_query =
+      from bundle_version in BundleVersion,
+      # manually specifying the joins allows us to preload associations in a single query
+      join:      bundle in assoc(bundle_version, :bundle),
+      left_join: enabled in assoc(bundle_version, :enabled_version_registration),
+      preload:   [:bundle],
+
+      # Fetch bundle versions mathcing the specified bundle_name
+      where:     bundle.name == ^bundle_name,
+
+      # Selecting the bundle and setting the status with a fragment.
+      # Setting the status in the db so we don't have to muck around with the
+      # returned struct.
+      select:    %{bundle_version |
+                   status: fragment("CASE WHEN ? = ? THEN 'enabled' ELSE 'disabled' END",
+                                    enabled.bundle_version_id,
+                                    bundle_version.id)},
+
+      # Put enabled bundle versions first and then order by the version number.
+      order_by:  [asc: enabled.bundle_version_id == bundle_version.id,
+                  desc: bundle_version.version],
+
+      # We only want the first result
+      limit: 1
+
+    # This query is used to preload commands
+    command_query =
+      from command_version in CommandVersion,
+      # To cut down on queries we join and preload the command versions command
+      join:     command in assoc(command_version, :command),
+      preload:  [command: command],
+
+      # Order command version by name
+      order_by: command.name
+
+    # Fetch the initial bundle version using the bundle_query
+    case Repo.one(bundle_query) do
+      nil ->
+        nil
+      %BundleVersion{}=bundle_version ->
+        bundle_version
+        # Preload the bundle version's commands using the command_query
+        |> Repo.preload([commands: (command_query)])
+    end
+  end
+
   def with_status_by_name(bundle_name) when is_binary(bundle_name) do
     query = from bv in Queries.BundleVersions.with_bundle_name(bundle_name),
             left_join: e in "enabled_bundle_versions",
@@ -327,7 +386,7 @@ defmodule Cog.Repository.Bundles do
     end
   end
 
-  @ doc """
+  @doc """
   Returns all bundle that are currently enabled
   """
   def enabled do

@@ -1,4 +1,6 @@
-| Bundle | Name |
-|--------|------|
-~each var=$results~|~$item.bundle~|~$item.name~|
+~each var=$results~
+~attachment color="gray"~
+**Name:** ~$item.name~
+**Bundle:** ~$item.bundle~
+~end~
 ~end~

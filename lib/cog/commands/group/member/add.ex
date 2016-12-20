@@ -1,38 +1,64 @@
 defmodule Cog.Commands.Group.Member.Add do
+  use Cog.Command.GenCommand.Base,
+    bundle: Cog.Util.Misc.embedded_bundle,
+    name: "group-member-add"
+
   require Cog.Commands.Helpers, as: Helpers
+  alias Cog.Commands.Group
+  alias Cog.V1.GroupView
   alias Cog.Repository.Groups
   alias Cog.Repository.Users
 
-  Helpers.usage """
-  Add users to user groups.
+  @description "Add users to user groups"
 
-  USAGE
-    group member add [FLAGS] <group-name> <user-name ...>
+  @arguments "<group-name> <user-name ...>"
 
-  ARGS
-    group-name    The group to add users to
-    user-name     List of one or more users to add to the group
+  @output_description "Returns the serialized group with the new member included"
 
-  FLAGS
-    -h, --help    Display this usage info
+  @output_example """
+  [
+    {
+      "roles": [],
+      "name": "engineering",
+      "members": [
+        {
+          "username": "vanstee",
+          "last_name": "Van Stee",
+          "id": "7cb7fba2-ea65-46a0-a8af-bea71df1ac00",
+          "first_name": "Patrick",
+          "email_address": "patrick@operable.io"
+        }
+      ],
+      "id": "0640f71f-3c1b-4d47-8b8b-c8765b115872"
+    }
+  ]
   """
 
-  @spec add_user(%Cog.Messages.Command{}, List.t) :: {:ok, String.t, Map.t} | {:error, any()}
-  def add_user(req, arg_list) do
-    if Helpers.flag?(req.options, "help") do
-      show_usage
-    else
-      case Helpers.get_args(arg_list, min: 2) do
-        {:ok, [group_name | usernames]} ->
-          case add(group_name, usernames) do
-            {:ok, group} ->
-              {:ok, "user-group-update-success", group}
-            error ->
-              error
-          end
-        {:error, {:under_min_args, _min}} ->
-          show_usage(error(:missing_args))
-      end
+  permission "manage_groups"
+  permission "manage_users"
+
+  rule ~s(when command is #{Cog.Util.Misc.embedded_bundle}:group-member-add must have #{Cog.Util.Misc.embedded_bundle}:manage_groups)
+  rule ~s(when command is #{Cog.Util.Misc.embedded_bundle}:group-member-add must have #{Cog.Util.Misc.embedded_bundle}:manage_users)
+
+  def handle_message(req, state) do
+    result = case Helpers.get_args(req.args, min: 2) do
+      {:ok, [group_name | usernames]} ->
+        case add(group_name, usernames) do
+          {:ok, group} ->
+            data = GroupView.render("command.json", %{group: group})
+            {:ok, "group-member-add", Map.put(data, :members_added, usernames)}
+          error ->
+            error
+        end
+      error ->
+        error
+    end
+
+    case result do
+      {:ok, template, data} ->
+        {:reply, req.reply_to, template, data, state}
+      {:error, err} ->
+        {:error, req.reply_to, Group.error(err), state}
     end
   end
 
@@ -50,9 +76,5 @@ defmodule Cog.Commands.Group.Member.Add do
       {:error, :not_found} ->
         {:error, {:resource_not_found, "user group", group_name}}
     end
-  end
-
-  defp error(:missing_args) do
-    "Missing required args. At a minimum you must include the user group and at least one user name to add"
   end
 end
