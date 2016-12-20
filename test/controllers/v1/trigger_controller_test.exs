@@ -69,8 +69,8 @@ defmodule Cog.V1.TriggerControllerTest do
   test "trigger creation works", %{authed: user} do
     conn = api_request(user, :post, "/v1/triggers",
                        body: %{"trigger" => %{"name" => "my_trigger",
-                                           "pipeline" => "echo foo",
-                                           "as_user" => "me"}})
+                                              "pipeline" => "echo foo",
+                                              "as_user" => user.username}})
     api_trigger = json_response(conn, 201)["trigger"]
     assert %{"name" => "my_trigger"} = api_trigger
 
@@ -91,6 +91,16 @@ defmodule Cog.V1.TriggerControllerTest do
     updated = json_response(conn, 200)["trigger"]
     assert %{"id" => ^id,
              "name" => "foo"} = updated
+  end
+
+  test "trigger creation with non-existent user fails", %{authed: user} do
+    conn = api_request(user,
+                       :post, "/v1/triggers",
+                       body: %{"trigger" => %{name: "echo",
+                                              pipeline: "echo foo",
+                                              as_user: "who_is_this"}})
+
+    assert %{"as_user" => ["does not exist"]} == json_response(conn, 422)["errors"]
   end
 
   test "trigger editing fails with bad parameters", %{authed: user} do

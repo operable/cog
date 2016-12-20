@@ -30,6 +30,8 @@ defmodule Cog.Models.User do
 
     has_many :tokens, Cog.Models.Token
 
+    has_many :triggers, Cog.Models.Trigger, foreign_key: :as_user, references: :username
+
     timestamps
   end
 
@@ -79,6 +81,13 @@ defmodule Cog.Models.User do
     |> validate_presence_on_insert(:password)
     |> encode_password
     |> unique_constraint(:username)
+  end
+
+  # Prevent deletion of the user if they're attached to any triggers
+  def delete_changeset(model) do
+    model
+    |> change
+    |> no_assoc_constraint(:triggers)
   end
 
   def validate_presence_on_insert(changeset, :password) do

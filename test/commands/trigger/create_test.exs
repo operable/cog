@@ -1,6 +1,8 @@
 defmodule Cog.Test.Commands.Trigger.CreateTest do
   use Cog.CommandCase, command_module: Cog.Commands.Trigger.Create
 
+  import Cog.Support.ModelUtilities, only: [user: 1]
+
   test "creating a trigger (simple)" do
     {:ok, payload} = new_req(args: ["foo", "echo stuff"])
     |> send_req()
@@ -16,6 +18,7 @@ defmodule Cog.Test.Commands.Trigger.CreateTest do
   end
 
   test "creating a trigger (complex)" do
+    user("bobby_tables")
     {:ok, payload} = new_req(args: ["foo", "echo stuff"],
                              options: %{"description" => "behold, a trigger",
                                         "enabled" => false,

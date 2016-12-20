@@ -22,13 +22,11 @@ defmodule Cog.Repository.TriggersTest do
 
   test "triggers can be created from a map of attributes" do
     attrs = %{name: "echo_message",
-              pipeline: "echo $body.message > chat://#general",
-              as_user: "marvin"}
+              pipeline: "echo $body.message > chat://#general"}
     {:ok, trigger} = Triggers.new(attrs)
     assert %Trigger{id: _,
                       name: "echo_message",
                       pipeline: "echo $body.message > chat://#general",
-                      as_user: "marvin",
                       timeout_sec: 30,
                       enabled: true,
                       description: nil} = trigger

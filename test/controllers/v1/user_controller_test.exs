@@ -137,6 +137,17 @@ defmodule Cog.V1.UserControllerTest do
     refute Repo.get(User, user.id)
   end
 
+  test "cannot delete a user when they have triggers", %{authed: requestor} do
+    user = user("user_with_triggers")
+    trigger(%{name: "cannot-delete-the-user",
+              pipeline: "echo 'NOPE'",
+              as_user: "user_with_triggers"})
+
+    conn = api_request(requestor, :delete, "/v1/users/#{user.id}")
+
+    assert json_response(conn, 422)["errors"] ==  %{"triggers" => ["are still associated to this entry"]}
+  end
+
   test "cannot list users without permission", %{unauthed: requestor} do
     conn = api_request(requestor, :get, "/v1/users")
     assert conn.halted

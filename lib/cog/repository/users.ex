@@ -118,9 +118,11 @@ defmodule Cog.Repository.Users do
   @doc """
   Deletes a user
   """
-  @spec delete(%User{}) :: {:ok, %User{}} | {:error, :not_found}
+  @spec delete(%User{}) :: {:ok, %User{}} | {:error, :not_found | Ecto.Changeset.t}
   def delete(%User{}=user) do
-    Repo.delete(user)
+    user
+    |> User.delete_changeset
+    |> Repo.delete
   end
 
   @doc """
