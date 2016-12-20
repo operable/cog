@@ -30,7 +30,7 @@ end
 # NOTE: Do not change this value unless you know what you're doing.
 # ========================================================================
 
-config :cog, :embedded_bundle_version, "0.17.0"
+config :cog, :embedded_bundle_version, "0.18.0"
 
 # ========================================================================
 # Chat Adapters
