@@ -1,5 +1,6 @@
 ~each var=$results as=relay~
 **Name:** ~$relay.name~
+**ID:** ~$relay.id~
 **Status:** ~$relay.status~
-**Relay Groups:** ~if cond=$relay.relay_groups empty?~No relay groups~end~~join var=$relay.relay_groups with=", "~~$item.name~~end~
+~if cond=$relay.relay_groups bound?~**Relay Groups:** ~if cond=$relay.relay_groups empty?~No relay groups~end~~join var=$relay.relay_groups with=", "~~$item.name~~end~~end~
 ~end~
