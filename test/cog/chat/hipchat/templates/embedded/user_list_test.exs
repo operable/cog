@@ -15,15 +15,21 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.UserListTest do
                              "last_name" => "Ops",
                              "email_address" => "chetops@example.com"}]}
     expected = """
-    <pre>+----------+------------+-----------+----------------------+
-    | Username | First Name | Last Name | Email                |
-    +----------+------------+-----------+----------------------+
-    | cog      | Cog        | McCog     | cog@example.com      |
-    | sprocket | Sprocket   | McCog     | sprocket@example.com |
-    | chetops  | Chet       | Ops       | chetops@example.com  |
-    +----------+------------+-----------+----------------------+
-    </pre>\
-    """
+    <strong>Username:</strong> cog<br/>
+    <strong>First Name:</strong> Cog<br/>
+    <strong>Last Name:</strong> McCog<br/>
+    <strong>Email:</strong> cog@example.com<br/>
+    <br/>
+    <strong>Username:</strong> sprocket<br/>
+    <strong>First Name:</strong> Sprocket<br/>
+    <strong>Last Name:</strong> McCog<br/>
+    <strong>Email:</strong> sprocket@example.com<br/>
+    <br/>
+    <strong>Username:</strong> chetops<br/>
+    <strong>First Name:</strong> Chet<br/>
+    <strong>Last Name:</strong> Ops<br/>
+    <strong>Email:</strong> chetops@example.com
+    """ |> String.replace("\n", "")
 
     assert_rendered_template(:hipchat, :embedded, "user-list", data, expected)
   end
@@ -38,15 +44,20 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.UserListTest do
                            %{"username" => "chetops",
                              "email_address" => "chetops@example.com"}]}
     expected = """
-    <pre>+----------+------------+-----------+----------------------+
-    | Username | First Name | Last Name | Email                |
-    +----------+------------+-----------+----------------------+
-    | cog      | Cog        |           | cog@example.com      |
-    | sprocket |            | McCog     | sprocket@example.com |
-    | chetops  |            |           | chetops@example.com  |
-    +----------+------------+-----------+----------------------+
-    </pre>\
-    """
+    <strong>Username:</strong> cog<br/>
+    <strong>First Name:</strong> Cog<br/>
+    <br/>
+    <strong>Email:</strong> cog@example.com<br/>
+    <br/>
+    <strong>Username:</strong> sprocket<br/>
+    <br/>
+    <strong>Last Name:</strong> McCog<br/>
+    <strong>Email:</strong> sprocket@example.com<br/>
+    <br/>
+    <strong>Username:</strong> chetops<br/>
+    <br/>
+    <strong>Email:</strong> chetops@example.com
+    """ |> String.replace("\n", "")
 
     assert_rendered_template(:hipchat, :embedded, "user-list", data, expected)
   end

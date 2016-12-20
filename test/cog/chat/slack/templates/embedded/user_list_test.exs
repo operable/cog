@@ -14,18 +14,29 @@ defmodule Cog.Chat.Slack.Templates.Embedded.UserListTest do
                              "first_name" => "Chet",
                              "last_name" => "Ops",
                              "email_address" => "chetops@example.com"}]}
-    expected = """
-    ```+----------+------------+-----------+----------------------+
-    | Username | First Name | Last Name | Email                |
-    +----------+------------+-----------+----------------------+
-    | cog      | Cog        | McCog     | cog@example.com      |
-    | sprocket | Sprocket   | McCog     | sprocket@example.com |
-    | chetops  | Chet       | Ops       | chetops@example.com  |
-    +----------+------------+-----------+----------------------+
-    ```
-    """ |> String.strip
 
-    assert_rendered_template(:slack, :embedded, "user-list", data, expected)
+    attachments = [
+      """
+      *Username:* cog
+      *First Name:* Cog
+      *Last Name:* McCog
+      *Email:* cog@example.com
+      """,
+      """
+      *Username:* sprocket
+      *First Name:* Sprocket
+      *Last Name:* McCog
+      *Email:* sprocket@example.com
+      """,
+      """
+      *Username:* chetops
+      *First Name:* Chet
+      *Last Name:* Ops
+      *Email:* chetops@example.com
+      """
+    ] |> Enum.map(&String.strip/1)
+
+    assert_rendered_template(:slack, :embedded, "user-list", data, {"", attachments})
   end
 
   test "handle when names aren't specified" do
@@ -37,17 +48,27 @@ defmodule Cog.Chat.Slack.Templates.Embedded.UserListTest do
                              "email_address" => "sprocket@example.com"},
                            %{"username" => "chetops",
                              "email_address" => "chetops@example.com"}]}
-    expected = """
-    ```+----------+------------+-----------+----------------------+
-    | Username | First Name | Last Name | Email                |
-    +----------+------------+-----------+----------------------+
-    | cog      | Cog        |           | cog@example.com      |
-    | sprocket |            | McCog     | sprocket@example.com |
-    | chetops  |            |           | chetops@example.com  |
-    +----------+------------+-----------+----------------------+
-    ```
-    """ |> String.strip
+    # TODO: Fix newlines here
+    attachments = [
+      """
+      *Username:* cog
+      *First Name:* Cog
 
-    assert_rendered_template(:slack, :embedded, "user-list", data, expected)
+      *Email:* cog@example.com
+      """,
+      """
+      *Username:* sprocket
+
+      *Last Name:* McCog
+      *Email:* sprocket@example.com
+      """,
+      """
+      *Username:* chetops
+
+      *Email:* chetops@example.com
+      """
+    ] |> Enum.map(&String.strip/1)
+
+    assert_rendered_template(:slack, :embedded, "user-list", data, {"", attachments})
   end
 end
