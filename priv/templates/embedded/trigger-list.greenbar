@@ -3,6 +3,7 @@
 ~attachment color="gray"~
 **Name:** ~$trigger.name~
 **ID:** ~$trigger.id~
+**Enabled:** ~$trigger.enabled~
 **Invocation URL:** ~$trigger.invocation_url~
 **Pipeline:** `~$trigger.pipeline~`
 ~end~
