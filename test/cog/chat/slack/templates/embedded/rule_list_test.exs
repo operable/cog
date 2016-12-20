@@ -11,18 +11,31 @@ defmodule Cog.Chat.Slack.Templates.Embedded.RuleListTest do
                            %{"command" => "foo:baz",
                              "rule" => "when command is foo:baz allow",
                              "id" => "789"}]}
-    expected = """
-    ```+---------+-------------------------------+-----+
-    | Command | Rule                          | ID  |
-    +---------+-------------------------------+-----+
-    | foo:foo | when command is foo:foo allow | 123 |
-    | foo:bar | when command is foo:bar allow | 456 |
-    | foo:baz | when command is foo:baz allow | 789 |
-    +---------+-------------------------------+-----+
-    ```
-    """ |> String.strip
+    attachments = [
+      """
+      *Command:* foo:foo
+      *ID:* 123
+      *Rule:*
 
-    assert_rendered_template(:slack, :embedded, "rule-list", data, expected)
+      ```when command is foo:foo allow```
+      """,
+      """
+      *Command:* foo:bar
+      *ID:* 456
+      *Rule:*
+
+      ```when command is foo:bar allow```
+      """, 
+      """
+      *Command:* foo:baz
+      *ID:* 789
+      *Rule:*
+
+      ```when command is foo:baz allow```
+      """
+    ] |> Enum.map(&String.strip/1)
+
+    assert_rendered_template(:slack, :embedded, "rule-list", data, {"", attachments})
   end
 
 end
