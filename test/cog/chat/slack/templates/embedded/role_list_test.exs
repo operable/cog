@@ -7,14 +7,9 @@ defmodule Cog.Chat.Slack.Templates.Embedded.RoleListTest do
                            %{"name" => "baz"}]}
 
     expected = """
-    ```+------+
-    | Name |
-    +------+
-    | foo  |
-    | bar  |
-    | baz  |
-    +------+
-    ```
+    foo
+    bar
+    baz
     """ |> String.strip
 
     assert_rendered_template(:slack, :embedded, "role-list", data, expected)

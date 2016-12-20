@@ -6,9 +6,11 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.RoleInfoTest do
                              "name" => "foo",
                              "permissions" => [%{"bundle" => "site", "name" => "foo"}]}]}
 
-    expected = "<strong>ID</strong>: 123<br/>" <>
-      "<strong>Name</strong>: foo<br/>" <>
-      "<strong>Permissions</strong>: site:foo"
+    expected = """
+    <strong>Name:</strong> foo<br/>
+    <strong>ID:</strong> 123<br/>
+    <strong>Permissions:</strong> site:foo
+    """ |> String.replace("\n", "")
 
     assert_rendered_template(:hipchat, :embedded, "role-info", data, expected)
   end
@@ -28,15 +30,16 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.RoleInfoTest do
                           ]}
 
     expected = """
-    <pre>+------+-----+-------------------------+
-    | Name | ID  | Permissions             |
-    +------+-----+-------------------------+
-    | foo  | 123 | site:foo                |
-    | bar  | 456 | site:foo, operable:blah |
-    | baz  | 789 | site:foo                |
-    +------+-----+-------------------------+
-    </pre>\
-    """
+    <strong>Name:</strong> foo<br/>
+    <strong>ID:</strong> 123<br/>
+    <strong>Permissions:</strong> site:foo<br/>
+    <strong>Name:</strong> bar<br/>
+    <strong>ID:</strong> 456<br/>
+    <strong>Permissions:</strong> site:foo, operable:blah<br/>
+    <strong>Name:</strong> baz<br/>
+    <strong>ID:</strong> 789<br/>
+    <strong>Permissions:</strong> site:foo
+    """ |> String.replace("\n", "")
 
     assert_rendered_template(:hipchat, :embedded, "role-info", data, expected)
   end
