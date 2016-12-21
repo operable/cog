@@ -12,26 +12,16 @@ defmodule Cog.Command.ReplyHelper do
   provider), no template rendering is performed, and the raw data
   itself is sent instead.
   """
+
   def send(common_template, message_data, room, adapter, connection) do
-    # TODO: it'd be nice to generate directives only if necessary :/
-    # As it is, though, this will currently only happen if we're
-    # sending a common template to the HTTP provider, so we can deal
-    # with this later.
     directives = Evaluator.evaluate(common_template, message_data)
-    payload = choose_payload(adapter, directives, message_data)
-
-    publish(connection, adapter, room, payload)
-  end
-
-  def choose_payload(adapter, directives, message_data) do
-    if Adapter.is_chat_provider?(adapter) do
+    payload = if Adapter.is_chat_provider?(adapter) do
       directives
     else
       message_data
     end
-  end
 
-  def publish(connection, adapter, room, payload),
-    do: Adapter.send(connection, adapter, room, payload)
+    Adapter.send(connection, adapter, room, payload)
+  end
 
 end
