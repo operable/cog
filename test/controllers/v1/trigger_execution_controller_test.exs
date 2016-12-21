@@ -47,15 +47,6 @@ defmodule Cog.V1.TriggerExecutionControllerTest do
     assert "Bad ID format" = json_response(conn, 400)["errors"]
   end
 
-  test "executing a trigger as a non-existent user fails", %{conn: conn} do
-    trigger = trigger(%{name: "echo",
-                  pipeline: "echo foo",
-                  as_user: "nobody_i_know"})
-
-    conn = post(conn, "/v1/triggers/#{trigger.id}", %{})
-    assert "Configured trigger user does not exist" = json_response(conn, 422)["errors"]
-  end
-
   test "redirecting elsewhere results in 204 (OK, no content), as well as a message to the chat adapter", %{conn: conn} do
     {:ok, snoop} = Snoop.adapter_traffic
 

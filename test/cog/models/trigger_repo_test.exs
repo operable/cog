@@ -7,8 +7,7 @@ defmodule Cog.Models.TriggerRepoTest do
   alias Cog.Models.Trigger
 
   @valid_attrs %{name: "echo_message",
-                 pipeline: "echo $body.message > chat://#general",
-                 as_user: "marvin"}
+                 pipeline: "echo $body.message > chat://#general"}
 
   test "trigger names are unique" do
     assert %Trigger{} = Trigger.changeset(%Trigger{}, @valid_attrs) |> Repo.insert!

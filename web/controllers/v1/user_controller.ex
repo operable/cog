@@ -101,6 +101,10 @@ defmodule Cog.V1.UserController do
        conn
        |> put_status(:not_found)
        |> json(%{errors: "User not found"})
+      {:error, changeset} ->
+        conn
+        |> put_status(:unprocessable_entity)
+        |> render(Cog.ChangesetView, "error.json", changeset: changeset)
     end
   end
 end
