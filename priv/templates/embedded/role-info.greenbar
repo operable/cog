@@ -1,5 +1,4 @@
 ~each var=$results as=role~
-
 **Name:** ~$role.name~
 **ID:** ~$role.id~
 **Permissions:** ~if cond=$role.permissions empty?~No permissions~end~~join var=$role.permissions with=", "~~$item.bundle~:~$item.name~~end~

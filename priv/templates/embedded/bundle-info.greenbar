@@ -1,10 +1,8 @@
 ~each var=$results as=bundle~
 **ID:** ~$bundle.id~
 **Name:** ~$bundle.name~
-**Versions:** ~join var=$bundle.versions with=", "~~$item.version~~end~
-~if cond=$bundle.incompatible_versions not_empty?~
-**Incompatible Versions:** ~join var=$bundle.incompatible_versions with=", "~~$item.version~~end~
-~end~
-**Version Enabled:** ~if cond=$bundle.enabled_version bound?~~$bundle.enabled_version.version~~end~~if cond=$bundle.enabled_version not_bound?~Disabled~end~
 **Relay Groups:** ~if cond=$bundle.relay_groups empty?~Unassigned~end~~join var=$bundle.relay_groups with=", "~~$item.name~~end~
+**Versions:** ~join var=$bundle.versions with=", "~~$item.version~~end~
+**Version Enabled:** ~if cond=$bundle.enabled_version bound?~~$bundle.enabled_version.version~~end~~if cond=$bundle.enabled_version not_bound?~Disabled~end~
+~if cond=$bundle.incompatible_versions not_empty?~**Incompatible Versions:** ~join var=$bundle.incompatible_versions with=", "~~$item.version~~end~~end~
 ~end~

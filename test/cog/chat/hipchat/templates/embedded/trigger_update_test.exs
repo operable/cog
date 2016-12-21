@@ -10,16 +10,8 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.TriggerUpdateTest do
                              "as_user" => "bobby_tables",
                              "timeout_sec" => 30,
                              "invocation_url" => "https://cog.mycompany.com/invoke_stuff"}]}
-    expected = "<strong>Trigger Updated</strong><br/><br/>" <>
-      "<strong>ID</strong>: abc123<br/>" <>
-      "<strong>Name</strong>: test_trigger<br/>" <>
-      "<strong>Description</strong>: Tests things!<br/>" <>
-      "<strong>Enabled?</strong>: true<br/>" <>
-      "<strong>Pipeline</strong>: <code>echo 'Something just happened'</code><br/>" <>
-      "<strong>As User</strong>: bobby_tables<br/>" <>
-      "<strong>Timeout (sec)</strong>: 30<br/>" <>
-      "<strong>Invocation URL</strong>: https://cog.mycompany.com/invoke_stuff"
 
+    expected = "Updated trigger 'test_trigger'"
 
     assert_rendered_template(:hipchat, :embedded, "trigger-update", data, expected)
   end
@@ -31,15 +23,8 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.TriggerUpdateTest do
                              "pipeline" => "echo 'Something just happened'",
                              "timeout_sec" => 30,
                              "invocation_url" => "https://cog.mycompany.com/invoke_stuff"}]}
-    expected = "<strong>Trigger Updated</strong><br/><br/>" <>
-      "<strong>ID</strong>: abc123<br/>" <>
-      "<strong>Name</strong>: test_trigger<br/>" <>
-      "<strong>Description</strong>: <br/>" <>
-      "<strong>Enabled?</strong>: true<br/>" <>
-      "<strong>Pipeline</strong>: <code>echo 'Something just happened'</code><br/>" <>
-      "<strong>As User</strong>: <br/>" <>
-      "<strong>Timeout (sec)</strong>: 30<br/>" <>
-      "<strong>Invocation URL</strong>: https://cog.mycompany.com/invoke_stuff"
+
+    expected = "Updated trigger 'test_trigger'"
 
     assert_rendered_template(:hipchat, :embedded, "trigger-update", data, expected)
   end
@@ -59,16 +44,11 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.TriggerUpdateTest do
                             "as_user" => "bobby_tables",
                             "timeout_sec" => 30,
                             "invocation_url" => "https://cog.mycompany.com/invoke_other_stuff"}]}
+
     expected = """
-    <strong>Triggers Updated</strong><br/>\
-    <pre>+--------+----------------+---------------+----------+-------------------------------------+--------------+---------+----------------------------------------------+
-    | ID     | Name           | Description   | Enabled? | Pipeline                            | As User      | Timeout | Invocation URL                               |
-    +--------+----------------+---------------+----------+-------------------------------------+--------------+---------+----------------------------------------------+
-    | abc123 | test_trigger   | Tests things! | true     | echo 'Something just happened'      |              | 30      | https://cog.mycompany.com/invoke_stuff       |
-    | abc456 | test_trigger_2 |               | false    | echo 'Something else just happened' | bobby_tables | 30      | https://cog.mycompany.com/invoke_other_stuff |
-    +--------+----------------+---------------+----------+-------------------------------------+--------------+---------+----------------------------------------------+
-    </pre>\
-    """
+    Updated trigger 'test_trigger'<br/>
+    Updated trigger 'test_trigger_2'
+    """ |> String.replace("\n", "")
 
     assert_rendered_template(:hipchat, :embedded, "trigger-update", data, expected)
   end

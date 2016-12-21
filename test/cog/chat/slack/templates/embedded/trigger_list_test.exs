@@ -19,21 +19,9 @@ defmodule Cog.Chat.Slack.Templates.Embedded.TriggerListTest do
                             "timeout_sec" => 30,
                             "invocation_url" => "https://cog.mycompany.com/invoke_other_stuff"}]}
     attachments = [
-      """
-      *Name:* test_trigger
-      *ID:* abc123
-      *Enabled:* true
-      *Invocation URL:* https://cog.mycompany.com/invoke_stuff
-      *Pipeline:* `echo 'Something just happened'`
-      """,
-      """
-      *Name:* test_trigger_2
-      *ID:* abc456
-      *Enabled:* false
-      *Invocation URL:* https://cog.mycompany.com/invoke_other_stuff
-      *Pipeline:* `echo 'Something else just happened'`
-      """
-    ] |> Enum.map(&String.strip/1)
+      "test_trigger (enabled)",
+      "test_trigger_2 (disabled)"
+    ]
 
     assert_rendered_template(:slack, :embedded, "trigger-list", data, {"", attachments})
   end

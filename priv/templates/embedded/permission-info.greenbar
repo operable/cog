@@ -1,12 +1,4 @@
-~if cond=length($results) == 1~
-**ID**: ~$results[0].id~
-**Bundle**: ~$results[0].bundle~
-**Name**: ~$results[0].name~
-~end~
-~if cond=length($results) > 1~
-| Bundle | Name | ID |
-|--------|------|----|
-~each var=$results~
-|~$item.bundle~|~$item.name~|~$item.id~|
-~end~
+~each var=$results as=permission~
+**Name:** ~$permission.bundle~:~$permission.name~
+**ID:** ~$permission.id~
 ~end~

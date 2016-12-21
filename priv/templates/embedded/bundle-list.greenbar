@@ -2,15 +2,13 @@
 
 ~if cond=$item.enabled_version bound?~
 ~attachment color="green"~
-**Name:** ~$item.name~
-**Version Enabled:** ~$item.enabled_version.version~
+~$item.name~ (~$item.enabled_version.version~)
 ~end~
 ~end~
 
 ~if cond=$item.enabled_version not_bound?~
 ~attachment color="red"~
-**Name:** ~$item.name~
-**Version Enabled:** Disabled
+~$item.name~ (disabled)
 ~end~
 ~end~
 

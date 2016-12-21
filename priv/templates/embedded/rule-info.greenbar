@@ -1,11 +1,10 @@
-~if cond=length($results) == 1~
-**ID**: ~$results[0].id~
-**Command**: ~$results[0].command_name~
-**Rule**: ~$results[0].rule~
-~end~
-~if cond=length($results) > 1~
-| Command | Rule | ID |
-|---------|------|----|
-~each var=$results~|~$item.command_name~|~$item.rule~|~$item.id~|
-~end~
+~each var=$results as=rule~
+**ID:** ~$rule.id~
+**Command:** ~$rule.command_name~
+**Rule:**
+
+```
+~$rule.rule~
+```
+
 ~end~

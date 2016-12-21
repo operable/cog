@@ -1,3 +1,15 @@
 ~each var=$results as=role~
-~$role.name~
+
+~if cond=$role.permissions not_empty?~
+~attachment color="blue"~
+~$role.name~ (~count var=$role.permissions~ permissions)
+~end~
+~end~
+
+~if cond=$role.permissions empty?~
+~attachment color="gray"~
+~$role.name~ (0 permissions)
+~end~
+~end~
+
 ~end~

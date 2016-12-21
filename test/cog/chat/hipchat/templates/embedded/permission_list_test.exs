@@ -7,14 +7,9 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.PermissionListTest do
                            %{"bundle" => "site", "name" => "baz"}]}
 
     expected = """
-    <strong>Name:</strong> foo<br/>
-    <strong>Bundle:</strong> site<br/>
-    <br/>
-    <strong>Name:</strong> bar<br/>
-    <strong>Bundle:</strong> site<br/>
-    <br/>
-    <strong>Name:</strong> baz<br/>
-    <strong>Bundle:</strong> site
+    site:foo<br/>
+    site:bar<br/>
+    site:baz
     """ |> String.replace("\n", "")
 
     assert_rendered_template(:hipchat, :embedded, "permission-list", data, expected)

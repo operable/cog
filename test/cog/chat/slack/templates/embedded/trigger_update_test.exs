@@ -11,16 +11,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.TriggerUpdateTest do
                              "timeout_sec" => 30,
                              "invocation_url" => "https://cog.mycompany.com/invoke_stuff"}]}
     expected = """
-    *Trigger Updated*
-
-    *ID*: abc123
-    *Name*: test_trigger
-    *Description*: Tests things!
-    *Enabled?*: true
-    *Pipeline*: `echo 'Something just happened'`
-    *As User*: bobby_tables
-    *Timeout (sec)*: 30
-    *Invocation URL*: https://cog.mycompany.com/invoke_stuff
+    Updated trigger 'test_trigger'
     """ |> String.strip
 
     assert_rendered_template(:slack, :embedded, "trigger-update", data, {expected, []})
@@ -34,14 +25,7 @@ defmodule Cog.Chat.Slack.Templates.Embedded.TriggerUpdateTest do
                              "timeout_sec" => 30,
                              "invocation_url" => "https://cog.mycompany.com/invoke_stuff"}]}
     expected = """
-    *Trigger Updated*
-
-    *ID*: abc123
-    *Name*: test_trigger
-    *Description*: \n*Enabled?*: true
-    *Pipeline*: `echo 'Something just happened'`
-    *As User*: \n*Timeout (sec)*: 30
-    *Invocation URL*: https://cog.mycompany.com/invoke_stuff
+    Updated trigger 'test_trigger'
     """ |> String.strip
 
     assert_rendered_template(:slack, :embedded, "trigger-update", data, {expected, []})
@@ -63,15 +47,8 @@ defmodule Cog.Chat.Slack.Templates.Embedded.TriggerUpdateTest do
                             "timeout_sec" => 30,
                             "invocation_url" => "https://cog.mycompany.com/invoke_other_stuff"}]}
     expected = """
-    *Triggers Updated*
-
-    ```+--------+----------------+---------------+----------+-------------------------------------+--------------+---------+----------------------------------------------+
-    | ID     | Name           | Description   | Enabled? | Pipeline                            | As User      | Timeout | Invocation URL                               |
-    +--------+----------------+---------------+----------+-------------------------------------+--------------+---------+----------------------------------------------+
-    | abc123 | test_trigger   | Tests things! | true     | echo 'Something just happened'      |              | 30      | https://cog.mycompany.com/invoke_stuff       |
-    | abc456 | test_trigger_2 |               | false    | echo 'Something else just happened' | bobby_tables | 30      | https://cog.mycompany.com/invoke_other_stuff |
-    +--------+----------------+---------------+----------+-------------------------------------+--------------+---------+----------------------------------------------+
-    ```
+    Updated trigger 'test_trigger'
+    Updated trigger 'test_trigger_2'
     """ |> String.strip
 
     assert_rendered_template(:slack, :embedded, "trigger-update", data, expected)
