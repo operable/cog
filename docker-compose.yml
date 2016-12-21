@@ -1,36 +1,44 @@
 # Example docker-compose file for Cog
 #
-# This is meant to be a minimal example of how to run Cog, connecting
-# to Slack, using docker-compose. To use it, copy `docker-compose.override.example.yml` to
-# `docker-compose.override.yml` and export the variables defined in the
-# `environment` stanzas below, and run
+# This is intended as a minimal example of running an instance of Cog connected
+# to Slack or Hipchat. To get started, you should create a new configuration
+# based on your chat provider using the provided templates. There should be
+# two override files in the same directory as this file:
 #
-#     docker-compose up
+# docker-compose.override.hipchat_example.yml
+# docker-compose.override.slack_example.yml
 #
-# For the sake of this example, you will need to have the following
-# environment variables exported in your local environment:
+# Select the one that matches your chat provider, and copy it to the same
+# directory with the name docker-compose.override.yml.
 #
-#    * SLACK_API_TOKEN
+# Next, you need to export some environment variables in the environment that
+# docker-compose is called from:
+#
 #    * COG_HOST - this is not a Cog environment variable per se, but
 #      one specifically for this docker-compose example. You should
 #      set this to the host that cog can be accessed "from the
 #      outside". If using docker-machine, for example, you could set
 #      this to `docker-machine ip default`
+#    * Provider-specific API configuration options are listed in the
+#      docker-compose.override.yml file that you copied above and also
+#      need to be set in order for Cog to connect to your provider.
+#
+# Once you have the required configuration exported, start Cog by running:
+# docker-compose up
 #
 # The Cog API will be available on port 80 of $COG_HOST, while
 # triggers can be invoked on port 3000.
 #
-# For simplicity, things like Postgres credentials are hard-coded, but
-# those can be modified to your taste.
+# Note that this example is not intended for production use and cuts some
+# corners for the sake of simplicity. Examples include hard-coded credentials
+# for Postgres, persistence of Postgres and log data, and customization of
+# other Cog configuration values.
 #
-# To see all the environment variables that affect Cog's behavior,
-# please see the online documentation at
+# For complete installation and administration documentation, you should refer
+# to the Cog Book, which can be found at:
 #
-#   * http://docs.operable.io/docs/cog-environment-variables
-#   * http://docs.operable.io/docs/relay-environment-variables
+# https://cog-book.operable.io/
 #
-# Add the environment variables you wish to modify to the stanzas
-# below (in the `docker-compose.override.yml` file).
 
 postgres:
   image: postgres:9.5
