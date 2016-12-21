@@ -1,22 +1,11 @@
 defmodule Cog.Events.PipelineEvent do
   @moduledoc """
-  Provides functions for generating command pipeline execution events.
-  """
+  Encapsulates information about command pipeline execution
+  events. Each event is a map; all events share a core set of fields,
+  while each event sub-type will have an additional set of fields
+  particular to that sub-type.
 
-  import Cog.Events.Util
-
-  @typedoc """
-  One of the valid kinds of events that can be emitted by a pipeline
-  """
-  @type event_label :: :pipeline_initialized |
-                       :command_dispatched |
-                       :pipeline_succeeded |
-                       :pipeline_failed
-
-  @typedoc """
-  Encapsulates information about command pipeline execution events.
-
-  # Fields
+  # Common Fields
 
   * `pipeline_id`: The unique identifier of the pipeline emitting the
   event. Can be used to correlate events from the same pipeline
@@ -26,20 +15,16 @@ defmodule Cog.Events.PipelineEvent do
   recorded.
 
   * `timestamp`: When the event was created, in UTC, as an ISO-8601
-  extended-format string (e.g. `"2016-01-07T15:08:00Z"`). For
+  extended-format string (e.g. `"2016-01-07T15:08:00.000000Z"`). For
   pipelines that execute in sub-second time, also see
   `elapsed_microseconds`.
 
   * `elapsed_microseconds`: Number of microseconds elapsed since
-  beginning of pipeline execution to the creation of this event. Can
-  be used to order events from a single pipeline.
-
-  * `data`: Map of arbitrary event-specific data. See below for details.
-
+  beginning of pipeline execution to the creation of this event.
 
   # Event-specific Data
 
-  Depending on the type of event, the `data` map will contain
+  Depending on the type of event, the map will contain additional
   different keys. These are detailed here for each event.
 
   ## `pipeline_initialized`
@@ -61,12 +46,15 @@ defmodule Cog.Events.PipelineEvent do
     event will be created for each discrete command.
   * `relay`: (String) the unique identifier of the Relay the command was
     dispatched to.
+  * `cog_env`: (JSON string) the calling environment sent to the
+    command. The value is presented formally as a string, not a map.
 
   ## `pipeline_succeeded`
 
-  * `result`: (JSON) the JSON structure that resulted from the successful
-    completion of the entire pipeline. This is the raw data produced
-    by the pipeline, prior to any template application.
+  * `result`: (JSON string) the JSON structure that resulted from the
+    successful completion of the entire pipeline. This is the raw data
+    produced by the pipeline, prior to any template application. The
+    value is presented formally as a string, not a list or map.
 
   ## `pipeline_failed`
 
@@ -75,18 +63,16 @@ defmodule Cog.Events.PipelineEvent do
     the error
 
   """
-  @type t :: %__MODULE__{pipeline_id: String.t,
-                         event: event_label,
-                         timestamp: String.t,
-                         elapsed_microseconds: non_neg_integer(),
-                         data: map}
-  defstruct [
-    pipeline_id: nil,
-    event: nil,
-    timestamp: nil,
-    elapsed_microseconds: 0,
-    data: %{}
-  ]
+
+  import Cog.Events.Util
+
+  @typedoc """
+  One of the valid kinds of events that can be emitted by a pipeline
+  """
+  @type event_label :: :pipeline_initialized |
+                       :command_dispatched |
+                       :pipeline_succeeded |
+                       :pipeline_failed
 
   @doc """
   Create a `pipeline_initialized` event
@@ -104,14 +90,14 @@ defmodule Cog.Events.PipelineEvent do
   def dispatched(pipeline_id, start, command, relay, cog_env) do
     new(pipeline_id, :command_dispatched, start, %{command_text: command,
                                                    relay: relay,
-                                                   cog_env: cog_env})
+                                                   cog_env: Poison.encode!(cog_env)})
   end
 
   @doc """
   Create a `pipeline_succeeded` event
   """
   def succeeded(pipeline_id, start, result),
-    do: new(pipeline_id, :pipeline_succeeded, start, %{result: result})
+    do: new(pipeline_id, :pipeline_succeeded, start, %{result: Poison.encode!(result)})
 
   @doc """
   Create a `pipeline_failed` event
@@ -122,7 +108,7 @@ defmodule Cog.Events.PipelineEvent do
   end
 
   # Centralize common event creation logic
-  defp new(pipeline_id, event, start, data) do
+  defp new(pipeline_id, event, start, extra_fields) do
     {now, elapsed_us} = case event do
                           :pipeline_initialized -> {start, 0}
                           _ ->
@@ -130,11 +116,11 @@ defmodule Cog.Events.PipelineEvent do
                             {now, elapsed(start, now)}
                         end
 
-    %__MODULE__{pipeline_id: pipeline_id,
+    Map.merge(extra_fields,
+              %{pipeline_id: pipeline_id,
                 event: event,
                 elapsed_microseconds: elapsed_us,
-                timestamp: Calendar.ISO.to_string(now),
-                data: data}
+                timestamp: Calendar.ISO.to_string(now)})
   end
 
 end
