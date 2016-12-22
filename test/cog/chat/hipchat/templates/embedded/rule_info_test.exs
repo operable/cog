@@ -8,7 +8,6 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.RuleInfoTest do
 
     expected = """
     <strong>ID:</strong> 123<br/>
-    <strong>Command:</strong> foo:foo<br/>
     <strong>Rule:</strong><br/>
     <pre>when command is foo:foo allow</pre>
     """ |> String.replace("\n", "")
