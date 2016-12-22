@@ -6,6 +6,8 @@ defmodule Cog.V1.BundlesControllerTest do
 
   @bad_uuid "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
 
+  @empty_config_file %{"cog_bundle_version" => Spanner.Config.current_config_version()}
+
   setup do
     # Requests handled by the role controller require this permission
     required_permission = permission("#{Cog.Util.Misc.embedded_bundle}:manage_commands")
@@ -169,9 +171,9 @@ defmodule Cog.V1.BundlesControllerTest do
   end
 
   test "shows disabled bundle", %{authed: requestor} do
-    {:ok, _version3} = Bundles.install(%{"name" => "foo", "version" => "3.0.0", "config_file" => %{}})
-    {:ok, _version2} = Bundles.install(%{"name" => "foo", "version" => "2.0.0", "config_file" => %{}})
-    {:ok, version1} = Bundles.install(%{"name" => "foo", "version" => "1.0.0", "config_file" => %{}})
+    {:ok, _version3} = Bundles.install(%{"name" => "foo", "version" => "3.0.0", "config_file" => @empty_config_file})
+    {:ok, _version2} = Bundles.install(%{"name" => "foo", "version" => "2.0.0", "config_file" => @empty_config_file})
+    {:ok, version1} = Bundles.install(%{"name" => "foo", "version" => "1.0.0", "config_file" => @empty_config_file})
 
     bundle = version1.bundle
 
@@ -191,11 +193,12 @@ defmodule Cog.V1.BundlesControllerTest do
   end
 
   test "shows enabled bundle", %{authed: requestor} do
-    {:ok, _version3} = Bundles.install(%{"name" => "foo", "version" => "3.0.0", "config_file" => %{}})
+    {:ok, _version3} = Bundles.install(%{"name" => "foo", "version" => "3.0.0", "config_file" => @empty_config_file})
     {:ok, version2}  = Bundles.install(%{"name" => "foo", "version" => "2.0.0", "config_file" => %{
+                                         "cog_bundle_version" => Spanner.Config.current_config_version(),
                                           "permissions" => ["foo:bar"],
                                           "commands" => %{"blah" => %{}}}})
-    {:ok, version1}  = Bundles.install(%{"name" => "foo", "version" => "1.0.0", "config_file" => %{}})
+    {:ok, version1}  = Bundles.install(%{"name" => "foo", "version" => "1.0.0", "config_file" => @empty_config_file})
 
     :ok = Bundles.set_bundle_version_status(version2, :enabled)
     bundle = version1.bundle
@@ -309,11 +312,12 @@ defmodule Cog.V1.BundlesControllerTest do
   end
 
   test "shows bundle versions", %{authed: requestor} do
-    {:ok, version1}  = Bundles.install(%{"name" => "foo", "version" => "1.0.0", "config_file" => %{}})
+    {:ok, version1}  = Bundles.install(%{"name" => "foo", "version" => "1.0.0", "config_file" => @empty_config_file})
     {:ok, _version2}  = Bundles.install(%{"name" => "foo", "version" => "2.0.0", "config_file" => %{
+                                          "cog_bundle_version" => Spanner.Config.current_config_version(),
                                           "permissions" => ["foo:bar"],
                                           "commands" => %{"blah" => %{}}}})
-    {:ok, _version3} = Bundles.install(%{"name" => "foo", "version" => "3.0.0", "config_file" => %{}})
+    {:ok, _version3} = Bundles.install(%{"name" => "foo", "version" => "3.0.0", "config_file" => @empty_config_file})
 
     conn = api_request(requestor, :get, "/v1/bundles/#{version1.bundle.id}/versions")
 

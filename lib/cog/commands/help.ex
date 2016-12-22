@@ -61,7 +61,8 @@ defmodule Cog.Commands.Help do
   # When help is called with no arguments we return the list of installed bundles
   def handle_message(%{args: []} = req, state) do
     bundles = %{enabled: Repo.preload(Bundles.enabled, :bundle),
-                disabled: Repo.preload(Bundles.highest_disabled_versions, :bundle)}
+                disabled: Repo.preload(Bundles.highest_disabled_versions, :bundle),
+                incompatible: Repo.preload(Bundles.highest_incompatible_versions, :bundle)}
     {:reply, req.reply_to, "help-bundles", bundles, state}
   end
   # When called with arguments the user could be requesting help for either a bundle or
