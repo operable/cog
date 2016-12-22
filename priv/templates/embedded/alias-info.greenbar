@@ -1,5 +1,4 @@
 ~each var=$results~
-**Name:** ~$item.name~
-**Visibility:** ~$item.visibility~
+**Name:** ~$item.visibility~:~$item.name~
 **Pipeline:** `~$item.pipeline~`
 ~end~
