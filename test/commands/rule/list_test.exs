@@ -6,7 +6,7 @@ defmodule Cog.Test.Commands.Rule.ListTest do
   setup :with_bundle
 
   test "listing rules" do
-    response = new_req(options: %{"command" => "test-bundle:st-echo"})
+    response = new_req(%{args: ["test-bundle:st-echo"]})
                |> send_req()
                |> unwrap()
 
@@ -15,7 +15,7 @@ defmodule Cog.Test.Commands.Rule.ListTest do
   end
 
   test "error when listing rules for an unrecognized command" do
-    error = new_req(options: %{"command" => "not_really:a_command"})
+    error = new_req(%{args: ["not_really:a_command"]})
             |> send_req()
             |> unwrap_error()
 
@@ -24,7 +24,7 @@ defmodule Cog.Test.Commands.Rule.ListTest do
 
   @tag :with_disabled_bundle
   test "listing rules for a disabled command fails" do
-    error = new_req(options: %{"command" => "test-bundle:st-echo"})
+    error = new_req(%{args: ["test-bundle:st-echo"]})
             |> send_req()
             |> unwrap_error()
 

@@ -1,8 +1,0 @@
-~each var=$results as=user~
-~attachment color="gray"~
-**Username:** ~$user.username~
-~if cond=$user.first_name bound?~**First Name:** ~$user.first_name~~end~
-~if cond=$user.last_name bound?~**Last Name:** ~$user.last_name~~end~
-**Email:** ~$user.email_address~
-~end~
-~end~

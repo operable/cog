@@ -15,7 +15,7 @@ defmodule Cog.Test.Commands.Rule.InfoTest do
               |> unwrap()
 
     assert %{id: id,
-             command_name: "operable:rule-info",
+             command: "operable:rule-info",
              rule: "when command is operable:rule-info allow"} == payload
   end
 
