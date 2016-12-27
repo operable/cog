@@ -3,7 +3,7 @@ use Mix.Config
 config :lager, :handlers,
   [{LagerLogger, [level: :error]}]
 
-config :cog, Carrier.Messaging.Connection,
+config :cog, Carrier.Connection,
   host: "127.0.0.1",
   port: 1883
 

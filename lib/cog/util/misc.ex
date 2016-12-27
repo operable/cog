@@ -24,7 +24,7 @@ defmodule Cog.Util.Misc do
   """
   def chat_adapter_module do
     # TODO: really "chat provider name"
-    config = Application.fetch_env!(:cog, Cog.Chat.Adapter)
+    config = Application.fetch_env!(:cog, CogChat.Adapter)
     case Keyword.fetch(config, :chat) do
       {:ok, name} when is_atom(name) ->
         {:ok, Atom.to_string(name)}

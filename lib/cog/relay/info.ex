@@ -17,7 +17,7 @@ defmodule Cog.Relay.Info do
   require Logger
   use GenServer
 
-  alias Carrier.Messaging
+  alias Carrier.Connection
   alias Cog.Repo
   alias Cog.Models.Relay
   alias Cog.Repository.Bundles
@@ -28,10 +28,10 @@ defmodule Cog.Relay.Info do
   end
 
   def init(_) do
-    case Messaging.Connection.connect() do
+    case Connection.connect() do
       {:ok, conn} ->
         Logger.info("Starting relay information service")
-        Messaging.Connection.subscribe(conn, @relay_info_topic)
+        Connection.subscribe(conn, @relay_info_topic)
         {:ok, %__MODULE__{mq_conn: conn}}
       error ->
         Logger.error("Error starting relay info: #{inspect error}")
@@ -113,7 +113,7 @@ defmodule Cog.Relay.Info do
   end
 
   defp respond(payload, reply_to, state) do
-    Messaging.Connection.publish(state.mq_conn, payload, routed_by: reply_to)
+    Connection.publish(state.mq_conn, payload, routed_by: reply_to)
   end
 
   defp calculate_signature(configs) do

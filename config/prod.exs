@@ -6,5 +6,5 @@ config :lager, :handlers,
 config :comeonin,
   bcrypt_log_rounds: 14
 
-config :cog, Cog.Chat.Adapter,
+config :cog, CogChat.Adapter,
   cache_ttl: {60, :sec}

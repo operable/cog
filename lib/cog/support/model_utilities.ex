@@ -121,7 +121,7 @@ defmodule Cog.Support.ModelUtilities do
   def with_chat_handle_for(%User{}=internal_user, provider) do
     provider =  ChatProvider |> Repo.get_by!(name: String.downcase(provider))
     handle = internal_user.username
-    {:ok, external_user} = Cog.Chat.Adapter.lookup_user(provider.name, handle)
+    {:ok, external_user} = CogChat.Adapter.lookup_user(provider.name, handle)
     # TODO Provider ID!!!!!!
 
     params = %{provider_id: provider.id,

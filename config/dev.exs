@@ -9,7 +9,7 @@ config :lager, :handlers,
 
 config :cog, :enable_spoken_commands, ensure_boolean(System.get_env("ENABLE_SPOKEN_COMMANDS")) || false
 
-config :cog, Cog.Chat.Adapter,
+config :cog, CogChat.Adapter,
   cache_ttl: {1, :sec}
 
 config :cog, Cog.Endpoint,

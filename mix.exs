@@ -27,7 +27,7 @@ defmodule Cog.Mixfile do
 
   def application do
     [applications: started_applications,
-     included_applications: [:emqttd, :slack, :romeo],
+     included_applications: [:emqttd, :cog_chat],
      mod: {Cog, []}]
   end
 
@@ -65,6 +65,8 @@ defmodule Cog.Mixfile do
       {:probe, github: "operable/probe"},
       {:spanner, github: "operable/spanner"},
       {:greenbar, github: "operable/greenbar"},
+      {:cog_slack, github: "kevsmith/cog_slack"},
+      {:cog_hipchat, github: "kevsmith/cog_hipchat"},
 
       # MQTT-related
       ########################################################################
@@ -102,7 +104,6 @@ defmodule Cog.Mixfile do
       {:postgrex, "~> 0.11.2"},
       {:slack, github: "operable/Elixir-Slack"},
       {:uuid, "~> 1.1.5"},
-      {:romeo, github: "operable/romeo", branch: "iq-bodies"},
       # The Slack library depends on this Github repo, and not the
       # version in Hex. Thus, we need to declare it manually :(
       {:websocket_client, github: "jeremyong/websocket_client"},

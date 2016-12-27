@@ -1,8 +1,9 @@
 defmodule Cog.Command.Pipeline.Executor do
 
-  alias Carrier.Messaging.Connection
+  alias Carrier.Connection
   alias Cog.AuditMessage
-  alias Cog.Chat.Adapter, as: ChatAdapter
+  alias CogChat.Adapter, as: ChatAdapter
+  alias CogChat.AdapterRequest
   alias Cog.Command.CommandResolver
   alias Cog.Command.PermissionsCache
   alias Cog.Command.Pipeline.Destination
@@ -60,8 +61,8 @@ defmodule Cog.Command.Pipeline.Executor do
     id: String.t,
     topic: String.t,
     started: DateTime.t,
-    mq_conn: Carrier.Messaging.Connection.connection(),
-    request: %Cog.Messages.AdapterRequest{}, # TODO: needs to be a type
+    mq_conn: Carrier.Connection.connection(),
+    request: %AdapterRequest{}, # TODO: needs to be a type
     destinations: %{Atom.t => [Destination.t]},
     relays: Map.t,
     invocations: [%Piper.Command.Ast.Invocation{}], # TODO: needs to be a type
@@ -104,7 +105,7 @@ defmodule Cog.Command.Pipeline.Executor do
   def start_link(request),
     do: :gen_fsm.start_link(__MODULE__, [request], [])
 
-  def init([%Cog.Messages.AdapterRequest{}=request]) do
+  def init([%AdapterRequest{}=request]) do
     config = Application.fetch_env!(:cog, Cog.Command.Pipeline)
     request = sanitize_request(request)
     {:ok, conn} = Connection.connect()
@@ -421,8 +422,8 @@ defmodule Cog.Command.Pipeline.Executor do
     handle   = request.sender.handle
     creators = user_creator_handles(request)
 
-    {:ok, mention_name} = Cog.Chat.Adapter.mention_name(request.adapter, handle)
-    {:ok, display_name} = Cog.Chat.Adapter.display_name(request.adapter)
+    {:ok, mention_name} = CogChat.Adapter.mention_name(request.adapter, handle)
+    {:ok, display_name} = CogChat.Adapter.display_name(request.adapter)
 
     %{"handle" => handle,
       "mention_name" => mention_name,
@@ -451,7 +452,7 @@ defmodule Cog.Command.Pipeline.Executor do
     |> Cog.Repo.all
     |> Enum.flat_map(&(&1.chat_handles))
     |> Enum.map(fn(h) ->
-      {:ok, mention} = Cog.Chat.Adapter.mention_name(provider, h.handle)
+      {:ok, mention} = CogChat.Adapter.mention_name(provider, h.handle)
       mention
     end)
     |> Enum.sort
@@ -479,7 +480,7 @@ defmodule Cog.Command.Pipeline.Executor do
   #
   # In general, chat-adapter initiated pipelines will not be supplied
   # with an initial context.
-  defp create_initial_context(%Cog.Messages.AdapterRequest{}=request) do
+  defp create_initial_context(%AdapterRequest{}=request) do
     context = List.wrap(request.initial_context)
 
     if Enum.all?(context, &is_map/1) do
@@ -581,7 +582,7 @@ defmodule Cog.Command.Pipeline.Executor do
     }
   end
 
-  defp sanitize_request(%Cog.Messages.AdapterRequest{text: text}=request) do
+  defp sanitize_request(%AdapterRequest{text: text}=request) do
     prefix = Application.get_env(:cog, :command_prefix, "!")
 
     text = text
@@ -624,7 +625,7 @@ defmodule Cog.Command.Pipeline.Executor do
     end
   end
 
-  defp fetch_user_from_request(%Cog.Messages.AdapterRequest{}=request) do
+  defp fetch_user_from_request(%AdapterRequest{}=request) do
     # TODO: This should happen when we validate the request
     if ChatAdapter.is_chat_provider?(request.adapter) do
       adapter   = request.adapter

@@ -39,7 +39,7 @@ config :cog, :embedded_bundle_version, "0.18.0"
 config :cog, Cog.Chat.Http.Provider,
   foo: "blah"
 
-config :cog, Cog.Chat.Adapter,
+config :cog, CogChat.Adapter,
   providers: provider_list(),
   chat: enabled_chat_provider()
 
@@ -144,7 +144,7 @@ config :cog, Cog.Repo,
 
 # ========================================================================
 
-config :cog, Carrier.Messaging.Connection,
+config :cog, Carrier.Connection,
   host: System.get_env("COG_MQTT_HOST") || "127.0.0.1",
   port: ensure_integer(System.get_env("COG_MQTT_PORT")) || 1883
 
@@ -153,7 +153,7 @@ config :cog, Carrier.Messaging.Connection,
 # Note: SSL certification verification can be disabled by setting
 # "ssl: :no_verify". We strongly recommend disabling verification for
 # development or debugging ONLY.
-#config :cog, Carrier.Messaging.Connection,
+#config :cog, Carrier.Connection,
 #  ssl: true,
 #  ssl_cert: "server.crt"
 
@@ -168,7 +168,7 @@ config :cog, Cog.Endpoint,
   cache_static_lookup: false,
   check_origin: true,
   render_errors: [accepts: ~w(json)],
-  pubsub: [name: Carrier.Messaging.Connection,
+  pubsub: [name: Carrier.Connection,
            adapter: Phoenix.PubSub.PG2]
 
 config :cog, Cog.TriggerEndpoint,
@@ -215,6 +215,10 @@ config :cog, Cog.Mailer,
 
 config :cog, :email_from, System.get_env("COG_EMAIL_FROM")
 config :cog, :password_reset_base_url, System.get_env("COG_PASSWORD_RESET_BASE_URL")
+
+config :cog_chat, providers: [cog_slack: CogSlack.Provider,
+                              cog_hipchat: CogHipChat.Provider]
+config :cog_chat, :state_store, Cog.Repository.ChatProviders
 
 import_config "slack.exs"
 import_config "hipchat.exs"

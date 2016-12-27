@@ -196,7 +196,7 @@ defmodule Cog.V1.TriggerExecutionController do
   defp to_chat_user(%Cog.Models.User{username: username,
                                      first_name: first_name,
                                      last_name: last_name}) do
-    %Cog.Chat.User{id: username,
+    %CogChat.User{id: username,
                    first_name: first_name,
                    last_name: last_name,
                    provider: "http",

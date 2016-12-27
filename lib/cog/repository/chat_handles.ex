@@ -15,7 +15,7 @@ defmodule Cog.Repository.ChatHandles do
   def set_handle(%User{id: user_id}, provider_name, handle) do
     Repo.transaction(fn() ->
       case chat_handle_params(provider_name, handle) do
-        {:ok, %Cog.Chat.User{}=user} ->
+        {:ok, %CogChat.User{}=user} ->
           %ChatProvider{id: provider_id} = Repo.get_by!(ChatProvider, name: provider_name)
 
           result = user_id
@@ -91,8 +91,8 @@ defmodule Cog.Repository.ChatHandles do
     # TODO: how does this behave if provider_name isn't known?
 
     provider_name = String.downcase(provider_name)
-    case Cog.Chat.Adapter.lookup_user(provider_name, handle) do
-      {:ok, %Cog.Chat.User{}=user} ->
+    case CogChat.Adapter.lookup_user(provider_name, handle) do
+      {:ok, %CogChat.User{}=user} ->
         {:ok, user}
       {:error, :not_implemented} ->
         raise "Provider #{provider_name} has not implemented lookup_user!"
@@ -100,7 +100,7 @@ defmodule Cog.Repository.ChatHandles do
         {:error, :invalid_handle}
       {:ok, map} when is_map(map) ->
         # TODO: why isn't this a User to begin with?
-        {:ok, Cog.Chat.User.from_map!(map)}
+        {:ok, CogChat.User.from_map!(map)}
     end
   end
 

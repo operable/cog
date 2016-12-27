@@ -1,37 +1,5 @@
 # These modules define the structure of our MQTT messages.
 
-defmodule Cog.Messages.AdapterRequest do
-  @moduledoc """
-  Input to the executor; all adapters must generate one.
-  """
-  use Conduit
-
-  # Unique request ID
-  field :id, :string, required: true
-
-  # Command or pipeline text
-  field :text, :string, required: true
-
-  # Initial input to the pipeline. Meaningful for trigger-initiated
-  # pipelines.
-  field :initial_context, :map, required: true
-
-  # Adapter-specific information about the user initiating the
-  # request (e.g., Slack chat handle, internal Slack user ID, etc.)
-  field :sender, Cog.Chat.User, required: true
-
-  # Adapter-specific information about the "room" the request was
-  # initiated from (e.g., Slack channel, HTTP request, etc.)
-  field :room, Cog.Chat.Room, required: true
-
-  # Message queue topic to send the reply to
-  field :reply, :string, required: true
-
-  # Short name of adapter, e.g. "slack"
-  field :adapter, :string, required: true
-
-end
-
 defmodule Cog.Messages.Command do
   @moduledoc """
   Input for a single command execution. This is what is sent to a Relay
@@ -68,13 +36,13 @@ defmodule Cog.Messages.Command do
   # request (e.g., Slack chat handle, internal Slack user ID, etc.)
   #
   # (see Cog.Messages.AdapterRequest.sender)
-  field :requestor, Cog.Chat.User, required: true
+  field :requestor, CogChat.User, required: true
 
   # Adapter-specific information about the "room" the request was
   # initiated from (e.g., Slack channel, HTTP request, etc.)
   #
   # (See Cog.Messages.AdapterRequest.room)
-  field :room, Cog.Chat.Room, required: true
+  field :room, CogChat.Room, required: true
 
   # Token to access services (e.g. memory)
   field :service_token, :string, required: true
@@ -121,7 +89,7 @@ defmodule Cog.Messages.SendMessage do
   # Adapter-specific information about the "room" the response is
   # targeted to. May or may not be the same as the initial source of
   # the request (e.g., multiple redirect destinations)
-  field :room, Cog.Chat.Room, required: true
+  field :room, CogChat.Room, required: true
 end
 
 ########################################################################

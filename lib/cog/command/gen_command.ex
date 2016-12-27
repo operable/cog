@@ -84,7 +84,7 @@ defmodule Cog.Command.GenCommand do
   #   `cb_module:init/1` returns.
   # * `topic`: message bus topic to which commands are sent; this is
   #   what we listen to to get jobs.
-  @typep state :: %__MODULE__{mq_conn: Carrier.Messaging.Connection.connection,
+  @typep state :: %__MODULE__{mq_conn: Carrier.Connection.connection,
                               cb_module: module(),
                               cb_state: callback_state(),
                               topic: String.t}
@@ -124,14 +124,14 @@ defmodule Cog.Command.GenCommand do
 
     # Establish a connection to the message bus and subscribe to
     # the appropriate topics
-    case Carrier.Messaging.Connection.connect do
+    case Carrier.Connection.connect do
       {:ok, conn} ->
         relay_id = Cog.Config.embedded_relay()
         [topic, _reply_topic] = topics = [command_topic(bundle, command, relay_id),
                                          command_reply_topic(bundle, command, relay_id)]
         for topic <- topics do
           Logger.debug("#{inspect module}: Command subscribing to #{topic}")
-          Carrier.Messaging.Connection.subscribe(conn, topic)
+          Carrier.Connection.subscribe(conn, topic)
         end
 
         args = [{:bundle, bundle}, {:command, command}|args]
@@ -211,7 +211,7 @@ defmodule Cog.Command.GenCommand do
   defp send_error_reply(error_message, reply_to, state) when is_binary(error_message) do
     resp = %Cog.Messages.CommandResponse{status: "error",
                                          status_message: error_message}
-    Carrier.Messaging.Connection.publish(state.mq_conn, resp, routed_by: reply_to)
+    Carrier.Connection.publish(state.mq_conn, resp, routed_by: reply_to)
   end
 
   ########################################################################
@@ -220,13 +220,13 @@ defmodule Cog.Command.GenCommand do
     resp = %Cog.Messages.CommandResponse{status: "ok",
                                          body: reply,
                                          template: template}
-    Carrier.Messaging.Connection.publish(state.mq_conn, resp, routed_by: reply_to)
+    Carrier.Connection.publish(state.mq_conn, resp, routed_by: reply_to)
   end
 
   defp send_ok_reply(reply, reply_to, state) when is_map(reply) or is_list(reply) or is_nil(reply) do
     resp = %Cog.Messages.CommandResponse{status: "ok",
                                          body: reply}
-    Carrier.Messaging.Connection.publish(state.mq_conn, resp, routed_by: reply_to)
+    Carrier.Connection.publish(state.mq_conn, resp, routed_by: reply_to)
   end
   defp send_ok_reply(reply, reply_to, state),
     do: send_ok_reply(%{body: [reply]}, reply_to, state)

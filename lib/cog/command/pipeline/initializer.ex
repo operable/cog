@@ -10,7 +10,7 @@ defmodule Cog.Command.Pipeline.Initializer do
 
   require Logger
 
-  alias Carrier.Messaging.Connection
+  alias Carrier.Connection
   alias Cog.Command.ReplyHelper
   alias Cog.Command.Pipeline.ExecutorSup
   alias Cog.Repository.Users
@@ -33,7 +33,7 @@ defmodule Cog.Command.Pipeline.Initializer do
   end
 
   def handle_info({:publish, "/bot/commands", message}, state) do
-    payload = Cog.Messages.AdapterRequest.decode!(message)
+    payload = CogChat.AdapterRequest.decode!(message)
     # Only self register when the feature is enabled via config
     # and the incoming request is from Slack.
     #
@@ -127,7 +127,7 @@ defmodule Cog.Command.Pipeline.Initializer do
   defp self_registration_success(user, request, state) do
     provider = request.adapter
     handle = request.sender.handle
-    {:ok, mention_name} = Cog.Chat.Adapter.mention_name(provider, handle)
+    {:ok, mention_name} = CogChat.Adapter.mention_name(provider, handle)
 
     context = %{"first_name" => request.sender.first_name,
                 "username" => user.username,
@@ -142,8 +142,8 @@ defmodule Cog.Command.Pipeline.Initializer do
   defp self_registration_failed(request, state) do
     provider = request.adapter
     handle = request.sender.handle
-    {:ok, mention_name} = Cog.Chat.Adapter.mention_name(provider, handle)
-    {:ok, display_name} = Cog.Chat.Adapter.display_name(provider)
+    {:ok, mention_name} = CogChat.Adapter.mention_name(provider, handle)
+    {:ok, display_name} = CogChat.Adapter.display_name(provider)
 
     context = %{"mention_name" => mention_name,
                 "display_name" => display_name}

@@ -6,8 +6,8 @@ defmodule Cog.ChatSup do
   def start_link(), do: Supervisor.start_link(__MODULE__, [])
 
   def init(_) do
-    children = [supervisor(Cog.Chat.Http.Supervisor, []),
-                worker(Cog.Chat.Adapter, [])]
+    :ok = Application.start(:cog_chat)
+    children = [supervisor(Cog.Chat.Http.Supervisor, [])]
     {:ok, {%{strategy: :one_for_one, intensity: 10, period: 60}, children}}
   end
 

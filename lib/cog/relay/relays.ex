@@ -8,7 +8,7 @@ defmodule Cog.Relay.Relays do
   require Logger
   use GenServer
 
-  alias Carrier.Messaging
+  alias Carrier.Connection
   alias Cog.Models.Relay
   alias Cog.Repo
   alias Cog.Relay.Util
@@ -65,10 +65,10 @@ defmodule Cog.Relay.Relays do
     do: GenServer.call(__MODULE__, {:relays_running, bundle_name, version}, :infinity)
 
   def init(_) do
-    case Messaging.Connection.connect() do
+    case Connection.connect() do
       {:ok, conn} ->
         Logger.info("Starting")
-        Messaging.Connection.subscribe(conn, @relays_discovery_topic)
+        Connection.subscribe(conn, @relays_discovery_topic)
         # Seed RNG so picking relays at random works
         :rand.seed(:exsplus, :os.timestamp())
         {:ok, %__MODULE__{tracker: Tracker.new(), mq_conn: conn}}
@@ -155,7 +155,7 @@ defmodule Cog.Relay.Relays do
     announcement_id = announcement.announcement_id
     receipt = receipt(announcement_id, failed_bundles)
     Logger.debug("Sending receipt to #{reply_to}: #{inspect receipt}")
-    Messaging.Connection.publish(state.mq_conn, receipt, routed_by: reply_to)
+    Connection.publish(state.mq_conn, receipt, routed_by: reply_to)
 
     %{state | tracker: tracker}
   end

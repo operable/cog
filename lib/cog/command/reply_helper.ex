@@ -1,5 +1,5 @@
 defmodule Cog.Command.ReplyHelper do
-  alias Cog.Chat.Adapter
+  alias CogChat.Adapter
   alias Cog.Template.Evaluator
 
   @doc """

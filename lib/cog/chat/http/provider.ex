@@ -1,12 +1,13 @@
 defmodule Cog.Chat.Http.Provider do
   use GenServer
-  use Cog.Chat.Provider
+  use CogChat.Provider
 
-  alias Carrier.Messaging.Connection
-  alias Carrier.Messaging.GenMqtt
+  alias Carrier.Connection
+  alias Carrier.GenMqtt
   alias Cog.Chat.Http.Connector
-  alias Cog.Chat.Message
-  alias Cog.Chat.Room
+  alias CogChat.Message
+  alias CogChat.Room
+  alias CogChat.User
 
   require Logger
 
@@ -19,6 +20,8 @@ defmodule Cog.Chat.Http.Provider do
 
   ########################################################################
   # Provider Implementation
+
+  def valid_config?, do: true
 
   def send_message(room, response),
     do: Connector.finish_request(room, response)
@@ -42,7 +45,7 @@ defmodule Cog.Chat.Http.Provider do
     {:ok, %__MODULE__{incoming: incoming, mbus: mbus}}
   end
 
-  def handle_cast({:pipeline, %Cog.Chat.User{}=requestor, id, initial_context, pipeline}, state) do
+  def handle_cast({:pipeline, %User{}=requestor, id, initial_context, pipeline}, state) do
     # In other places, we treat a room name of "direct" as a direct
     # message, so for now we'll follow that convention for the HTTP
     # provider (we should probably just rely on the `is_dm` flag

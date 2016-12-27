@@ -3,7 +3,7 @@ use Mix.Config
 config :lager, :handlers,
   [{LagerLogger, [level: :error]}]
 
-config :cog, Cog.Chat.Adapter,
+config :cog, CogChat.Adapter,
   providers: [test: Cog.Chat.Test.Provider,
               http: Cog.Chat.Http.Provider],
   cache_ttl: {1, :sec},

@@ -3,7 +3,7 @@ defmodule Cog.Command.Pipeline.Destination do
   @type classification :: :chat | :trigger | :status_only
   @type t :: %__MODULE__{raw: String.t,
                          adapter: String.t,
-                         room: %Cog.Chat.Room{},
+                         room: %CogChat.Room{},
                          classification: classification}
   defstruct [raw: nil,
              adapter: nil,
@@ -11,7 +11,7 @@ defmodule Cog.Command.Pipeline.Destination do
              classification: nil]
 
   require Logger
-  alias Cog.Chat.Adapter
+  alias CogChat.Adapter
 
   @doc """
   Given a list of raw pipeline destinations, resolve them all to the
