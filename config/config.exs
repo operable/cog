@@ -219,6 +219,7 @@ config :cog, :password_reset_base_url, System.get_env("COG_PASSWORD_RESET_BASE_U
 config :cog_chat, providers: [cog_slack: CogSlack.Provider,
                               cog_hipchat: CogHipChat.Provider]
 config :cog_chat, :state_store, Cog.Repository.ChatProviders
+config :cog_chat, :primary_provider, "slack"
 
 import_config "slack.exs"
 import_config "hipchat.exs"
