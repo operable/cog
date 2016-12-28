@@ -67,6 +67,7 @@ defmodule Cog.Mixfile do
       {:greenbar, github: "operable/greenbar"},
       {:cog_slack, github: "kevsmith/cog_slack"},
       {:cog_hipchat, github: "kevsmith/cog_hipchat"},
+      {:piper, github: "operable/piper", branch: "kevsmith/namespaced-redirects", override: true},
 
       # MQTT-related
       ########################################################################

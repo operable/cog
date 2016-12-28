@@ -21,7 +21,7 @@ defmodule Cog.Command.Pipeline.Destination do
   """
   def process(raw_destinations, sender, origin_room, origin_adapter) when is_binary(origin_adapter) do
     result = raw_destinations
-    |> Enum.map(&make_destination/1)
+    |> Enum.map(fn(target) -> make_destination(target, origin_adapter) end)
     |> maybe_add_origin(origin_adapter)
     |> resolve(sender, origin_room, origin_adapter)
 
@@ -35,8 +35,14 @@ defmodule Cog.Command.Pipeline.Destination do
 
   ########################################################################
 
-  defp make_destination(raw),
-    do: %__MODULE__{raw: raw}
+  defp make_destination(raw, origin_adapter) do
+    case String.split(raw, "://", parts: 2) do
+      [target] ->
+        %__MODULE__{adapter: origin_adapter, raw: target}
+      [provider, target] ->
+        %__MODULE__{adapter: provider, raw: target}
+    end
+  end
 
   # If no destinations are explicitly provided, we return the full
   # output to the same place the request originated from. For chat
@@ -54,13 +60,13 @@ defmodule Cog.Command.Pipeline.Destination do
   #
   # If the origin _is_ one of the destinations, we do nothing special;
   # all explicitly listed destinations receive full output.
-  defp maybe_add_origin([], _origin_adapter),
-    do: [make_destination("here")]
+  defp maybe_add_origin([], origin_adapter),
+    do: [make_destination("here", origin_adapter)]
   defp maybe_add_origin(destinations, origin_adapter) do
     if originator_is_destination?(destinations) || Adapter.is_chat_provider?(origin_adapter) do
       destinations
     else
-      [%{make_destination("here") | classification: :status_only} | destinations]
+      [%{make_destination("here", origin_adapter) | classification: :status_only} | destinations]
     end
   end
 
@@ -101,11 +107,11 @@ defmodule Cog.Command.Pipeline.Destination do
     {:ok, room} = Adapter.lookup_room(adapter, id: sender.id)
     {:ok, %{dest | adapter: adapter, room: room, classification: classify_adapter(adapter)}}
   end
-  defp resolve_destination(%__MODULE__{raw: redir}=dest, _sender, _origin_room, origin_adapter) do
-    {adapter, destination} = adapter_destination(redir, origin_adapter)
+  defp resolve_destination(%__MODULE__{}=dest, _sender, _origin_room, _origin_adapter) do
+    {adapter, destination} = adapter_destination(dest)
     case Adapter.lookup_room(adapter, name: destination) do
       {:error, reason} ->
-        {:error, {reason, redir}}
+        {:error, {reason, dest.raw}}
       {:ok, room} ->
         {:ok, %{dest | adapter: adapter, room: room, classification: classify_adapter(adapter)}}
     end
@@ -115,16 +121,17 @@ defmodule Cog.Command.Pipeline.Destination do
   # where they originated from.
   #
   # Destinations prefixed with "chat://" will be routed through the
-  # active chat adapter module. Anything else will be routed through
+  # primary chat adapter module. Other namespaced destinations will be
+  # verified with the specified provider, if it is installed and active.
+  # Anything else will be routed through
   # the adapter that initially serviced the request.
-  @spec adapter_destination(String.t, String.t) :: {String.t, String.t}
-  defp adapter_destination("chat://" <> destination, _origin_adapter) do
-    {:ok, adapter} = Cog.Util.Misc.chat_adapter_module
-    {adapter, destination}
+  @spec adapter_destination(%__MODULE__{}) :: {String.t, String.t}
+  defp adapter_destination(%__MODULE__{adapter: "chat", raw: target}) do
+    {Adapter.primary_provider(), target}
   end
-  defp adapter_destination(destination, origin_adapter),
-    do: {origin_adapter, destination}
-
+  defp adapter_destination(%__MODULE__{adapter: provider, raw: target}) do
+    {provider, target}
+  end
 
   # TODO: perhaps let Adapter handle this logic instead
   defp classify_adapter(adapter) do
