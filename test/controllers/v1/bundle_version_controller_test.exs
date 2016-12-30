@@ -43,6 +43,7 @@ defmodule Cog.V1.BundleVersionControllerTest do
     {:ok, version} = Bundles.install(%{"name" => "test-bundle",
                                        "version" => "1.0.0",
                                        "config_file" => %{
+                                         "cog_bundle_version" => Spanner.Config.current_config_version(),
                                          "name" => "test-bundle",
                                          "version" => "1.0.0",
                                          "commands" => %{"foo" => %{"documentation" => "docs for foo"},

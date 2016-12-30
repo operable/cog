@@ -20,6 +20,7 @@ defmodule Cog.ModelCase do
       import Ecto.Model
       import Ecto.Query, only: [from: 2]
       import Cog.ModelCase
+      import Cog.Test.Util
 
       # These are ours
       import DatabaseTestSetup

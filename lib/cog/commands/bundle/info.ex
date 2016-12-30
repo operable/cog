@@ -22,6 +22,13 @@ defmodule Cog.Commands.Bundle.Info do
           "description": "Core chat commands for Cog"
         }
       ],
+      "incompatible_versions": [
+        {
+          "version": "0.16.0",
+          "id": "00000000-0000-0000-0000-000000000000",
+          "description": "Core chat commands for Cog"
+        }
+      ],
       "updated_at": "2016-12-07T22:19:04",
       "relay_groups": [],
       "name": "operable",

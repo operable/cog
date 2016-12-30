@@ -30,6 +30,16 @@ defmodule Cog.V1.BundleStatusController do
             conn
             |> put_status(:forbidden)
             |> json(%{error: "Cannot modify the status of the #{name} bundle"})
+          {:error, {:incompatible_config_version, bundle_version}} ->
+            message = """
+            Cannot modify the status of '#{bundle_version.bundle.name}' version '#{bundle_version.version}'. \
+            Config version '#{bundle_version.config_file["cog_bundle_version"]}' is no longer supported. \
+            Please install an updated version of the bundle.\
+            """
+
+            conn
+            |> put_status(:bad_request)
+            |> json(%{error: message})
         end
       nil ->
         conn

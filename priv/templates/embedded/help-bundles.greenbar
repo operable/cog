@@ -21,6 +21,17 @@ __Disabled Bundles__
 ~end~
 ~end~
 
+~if cond=$bundles.incompatible not_empty?~
+~br~
+__Incompatible Bundles__
+
+~br~
+
+~each var=$bundles.incompatible as=bundle~
+* ~$bundle.name~~if cond=$bundle.description~ - ~$bundle.description~~end~
+~end~
+~end~
+
 ~br~
 
 To learn more about a specific bundle and the commands available within it, you can use "operable:help <bundle>".

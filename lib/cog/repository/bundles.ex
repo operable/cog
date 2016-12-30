@@ -39,6 +39,8 @@ defmodule Cog.Repository.Bundles do
   @install_types [:normal, :force]
   @default_install_type :normal
 
+  @minimum_bundle_config_version Spanner.Config.minimum_config_version
+
   ########################################################################
   # CRUD Operations
 
@@ -200,9 +202,18 @@ defmodule Cog.Repository.Bundles do
   ########################################################################
   # Enabled/Disabled Status
 
-  def set_bundle_version_status(%BundleVersion{bundle: %Bundle{name: protected}}, _) when protected in @reserved_bundle_names,
+  # Users aren't allowed to change the status of bundles with a reserved name.
+  # If they attempt it, return an error.
+  def set_bundle_version_status(%BundleVersion{bundle: %Bundle{name: protected}}, _)
+  when protected in @reserved_bundle_names,
     do: {:error, {:protected_bundle, protected}}
-  def set_bundle_version_status(bundle_version, status) when status in [:enabled, :disabled],
+  # If an attempt is made to enable a bundle version with an incompatible bundle config
+  # then we return an error.
+  def set_bundle_version_status(%BundleVersion{config_file: %{"cog_bundle_version" => cbv}}=bv, status)
+  when cbv < @minimum_bundle_config_version and status in [:enabled],
+    do: {:error, {:incompatible_config_version, bv}}
+  def set_bundle_version_status(bundle_version, status)
+  when status in [:enabled, :disabled],
     do: __set_bundle_version_status(bundle_version, status)
 
   # Private implementation that we can use to ensure that the right
@@ -289,6 +300,34 @@ defmodule Cog.Repository.Bundles do
       %BundleVersion{status: "enabled"}=bundle_version ->
         {:ok, bundle_version}
     end
+  end
+
+  @doc """
+  Disable old incompatible bundles
+  """
+  def disable_incompatible_bundles() do
+    query =
+      from bundle_version in BundleVersion,
+
+      # We join bundle here for the preload
+      join: bundle in assoc(bundle_version, :bundle),
+      # We only care about incompatible bundle versions that are enabled
+      join: enabled in assoc(bundle_version, :enabled_version_registration),
+
+      preload: [:bundle],
+
+      # Get bundle_versions where the cog_bundle_version is below the minimum supported version
+      where: fragment("cast(config_file->>'cog_bundle_version' as integer) < ?", @minimum_bundle_config_version),
+      # Filter out reserved bundles, we can't disable those anyway.
+      where: not(bundle.name in @reserved_bundle_names),
+
+      # call the stored procedure to disable the incompatible versions and then return them
+      # Returns results like {nil, %BundleVersion{}}. `nil` because that's what the stored procedure returns.
+      select: {fragment("disable_bundle_version(?, ?)", bundle.id, bundle_version.version), bundle_version}
+
+    Repo.all(query)
+    # Strip out the bundle version from the list of tuples returned
+    |> Enum.map(fn({_, bv}) -> bv end)
   end
 
   @doc """
@@ -397,7 +436,12 @@ defmodule Cog.Repository.Bundles do
     Repo.all(query)
   end
 
-  def highest_disabled_versions do
+  def highest_disabled_versions,
+    # Incompatible bundles are also disabled but we don't want to include them
+    # with the normal disabled bundles, so we reject them.
+    do: Enum.reject(get_highest_disabled_versions(), &incompatible?/1)
+
+  defp get_highest_disabled_versions do
     query = from bv in BundleVersion,
             left_join: e in "enabled_bundle_versions",
               on: bv.bundle_id == e.bundle_id,
@@ -408,6 +452,19 @@ defmodule Cog.Repository.Bundles do
 
     Repo.all(query)
   end
+
+  @doc """
+  Returns bundles with no compatible versions installed
+  """
+  def highest_incompatible_versions,
+    # Incompatible bundle versions should also be disabled, so we grab the highest
+    # disabled bundles and filter down to only the ones that are incompatible.
+    do: Enum.filter(get_highest_disabled_versions(), &incompatible?/1)
+
+  def incompatible?(%BundleVersion{config_file: %{"cog_bundle_version" => cbv}}),
+    # Bundle versions are incompatible if their cog_bundle_version is lower
+    # than the minimum bundle config version
+    do: cbv < @minimum_bundle_config_version
 
   @doc """
   Returns a map of bundle name to enabled version for all enabled

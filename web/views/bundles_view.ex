@@ -20,7 +20,8 @@ defmodule Cog.V1.BundlesView do
 
     %{id: bundle.id,
       name: bundle.name,
-      versions: ordered_versions(bundle.versions),
+      versions: ordered_compatible_versions(bundle.versions),
+      incompatible_versions: ordered_incompatible_versions(bundle.versions),
       inserted_at: bundle.inserted_at,
       updated_at: bundle.updated_at}
     |> Map.merge(enabled_version)
@@ -34,6 +35,23 @@ defmodule Cog.V1.BundlesView do
   end
 
   ########################################################################
+
+  # TODO: Move these functions to the bundles repository. We should probably
+  # be getting the versions from the db ordered and grouped by compatible
+  # and incompatible. But that should require some rework around how we get
+  # bundles. Aside from the ordering these functions just extract the needed
+  # fields for display, so I'll leave them here for now.
+  defp ordered_compatible_versions(versions) do
+    # Reject incompatible versions, then order the rest
+    Enum.reject(versions, &Cog.Repository.Bundles.incompatible?/1)
+    |> ordered_versions()
+  end
+
+  defp ordered_incompatible_versions(versions) do
+    # Drop compatible versions, then order the rest
+    Enum.filter(versions, &Cog.Repository.Bundles.incompatible?/1)
+    |> ordered_versions()
+  end
 
   defp ordered_versions(versions) do
     versions

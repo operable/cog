@@ -30,6 +30,31 @@ defmodule Cog.Repository.BundlesTest do
              "foo" => version("1.0.0")} == Bundles.enabled_bundles
   end
 
+  test "outdated bundles can't be enabled" do
+    old_config_version = 2
+    {:ok, old_bundle} = Bundles.install(%{"name" => "old", "version" => "1.0.0", "config_file" => %{"cog_bundle_version" => old_config_version}})
+
+    assert {:error, {:incompatible_config_version, _}} = Bundles.set_bundle_version_status(old_bundle, :enabled)
+  end
+
+  test "outdated bundles are all disabled" do
+    old_config_version = 2
+    versions = [
+      unwrap(Bundles.install(%{"name" => "foo", "version" => "1.0.0", "config_file" => %{"cog_bundle_version" => old_config_version}})),
+      unwrap(Bundles.install(%{"name" => "bar", "version" => "1.0.0", "config_file" => %{"cog_bundle_version" => old_config_version}})),
+      unwrap(Bundles.install(%{"name" => "baz", "version" => "1.0.0", "config_file" => %{}}))
+    ]
+
+    Enum.each(versions,
+              &Ecto.Adapters.SQL.query!(Cog.Repo,
+                                        "SELECT enable_bundle_version($1, $2)",
+                                        [Cog.UUID.uuid_to_bin(&1.bundle.id), [1, 0, 0]]))
+
+    Bundles.disable_incompatible_bundles()
+
+    assert [false, false, true] == Enum.map(versions, &Bundles.enabled?(&1))
+  end
+
   test "the enabled version of the operable bundle is always the current application version" do
     {:ok, current_version} = Version.parse(embedded_bundle_version_string)
 

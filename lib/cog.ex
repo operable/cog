@@ -50,6 +50,18 @@ defmodule Cog do
         Logger.info("Ensuring common templates are up-to-date")
         Cog.Repository.Templates.refresh_common_templates!
 
+        # Disable bundles that have an unsupported config version
+        # If Cog is upgraded incompatible bundles that were installed
+        # previously will be disabled and a warning message displayed
+        # to the user. Nothing will happen if there are no enabled
+        # incompatible bundle versions.
+        Cog.Repository.Bundles.disable_incompatible_bundles()
+        |> Enum.map(&Logger.warn("""
+        Detected unsupported bundle config version '#{&1.config_file["cog_bundle_version"]}'. \
+        Disabling incompatible bundle '#{&1.bundle.name}', version '#{&1.version}'. \
+        Update your bundle config to the newest version, '#{Spanner.Config.current_config_version}' and reinstall.\
+        """))
+
         # Send a start event to the Operable telemetry service
         Cog.Telemetry.send_event(:start)
 

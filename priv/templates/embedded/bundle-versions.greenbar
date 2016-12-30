@@ -1,8 +1,16 @@
 ~each var=$results~
-
+~$item.compatible~
+~if cond=$item.incompatible not_bound?~
 ~attachment color="gray"~
 **Version:** ~$item.version~
 **Enabled:** ~$item.enabled~
+~end~
+~end~
+~if cond=$item.incompatible bound?~
+~attachment color="red"~
+**Version:** ~$item.version~
+**Incompatible**
+~end~
 ~end~
 
 ~end~

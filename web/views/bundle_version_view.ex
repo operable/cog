@@ -3,7 +3,7 @@ defmodule Cog.V1.BundleVersionView do
   alias Cog.Repository.Bundles
 
   def render("bundle_version.json", %{bundle_version: bundle_version}) do
-    %{id: bundle_version.id,
+    version = %{id: bundle_version.id,
       bundle_id: bundle_version.bundle.id,
       name: bundle_version.bundle.name,
       description: bundle_version.description,
@@ -17,6 +17,12 @@ defmodule Cog.V1.BundleVersionView do
       config_file: bundle_version.config_file,
       inserted_at: bundle_version.inserted_at,
       updated_at: bundle_version.updated_at}
+
+    if Bundles.incompatible?(bundle_version) do
+      Map.put(version, :incompatible, true)
+    else
+      version
+    end
   end
   def render("index.json", %{bundle_versions: bundle_versions}),
     do: %{bundle_versions: render_many(bundle_versions, __MODULE__, "bundle_version.json", as: :bundle_version)}
