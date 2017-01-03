@@ -9,5 +9,14 @@ WORKDIR /code
 RUN mix deps.get
 RUN MIX_ENV=test mix deps.compile
 
-COPY . /code
+COPY emqttd_plugins/ /code/emqttd_plugins/
+COPY priv/ /code/priv/
+COPY test/ /code/test/
+COPY web/ /code/web/
+COPY lib/ /code/lib/
+
 RUN MIX_ENV=test mix compile
+
+COPY .buildkite/ /code/.buildkite
+COPY scripts/ /code/scripts/
+COPY Makefile /code
