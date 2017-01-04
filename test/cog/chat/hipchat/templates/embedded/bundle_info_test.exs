@@ -14,9 +14,9 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.BundleInfoTest do
     expected = """
     <strong>ID:</strong> aaaa-bbbb-cccc-dddd-eeee-ffff<br/>
     <strong>Name:</strong> my_bundle<br/>
+    <strong>Relay Groups:</strong> preprod, prod<br/>
     <strong>Versions:</strong> 0.0.1, 0.0.2, 0.0.3<br/>
-    <strong>Version Enabled:</strong> 0.0.3<br/>
-    <strong>Relay Groups:</strong> preprod, prod
+    <strong>Version Enabled:</strong> 0.0.3
     """ |> String.replace("\n", "")
 
     assert_rendered_template(:hipchat, :embedded, "bundle-info", data, expected)
@@ -36,10 +36,10 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.BundleInfoTest do
     expected = """
     <strong>ID:</strong> aaaa-bbbb-cccc-dddd-eeee-ffff<br/>
     <strong>Name:</strong> my_bundle<br/>
+    <strong>Relay Groups:</strong> preprod, prod<br/>
     <strong>Versions:</strong> 0.0.2, 0.0.3, 0.0.4<br/>
-    <strong>Incompatible Versions:</strong> 0.0.1<br/>
     <strong>Version Enabled:</strong> 0.0.3<br/>
-    <strong>Relay Groups:</strong> preprod, prod
+    <strong>Incompatible Versions:</strong> 0.0.1
     """ |> String.replace("\n", "")
 
     assert_rendered_template(:hipchat, :embedded, "bundle-info", data, expected)

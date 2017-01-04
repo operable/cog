@@ -13,9 +13,9 @@ defmodule Cog.Chat.Slack.Templates.Embedded.BundleInfoTest do
     expected = """
     *ID:* aaaa-bbbb-cccc-dddd-eeee-ffff
     *Name:* my_bundle
+    *Relay Groups:* preprod, prod
     *Versions:* 0.0.1, 0.0.2, 0.0.3
     *Version Enabled:* 0.0.3
-    *Relay Groups:* preprod, prod
     """ |> String.strip
 
     assert_rendered_template(:slack, :embedded, "bundle-info", data, expected)
@@ -34,10 +34,10 @@ defmodule Cog.Chat.Slack.Templates.Embedded.BundleInfoTest do
     expected = """
     *ID:* aaaa-bbbb-cccc-dddd-eeee-ffff
     *Name:* my_bundle
-    *Versions:* 0.0.2, 0.0.3, 0.0.4
-    *Incompatible Versions:* 0.0.1
-    *Version Enabled:* 0.0.3
     *Relay Groups:* preprod, prod
+    *Versions:* 0.0.2, 0.0.3, 0.0.4
+    *Version Enabled:* 0.0.3
+    *Incompatible Versions:* 0.0.1
     """ |> String.strip
 
     assert_rendered_template(:slack, :embedded, "bundle-info", data, expected)
