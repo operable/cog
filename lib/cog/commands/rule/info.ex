@@ -18,7 +18,7 @@ defmodule Cog.Commands.Rule.Info do
     {
       "rule": "when command is operable:min allow",
       "id": "00000000-0000-0000-0000-000000000000",
-      "command_name": "operable:min"
+      "command": "operable:min"
     }
   ]
   """
@@ -40,7 +40,7 @@ defmodule Cog.Commands.Rule.Info do
     if Cog.UUID.is_uuid?(id) do
       case Rules.rule(id) do
         %Rule{}=rule ->
-          {:ok, Cog.V1.RuleView.render("show.json", %{rule: rule})[:rule]}
+          {:ok, rule}
         nil ->
           {:error, {:resource_not_found, "rule", id}}
       end

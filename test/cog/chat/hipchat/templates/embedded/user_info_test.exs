@@ -20,39 +20,4 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.UserInfoTest do
 
     assert_rendered_template(:hipchat, :embedded, "user-info", data, expected)
   end
-
-  @tag :wip
-  test "user-info template with multiple inputs" do
-    data = %{"results" => [%{"username" => "cog",
-                             "first_name" => "Cog",
-                             "last_name" => "McCog",
-                             "email_address" => "cog@example.com",
-                             "groups" => [%{"name" => "dev"},
-                                          %{"name" => "ops"}],
-                             "chat_handles" => [%{"chat_provider" => %{"name" => "HipChat"},
-                                                  "handle" => "the_cog"}]},
-
-                           %{"username" => "sprocket",
-                             "first_name" => "Sprocket",
-                             "last_name" => "McSprocket",
-                             "email_address" => "sprocket@example.com",
-                             "groups" => [%{"name" => "sec"},
-                                          %{"name" => "test"}],
-                             "chat_handles" => [%{"chat_provider" => %{"name" => "HipChat"},
-                                                  "handle" => "sprocket"},
-                                                %{"chat_provider" => %{"name" => "HipChat"},
-                                                  "handle" => "SprocketMcSprocket"}]}
-                          ]}
-    expected = """
-    <pre>+----------+------------+------------+----------------------+-----------+--------------------------------------------------+
-    | Username | First Name | Last Name  | Email                | Groups    | Handles                                          |
-    +----------+------------+------------+----------------------+-----------+--------------------------------------------------+
-    | cog      | Cog        | McCog      | cog@example.com      | dev, ops  | the_cog (HipChat)                                |
-    | sprocket | Sprocket   | McSprocket | sprocket@example.com | sec, test | sprocket (HipChat), SprocketMcSprocket (HipChat) |
-    +----------+------------+------------+----------------------+-----------+--------------------------------------------------+
-    </pre>\
-    """
-
-    assert_rendered_template(:hipchat, :embedded, "user-info", data, expected)
-  end
 end

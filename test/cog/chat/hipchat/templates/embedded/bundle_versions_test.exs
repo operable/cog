@@ -15,17 +15,10 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.BundleVersionsTest do
                              "version" => "0.0.7",
                              "enabled" => false}]}
     expected = """
-    <strong>Version:</strong> 1.0.0<br/>
-    <strong>Enabled:</strong> true<br/>
-    <br/>
-    <strong>Version:</strong> 0.0.9<br/>
-    <strong>Enabled:</strong> false<br/>
-    <br/>
-    <strong>Version:</strong> 0.0.8<br/>
-    <strong>Enabled:</strong> false<br/>
-    <br/>
-    <strong>Version:</strong> 0.0.7<br/>
-    <strong>Enabled:</strong> false
+    1.0.0 (enabled)<br/>
+    0.0.9 (disabled)<br/>
+    0.0.8 (disabled)<br/>
+    0.0.7 (disabled)
     """ |> String.replace("\n", "")
 
     assert_rendered_template(:hipchat, :embedded, "bundle-versions", data, expected)

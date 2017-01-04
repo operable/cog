@@ -6,7 +6,9 @@ defmodule Cog.Commands.Rule.List do
   alias Cog.Commands.Rule
   alias Cog.Repository.Rules
 
-  @description "List all rules or rules for the provided command."
+  @description "List all rules or rules for the provided command"
+
+  @arguments "[command]"
 
   @output_description "Returns the list of rules."
 
@@ -25,14 +27,12 @@ defmodule Cog.Commands.Rule.List do
   ]
   """
 
-  option "command", type: "string", short: "c", description: "List rules belonging to command"
-
   permission "manage_commands"
 
   rule "when command is #{Cog.Util.Misc.embedded_bundle}:rule-list must have #{Cog.Util.Misc.embedded_bundle}:manage_commands"
 
-  def handle_message(req, state) do
-    case list(req) do
+  def handle_message(req = %{args: args}, state) do
+    case list(args) do
       {:ok, rules} ->
         {:reply, req.reply_to, "rule-list", rules, state}
       {:error, error} ->
@@ -40,7 +40,7 @@ defmodule Cog.Commands.Rule.List do
     end
   end
 
-  defp list(%{options: %{"command" => command}}),
+  defp list([command]),
     do: Rules.rules_for_command(command)
   defp list(_req),
     do: {:ok, Rules.all_rules}

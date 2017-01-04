@@ -1,6 +1,5 @@
 ~each var=$results~
 ~attachment color="gray"~
-**Name:** ~$item.name~
-**Bundle:** ~$item.bundle~
+~$item.bundle~:~$item.name~
 ~end~
 ~end~

@@ -10,14 +10,9 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.RelayListTest do
                              "status" => "enabled"}]}
 
     expected = """
-    <strong>Name:</strong> relay_one<br/>
-    <strong>Status:</strong> enabled<br/>
-    <br/>
-    <strong>Name:</strong> relay_two<br/>
-    <strong>Status:</strong> disabled<br/>
-    <br/>
-    <strong>Name:</strong> relay_three<br/>
-    <strong>Status:</strong> enabled
+    relay_one (enabled)<br/>
+    relay_two (disabled)<br/>
+    relay_three (enabled)
     """ |> String.replace("\n", "")
 
     assert_rendered_template(:hipchat, :embedded, "relay-list", data, expected)

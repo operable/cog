@@ -2,19 +2,20 @@ defmodule Cog.Chat.Slack.Templates.Embedded.TriggerCreateTest do
   use Cog.TemplateCase
 
   test "trigger-create template" do
-    data = %{"results" => [%{"id" => "12345"}]}
-    expected = "Created trigger '12345'"
+    data = %{"results" => [%{"name" => "echo-test"}]}
+    expected = "Created trigger 'echo-test'"
     assert_rendered_template(:slack, :embedded, "trigger-create", data, expected)
   end
 
   test "trigger-create template with multiple inputs" do
-    data = %{"results" => [%{"id" => "12345"},
-                           %{"id" => "67890"},
-                           %{"id" => "11111"}]}
+    data = %{"results" => [%{"name" => "echo-1"},
+                           %{"name" => "echo-2"},
+                           %{"name" => "echo-3"}]}
+
     expected = """
-    Created trigger '12345'
-    Created trigger '67890'
-    Created trigger '11111'
+    Created trigger 'echo-1'
+    Created trigger 'echo-2'
+    Created trigger 'echo-3'
     """ |> String.strip
 
     assert_rendered_template(:slack, :embedded, "trigger-create", data, expected)

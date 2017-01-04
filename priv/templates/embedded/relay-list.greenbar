@@ -2,15 +2,13 @@
 
 ~if cond=$relay.status == "enabled"~
 ~attachment color="green"~
-**Name:** ~$relay.name~
-**Status:** ~$relay.status~
+~$relay.name~ (enabled)
 ~end~
 ~end~
 
 ~if cond=$relay.status == "disabled"~
 ~attachment color="red"~
-**Name:** ~$relay.name~
-**Status:** ~$relay.status~
+~$relay.name~ (disabled)
 ~end~
 ~end~
 

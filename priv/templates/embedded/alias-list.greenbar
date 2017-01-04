@@ -1,18 +1,14 @@
 ~each var=$results~
 
 ~if cond=$item.visibility == "user"~
-~attachment color="blue"~
-**Name:** ~$item.name~
-**Visibility:** ~$item.visibility~
-**Pipeline:** `~$item.pipeline~`
+~attachment color="green"~
+~$item.visibility~:~$item.name~
 ~end~
 ~end~
 
 ~if cond=$item.visibility == "site"~
-~attachment color="gray"~
-**Name:** ~$item.name~
-**Visibility:** ~$item.visibility~
-**Pipeline:** `~$item.pipeline~`
+~attachment color="blue"~
+~$item.visibility~:~$item.name~
 ~end~
 ~end~
 

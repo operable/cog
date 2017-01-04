@@ -2,7 +2,6 @@
 ~attachment color="gray"~
 **Name:** ~$relay_group.name~
 **Relays:** ~if cond=$relay_group.relays empty?~No relays~end~~join var=$relay_group.relays with=", "~~$item.name~~end~
-
 **Bundles:** ~if cond=$relay_group.bundles empty?~No bundles assigned~end~~join var=$relay_group.bundles with=", "~~$item.name~~end~
 ~end~
 ~end~

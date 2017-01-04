@@ -7,19 +7,10 @@ defmodule Cog.Chat.Slack.Templates.Embedded.PermissionListTest do
                            %{"bundle" => "site", "name" => "baz"}]}
 
     attachments = [
-      """
-      *Name:* foo
-      *Bundle:* site
-      """,
-      """
-      *Name:* bar
-      *Bundle:* site
-      """,
-      """
-      *Name:* baz
-      *Bundle:* site
-      """
-    ] |> Enum.map(&String.strip/1)
+      "site:foo",
+      "site:bar",
+      "site:baz"
+    ]
 
     assert_rendered_template(:slack, :embedded, "permission-list", data, {"", attachments})
   end

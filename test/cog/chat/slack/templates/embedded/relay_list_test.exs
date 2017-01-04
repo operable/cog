@@ -10,19 +10,10 @@ defmodule Cog.Chat.Slack.Templates.Embedded.RelayListTest do
                              "status" => "enabled"}]}
 
     attachments = [
-      """
-      *Name:* relay_one
-      *Status:* enabled
-      """,
-      """
-      *Name:* relay_two
-      *Status:* disabled
-      """,
-      """
-      *Name:* relay_three
-      *Status:* enabled
-      """,
-    ] |> Enum.map(&String.strip/1)
+      "relay_one (enabled)",
+      "relay_two (disabled)",
+      "relay_three (enabled)"
+    ]
 
     assert_rendered_template(:slack, :embedded, "relay-list", data, {"", attachments})
   end

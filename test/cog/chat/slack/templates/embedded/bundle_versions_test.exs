@@ -15,24 +15,10 @@ defmodule Cog.Chat.Slack.Templates.Embedded.BundleVersionsTest do
                              "version" => "0.0.7",
                              "enabled" => false}]}
 
-    attachments = [
-      """
-      *Version:* 1.0.0
-      *Enabled:* true
-      """,
-      """
-      *Version:* 0.0.9
-      *Enabled:* false
-      """,
-      """
-      *Version:* 0.0.8
-      *Enabled:* false
-      """,
-      """
-      *Version:* 0.0.7
-      *Enabled:* false
-      """
-    ] |> Enum.map(&String.strip/1)
+    attachments = ["1.0.0 (enabled)",
+                   "0.0.9 (disabled)",
+                   "0.0.8 (disabled)",
+                   "0.0.7 (disabled)"]
 
     assert_rendered_template(:slack, :embedded, "bundle-versions", data, {"", attachments})
   end

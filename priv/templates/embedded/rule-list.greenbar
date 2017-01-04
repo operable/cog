@@ -1,12 +1,8 @@
 ~each var=$results as=rule~
-~attachment color="gray"~
-**Command:** ~$rule.command~
 **ID:** ~$rule.id~
 **Rule:**
 
 ```
 ~$rule.rule~
 ```
-
-~end~
 ~end~

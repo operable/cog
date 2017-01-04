@@ -2,18 +2,18 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.TriggerCreateTest do
   use Cog.TemplateCase
 
   test "trigger-create template" do
-    data = %{"results" => [%{"id" => "12345"}]}
-    expected = "Created trigger '12345'"
+    data = %{"results" => [%{"name" => "echo-test"}]}
+    expected = "Created trigger 'echo-test'"
     assert_rendered_template(:hipchat, :embedded, "trigger-create", data, expected)
   end
 
   test "trigger-create template with multiple inputs" do
-    data = %{"results" => [%{"id" => "12345"},
-                           %{"id" => "67890"},
-                           %{"id" => "11111"}]}
-    expected = "Created trigger '12345'<br/>" <>
-      "Created trigger '67890'<br/>" <>
-      "Created trigger '11111'"
+    data = %{"results" => [%{"name" => "echo-1"},
+                           %{"name" => "echo-2"},
+                           %{"name" => "echo-3"}]}
+    expected = "Created trigger 'echo-1'<br/>" <>
+      "Created trigger 'echo-2'<br/>" <>
+      "Created trigger 'echo-3'"
 
     assert_rendered_template(:hipchat, :embedded, "trigger-create", data, expected)
   end
