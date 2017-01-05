@@ -92,11 +92,9 @@ defmodule Cog.Chat.HipChat.Templates.Embedded.RelayInfoTest do
     <strong>Name:</strong> relay_one<br/>
     <strong>ID:</strong> 123<br/>
     <strong>Status:</strong> enabled<br/>
-    <br/>
     <strong>Name:</strong> relay_two<br/>
     <strong>ID:</strong> 456<br/>
     <strong>Status:</strong> disabled<br/>
-    <br/>
     <strong>Name:</strong> relay_three<br/>
     <strong>ID:</strong> 789<br/>
     <strong>Status:</strong> enabled

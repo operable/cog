@@ -80,11 +80,9 @@ defmodule Cog.Chat.Slack.Templates.Embedded.RelayInfoTest do
     *Name:* relay_one
     *ID:* 123
     *Status:* enabled
-
     *Name:* relay_two
     *ID:* 456
     *Status:* disabled
-
     *Name:* relay_three
     *ID:* 789
     *Status:* enabled
