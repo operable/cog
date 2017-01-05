@@ -9,8 +9,6 @@ DB_TIMEOUT=30
 cat <<EOF
 steps:
   - label: ":docker: Build Test Image"
-    agents:
-      queue: beta # TODO: dedicated builder queue
     plugins:
       docker-compose:
         build: test
@@ -29,8 +27,6 @@ cat <<EOF
 
   - command: ./scripts/wait-for-it.sh postgres:5432 -s -t ${DB_TIMEOUT} -- make test-${TEST}
     label: ":cogops: ${TEST}"
-    agents:
-      queue: beta
     plugins:
       docker-compose:
         run: test
@@ -47,8 +43,6 @@ cat <<EOF
 
   - command: ./scripts/wait-for-it.sh postgres:5432 -s -t ${DB_TIMEOUT} -- make test-${PLATFORM}
     label: ":${PLATFORM}: Integration"
-    agents:
-      queue: beta
     plugins:
       docker-compose:
         run: test
@@ -90,8 +84,6 @@ cat <<EOF
 
   - command: .buildkite/scripts/build_and_push_docker_image.sh $COG_IMAGE
     label: ":docker: Build Real Image"
-    agents:
-      queue: beta # TODO future builder queue
 
   - wait
 EOF
