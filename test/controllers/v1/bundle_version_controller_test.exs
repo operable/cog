@@ -58,28 +58,21 @@ defmodule Cog.V1.BundleVersionControllerTest do
 
     bundle_id = version.bundle.id
     version_id = version.id
-    assert %{"bundle_version" =>
-              %{"id" => ^version_id,
-                "bundle_id" => ^bundle_id,
-                "name" => "test-bundle",
-                "version" => "1.0.0",
-                "enabled" => true,
-                "inserted_at" => _,
-                "updated_at" => _,
-                "commands" => [
-                  %{"id" => _,
-                    "bundle" => "test-bundle",
-                    "name" => "bar",
-                    "description" => nil,
-                    "documentation" => "docs for bar"},
-                  %{"id" => _,
-                    "bundle" => "test-bundle",
-                    "name" => "foo",
-                    "description" => nil,
-                    "documentation" => "docs for foo"}],
-                "permissions" => [%{"id" => _,
-                                    "bundle" => "test-bundle",
-                                    "name" => "permission"}]}} = json_response(conn, 200)
+    %{"bundle_version" =>
+      %{"id" => ^version_id,
+        "bundle_id" => ^bundle_id,
+        "name" => "test-bundle",
+        "version" => "1.0.0",
+        "enabled" => true,
+        "inserted_at" => _,
+        "updated_at" => _,
+        "commands" => commands,
+        "permissions" => [%{"id" => _,
+                            "bundle" => "test-bundle",
+                            "name" => "permission"}]}} = json_response(conn, 200)
+    assert Enum.count(commands) == 2
+    command_names = [Map.get(Enum.at(commands, 0), "name"), Map.get(Enum.at(commands, 1), "name")]
+    assert command_names == ["bar", "foo"] or command_names == ["foo", "bar"]
   end
 
   test "cannot delete an enabled bundle version", %{authed: requestor} do
