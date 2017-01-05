@@ -5,7 +5,7 @@ defmodule Cog.Chat.HipChat.Provider do
   use GenServer
   use Cog.Chat.Provider
 
-  alias Carrier.Messaging.Connection
+  alias Carrier.Messaging.ConnectionSup
   alias Carrier.Messaging.GenMqtt
   alias Cog.Chat.HipChat
 
@@ -64,7 +64,7 @@ defmodule Cog.Chat.HipChat.Provider do
     incoming = Keyword.fetch!(config, :incoming_topic)
     case HipChat.Connector.start_link(config) do
       {:ok, xmpp_conn} ->
-        {:ok, mbus} = Connection.connect()
+        {:ok, mbus} = ConnectionSup.connect()
         {:ok, %__MODULE__{incoming: incoming, mbus: mbus, xmpp: xmpp_conn}}
       error ->
         error

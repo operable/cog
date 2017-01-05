@@ -5,7 +5,7 @@ defmodule Cog.Chat.Slack.Provider do
   use GenServer
   use Cog.Chat.Provider
 
-  alias Carrier.Messaging.Connection
+  alias Carrier.Messaging.ConnectionSup
   alias Carrier.Messaging.GenMqtt
   alias Cog.Chat.Slack.Connector
   alias Greenbar.Renderers.SlackRenderer
@@ -71,7 +71,7 @@ defmodule Cog.Chat.Slack.Provider do
     else
       incoming = Keyword.fetch!(config, :incoming_topic)
 
-      {:ok, mbus} = Connection.connect()
+      {:ok, mbus} = ConnectionSup.connect()
       {:ok, pid} = Connector.start_link(token)
       {:ok, %__MODULE__{token: token, incoming: incoming, connector: pid, mbus: mbus}}
     end

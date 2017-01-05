@@ -18,7 +18,7 @@ defmodule Cog.FakeRelay do
   containing the connections and the relay model.
   """
   def new(%Relay{}=relay) do
-    {:ok, conn} = Messaging.Connection.connect()
+    {:ok, conn} = Messaging.ConnectionSup.connect()
     %__MODULE__{conn: conn, relay: relay}
   end
 

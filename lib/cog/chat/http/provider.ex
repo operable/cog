@@ -2,7 +2,7 @@ defmodule Cog.Chat.Http.Provider do
   use GenServer
   use Cog.Chat.Provider
 
-  alias Carrier.Messaging.Connection
+  alias Carrier.Messaging.ConnectionSup
   alias Carrier.Messaging.GenMqtt
   alias Cog.Chat.Http.Connector
   alias Cog.Chat.Message
@@ -38,7 +38,7 @@ defmodule Cog.Chat.Http.Provider do
 
   def init(config) do
     incoming = Keyword.fetch!(config, :incoming_topic)
-    {:ok, mbus} = Connection.connect()
+    {:ok, mbus} = ConnectionSup.connect()
     {:ok, %__MODULE__{incoming: incoming, mbus: mbus}}
   end
 

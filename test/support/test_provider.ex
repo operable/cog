@@ -12,7 +12,7 @@ defmodule Cog.Chat.Test.Provider do
     do: GenServer.start_link(__MODULE__, args, name: __MODULE__)
 
   def init(config) do
-    {:ok, conn} = Carrier.Messaging.Connection.connect
+    {:ok, conn} = Carrier.Messaging.ConnectionSup.connect()
     incoming = Keyword.fetch!(config, :incoming_topic)
     {:ok, %__MODULE__{conn: conn, incoming: incoming}}
   end
