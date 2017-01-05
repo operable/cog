@@ -6,7 +6,7 @@ defmodule Cog.Util.Debug do
 
   defmacro __using__(_) do
     quote do
-      import unquote(__MODULE__), only: [debug: 1]
+      import unquote(__MODULE__), only: [debug: 1, dump: 1]
     end
   end
 
@@ -19,6 +19,12 @@ defmodule Cog.Util.Debug do
     end
   end
 
+  defmacro dump(thing) do
+    quote do
+      debug(unquote(thing))
+      unquote(thing)
+    end
+  end
 
   defp format_file_name(name) do
     parts = String.split(name, "/")
