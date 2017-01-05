@@ -2,7 +2,18 @@ defmodule Cog.Commands.Info do
   use Cog.Command.GenCommand.Base,
     bundle: Cog.Util.Misc.embedded_bundle
 
-  @description "Display information about the current running instance of Cog"
+  @description "Display information about the current running instance of Cog."
+
+  @output_example """
+  [
+    {
+      "embedded_bundle_version": "0.18.0",
+      "elixir_version": "1.3.4",
+      "cog_version": "0.18.0",
+      "bundle_config_version": 5
+    }
+  ]
+  """
 
   rule "when command is #{Cog.Util.Misc.embedded_bundle}:info allow"
 
