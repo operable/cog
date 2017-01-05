@@ -85,22 +85,29 @@ cat <<EOF
   - command: .buildkite/scripts/build_and_push_docker_image.sh $COG_IMAGE
     label: ":docker: Build Real Image"
 
-  - wait
 EOF
 
 ########################################################################
 # Triggered Builds
 
-# If there's a branch in cogctl with the same name as the branch we're
-# building here in Cog, use that branch. Otherwise, build on master.
-if git ls-remote --exit-code --heads https://github.com/operable/cogctl refs/heads/${BUILDKITE_BRANCH} > /dev/null 2>&1
+# We'd like to ensure that cogctl can still work with cog, so we'll
+# trigger a build using the cog image we just built.
+#
+# However, we won't do this if it's a scheduled nightly build. cogctl
+# has its own nightly build, and there's no reason to build it twice.
+if [ "${BUILDKITE_SOURCE}" != "schedule" ]
 then
-    TRIGGER_BRANCH=${BUILDKITE_BRANCH}
-else
-    TRIGGER_BRANCH='master'
-fi
+    # If there's a branch in cogctl with the same name as the branch we're
+    # building here in Cog, use that branch. Otherwise, build on master.
+    if git ls-remote --exit-code --heads https://github.com/operable/cogctl refs/heads/${BUILDKITE_BRANCH} > /dev/null 2>&1
+    then
+        TRIGGER_BRANCH=${BUILDKITE_BRANCH}
+    else
+        TRIGGER_BRANCH='master'
+    fi
 
-cat <<EOF
+    cat <<EOF
+  - wait
 
   - trigger: "cogctl"
     label: ":cogops: Triggered cogctl build"
@@ -111,3 +118,4 @@ cat <<EOF
       env:
         COG_IMAGE: ${COG_IMAGE}
 EOF
+fi
