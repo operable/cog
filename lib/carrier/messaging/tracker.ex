@@ -136,22 +136,12 @@ defmodule Carrier.Messaging.Tracker do
   end
 
   defp has_subscriptions?(tracker, subscriber) do
-    if Enum.reduce_while(tracker.reply_endpoints, false, &(has_endpoint(&1, subscriber, &2))) do
-      true
-    else
-      Enum.reduce_while(tracker.subscriptions, false, &(has_any_subscription(&1, subscriber, &2)))
-    end
+    Map.has_key?(tracker.reply_endpoints, subscriber) or
+      Enum.any?(tracker.subscriptions, &(has_subscription?(&1, subscriber)))
   end
 
-  defp has_endpoint({_topic, subscriber}, subscriber, _), do: {:halt, true}
-  defp has_endpoint({_, _}, _, _), do: {:cont, false}
-
-  defp has_any_subscription({_, {_, subscribed}}, subscriber, _) do
-    if Enum.member?(subscribed, subscriber) do
-        {:halt, true}
-    else
-      {:cont, false}
-    end
+  defp has_subscription?({_, {_, subscribed}}, subscriber) do
+    Enum.member?(subscribed, subscriber)
   end
 
   defp del_reply_endpoint(%__MODULE__{reply_endpoints: reps, unused_topics: ut}=tracker, subscriber) do
