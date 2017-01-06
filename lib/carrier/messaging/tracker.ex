@@ -23,12 +23,8 @@ defmodule Carrier.Messaging.Tracker do
 
   @spec add_subscription(Tracker.t, String.t, pid()) :: Tracker.t
   def add_subscription(%__MODULE__{subscriptions: subs}=tracker, topic, subscriber) do
-    subs = case Map.get(subs, topic) do
-             nil ->
-               Map.put(subs, topic, {subscription_matcher(topic), [subscriber]})
-             {matcher, subscribed} ->
-               Map.put(subs, topic, {matcher, Enum.uniq([subscriber|subscribed])})
-           end
+    subs = Map.update(subs, topic, {subscription_matcher(topic), [subscriber]},
+      fn({matcher, subscribed}) -> {matcher, Enum.uniq([subscriber|subscribed])} end)
     maybe_monitor_subscriber(%{tracker | subscriptions: subs}, subscriber)
   end
 
@@ -163,7 +159,7 @@ defmodule Carrier.Messaging.Tracker do
 
   defp delete_subscription(topic, subscriber, subs) do
     case Map.get(subs, topic) do
-      {_, []} ->
+      nil ->
         subs
       {matcher, subscribed} ->
         Map.put(subs, topic, {matcher, List.delete(subscribed, subscriber)})
