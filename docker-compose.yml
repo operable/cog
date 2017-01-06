@@ -39,43 +39,42 @@
 #
 # https://cog-book.operable.io/
 #
-
-postgres:
-  image: postgres:9.5
-  environment:
-    - POSTGRES_USER=cog
-    - POSTGRES_PASSWORD=cog
-
-cog:
-  extends:
-    file: docker-compose.common.yml
-    service: common
-  image: operable/cog:latest
-  environment:
-    - COG_MQTT_HOST=0.0.0.0
-    - DATABASE_URL=ecto://cog:cog@postgres:5432/cog
-  links:
-    - postgres
-  ports:
-    - 1883
-    - 80:4000
-    - 4001:4001
-    - 4002:4002
-  entrypoint: /home/operable/cog/scripts/docker-start
-
-relay:
-  extends:
-    file: docker-compose.common.yml
-    service: common
-  image: operable/relay:latest
-  privileged: true
-  volumes:
-    - /var/run/docker.sock:/var/run/docker.sock
-  environment:
-    - RELAY_COG_REFRESH_INTERVAL=30s
-    - RELAY_DOCKER_CLEAN_INTERVAL=1m
-    - RELAY_COG_HOST=cog
-    - RELAY_DYNAMIC_CONFIG_ROOT=/tmp/bundle_configs
-  links:
-    - cog
-  entrypoint: /usr/local/bin/relay
+version: '2'
+services:
+  postgres:
+    image: postgres:9.5
+    environment:
+      - POSTGRES_USER=cog
+      - POSTGRES_PASSWORD=cog
+  cog:
+    extends:
+      file: docker-compose.common.yml
+      service: common
+    image: operable/cog:latest
+    environment:
+      - COG_MQTT_HOST=0.0.0.0
+      - DATABASE_URL=ecto://cog:cog@postgres:5432/cog
+    depends_on:
+      - postgres
+    ports:
+      - 1883
+      - 80:4000
+      - 4001:4001
+      - 4002:4002
+    entrypoint: /home/operable/cog/scripts/docker-start
+  relay:
+    extends:
+      file: docker-compose.common.yml
+      service: common
+    image: operable/relay:latest
+    privileged: true
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - RELAY_COG_REFRESH_INTERVAL=30s
+      - RELAY_DOCKER_CLEAN_INTERVAL=1m
+      - RELAY_COG_HOST=cog
+      - RELAY_DYNAMIC_CONFIG_ROOT=/tmp/bundle_configs
+    depends_on:
+      - cog
+    entrypoint: /usr/local/bin/relay

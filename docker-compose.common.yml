@@ -1,5 +1,7 @@
-common:
-  environment:
-    - COG_API_URL_BASE=http://${COG_HOST}
-    - COG_TRIGGER_URL_BASE=http://${COG_HOST}:4001
-    - COG_SERVICE_URL_BASE=http://${COG_HOST}:4002
+version: '2'
+services:
+  common:
+    environment:
+      - COG_API_URL_BASE=http://${COG_HOST}
+      - COG_TRIGGER_URL_BASE=http://${COG_HOST}:4001
+      - COG_SERVICE_URL_BASE=http://${COG_HOST}:4002

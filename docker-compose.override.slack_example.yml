@@ -1,16 +1,18 @@
-cog:
-  environment:
-    - COG_SLACK_ENABLED=1
-    - SLACK_API_TOKEN=${SLACK_API_TOKEN}
-    - COG_BOOTSTRAP_USERNAME=admin
-    - COG_BOOTSTRAP_PASSWORD=changeme
-    - COG_BOOTSTRAP_EMAIL_ADDRESS=cog@localhost
-    - COG_BOOTSTRAP_FIRST_NAME=Cog
-    - COG_BOOTSTRAP_LAST_NAME=Administrator
-    - RELAY_ID=00000000-0000-0000-0000-000000000000
-    - RELAY_COG_TOKEN=supersecret
+version: '2'
+services:
+  cog:
+    environment:
+      - COG_SLACK_ENABLED=1
+      - SLACK_API_TOKEN=${SLACK_API_TOKEN}
+      - COG_BOOTSTRAP_USERNAME=admin
+      - COG_BOOTSTRAP_PASSWORD=changeme
+      - COG_BOOTSTRAP_EMAIL_ADDRESS=cog@localhost
+      - COG_BOOTSTRAP_FIRST_NAME=Cog
+      - COG_BOOTSTRAP_LAST_NAME=Administrator
+      - RELAY_ID=00000000-0000-0000-0000-000000000000
+      - RELAY_COG_TOKEN=supersecret
 
-relay:
-  environment:
-    - RELAY_ID=00000000-0000-0000-0000-000000000000
-    - RELAY_COG_TOKEN=supersecret
+  relay:
+    environment:
+      - RELAY_ID=00000000-0000-0000-0000-000000000000
+      - RELAY_COG_TOKEN=supersecret
