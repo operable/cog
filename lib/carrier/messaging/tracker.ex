@@ -91,10 +91,14 @@ defmodule Carrier.Messaging.Tracker do
     end
   end
 
+  # Tracker users regexes to find subscribers for a given MQTT topic because
+  # the MQTT standard describes two types of wildcard subscriptions:
+  #   * "foo/+" means "subscribe to foo and all topics one level down"
+  #   * "foo/*" means "subscribe to foo and all subtopics regardless of depth"
   defp subscription_matcher(sub_topic) do
     regex = case String.slice(sub_topic, -2, 2) do
               "/+" ->
-                "^#{String.slice(sub_topic, 0, String.length(sub_topic) - 1)}[a-zA-Z0-9_]+$"
+                "^#{String.slice(sub_topic, 0, String.length(sub_topic) - 1)}[a-zA-Z0-9_\-]+$"
               "/*" ->
                 "^#{String.slice(sub_topic, 0, String.length(sub_topic) - 1)}.*"
               _ ->
