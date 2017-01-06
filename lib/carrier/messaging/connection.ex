@@ -2,8 +2,6 @@ defmodule Carrier.Messaging.Connection do
 
   require Logger
 
-  use Cog.Util.Debug
-
   alias Carrier.Messaging.Tracker
   alias Carrier.Messaging.Messages.MqttCall
   alias Carrier.Messaging.Messages.MqttCast
