@@ -323,10 +323,14 @@ defmodule Cog.Chat.Adapter do
       true ->
         command_prefix = Application.get_env(:cog, :command_prefix, "!")
         updated = Regex.replace(~r/^#{Regex.escape(command_prefix)}/, text, "")
-        if updated != text do
-          updated
-        else
-          nil
+
+        case updated do
+          ^text ->
+            nil
+          "" ->
+            nil
+          updated ->
+            updated
         end
     end
   end
