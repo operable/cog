@@ -134,7 +134,6 @@ defmodule Cog.Command.GenCommand.Base do
       Module.register_attribute(__MODULE__, :examples, accumulate: false, persist: true)
       Module.register_attribute(__MODULE__, :notes, accumulate: false, persist: true)
       Module.register_attribute(__MODULE__, :arguments, accumulate: false, persist: true)
-      Module.register_attribute(__MODULE__, :subcommands, accumulate: false, persist: true)
       Module.register_attribute(__MODULE__, :options, accumulate: true, persist: true)
       Module.register_attribute(__MODULE__, :permissions, accumulate: true, persist: true)
       Module.register_attribute(__MODULE__, :raw_rules, accumulate: true, persist: false)
@@ -180,7 +179,7 @@ defmodule Cog.Command.GenCommand.Base do
     attr_value(module, :command_name)
   end
 
-  for attr <- [:description, :long_description, :examples, :notes, :arguments, :subcommands, :output_description, :output_example] do
+  for attr <- [:description, :long_description, :examples, :notes, :arguments, :output_description, :output_example] do
     def unquote(attr)(module),
       do: attr_value(module, unquote(attr))
   end

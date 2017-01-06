@@ -10,7 +10,6 @@ defmodule Cog.CommandVersionHelpView do
       synopsis: render_synopsis(command_version),
       required_options: render_required_options(command_version),
       options: render_options(command_version),
-      subcommands: render_subcommands(command_version),
       examples: command_version.examples,
       notes: command_version.notes,
       output: render_output(command_version),
@@ -94,15 +93,6 @@ defmodule Cog.CommandVersionHelpView do
     do: "--#{long_flag}"
   defp render_long_flag(%CommandOption{long_flag: long_flag, name: name}),
     do: "--#{long_flag} <#{name}>"
-
-  def render_subcommands(%CommandVersion{subcommands: nil}),
-    do: []
-  def render_subcommands(%CommandVersion{subcommands: subcommands}) do
-    Enum.map(subcommands, fn {command, description} ->
-      %{command: command,
-        description: description}
-    end)
-  end
 
   def render_output(%CommandVersion{output: output}) do
     %{description: output["description"],

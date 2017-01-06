@@ -38,7 +38,6 @@ defmodule Cog.Commands.Help do
   @output_example """
   {
     "synopsis": "operable:raw",
-    "subcommands": [],
     "required_options": [],
     "output": {},
     "options": [],

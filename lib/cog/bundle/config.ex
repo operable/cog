@@ -97,7 +97,6 @@ defmodule Cog.Bundle.Config do
         "examples" => GenCommand.Base.examples(module),
         "notes" => GenCommand.Base.notes(module),
         "arguments" => GenCommand.Base.arguments(module),
-        "subcommands" => GenCommand.Base.subcommands(module),
         "output" => GenCommand.Base.output(module),
         "documentation" => case Code.get_docs(module, :moduledoc) do
                              {_line, doc} ->

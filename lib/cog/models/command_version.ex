@@ -14,7 +14,6 @@ defmodule Cog.Models.CommandVersion do
     field :examples, :string
     field :notes, :string
     field :arguments, :string
-    field :subcommands, :map
     field :documentation, :string
     field :output, :map
     field :status, :string, virtual: true
@@ -28,7 +27,7 @@ defmodule Cog.Models.CommandVersion do
   end
 
   @required_fields ~w(command_id bundle_version_id)
-  @optional_fields ~w(description documentation long_description examples notes arguments subcommands output)
+  @optional_fields ~w(description documentation long_description examples notes arguments output)
 
   summary_fields [:documentation]
   detail_fields [:documentation]
