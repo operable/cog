@@ -21,6 +21,7 @@ __Commands__
 ~if cond=$bundle.config_file.config~
 ~br~
 __Configuration__
+
 ~if cond=$bundle.config_file.config.notes~
 ~$bundle.config_file.config.notes~
 ~end~
