@@ -70,9 +70,7 @@ defmodule Cog.V1.BundleVersionControllerTest do
         "permissions" => [%{"id" => _,
                             "bundle" => "test-bundle",
                             "name" => "permission"}]}} = json_response(conn, 200)
-    assert Enum.count(commands) == 2
-    command_names = [Map.get(Enum.at(commands, 0), "name"), Map.get(Enum.at(commands, 1), "name")]
-    assert command_names == ["bar", "foo"] or command_names == ["foo", "bar"]
+    assert ([Map.get(Enum.at(commands, 0), "name"), Map.get(Enum.at(commands, 1), "name")] |> Enum.sort) == ["bar", "foo"]
   end
 
   test "cannot delete an enabled bundle version", %{authed: requestor} do

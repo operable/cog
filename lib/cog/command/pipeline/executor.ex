@@ -103,8 +103,7 @@ defmodule Cog.Command.Pipeline.Executor do
   require Logger
 
   def start_link(request) do
-    result = :gen_fsm.start_link(__MODULE__, [request], [])
-    result
+    :gen_fsm.start_link(__MODULE__, [request], [])
   end
 
   def init([%Cog.Messages.AdapterRequest{}=request]) do
@@ -628,8 +627,7 @@ defmodule Cog.Command.Pipeline.Executor do
 
   defp fetch_user_from_request(%Cog.Messages.AdapterRequest{}=request) do
     # TODO: This should happen when we validate the request
-    result = ChatAdapter.is_chat_provider?(request.adapter)
-    if result do
+    if ChatAdapter.is_chat_provider?(request.adapter) do
       adapter   = request.adapter
       sender_id = request.sender.id
       user = Queries.User.for_chat_provider_user_id(sender_id, adapter)

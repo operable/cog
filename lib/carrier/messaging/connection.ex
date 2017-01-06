@@ -24,10 +24,6 @@ defmodule Carrier.Messaging.Connection do
 
   defstruct [:conn, :tracker, :owner]
 
-  # Note: This type is what we get from emqttc; if we change
-  # underlying message buses, we can just change this
-  # definition. Client code can just depend on this opaque type and
-  # not need to know that we're using emqttc at all.
   @typedoc "The connection to the message bus."
   @opaque connection :: pid()
 
@@ -49,7 +45,6 @@ defmodule Carrier.Messaging.Connection do
   `:connect_timeout` option in `opts`.
 
   """
-  # Again, this spec is what comes from emqttc
   @spec start_link(pid(), Keyword.t()) :: {:ok, connection()} | :ignore | {:error, term()}
   def start_link(owner, opts \\ []) do
     opts = opts
