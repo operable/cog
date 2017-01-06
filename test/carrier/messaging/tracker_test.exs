@@ -71,6 +71,40 @@ defmodule Carrier.Messaging.TrackerTest do
     assert Tracker.find_subscribers(tracker, "foo/ba/baz") == []
   end
 
+  test "removing subscriber works" do
+    p1 = placeholder()
+    p2 = placeholder()
+    tracker = %Tracker{}
+    tracker = tracker
+              |> Tracker.add_subscription("foo/bar", p1)
+              |> Tracker.add_subscription("quux", p1)
+              |> Tracker.add_subscription("baz", p2)
+              |> Tracker.add_subscription("quux", p2)
+    {tracker, _} = Tracker.add_reply_endpoint(tracker, p1)
+    {tracker, _} = Tracker.add_reply_endpoint(tracker, p2)
+    tracker = Tracker.del_subscriber(tracker, p1)
+    assert Tracker.find_subscribers(tracker, "quux") == [p2]
+    assert Enum.count(tracker.monitors) == 1
+    tracker = Tracker.del_subscriber(tracker, p2)
+    assert Tracker.unused?(tracker)
+  end
+
+  test "handle unknown processes" do
+    p1 = placeholder()
+    p2 = placeholder()
+    tracker = %Tracker{}
+    tracker = Tracker.add_subscription(tracker, "foo", p1)
+    {tracker, _} = Tracker.add_reply_endpoint(tracker, p1)
+    {tracker, false} = Tracker.del_subscription(tracker, "foo", p2)
+    refute Tracker.unused?(tracker)
+    assert Tracker.find_subscribers(tracker, "foo") == [p1]
+    tracker = Tracker.del_subscriber(tracker, p2)
+    refute Tracker.unused?(tracker)
+    assert Tracker.find_subscribers(tracker, "foo") == [p1]
+    tracker = Tracker.del_subscriber(tracker, p1)
+    assert Tracker.unused?(tracker)
+  end
+
   test "unused? predicate functions" do
     p1 = placeholder()
     {tracker, reply_endpoint} = %Tracker{}

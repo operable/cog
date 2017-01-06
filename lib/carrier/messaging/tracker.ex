@@ -117,18 +117,22 @@ defmodule Carrier.Messaging.Tracker do
     if has_subscriptions?(tracker, subscriber) do
       tracker
     else
-      if Map.has_key?(monitors, subscriber) do
-        unmonitor_subscriber(tracker, subscriber)
-      else
-        tracker
-      end
+        {_, monitors} = Map.get_and_update(monitors, subscriber,
+          fn(nil) -> :pop
+            (mref) -> :erlang.demonitor(mref, [:flush])
+                      :pop end)
+        %{tracker | monitors: monitors}
     end
   end
 
   def unmonitor_subscriber(%__MODULE__{monitors: monitors}=tracker, subscriber) do
-    {mref, monitors} = Map.pop(monitors, subscriber)
-    :erlang.demonitor(mref, [:flush])
-    %{tracker | monitors: monitors}
+    case Map.pop(monitors, subscriber) do
+      {nil, _monitors} ->
+        tracker
+      {mref, monitors} ->
+        :erlang.demonitor(mref, [:flush])
+        %{tracker | monitors: monitors}
+    end
   end
 
   defp has_subscriptions?(tracker, subscriber) do
@@ -153,16 +157,18 @@ defmodule Carrier.Messaging.Tracker do
   end
 
   defp del_all_subscriptions(%__MODULE__{subscriptions: subs}=tracker, subscriber) do
-    subs = Enum.reduce(Map.keys(subs), subs, &(delete_subscription(&1, subscriber, &2)))
-    %{tracker | subscriptions: subs}
+    {subs, unused_topics} = Enum.reduce(Map.keys(subs), {subs, []}, &(delete_subscription(&1, subscriber, &2)))
+    %{tracker | subscriptions: subs, unused_topics: tracker.unused_topics ++ unused_topics}
   end
 
-  defp delete_subscription(topic, subscriber, subs) do
+  defp delete_subscription(topic, subscriber, {subs, unused_topics}) do
     case Map.get(subs, topic) do
       nil ->
-        subs
+        {subs, unused_topics}
+      {_matcher, [^subscriber]} ->
+        {Map.delete(subs, topic), [topic|unused_topics]}
       {matcher, subscribed} ->
-        Map.put(subs, topic, {matcher, List.delete(subscribed, subscriber)})
+        {Map.put(subs, topic, {matcher, List.delete(subscribed, subscriber)}), unused_topics}
     end
   end
 
