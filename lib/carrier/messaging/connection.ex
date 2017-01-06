@@ -20,6 +20,7 @@ defmodule Carrier.Messaging.Connection do
 
   @internal_mq_username Cog.Util.Misc.internal_mq_username
   @default_connect_timeout 5000 # 5 seconds
+  @default_call_timeout 5000 # 5 seconds
   @default_log_level :error
 
   defstruct [:conn, :tracker, :owner]
@@ -101,7 +102,7 @@ defmodule Carrier.Messaging.Connection do
   @spec call(conn::connection(), topic::String.t, endpoint::String.t, message::Map.t, opts::call_opts()) :: Map.t | {:error, atom()}
   def call(conn, topic, endpoint, message, opts \\ []) do
     subscriber = Keyword.get(opts, :subscriber, self())
-    timeout = Keyword.get(opts, :timeout, 5000)
+    timeout = Keyword.get(opts, :timeout, @default_call_timeout)
     GenServer.call(conn, {:call, topic, endpoint, message, subscriber, timeout}, :infinity)
   end
 
