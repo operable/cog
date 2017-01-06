@@ -130,9 +130,9 @@ defmodule Carrier.Messaging.Tracker do
   end
 
   def unmonitor_subscriber(%__MODULE__{monitors: monitors}=tracker, subscriber) do
-    mref = Map.fetch!(monitors, subscriber)
+    {mref, monitors} = Map.pop(monitors, subscriber)
     :erlang.demonitor(mref, [:flush])
-    %{tracker | monitors: Map.delete(monitors, subscriber)}
+    %{tracker | monitors: monitors}
   end
 
   defp has_subscriptions?(tracker, subscriber) do
