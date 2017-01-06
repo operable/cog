@@ -2,13 +2,13 @@ defmodule Cog.Command.Pipeline.Executor do
 
   alias Carrier.Messaging.ConnectionSup
   alias Carrier.Messaging.Connection
-  alias Cog.AuditMessage
+  alias Cog.Command.AuditMessage
   alias Cog.Chat.Adapter, as: ChatAdapter
   alias Cog.Command.CommandResolver
   alias Cog.Command.PermissionsCache
   alias Cog.Command.Pipeline.Destination
   alias Cog.Command.Pipeline.Plan
-  alias Cog.ErrorResponse
+  alias Cog.Command.Output.ErrorResponse
   alias Cog.Events.PipelineEvent
   alias Cog.Queries
   alias Cog.Relay.Relays

@@ -1,4 +1,4 @@
-defmodule Cog.Command.ReplyHelper do
+defmodule Cog.Command.Output.ReplyHelper do
   alias Cog.Chat.Adapter
   alias Cog.Template.Evaluator
 

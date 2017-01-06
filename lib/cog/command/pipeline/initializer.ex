@@ -12,7 +12,7 @@ defmodule Cog.Command.Pipeline.Initializer do
 
   alias Carrier.Messaging.ConnectionSup
   alias Carrier.Messaging.Connection
-  alias Cog.Command.ReplyHelper
+  alias Cog.Command.Output.ReplyHelper
   alias Cog.Command.Pipeline.ExecutorSup
   alias Cog.Repository.Users
   alias Cog.Repository.ChatHandles

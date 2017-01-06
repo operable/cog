@@ -1,7 +1,7 @@
-defmodule Cog.AuditMessage do
+defmodule Cog.Command.AuditMessage do
   alias Cog.Models.Bundle
   alias Cog.Models.CommandVersion
-  alias Cog.ErrorResponse
+  alias Cog.Command.Output.ErrorResponse
 
   # Turn an error tuple into a message intended for the audit log
   def render({:parse_error, msg}, request) when is_binary(msg),

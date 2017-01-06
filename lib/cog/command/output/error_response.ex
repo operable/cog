@@ -1,4 +1,4 @@
-defmodule Cog.ErrorResponse do
+defmodule Cog.Command.Output.ErrorResponse do
   alias Piper.Permissions.Ast
   alias Cog.Models.Bundle
 
