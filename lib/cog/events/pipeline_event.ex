@@ -31,11 +31,11 @@ defmodule Cog.Events.PipelineEvent do
 
   * `command_text`: (String) the text of the entire pipeline, as typed by the
     user. No variables will have been interpolated or bound at this point.
-  * `adapter`: (String) the chat adapter being used
-  * `handle`: (String) the adapter-specific chat handle of the user issuing the
+  * `provider`: (String) the chat provider being used
+  * `handle`: (String) the provider-specific chat handle of the user issuing the
     command.
   * `cog_user`: The Cog-specific username of the invoker of issuer of
-    the command. May be different than the adapter-specific handle.
+    the command. May be different than the provider-specific handle.
 
   ## `command_dispatched`
 
@@ -77,10 +77,10 @@ defmodule Cog.Events.PipelineEvent do
   @doc """
   Create a `pipeline_initialized` event
   """
-  def initialized(pipeline_id, start, text, adapter, cog_user, handle) do
+  def initialized(pipeline_id, start, text, provider, cog_user, handle) do
     new(pipeline_id, :pipeline_initialized, start, %{command_text: text,
                                                      cog_user: cog_user,
-                                                     adapter: adapter,
+                                                     provider: provider,
                                                      chat_handle: handle})
   end
 

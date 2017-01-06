@@ -1,8 +1,8 @@
-defmodule Cog.AdapterAssertions do
+defmodule Cog.ProviderAssertions do
   import ExUnit.Assertions
 
   @doc """
-  Compare a fragment of an error message from a chat adapter to the
+  Compare a fragment of an error message from a chat provider to the
   complete textual response given.
   """
   def assert_error_message_contains(actual_response, expected_message_fragment) do

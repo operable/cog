@@ -27,8 +27,8 @@ defmodule Cog.AuditMessage do
     do: "The #{name} bundle is currently disabled"
   def render({:command_error, response}, _request),
     do: response.status_message || response.body["message"]
-  def render({:template_rendering_error, {error, template, adapter}}, _request),
-    do: "Error rendering template '#{template}' for '#{adapter}': #{inspect error}"
+  def render({:template_rendering_error, {error, template, provider}}, _request),
+    do: "Error rendering template '#{template}' for '#{provider}': #{inspect error}"
   def render({:timeout, %CommandVersion{}=command}, _request) do
     name = CommandVersion.full_name(command)
     "Timed out waiting on #{name} to reply"

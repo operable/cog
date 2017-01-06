@@ -34,16 +34,16 @@ defmodule Cog.Command.Pipeline.Initializer do
   end
 
   def handle_info({:publish, "/bot/commands", message}, state) do
-    payload = Cog.Messages.AdapterRequest.decode!(message)
+    payload = Cog.Messages.ProviderRequest.decode!(message)
     # Only self register when the feature is enabled via config
     # and the incoming request is from Slack.
     #
-    # TODO: should only do this if the adapter is a chat adapter
-    self_register_flag = Application.get_env(:cog, :self_registration, false) and payload.adapter != "http"
+    # TODO: should only do this if the provider is a chat provider
+    self_register_flag = Application.get_env(:cog, :self_registration, false) and payload.provider != "http"
     case self_register_user(payload, self_register_flag, state) do
       :ok ->
-        # TODO: should only do history check if the adapter is a chat
-        # adapter, too
+        # TODO: should only do history check if the provider is a chat
+        # provider, too
         case check_history(payload, state) do
           {true, payload, state} ->
             {:ok, _} = ExecutorSup.run(payload)
@@ -88,7 +88,7 @@ defmodule Cog.Command.Pipeline.Initializer do
 
   defp self_register_user(request, true, state) do
     sender = request.sender
-    case Users.by_chat_handle(sender.handle, request.adapter) do
+    case Users.by_chat_handle(sender.handle, request.provider) do
       {:ok, _} ->
         :ok
       {:error, :not_found} ->
@@ -100,7 +100,7 @@ defmodule Cog.Command.Pipeline.Initializer do
                              "email_address" => sender.email,
                              "password" => Passwords.generate_password(12)}) do
               {:ok, user} ->
-                case ChatHandles.set_handle(user, request.adapter, sender.handle) do
+                case ChatHandles.set_handle(user, request.provider, sender.handle) do
                   {:ok, _} ->
                     self_registration_success(user, request, state)
                     :ok
@@ -126,7 +126,7 @@ defmodule Cog.Command.Pipeline.Initializer do
   end
 
   defp self_registration_success(user, request, state) do
-    provider = request.adapter
+    provider = request.provider
     handle = request.sender.handle
     {:ok, mention_name} = Cog.Chat.Adapter.mention_name(provider, handle)
 
@@ -136,12 +136,12 @@ defmodule Cog.Command.Pipeline.Initializer do
     ReplyHelper.send("self-registration-success",
                      context,
                      request.room,
-                     request.adapter,
+                     request.provider,
                      state.mq_conn)
   end
 
   defp self_registration_failed(request, state) do
-    provider = request.adapter
+    provider = request.provider
     handle = request.sender.handle
     {:ok, mention_name} = Cog.Chat.Adapter.mention_name(provider, handle)
     {:ok, display_name} = Cog.Chat.Adapter.display_name(provider)
@@ -151,7 +151,7 @@ defmodule Cog.Command.Pipeline.Initializer do
     ReplyHelper.send("self-registration-failed",
                      context,
                      request.room,
-                     request.adapter,
+                     request.provider,
                      state.mq_conn)
   end
 

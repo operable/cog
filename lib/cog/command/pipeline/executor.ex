@@ -22,7 +22,7 @@ defmodule Cog.Command.Pipeline.Executor do
 
   @command_statuses [:success, :abort, :error]
 
-  @type adapter_name :: String.t
+  @type provider_name :: String.t
 
   @typedoc """
   Custom State for executor
@@ -33,7 +33,7 @@ defmodule Cog.Command.Pipeline.Executor do
   * `:topic` - The topic that the executor listens on.
   * `:started` - Timestamp for the start of the pipeline.
   * `:mq_conn` - The message queue connection.
-  * `:request` - The original request from the adapter.
+  * `:request` - The original request from the provider.
   * `:destinations` - Destinations to which pipeline output will be
     returned.
   * `:invocations` - list of all the invocation ASTs for the
@@ -62,7 +62,7 @@ defmodule Cog.Command.Pipeline.Executor do
     topic: String.t,
     started: DateTime.t,
     mq_conn: Carrier.Messaging.Connection.connection(),
-    request: %Cog.Messages.AdapterRequest{}, # TODO: needs to be a type
+    request: %Cog.Messages.ProviderRequest{}, # TODO: needs to be a type
     destinations: %{Atom.t => [Destination.t]},
     relays: Map.t,
     invocations: [%Piper.Command.Ast.Invocation{}], # TODO: needs to be a type
@@ -106,7 +106,7 @@ defmodule Cog.Command.Pipeline.Executor do
     :gen_fsm.start_link(__MODULE__, [request], [])
   end
 
-  def init([%Cog.Messages.AdapterRequest{}=request]) do
+  def init([%Cog.Messages.ProviderRequest{}=request]) do
     config = Application.fetch_env!(:cog, Cog.Command.Pipeline)
     request = sanitize_request(request)
     {:ok, conn} = ConnectionSup.connect()
@@ -122,7 +122,7 @@ defmodule Cog.Command.Pipeline.Executor do
         case fetch_user_from_request(request) do
           {:ok, user} ->
             {:ok, perms} = PermissionsCache.fetch(user)
-            command_timeout = get_command_timeout(request.adapter, config)
+            command_timeout = get_command_timeout(request.provider, config)
             loop_data = %__MODULE__{id: id, topic: topic, request: request,
                                     mq_conn: conn,
                                     user: user,
@@ -161,7 +161,7 @@ defmodule Cog.Command.Pipeline.Executor do
         case Destination.process(Ast.Pipeline.redirect_targets(pipeline),
                                  state.request.sender,
                                  state.request.room,
-                                 state.request.adapter) do
+                                 state.request.provider) do
           {:ok, destinations} ->
             {:next_state,
              :plan_next_invocation, %{state |
@@ -303,7 +303,7 @@ defmodule Cog.Command.Pipeline.Executor do
   # TODO: remove bundle and room from command resp so commands can't excape their bundle.
 
   # Given pipeline output, apply templating as appropriate for each
-  # adapter/destination it is to be sent to, and send it to each.
+  # provider/destination it is to be sent to, and send it to each.
 
   # Anything besides success should have a message
   defp respond(state, status) when status == :success,
@@ -318,7 +318,7 @@ defmodule Cog.Command.Pipeline.Executor do
     output = output_for(type, state, status, message)
     state.destinations
     |> Map.get(type)
-    |> Enum.each(&ChatAdapter.send(state.mq_conn, &1.adapter, &1.room, output))
+    |> Enum.each(&ChatAdapter.send(state.mq_conn, &1.provider, &1.room, output))
   end
 
   defp output_for(:chat, state, _, _) do
@@ -393,7 +393,7 @@ defmodule Cog.Command.Pipeline.Executor do
 
   defp initialization_event(%__MODULE__{id: id, request: request,
                                         started: started, user: user}) do
-    PipelineEvent.initialized(id, started, request.text, request.adapter,
+    PipelineEvent.initialized(id, started, request.text, request.provider,
                               user.username, request.sender.handle)
     |> Probe.notify
   end
@@ -422,8 +422,8 @@ defmodule Cog.Command.Pipeline.Executor do
     handle   = request.sender.handle
     creators = user_creator_handles(request)
 
-    {:ok, mention_name} = Cog.Chat.Adapter.mention_name(request.adapter, handle)
-    {:ok, display_name} = Cog.Chat.Adapter.display_name(request.adapter)
+    {:ok, mention_name} = Cog.Chat.Adapter.mention_name(request.provider, handle)
+    {:ok, display_name} = Cog.Chat.Adapter.display_name(request.provider)
 
     %{"handle" => handle,
       "mention_name" => mention_name,
@@ -431,8 +431,8 @@ defmodule Cog.Command.Pipeline.Executor do
       "user_creators" => creators}
   end
 
-  # Returns a list of adapter-appropriate "mention names" of all Cog
-  # users with registered handles for the adapter that currently have
+  # Returns a list of provider-appropriate "mention names" of all Cog
+  # users with registered handles for the provider that currently have
   # the permissions required to create and manipulate new Cog user
   # accounts.
   #
@@ -442,7 +442,7 @@ defmodule Cog.Command.Pipeline.Executor do
   # necessarily have a chat handle registered for the chat provider
   # being used (most notably, the bootstrap admin user).
   defp user_creator_handles(request) do
-    provider = request.adapter
+    provider = request.provider
 
     "operable:manage_users"
     |> Cog.Queries.Permission.from_full_name
@@ -478,9 +478,9 @@ defmodule Cog.Command.Pipeline.Executor do
   # with initial contexts, there can be variables in the first
   # invocation).
   #
-  # In general, chat-adapter initiated pipelines will not be supplied
+  # In general, chat-provider initiated pipelines will not be supplied
   # with an initial context.
-  defp create_initial_context(%Cog.Messages.AdapterRequest{}=request) do
+  defp create_initial_context(%Cog.Messages.ProviderRequest{}=request) do
     context = List.wrap(request.initial_context)
 
     if Enum.all?(context, &is_map/1) do
@@ -540,7 +540,7 @@ defmodule Cog.Command.Pipeline.Executor do
   end
 
   defp sender_name(state) do
-    if ChatAdapter.is_chat_provider?(state.request.adapter) do
+    if ChatAdapter.is_chat_provider?(state.request.provider) do
       "@#{state.request.sender.handle}"
     else
       state.request.sender.id
@@ -551,7 +551,7 @@ defmodule Cog.Command.Pipeline.Executor do
     {:ok, destinations} = Destination.process(["here"],
                                               request.sender,
                                               request.room,
-                                              request.adapter)
+                                              request.provider)
     destinations
   end
 
@@ -561,7 +561,7 @@ defmodule Cog.Command.Pipeline.Executor do
   defp request_for_plan(plan, request, user, reply_to, service_token) do
     # TODO: stuffing the provider into requestor here is a bit
     # code-smelly; investigate and fix
-    provider  = request.adapter
+    provider  = request.provider
     requestor = request.sender |> Map.put_new("provider", provider)
     room      = request.room
     user      = Cog.Models.EctoJson.render(user)
@@ -582,7 +582,7 @@ defmodule Cog.Command.Pipeline.Executor do
     }
   end
 
-  defp sanitize_request(%Cog.Messages.AdapterRequest{text: text}=request) do
+  defp sanitize_request(%Cog.Messages.ProviderRequest{text: text}=request) do
     prefix = Application.get_env(:cog, :command_prefix, "!")
 
     text = text
@@ -625,12 +625,12 @@ defmodule Cog.Command.Pipeline.Executor do
     end
   end
 
-  defp fetch_user_from_request(%Cog.Messages.AdapterRequest{}=request) do
+  defp fetch_user_from_request(%Cog.Messages.ProviderRequest{}=request) do
     # TODO: This should happen when we validate the request
-    if ChatAdapter.is_chat_provider?(request.adapter) do
-      adapter   = request.adapter
+    if ChatAdapter.is_chat_provider?(request.provider) do
+      provider   = request.provider
       sender_id = request.sender.id
-      user = Queries.User.for_chat_provider_user_id(sender_id, adapter)
+      user = Queries.User.for_chat_provider_user_id(sender_id, provider)
       |> Repo.one
       case user do
         nil ->
@@ -649,8 +649,8 @@ defmodule Cog.Command.Pipeline.Executor do
     end
   end
 
-  defp get_command_timeout(adapter, config) do
-    if ChatAdapter.is_chat_provider?(adapter) do
+  defp get_command_timeout(provider, config) do
+    if ChatAdapter.is_chat_provider?(provider) do
       Keyword.fetch!(config, :interactive_timeout)
     else
       Keyword.fetch!(config, :trigger_timeout)

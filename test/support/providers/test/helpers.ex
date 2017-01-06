@@ -1,8 +1,8 @@
-defmodule Cog.Adapters.Test.Helpers do
+defmodule Cog.Providers.Test.Helpers do
   require Logger
   alias Cog.Snoop
 
-  @here "TEST_ADAPTER_HERE"
+  @here "TEST_PROVIDER_HERE"
 
   # Convenience for sending a message and receiving the single
   # response back to where it was sent

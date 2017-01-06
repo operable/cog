@@ -5,7 +5,7 @@ defmodule Cog.Chat.Adapter do
   use Carrier.Messaging.GenMqtt
   alias Cog.Util.CacheSup
   alias Cog.Util.Cache
-  alias Cog.Messages.AdapterRequest
+  alias Cog.Messages.ProviderRequest
   alias Cog.Chat.Room
   alias Cog.Chat.Message
   alias Cog.Chat.User
@@ -240,8 +240,8 @@ defmodule Cog.Chat.Adapter do
                       mention_name = with_provider(message.provider, state, :mention_name, [message.user.handle])
                       send(conn, message.provider, message.room, "#{mention_name} Executing edited command '#{text}'")
                     end
-                    request = %AdapterRequest{text: text, sender: message.user, room: message.room, reply: "", id: message.id,
-                                              adapter: message.provider, initial_context: message.initial_context || %{}}
+                    request = %ProviderRequest{text: text, sender: message.user, room: message.room, reply: "", id: message.id,
+                                              provider: message.provider, initial_context: message.initial_context || %{}}
                     Connection.publish(conn, request, routed_by: "/bot/commands")
                     state
                   false ->

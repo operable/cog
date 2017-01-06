@@ -67,10 +67,10 @@ defmodule Cog.Repository.Templates do
   # templates. This should be used as a starting point for all
   # database queries dealing with these templates to ensure consistency.
   defp common_templates do
-    adapter = Cog.Template.default_provider
+    provider = Cog.Template.default_provider
     from t in Cog.Models.Template,
     where: is_nil(t.bundle_version_id),
-    where: t.adapter == ^adapter
+    where: t.adapter == ^provider
   end
 
   defp find_common_template(name),

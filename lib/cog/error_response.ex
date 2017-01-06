@@ -30,8 +30,8 @@ defmodule Cog.ErrorResponse do
     do: "The #{name} bundle is currently disabled"
   def render({:timeout, full_command_name}),
     do: "The #{full_command_name} command timed out"
-  def render({:template_rendering_error, {error, template, adapter}}),
-    do: "There was an error rendering the template '#{template}' for the adapter '#{adapter}': #{inspect error}"
+  def render({:template_rendering_error, {error, template, provider}}),
+    do: "There was an error rendering the template '#{template}' for the provider '#{provider}': #{inspect error}"
   def render({:command_error, response}) do
     error = response.status_message || response.body["message"]
     error

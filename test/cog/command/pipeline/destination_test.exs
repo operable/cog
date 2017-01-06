@@ -11,7 +11,7 @@ defmodule Cog.Command.Pipeline.DestinationTest do
 
     assert %{chat: [%Destination{classification: :chat,
                                  raw: "here",
-                                 adapter: "test",
+                                 provider: "test",
                                  room: :origin_room}]} = resolved
   end
 
@@ -23,7 +23,7 @@ defmodule Cog.Command.Pipeline.DestinationTest do
 
     assert %{chat: [%Destination{classification: :chat,
                                  raw: "me",
-                                 adapter: "test",
+                                 provider: "test",
                                  room: %Room{id: "user1_dm",
                                              name: "user1",
                                              provider: "test",
@@ -38,7 +38,7 @@ defmodule Cog.Command.Pipeline.DestinationTest do
 
     assert %{chat: [%Destination{classification: :chat,
                                  raw: "some_other_place",
-                                 adapter: "test",
+                                 provider: "test",
                                  room: %Room{id: "some_other_place",
                                              name: "some_other_place",
                                              provider: "test",
@@ -53,7 +53,7 @@ defmodule Cog.Command.Pipeline.DestinationTest do
 
     assert %{chat: [%Destination{classification: :chat,
                                  raw: "chat://some_other_place",
-                                 adapter: "test",
+                                 provider: "test",
                                  room: %Room{id: "some_other_place",
                                              name: "some_other_place",
                                              provider: "test",
@@ -68,11 +68,11 @@ defmodule Cog.Command.Pipeline.DestinationTest do
 
     assert %{chat: [%Destination{classification: :chat,
                                  raw: "here",
-                                 adapter: "test",
+                                 provider: "test",
                                  room: :origin_room}]} = resolved
   end
 
-  test "no given destinations results in an implicit full-output 'here' for non-chat adapters" do
+  test "no given destinations results in an implicit full-output 'here' for non-chat providers" do
     {:ok, resolved} = Destination.process([],
                                           :sender,
                                           :origin_room,
@@ -80,11 +80,11 @@ defmodule Cog.Command.Pipeline.DestinationTest do
 
     assert %{trigger: [%Destination{classification: :trigger,
                                     raw: "here",
-                                    adapter: "http",
+                                    provider: "http",
                                     room: :origin_room}]} = resolved
   end
 
-  test "no explicit 'here' generates a status-only output 'here' for non-chat adapters" do
+  test "no explicit 'here' generates a status-only output 'here' for non-chat providers" do
     {:ok, resolved} = Destination.process(["chat://#general"],
                                           :sender,
                                           :origin_room,
@@ -92,11 +92,11 @@ defmodule Cog.Command.Pipeline.DestinationTest do
 
     expected = %{status_only: [%Destination{classification: :status_only,
                                             raw: "here",
-                                            adapter: "http",
+                                            provider: "http",
                                             room: :origin_room}],
                  chat: [%Destination{classification: :chat,
                                      raw: "chat://#general",
-                                     adapter: "test",
+                                     provider: "test",
                                      room: %Room{id: "#general",
                                                  name: "#general",
                                                  provider: "test",
@@ -105,7 +105,7 @@ defmodule Cog.Command.Pipeline.DestinationTest do
     assert expected == resolved
   end
 
-  test "explicit 'here' resolves as a full-output 'here' for non-chat adapters" do
+  test "explicit 'here' resolves as a full-output 'here' for non-chat providers" do
 
     {:ok, resolved} = Destination.process(["chat://#general",
                                            "here"],
@@ -115,14 +115,14 @@ defmodule Cog.Command.Pipeline.DestinationTest do
 
     expected = %{chat: [%Destination{classification: :chat,
                                      raw: "chat://#general",
-                                     adapter: "test",
+                                     provider: "test",
                                      room: %Room{id: "#general",
                                                  name: "#general",
                                                  provider: "test",
                                                  is_dm: false}}],
                  trigger: [%Destination{classification: :trigger,
                                          raw: "here",
-                                         adapter: "http",
+                                         provider: "http",
                                          room: :origin_room}]}
 
     assert expected == resolved

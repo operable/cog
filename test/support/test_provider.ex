@@ -96,7 +96,7 @@ defmodule Cog.Chat.Test.Provider do
                                        first_name: user.first_name,
                                        last_name: user.last_name,
                                        handle: user.username # I think
-                                       # this relies on adapter module
+                                       # this relies on provider module
                                        # shenanigans, though
                                      },
                                      type: "message",

@@ -39,11 +39,11 @@ defmodule Cog.V1.ChatHandleController do
         conn
         |> put_status(:unprocessable_entity)
         |> render(Cog.ErrorView, "422.json", %{error: "User with handle '#{handle}' not found"})
-      {:error, :adapter_not_running} ->
-        {:ok, adapter} = Cog.Util.Misc.chat_adapter_module
+      {:error, :provider_not_running} ->
+        {:ok, provider} = Cog.Util.Misc.chat_provider_module
         conn
         |> put_status(:unprocessable_entity)
-        |> render(Cog.ErrorView, "422.json", %{error: "Currently, you can only set chat handles for the configured chat adapter, which handles '#{adapter.name}'. You requested a chat handle for '#{provider_name}'"})
+        |> render(Cog.ErrorView, "422.json", %{error: "Currently, you can only set chat handles for the configured chat provider, which handles '#{provider.name}'. You requested a chat handle for '#{provider_name}'"})
     end
   end
 

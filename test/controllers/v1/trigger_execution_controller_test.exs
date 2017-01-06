@@ -30,7 +30,7 @@ defmodule Cog.V1.TriggerExecutionControllerTest do
     assert %{"pipeline_output" => [%{"body" => ["foo"]}],
              "status" => "success"} == json_response(conn, 200)
 
-    # The chat adapter shouldn't have gotten anything, since we didn't
+    # The chat provider shouldn't have gotten anything, since we didn't
     # redirect to it.
     Snoop.assert_no_message_received(snoop, provider: "test")
     assert [%{"pipeline_output" => [%{"body" => ["foo"]}],
@@ -82,7 +82,7 @@ defmodule Cog.V1.TriggerExecutionControllerTest do
     message = json_response(conn, 500)["pipeline_output"]["error_message"]
     assert message == "I can't find the variable '$not_a_key'."
 
-    # And the adapter should not get a message, even though we redirected
+    # And the provider should not get a message, even though we redirected
     Snoop.assert_no_message_received(snoop, provider: "test")
     [error_msg] = Snoop.loop_until_received(snoop, provider: "http")
     assert get_in(error_msg, ["pipeline_output", "error_message"]) == "I can't find the variable '$not_a_key'."
@@ -124,7 +124,7 @@ defmodule Cog.V1.TriggerExecutionControllerTest do
     [message] = Snoop.messages(executor_snoop)
 
     assert %{"id" => request_id,
-             "adapter" => "http",
+             "provider" => "http",
              "room" => %{"id" => request_id},
              "sender" => %{"id" => ^username},
              "initial_context" => %{"trigger_id" => ^trigger_id,
@@ -269,7 +269,7 @@ defmodule Cog.V1.TriggerExecutionControllerTest do
     assert [%{"pipeline_output" => %{"error_message" => "The operable:sleep command timed out"}}] = Snoop.loop_until_received(snoop, provider: "http")
 
     # The same pipeline sent through a chat provider should succeed.
-    assert [%{body: ["foobar"]}] == Cog.Adapters.Test.Helpers.send_message(user, "@bot: #{pipeline}")
+    assert [%{body: ["foobar"]}] == Cog.Providers.Test.Helpers.send_message(user, "@bot: #{pipeline}")
   end
 
   @tag content_type: "text/plain"
@@ -347,7 +347,7 @@ defmodule Cog.V1.TriggerExecutionControllerTest do
                         "pipeline_output" => [],
                         "status" => "success"}
 
-    # And the adapter should not get a message, even though we redirected
+    # And the provider should not get a message, even though we redirected
     Snoop.assert_no_message_received(snoop, provider: "test")
     assert [%{}] = Snoop.loop_until_received(snoop, provider: "http")
   end
