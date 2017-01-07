@@ -4,6 +4,7 @@ defmodule Carrier.Messaging.GenMqtt do
 
   require Logger
   use GenServer
+  alias Carrier.Messaging.ConnectionSup
   alias Carrier.Messaging.Connection
   alias Carrier.Messaging.Messages.MqttCall
   alias Carrier.Messaging.Messages.MqttCast
@@ -78,7 +79,7 @@ defmodule Carrier.Messaging.GenMqtt do
     {:ok, result :: any} |
     {:error, reason :: any}
   def call(nil, topic, endpoint, call_args, timeout) do
-    {:ok, conn} = Connection.connect()
+    {:ok, conn} = ConnectionSup.connect()
     result = call(conn, topic, endpoint, call_args, timeout)
     Connection.disconnect(conn)
     result
@@ -90,12 +91,13 @@ defmodule Carrier.Messaging.GenMqtt do
                 n ->
                   n
               end
-    case Connection.call(conn, topic, endpoint, call_args, timeout) do
+    {:ok, _endpoint} = Connection.create_reply_endpoint(conn)
+    case Connection.call(conn, topic, endpoint, call_args, [timeout: timeout]) do
       {:error, :call_timeout} ->
         {:error, :timeout}
-      %MqttReply{flag: "error", result: [result]} ->
+      {:ok, %MqttReply{flag: "error", result: [result]}} ->
         {:error, result}
-      %MqttReply{flag: "ok", result: [result]} ->
+      {:ok, %MqttReply{flag: "ok", result: [result]}} ->
         {:ok, result}
     end
   end
@@ -106,7 +108,7 @@ defmodule Carrier.Messaging.GenMqtt do
     :ok |
     {:error, reason :: any}
   def cast(nil, topic, endpoint, cast_args) do
-    {:ok, conn} = Connection.connect()
+    {:ok, conn} = ConnectionSup.connect()
     result = cast(conn, topic, endpoint, cast_args)
     Connection.disconnect(conn)
     result
@@ -121,7 +123,7 @@ defmodule Carrier.Messaging.GenMqtt do
   end
 
   def init([%{cb: cb, args: args}]) do
-    case Connection.connect() do
+    case ConnectionSup.connect() do
       {:ok, conn} ->
         state = %__MODULE__{cb: cb, conn: conn}
         run_callback(:init, args, state)
@@ -156,7 +158,9 @@ defmodule Carrier.Messaging.GenMqtt do
     end
   end
 
-  def handle_info(_, state), do: {:noreply, state}
+  def handle_info(_msg, state) do
+    {:noreply, state}
+  end
 
   defp run_callback(:init, args, state) do
     case state.cb.init(state.conn, args) do

@@ -2,6 +2,7 @@ defmodule Carrier.Messaging.Connection do
 
   require Logger
 
+  alias Carrier.Messaging.Tracker
   alias Carrier.Messaging.Messages.MqttCall
   alias Carrier.Messaging.Messages.MqttCast
   alias Carrier.Messaging.Messages.MqttReply
@@ -9,30 +10,27 @@ defmodule Carrier.Messaging.Connection do
   require Record
   Record.defrecord :hostent, Record.extract(:hostent, from_lib: "kernel/include/inet.hrl")
 
+  use GenServer
+
   @moduledoc """
-  Interface for the message bus on which commands communicate.
+  General interface to Cog's message bus
   """
 
   @internal_mq_username Cog.Util.Misc.internal_mq_username
   @default_connect_timeout 5000 # 5 seconds
+  @default_call_timeout 5000 # 5 seconds
   @default_log_level :error
 
-  defstruct [:id, :conn, :call_reply]
+  defstruct [:conn, :tracker, :owner]
 
-  # Note: This type is what we get from emqttc; if we change
-  # underlying message buses, we can just change this
-  # definition. Client code can just depend on this opaque type and
-  # not need to know that we're using emqttc at all.
   @typedoc "The connection to the message bus."
-  @opaque connection :: %__MODULE__{}
+  @opaque connection :: pid()
 
-  @doc """
-  Starts up a message bus client process using only preconfigured parameters.
-  """
-  @spec connect() :: {:ok, connection()} | :ignore | {:error, term()}
-  def connect() do
-    connect([])
-  end
+  @type call_opts :: [] | [call_opt()]
+  @type call_opt :: {:timeout, integer()} | {:subscriber, pid()}
+
+  @type publish_opts :: [] | [publish_opt()]
+  @type publish_opt :: {:routed_by, String.t} | {:threshold, integer()}
 
   @doc """
   Starts up a message bus client process.
@@ -46,15 +44,85 @@ defmodule Carrier.Messaging.Connection do
   `:connect_timeout` option in `opts`.
 
   """
-  # Again, this spec is what comes from emqttc
-  @spec connect(Keyword.t()) :: {:ok, connection()} | :ignore | {:error, term()}
-  def connect(opts) do
-    connect_timeout = Keyword.get(opts, :connect_timeout, @default_connect_timeout)
-
+  @spec start_link(pid(), Keyword.t()) :: {:ok, connection()} | :ignore | {:error, term()}
+  def start_link(owner, opts \\ []) do
     opts = opts
     |> add_connect_config
     |> add_internal_credentials
 
+    GenServer.start_link(__MODULE__, [owner, opts])
+  end
+
+  @doc """
+  Creates a GenMqtt-style reply endpoint and subscribes `subscriber` to the topic
+
+  `subscriber` defaults to the caller's pid
+  """
+  @spec create_reply_endpoint(conn::connection(), subscriber::pid()) :: {:ok, String.t} | {:error, atom()}
+  def create_reply_endpoint(conn, subscriber \\ self()) do
+    GenServer.call(conn, {:create_reply_endpoint, subscriber}, :infinity)
+  end
+
+  @doc """
+  Creates a subscription to a given topic for `subscriber`
+
+  `subscriber` defaults to caller's pid
+  """
+  @spec subscribe(conn::connection(), topic::String.t, subscriber::pid()) :: {:ok, String.t} | {:error, atom()}
+  def subscribe(conn, topic, subscriber \\ self()) do
+    GenServer.call(conn, {:subscribe, topic, subscriber}, :infinity)
+  end
+
+  @doc """
+  Removes the named subscription for `subscriber`.
+  Returns true if unsubscribe was successful, false otherwise.
+  """
+  @spec unsubscribe(conn::connection(), topic::String.t, subscriber::pid()) :: boolean()
+  def unsubscribe(conn, topic, subscriber \\ self()) do
+    GenServer.call(conn, {:unsubscribe, topic, subscriber}, :infinity)
+  end
+
+  @doc """
+  Publishes a message to a MQTT topic
+
+  ## Keyword Arguments
+
+    * `:routed_by` - the topic on which to publish `message`. Required.
+  """
+  @spec publish(conn::connection(), message::Map.t, opts::publish_opts()) :: :ok | {:error, atom()}
+  def publish(conn, message, opts) do
+    GenServer.call(conn, {:publish, message, opts}, :infinity)
+  end
+
+  @doc """
+  Sends a GenMqtt call message and waits for reply
+  """
+  @spec call(conn::connection(), topic::String.t, endpoint::String.t, message::Map.t, opts::call_opts()) :: Map.t | {:error, atom()}
+  def call(conn, topic, endpoint, message, opts \\ []) do
+    subscriber = Keyword.get(opts, :subscriber, self())
+    timeout = Keyword.get(opts, :timeout, @default_call_timeout)
+    GenServer.call(conn, {:call, topic, endpoint, message, subscriber, timeout}, :infinity)
+  end
+
+  @doc """
+  Sends a GenMqtt cast message
+  """
+  @spec cast(conn::connection(), topic::String.t, endpoint::String.t, message::Map.t) :: :ok | {:error, atom()}
+  def cast(conn, topic, endpoint, message) do
+    GenServer.call(conn, {:cast, topic, endpoint, message}, :infinity)
+  end
+
+  @doc """
+  Terminates an active connection
+  """
+  @spec disconnect(conn::connection) :: :ok
+  def disconnect(conn) do
+    GenServer.call(conn, :disconnect)
+  end
+
+
+  def init([owner, opts]) do
+    connect_timeout = Keyword.get(opts, :connect_timeout, @default_connect_timeout)
     {:ok, conn} = :emqttc.start_link(opts)
 
     # `emqttc:start_link/1` returns a message bus client process, but it
@@ -70,101 +138,105 @@ defmodule Carrier.Messaging.Connection do
     # If we don't connect after a specified timeout, we just fail.
     receive do
       {:mqttc, ^conn, :connected} ->
-        id = UUID.uuid4(:hex)
-        call_reply = "carrier/call/reply/#{id}"
-        :emqttc.sync_subscribe(conn, call_reply)
-        {:ok, %__MODULE__{conn: conn, id: id, call_reply: call_reply}}
+        Process.link(owner)
+        {:ok, %__MODULE__{conn: conn,
+                          owner: owner,
+                          tracker: %Tracker{}}}
     after connect_timeout ->
         Logger.info("Connection not established")
-        {:error, :econnrefused}
+        {:stop, :econnrefused}
     end
   end
 
-  @spec disconnect(%__MODULE__{}) :: :ok | atom
-  def disconnect(%__MODULE__{conn: conn}) do
-    :emqttc.disconnect(conn)
+  def handle_call({:create_reply_endpoint, subscriber}, _from, %__MODULE__{tracker: tracker}=state) do
+    {tracker, topic} = Tracker.add_reply_endpoint(tracker, subscriber)
+    unless Enum.member?(:emqttc.topics(state.conn), {topic, :qos1}) do
+      :emqttc.sync_subscribe(state.conn, topic, :qos1)
+    end
+    {:reply, {:ok, topic}, %{state | tracker: tracker}}
   end
-
-  def subscribe(%__MODULE__{conn: conn}, topic) do
-    # `:qos1` is an MQTT quality-of-service level indicating "at least
-    # once delivery" of messages. Additionally, the sender blocks
-    # until receiving a message acknowledging receipt of the
-    # message. This provides back-pressure for the system, and
-    # generally makes things easier to reason about.
-    #
-    # See
-    # http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/os/mqtt-v3.1.1-os.html#_Toc398718101
-    # for more.
-    :emqttc.sync_subscribe(conn, topic, :qos1)
+  def handle_call({:subscribe, topic, subscriber}, _from, %__MODULE__{tracker: tracker}=state) do
+    tracker = Tracker.add_subscription(tracker, topic, subscriber)
+    unless Enum.member?(:emqttc.topics(state.conn), {topic, :qos1}) do
+      :emqttc.sync_subscribe(state.conn, topic, :qos1)
+    end
+    {:reply, {:ok, topic}, %{state | tracker: tracker}}
   end
-
-  def unsubscribe(%__MODULE__{conn: conn}, topic) do
-    :emqttc.unsubscribe(conn, topic)
+  def handle_call({:unsubscribe, topic, subscriber}, _from, %__MODULE__{tracker: tracker}=state) do
+    {tracker, deleted} = Tracker.del_subscription(tracker, topic, subscriber)
+    state = if deleted do
+      drop_unused_topics(%{state | tracker: tracker})
+    else
+      state
+    end
+    {:reply, deleted, state}
   end
-
-  @spec call(conn :: connection, call_topic :: String.t, endpoint :: String.t, payload :: map, timeout :: integer) ::
-    map |
-    {:error, :call_timeout} |
-    {:error, reason :: any}
-  def call(%__MODULE__{call_reply: reply}=conn, call_topic, endpoint, payload, timeout) when is_map(payload) do
-    flush_pending(reply)
-
-    message = %MqttCall{sender: reply, endpoint: endpoint, payload: payload}
-
-    # Publish message (make blocking call)
-    case publish(conn, message, routed_by: call_topic) do
-      {:ok, _} ->
-        # Wait for response
-        receive do
-          {:publish, ^reply, message} ->
-            MqttReply.decode!(message)
-        after timeout ->
-            {:error, :call_timeout}
+  def handle_call({:publish, message, opts}, _from, state) do
+    case Keyword.get(opts, :routed_by) do
+      nil ->
+        {:reply, {:error, :no_topic}, state}
+      topic ->
+        case message.__struct__.encode(message) do
+          {:ok, encoded} ->
+            case :emqttc.sync_publish(state.conn, topic, encoded, :qos1) do
+              {:ok, _} ->
+                {:reply, :ok, state}
+              error ->
+                {:reply, error, state}
+            end
+          error ->
+            {:reply, error, state}
         end
     end
   end
-
-  @spec cast(conn :: connection, cast_topic :: String.t, endpoint :: String.t, payload :: map) :: :ok | {:error, reason :: any}
-  def cast(%__MODULE__{}=conn, cast_topic, endpoint, payload) when is_map(payload) do
+  def handle_call({:call, topic, endpoint, payload, subscriber, timeout}, from, state) do
+    case Tracker.get_reply_endpoint(state.tracker, subscriber) do
+      nil ->
+        {:reply, {:error, :no_reply_endpoint}, state}
+      reply_endpoint ->
+        flush_pending(reply_endpoint)
+        message = %MqttCall{sender: reply_endpoint, endpoint: endpoint, payload: payload}
+        case handle_call({:publish, message, routed_by: topic}, from, state) do
+          {:reply, :ok, state} ->
+            # Wait for response
+            receive do
+              {:publish, ^reply_endpoint, message} ->
+                {:reply, MqttReply.decode(message), state}
+            after timeout ->
+                {:reply, {:error, :call_timeout}, state}
+            end
+          error ->
+            error
+        end
+    end
+  end
+  def handle_call({:cast, topic, endpoint, payload}, from, state) do
     message = %MqttCast{endpoint: endpoint, payload: payload}
-    case publish(conn, message, routed_by: cast_topic) do
-      {:ok, _} ->
-        :ok
-      error ->
-        error
+    handle_call({:publish, message, routed_by: topic}, from, state)
+  end
+  def handle_call(:disconnect, _from, state) do
+    unless state.owner == nil do
+      Process.unlink(state.owner)
     end
+    :emqttc.disconnect(state.conn)
+    {:stop, :shutdown, :ok, state}
   end
 
-  @doc """
-  Publish a JSON object to the message bus. The object will be
-  signed with the system key.
-
-  ## Keyword Arguments
-
-    * `:routed_by` - the topic on which to publish `message`. Required.
-
-  """
-
-  # Here, we assume we're being passed a Conduit-enabled struct
-  # (aside: any way to verify that statically?) We'll do the encoding
-  # to JSON internally
-  def publish(%__MODULE__{conn: conn}, %{__struct__: _}=message, kw_args) do
-    topic = Keyword.fetch!(kw_args, :routed_by)
-
-    encoded = message.__struct__.encode!(message)
-    case Keyword.fetch(kw_args, :threshold) do
-      {:ok, threshold} ->
-        size = byte_size(encoded)
-        if size > threshold do
-          Logger.warn("Message potentially too long (#{size} bytes)")
-        else
-          :ok
-        end
-      :error ->
-        :ok
+  def handle_info({:DOWN, _mref, :process, subscriber, _}, %__MODULE__{tracker: tracker}=state) do
+    tracker = Tracker.del_subscriber(tracker, subscriber)
+    {:noreply, drop_unused_topics(%{state | tracker: tracker})}
+  end
+  def handle_info({:publish, topic, _}=message, state) do
+    case Tracker.find_subscribers(state.tracker, topic) do
+      [] ->
+        {:noreply, state}
+      subscribed ->
+        Enum.each(subscribed, &(Process.send(&1, message, [])))
+        {:noreply, state}
     end
-
-    :emqttc.sync_publish(conn, topic, encoded, :qos1)
+  end
+  def handle_info(_msg, state) do
+    {:noreply, state}
   end
 
   ########################################################################
@@ -232,6 +304,12 @@ defmodule Carrier.Messaging.Connection do
     after 0 ->
         :ok
     end
+  end
+
+  defp drop_unused_topics(%__MODULE__{tracker: tracker, conn: conn}=state) do
+    {tracker, unused_topics} = Tracker.get_and_reset_unused_topics(tracker)
+    Enum.each(unused_topics, &(:emqttc.unsubscribe(conn, &1)))
+    %{state | tracker: tracker}
   end
 
 end

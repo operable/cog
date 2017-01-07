@@ -10,6 +10,7 @@ defmodule Cog.Command.Pipeline.Initializer do
 
   require Logger
 
+  alias Carrier.Messaging.ConnectionSup
   alias Carrier.Messaging.Connection
   alias Cog.Command.ReplyHelper
   alias Cog.Command.Pipeline.ExecutorSup
@@ -26,7 +27,7 @@ defmodule Cog.Command.Pipeline.Initializer do
 
   def init(_) do
     previous_command_token = Application.get_env(:cog, :previous_command_token)
-    {:ok, conn} = Connection.connect()
+    {:ok, conn} = ConnectionSup.connect()
     Connection.subscribe(conn, "/bot/commands")
     Logger.info("Ready.")
     {:ok, %__MODULE__{mq_conn: conn, previous_command_token: previous_command_token}}

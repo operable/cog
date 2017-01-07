@@ -124,7 +124,7 @@ defmodule Cog.Command.GenCommand do
 
     # Establish a connection to the message bus and subscribe to
     # the appropriate topics
-    case Carrier.Messaging.Connection.connect do
+    case Carrier.Messaging.ConnectionSup.connect do
       {:ok, conn} ->
         relay_id = Cog.Config.embedded_relay()
         [topic, _reply_topic] = topics = [command_topic(bundle, command, relay_id),

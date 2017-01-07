@@ -1,5 +1,6 @@
 defmodule Cog.Command.Pipeline.Executor do
 
+  alias Carrier.Messaging.ConnectionSup
   alias Carrier.Messaging.Connection
   alias Cog.AuditMessage
   alias Cog.Chat.Adapter, as: ChatAdapter
@@ -101,17 +102,17 @@ defmodule Cog.Command.Pipeline.Executor do
 
   require Logger
 
-  def start_link(request),
-    do: :gen_fsm.start_link(__MODULE__, [request], [])
+  def start_link(request) do
+    :gen_fsm.start_link(__MODULE__, [request], [])
+  end
 
   def init([%Cog.Messages.AdapterRequest{}=request]) do
     config = Application.fetch_env!(:cog, Cog.Command.Pipeline)
     request = sanitize_request(request)
-    {:ok, conn} = Connection.connect()
+    {:ok, conn} = ConnectionSup.connect()
     id = request.id
     topic = "/bot/pipelines/#{id}"
     Connection.subscribe(conn, topic <> "/+")
-
     service_token = Cog.Command.Service.Tokens.new
 
     # TODO: Fold initial context creation into decoding; we shouldn't
@@ -629,10 +630,8 @@ defmodule Cog.Command.Pipeline.Executor do
     if ChatAdapter.is_chat_provider?(request.adapter) do
       adapter   = request.adapter
       sender_id = request.sender.id
-
       user = Queries.User.for_chat_provider_user_id(sender_id, adapter)
       |> Repo.one
-
       case user do
         nil ->
           {:error, :not_found}

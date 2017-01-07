@@ -108,7 +108,7 @@ defmodule Cog.Snoop do
   # GenServer implementation details
 
   def init(topic) do
-    {:ok, mq_conn} = Connection.connect
+    {:ok, mq_conn} = Carrier.Messaging.ConnectionSup.connect()
     Connection.subscribe(mq_conn, topic)
     {:ok, %__MODULE__{mq_conn: mq_conn,
                       topic: topic,
