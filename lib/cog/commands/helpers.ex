@@ -41,15 +41,6 @@ defmodule Cog.Commands.Helpers do
   end
 
   @doc """
-  Returns a tuple containing the subcommand and remaining args
-  """
-  @spec get_subcommand(List.t) :: {String.t, List.t}
-  def get_subcommand([]),
-    do: {nil, []}
-  def get_subcommand([subcommand | args]),
-    do: {subcommand, args}
-
-  @doc """
   If flag exists and is true will return true, otherwise returns false. Flags
   are defined as boolean options. Options that are not.
   """
@@ -123,10 +114,6 @@ defmodule Cog.Commands.Helpers do
     do: "Invalid alias name. Only emoji, letters, numbers, and the following special characters are allowed: *, -, _"
   def error(:too_many_wildcards),
     do: "Too many wildcards. You can only include one wildcard in a query"
-  def error(:no_subcommand),
-    do: "I don't what to do, please specify a subcommand"
-  def error({:unknown_subcommand, subcommand}),
-    do: "Unknown subcommand '#{subcommand}'"
   def error({:resource_not_found, "rule", id}),
     do: "Could not find 'rule' with the id '#{id}'"
   def error({:resource_not_found, resource_type, resource_name}),

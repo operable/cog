@@ -46,16 +46,6 @@ __Options__
 ~br~
 ~end~
 
-~if cond=$command.subcommands not_empty?~
-__Subcommands__
-~br~
-~each var=$command.subcommands as=subcommand~
-* ~$subcommand.command~ - ~$subcommand.description~
-
-~end~
-~br~
-~end~
-
 ~if cond=$command.examples~
 __Examples__
 ~br~
