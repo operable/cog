@@ -1,0 +1,9 @@
+~each var=$results as=info~
+**Cog System Information**
+~attachment color="blue"~
+**Cog Version:** ~$info.cog_version~
+**Embedded Bundle Version:** ~$info.embedded_bundle_version~
+**Bundle Config Version:** ~$info.bundle_config_version~
+**Elixir Version:** ~$info.elixir_version~
+~end~
+~end~
