@@ -1,4 +1,4 @@
-defmodule Cog.BundleRegistry do
+defmodule Cog.Bundle.Warehouse do
   @registry_url "https://warehouse.operable.io"
 
   def get_config(bundle, version) do

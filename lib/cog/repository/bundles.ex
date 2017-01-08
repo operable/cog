@@ -9,7 +9,7 @@ defmodule Cog.Repository.Bundles do
   alias Cog.Models.{Bundle, BundleVersion, BundleDynamicConfig, CommandVersion, Rule, RelayGroupAssignment}
   alias Cog.Repository.Rules
   alias Cog.Queries
-  alias Cog.BundleRegistry
+  alias Cog.Bundle.Warehouse
 
   alias Cog.Models.Types.VersionTriple
   alias Ecto.Adapters.SQL
@@ -61,7 +61,7 @@ defmodule Cog.Repository.Bundles do
     do: __install(install_type, params)
 
   def install_from_registry(bundle, version) do
-    case BundleRegistry.get_config(bundle, version) do
+    case Warehouse.get_config(bundle, version) do
       {:ok, %{"name" => name, "version" => version} = config} ->
         revised_config = %{"name" => name,
                            "version" => version,
