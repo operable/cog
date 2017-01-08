@@ -1,4 +1,4 @@
-defmodule Cog.LogHelper do
+defmodule Cog.Util.EctoLogger do
 
   @moduledoc """
   This module exists solely to tame Ecto's prodigious and unhelpful log output.

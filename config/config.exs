@@ -139,7 +139,7 @@ config :cog, Cog.Repo,
   pool_timeout: ensure_integer(System.get_env("COG_DB_POOL_TIMEOUT")) || 15000,
   timeout: ensure_integer(System.get_env("COG_DB_TIMEOUT")) || 15000,
   parameters: [timezone: 'UTC'],
-  loggers: [{Cog.LogHelper, :log, []}],
+  loggers: [{Cog.Util.EctoLogger, :log, []}],
   ssl: ensure_boolean(System.get_env("COG_DB_SSL")) || false
 
 # ========================================================================
