@@ -8,7 +8,7 @@ defmodule Cog.Command.Pipeline.Executor do
   alias Cog.Command.PermissionsCache
   alias Cog.Command.Pipeline.Destination
   alias Cog.Command.Pipeline.Plan
-  alias Cog.Command.Output.ErrorResponse
+  alias Cog.Command.Output
   alias Cog.Events.PipelineEvent
   alias Cog.Queries
   alias Cog.Relay.Relays
@@ -494,7 +494,7 @@ defmodule Cog.Command.Pipeline.Executor do
     id = state.id
     initiator = sender_name(state)
     pipeline_text = state.request.text
-    error_message = ErrorResponse.render(error)
+    error_message = Output.format_error(error)
 
     planning_failure = case state do
       %{invocations: [%Ast.Invocation{} = planning_failure|_]} ->

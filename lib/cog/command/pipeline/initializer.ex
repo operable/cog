@@ -12,7 +12,7 @@ defmodule Cog.Command.Pipeline.Initializer do
 
   alias Carrier.Messaging.ConnectionSup
   alias Carrier.Messaging.Connection
-  alias Cog.Command.Output.ReplyHelper
+  alias Cog.Command.Output
   alias Cog.Command.Pipeline.ExecutorSup
   alias Cog.Repository.Users
   alias Cog.Repository.ChatHandles
@@ -133,11 +133,8 @@ defmodule Cog.Command.Pipeline.Initializer do
     context = %{"first_name" => request.sender.first_name,
                 "username" => user.username,
                 "mention_name" => mention_name}
-    ReplyHelper.send("self-registration-success",
-                     context,
-                     request.room,
-                     request.provider,
-                     state.mq_conn)
+    Output.send("self-registration-success", context,
+                request.room, request.provider, state.mq_conn)
   end
 
   defp self_registration_failed(request, state) do
@@ -148,11 +145,8 @@ defmodule Cog.Command.Pipeline.Initializer do
 
     context = %{"mention_name" => mention_name,
                 "display_name" => display_name}
-    ReplyHelper.send("self-registration-failed",
-                     context,
-                     request.room,
-                     request.provider,
-                     state.mq_conn)
+    Output.send("self-registration-failed", context,
+                request.room, request.provider, state.mq_conn)
   end
 
   defp find_available_username(username) do

@@ -1,7 +1,7 @@
 defmodule Cog.Command.AuditMessage do
   alias Cog.Models.Bundle
   alias Cog.Models.CommandVersion
-  alias Cog.Command.Output.ErrorResponse
+  alias Cog.Command.Output
 
   # Turn an error tuple into a message intended for the audit log
   def render({:parse_error, msg}, request) when is_binary(msg),
@@ -18,11 +18,11 @@ defmodule Cog.Command.AuditMessage do
   def render({:denied, {_rule, current_invocation}}, request),
     do: "User #{request.sender.handle} denied access to '#{current_invocation}'"
   def render({:no_relays, bundle_name}, _request),
-    do: ErrorResponse.render({:no_relays, bundle_name}) # Uses same user message for now
+    do: Output.format_error({:no_relays, bundle_name}) # Uses same user message for now
   def render({:no_relay_group, bundle_name}, _request),
-    do: ErrorResponse.render({:no_relay_group, bundle_name})
+    do: Output.format_error({:no_relay_group, bundle_name})
   def render({:no_enabled_relays, bundle_name}, _request),
-    do: ErrorResponse.render({:no_relay_group, bundle_name})
+    do: Output.format_error({:no_relay_group, bundle_name})
   def render({:disabled_bundle, %Bundle{name: name}}, _request),
     do: "The #{name} bundle is currently disabled"
   def render({:command_error, response}, _request),
