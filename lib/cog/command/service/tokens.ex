@@ -11,7 +11,7 @@ defmodule Cog.Command.Service.Tokens do
 
   use GenServer
   import Cog.Command.Service.PipelineMonitor
-  alias Cog.ETSWrapper
+  alias Cog.Util.ETSWrapper
   require Logger
 
   @dead_pipeline_cleanup_interval 30000 # 30 seconds

@@ -1,6 +1,6 @@
-defmodule Cog.ETSWrapperTest do
+defmodule Cog.Util.ETSWrapperTest do
   use ExUnit.Case, async: true
-  alias Cog.ETSWrapper
+  alias Cog.Util.ETSWrapper
 
   setup do
     table = :ets.new(:test_table, [:private])
