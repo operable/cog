@@ -1,6 +1,6 @@
 defmodule Cog.Assertions do
   import ExUnit.Assertions
-  alias Cog.Time
+  alias Cog.Util.TimeHelpers
   require Logger
 
   @interval 1000 #  1 second
@@ -12,22 +12,22 @@ defmodule Cog.Assertions do
   # process will sleep for `interval` and then try again until either
   # succeeding or timing out after `timeout`.
   def polling_assert(expected, actual_func, interval \\ @interval, timeout \\ @timeout) do
-    try_until = Time.now + (timeout / 1000)
+    try_until = TimeHelpers.now + (timeout / 1000)
     do_polling_assert(expected, actual_func, try_until, interval)
   end
 
   def polling_assert_in(expected, actual_func, interval \\ @interval, timeout \\ @timeout) do
-    try_until = Time.now + (timeout / 1000)
+    try_until = TimeHelpers.now + (timeout / 1000)
     do_polling_assert_in(expected, actual_func, try_until, interval)
   end
 
   def polling(actual_func, interval \\ @interval, timeout \\ @timeout) do
-    try_until = Time.now + (timeout / 1000)
+    try_until = TimeHelpers.now + (timeout / 1000)
     do_polling(actual_func, try_until, interval)
   end
 
   defp do_polling(actual_func, try_until, interval) do
-    if try_until > Time.now do
+    if try_until > TimeHelpers.now do
       case actual_func.() do
         nil ->
           Logger.debug("Didn't receive a new message. Trying again...")
@@ -43,7 +43,7 @@ defmodule Cog.Assertions do
   end
 
   defp do_polling_assert(expected, actual_func, try_until, interval) do
-    if try_until > Time.now do
+    if try_until > TimeHelpers.now do
       case actual_func.() do
         nil ->
           Logger.debug("Didn't receive a new message. Trying again...")
@@ -59,7 +59,7 @@ defmodule Cog.Assertions do
   end
 
   defp do_polling_assert_in(expected, actual_func, try_until, interval) do
-    if try_until > Time.now do
+    if try_until > TimeHelpers.now do
       case actual_func.() do
         nil ->
           Logger.debug("Didn't receive a new message. Trying again...")

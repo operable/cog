@@ -3,6 +3,7 @@ defmodule Cog.Util.CacheImpl do
   @cache_config_key :__CACHE_CONFIG__
 
   use GenServer
+  alias Cog.Util.TimeHelpers
 
   defstruct [:tid, :tref]
 
@@ -12,7 +13,7 @@ defmodule Cog.Util.CacheImpl do
   end
 
   def lookup(cacheref, key) when is_atom(cacheref) do
-    current_time = Cog.Time.now()
+    current_time = TimeHelpers.now()
     case :ets.lookup(cacheref, key) do
       [{^key, expiry, value}] when expiry > current_time ->
         {:ok, value}
@@ -49,7 +50,7 @@ defmodule Cog.Util.CacheImpl do
   def handle_call({:store, key, value}, _from, state) do
     ttl = get_cache_ttl(state.tid)
     reply = if ttl > 0 do
-      expiry = ttl + Cog.Time.now()
+      expiry = ttl + TimeHelpers.now()
       case :ets.insert(state.tid, {key, expiry, value}) do
         true ->
           :ok
@@ -77,7 +78,7 @@ defmodule Cog.Util.CacheImpl do
   end
 
   def handle_info(:expire, state) do
-    current_time = Cog.Time.now()
+    current_time = TimeHelpers.now()
     :ets.safe_fixtable(state.tid, true)
     expire_old_entries(state.tid, current_time)
     :ets.safe_fixtable(state.tid, false)

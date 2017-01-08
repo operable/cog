@@ -3,6 +3,8 @@ defmodule Cog.Command.PermissionsCache do
   use GenServer
   require Logger
 
+  alias Cog.Util.TimeHelpers
+
   @ets_table :cog_perms_cache
 
   def start_link() do
@@ -10,7 +12,7 @@ defmodule Cog.Command.PermissionsCache do
   end
 
   def fetch(user) do
-    expires_before = Cog.Time.now()
+    expires_before = TimeHelpers.now()
     key = user.id
     case :ets.lookup(@ets_table, key) do
       [{^key, perms, expiry}] when expiry > expires_before ->
@@ -37,7 +39,7 @@ defmodule Cog.Command.PermissionsCache do
   end
 
   def handle_call({:fetch, user}, _caller, state) do
-    expires_before = Cog.Time.now()
+    expires_before = TimeHelpers.now()
     key = user.id
     reply = case :ets.lookup(@ets_table, key) do
               [] ->
@@ -62,7 +64,7 @@ defmodule Cog.Command.PermissionsCache do
 
   defp expire_old_entries() do
     :ets.safe_fixtable(@ets_table, true)
-    drop_old_entries(:ets.first(@ets_table), Cog.Time.now())
+    drop_old_entries(:ets.first(@ets_table), TimeHelpers.now())
     :ets.safe_fixtable(@ets_table, false)
   end
 
@@ -82,7 +84,7 @@ defmodule Cog.Command.PermissionsCache do
   defp fetch_and_cache(user, state) do
     Logger.info("Permission cache miss for user #{user.username}")
     perms = Cog.Models.User.all_permissions(user)
-    expiry = Cog.Time.now() + state.ttl
+    expiry = TimeHelpers.now() + state.ttl
     :ets.insert(@ets_table, {user.id, perms, expiry})
     {:ok, perms}
   end
