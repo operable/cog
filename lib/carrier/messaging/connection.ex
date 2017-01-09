@@ -144,7 +144,7 @@ defmodule Carrier.Messaging.Connection do
         try do
           Process.link(owner)
         rescue
-          e ->
+          e in ErlangError ->
             Logger.error("Linking to owner process failed: #{Exception.message(e)}")
             {:stop, :failed_owner_link}
         end
