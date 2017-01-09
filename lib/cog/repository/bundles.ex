@@ -93,7 +93,7 @@ defmodule Cog.Repository.Bundles do
   defp __reset_embedded() do
     # Belt and suspenders check to ensure this function is only
     # used as intended.
-    unless Mix.env == :dev do
+    unless Application.get_env(:cog, :mode) == :dev do
       raise "Attempted to embedded bundle with wrong environment: #{Mix.env}"
     end
     Logger.info("Dev mode detected. Resetting embedded bundle.")
@@ -535,7 +535,7 @@ defmodule Cog.Repository.Bundles do
           :lt ->
             upgrade_to_current.()
           :eq ->
-            if Mix.env == :dev do
+            if Application.get_env(:cog, :mode) == :dev do
               __reset_embedded()
               upgrade_to_current.()
             else

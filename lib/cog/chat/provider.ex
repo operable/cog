@@ -27,6 +27,8 @@ defmodule Cog.Chat.Provider do
 
   @callback display_name :: String.t
 
+  @callback config_name :: atom
+
   defmacro __using__(_) do
     quote do
       @behaviour unquote(__MODULE__)

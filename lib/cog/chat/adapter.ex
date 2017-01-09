@@ -157,10 +157,11 @@ defmodule Cog.Chat.Adapter do
 
   def init(conn, _) do
     Logger.info("Starting")
-    case Application.fetch_env(:cog, __MODULE__) do
+    case Application.fetch_env(:cog, :chat) do
       :error ->
         {:stop, :missing_chat_adapter_config}
       {:ok, config} ->
+        Logger.info("Adapter config: #{inspect config}")
         case Keyword.get(config, :providers) do
           nil ->
             Logger.error("Chat provider not specified. You must specify one of 'COG_SLACK_ENABLED' or 'COG_HIPCHAT_ENABLED' env variables")
@@ -168,7 +169,7 @@ defmodule Cog.Chat.Adapter do
           providers ->
             # TODO: validate that these providers actually implement
             # the proper behavior
-            finish_initialization(conn, providers)
+            finish_initialization(conn, providers, config)
         end
     end
   end
@@ -254,10 +255,10 @@ defmodule Cog.Chat.Adapter do
     {:noreply, state}
   end
 
-  defp finish_initialization(conn, providers) do
+  defp finish_initialization(conn, providers, config) do
     Connection.subscribe(conn, @adapter_topic)
     Connection.subscribe(conn, @incoming_topic)
-    case start_providers(providers, %{}) do
+    case start_providers(providers, config, %{}) do
       {:ok, providers} ->
         {:ok, %__MODULE__{providers: providers, cache: get_cache()}}
       error ->
@@ -265,20 +266,20 @@ defmodule Cog.Chat.Adapter do
     end
   end
 
-  defp start_providers([], accum), do: {:ok, accum}
-  defp start_providers([{name, provider}|t], accum) do
-    case Application.fetch_env(:cog, provider) do
+  defp start_providers([], _config, accum), do: {:ok, accum}
+  defp start_providers([provider|t], config, accum) do
+    case Keyword.fetch(config, provider.config_name) do
       :error ->
-        {:error, {:missing_provider_config, provider}}
+        {:error, {:missing_provider_config, provider.config_name}}
       {:ok, config} ->
         config = [{:incoming_topic, @incoming_topic}|config]
         case provider.start_link(config) do
           {:ok, _} ->
-            Logger.info("Chat provider '#{name}' (#{provider}) initialized.")
-            accum = accum |> Map.put(name, provider) |> Map.put(Atom.to_string(name), provider)
-            start_providers(t, accum)
+            Logger.info("Chat provider '#{provider.display_name}' (#{provider}) initialized.")
+            accum = accum |> Map.put(provider.config_name, provider) |> Map.put(Atom.to_string(provider.config_name), provider)
+            start_providers(t, config, accum)
           error ->
-            Logger.error("Chat provider '#{name}' (#{provider}) failed to initialize: #{inspect error}")
+            Logger.error("Chat provider '#{provider.display_name}' (#{provider}) failed to initialize: #{inspect error}")
             error
         end
     end

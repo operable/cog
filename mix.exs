@@ -32,7 +32,8 @@ defmodule Cog.Mixfile do
   end
 
   defp started_applications do
-    apps = [:lager,
+    apps = [:mnesia,
+            :lager,
             :logger,
             :probe,
             :logger_file_backend,
@@ -49,7 +50,20 @@ defmodule Cog.Mixfile do
             :greenbar_markdown,
             :greenbar,
             :spanner,
-            :bamboo]
+            :bamboo,
+            :bamboo_smtp,
+            :conduit,
+            :conform,
+            :emqttc,
+            :eper,
+            :ex_json_schema,
+            :gen_logger,
+            :html_entities,
+            :lager_logger,
+            :p1_utils,
+            :phoenix_pubsub,
+            :uuid,
+            :websocket_client]
     if System.get_env("COG_SASL_LOG") != nil do
       [:sasl|apps]
     else
@@ -107,6 +121,11 @@ defmodule Cog.Mixfile do
       # version in Hex. Thus, we need to declare it manually :(
       {:websocket_client, github: "jeremyong/websocket_client"},
       {:eper, "0.94.0"},
+
+      # Config file & Release management management
+      ########################################################################
+      {:conform, github: "operable/conform", branch: "kevsmith/env-vars"},
+      {:distillery, "~> 1.0"},
 
       # Test and Development
       ########################################################################

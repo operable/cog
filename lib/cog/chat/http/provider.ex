@@ -12,6 +12,8 @@ defmodule Cog.Chat.Http.Provider do
 
   @provider_name "http"
 
+  def config_name(), do: :http
+
   defstruct [:mbus, :incoming]
 
   def start_link(config),

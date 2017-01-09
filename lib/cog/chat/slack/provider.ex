@@ -14,6 +14,8 @@ defmodule Cog.Chat.Slack.Provider do
 
   def display_name, do: "Slack"
 
+  def config_name, do: :slack
+
   def start_link(config) do
     case Application.ensure_all_started(:slack) do
       {:ok, _} ->

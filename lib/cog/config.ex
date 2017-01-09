@@ -5,8 +5,17 @@ defmodule Cog.Config do
   long after creation time a token is considered valid.
   """
   def token_lifetime do
-    value = Application.fetch_env!(:cog, :token_lifetime)
-    convert(value, :sec)
+    api_token_config = Application.get_env(:cog, :api_token)
+    # Not a fan of this but token_lifetime/0 gets called during compilation
+    # If the function returns an error then compilation is aborted
+    # :( :(
+    if api_token_config == nil do
+      60
+    else
+      value = Keyword.fetch!(api_token_config, :lifetime)
+      units = Keyword.fetch!(api_token_config, :lifetime_units)
+      convert({value, units}, :sec)
+    end
   end
 
   @doc """
@@ -14,8 +23,17 @@ defmodule Cog.Config do
   milliseconds. Expired tokens will be reaped on this schedule.
   """
   def token_reap_period do
-    value = Application.fetch_env!(:cog, :token_reap_period)
-    convert(value, :ms)
+    api_token_config = Application.get_env(:cog, :api_token)
+    # Not a fan of this but token_reap_period/0 gets called during compilation
+    # If the function returns an error then compilation is aborted
+    # :( :(
+    if api_token_config == nil do
+      5000
+    else
+      value = Keyword.fetch!(api_token_config, :reap_interval)
+      units = Keyword.fetch!(api_token_config, :reap_interval_units)
+      convert({value, units}, :ms)
+    end
   end
 
   @doc """
@@ -46,6 +64,9 @@ defmodule Cog.Config do
       259200
 
   """
+  def convert(from, into) when is_integer(from) do
+    convert({from, :sec}, into)
+  end
   def convert(from, into) do
     from
     |> convert_to_seconds

@@ -29,11 +29,11 @@ defmodule Cog.BusDriver do
 
   def init(_) do
     case configure_message_bus() do
-      {:ok, [app_name]} ->
-        case Application.ensure_all_started(app_name) do
+      :ok ->
+        case Application.ensure_all_started(:emqttd) do
           {:ok, _} ->
             :erlang.process_flag(:trap_exit, true)
-            {:ok, app_name}
+            {:ok, :emqttd}
           error ->
             {:stop, error}
         end
@@ -51,22 +51,39 @@ defmodule Cog.BusDriver do
   defp configure_message_bus() do
     case prepare_bindings() do
       {:ok, common_bindings, cert_bindings} ->
-        case load_private_config("common_mqtt") do
-          {:ok, _} ->
-            if length(cert_bindings) == 2 do
-              # SSL enabled
-              Logger.info("Message bus configured for SSL")
-              load_private_config("ssl_mqtt", [{:mqtt_type, :mqtts}|common_bindings] ++ cert_bindings)
-            else
-              # SSL disabled
-              Logger.info("Message bus configured for plain TCP")
-              load_private_config("plain_mqtt", [{:mqtt_type, :mqtt}|common_bindings])
+        case eval_config("common_mqtt", common_bindings) do
+          {:ok, base} ->
+            case configure_listeners(common_bindings ++ cert_bindings) do
+              {:ok, listeners} ->
+                final_config = merge_config(base, listeners)
+                Enum.each(final_config, fn({key, value}) -> :application.set_env(:emqttd, key, value, [persistent: true]) end)
+                :ok
+              error ->
+                error
             end
           error ->
             error
         end
       error ->
         error
+    end
+  end
+
+  defp merge_config(c1, c2) do
+    c1v = Keyword.fetch!(c1, :emqttd)
+    c2v = Keyword.fetch!(c2, :emqttd)
+    c1v ++ c2v
+  end
+
+  defp configure_listeners(bindings) do
+    if length(bindings) == 4 do
+      # SSL enabled
+      Logger.info("Message bus configured for SSL")
+      eval_config("ssl_mqtt", [{:mqtt_type, :mqtts}|bindings])
+    else
+      # SSL disabled
+      Logger.info("Message bus configured for plain TCP")
+      eval_config("plain_mqtt", [{:mqtt_type, :mqtt}|bindings])
     end
   end
 
@@ -99,17 +116,14 @@ defmodule Cog.BusDriver do
   defp convert_string(nil), do: nil
   defp convert_string(value), do: String.to_charlist(value)
 
-  defp load_private_config(name, bindings \\ []) do
-    config = File.read!(Path.join([:code.priv_dir(:cog), "config", name <> ".exs"]))
-    case Code.eval_string(config, bindings) do
-      {:ok, results} ->
-        [{_, agent}|_] = Enum.reverse(results)
-        config = Mix.Config.Agent.get(agent)
-        Mix.Config.Agent.stop(agent)
-        Mix.Config.validate!(config)
-        {:ok, Mix.Config.persist(config)}
-      error ->
-        error
+  def eval_config(name, bindings) do
+    config = File.read!(Path.join([:code.priv_dir(:cog), "config", name <> ".conf"]))
+    try do
+      {results, _} = Code.eval_string(config, bindings)
+      {:ok, results}
+    rescue
+      e ->
+        {:error, Exception.message(e)}
     end
   end
 

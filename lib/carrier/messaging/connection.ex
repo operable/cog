@@ -248,7 +248,7 @@ defmodule Carrier.Messaging.Connection do
   end
 
   defp add_connect_config(opts) do
-    connect_opts = Application.get_env(:cog, __MODULE__)
+    connect_opts = Application.get_env(:cog, :mqtt_client)
     host = Keyword.fetch!(connect_opts, :host)
     port = Keyword.fetch!(connect_opts, :port)
     log_level = Keyword.get(connect_opts, :log_level, @default_log_level)
@@ -265,15 +265,11 @@ defmodule Carrier.Messaging.Connection do
 
   # Enable SSL connections when SSL config is provided
   defp configure_ssl(opts, connect_opts) do
-    case Keyword.get(connect_opts, :ssl, false) do
-      false ->
+    case Keyword.get(connect_opts, :ssl, :diabled) do
+      :disabled ->
         opts
-      true ->
+      :enabled ->
         build_ssl_config(:verify, opts, connect_opts)
-      :verify ->
-        build_ssl_config(:verify, opts, connect_opts)
-      :unverified ->
-        build_ssl_config(:unverified, opts, connect_opts)
       :no_verify ->
         build_ssl_config(:unverified, opts, connect_opts)
     end

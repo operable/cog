@@ -30,7 +30,7 @@ defmodule Cog.Telemetry do
           %{ cog:
             %{ id: telemetry_id,
                version: to_string(version),
-               env: Atom.to_string(Mix.env) }}}
+               env: Atom.to_string(Application.get_env(:cog, :mode))}}}
     end
   end
 
