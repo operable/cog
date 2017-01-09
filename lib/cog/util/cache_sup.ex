@@ -1,15 +1,10 @@
 defmodule Cog.Util.CacheSup do
-  use Supervisor
 
   alias Cog.Config
+  alias Cog.Util.FactorySup
+  alias Cog.Util.CacheImpl
 
-  def start_link,
-    do: Supervisor.start_link(__MODULE__, [], name: __MODULE__)
-
-  def init(_) do
-    children = [worker(Cog.Util.CacheImpl, [], restart: :transient, shutdown: :brutal_kill)]
-    supervise(children, strategy: :simple_one_for_one)
-  end
+  use FactorySup, worker: CacheImpl
 
   def create_cache(name, ttl) when is_atom(name) do
     ttl = Config.convert(ttl, :sec)
