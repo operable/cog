@@ -75,6 +75,7 @@ defmodule Cog.Mixfile do
       # Used by cowboy, emqttd, esockd... they don't seem to lock to a
       # particular version, though.
       {:gproc, "~> 0.5.0", override: true},
+      {:snappy, github: "fdmanana/snappy-erlang-nif"},
 
       # Logging
       ########################################################################
