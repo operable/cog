@@ -42,7 +42,7 @@ defmodule Cog.Chat.Provider do
       def send_message(_target, _message), do: {:error, :not_implemented}
 
       # TODO: Need to look into how useful this is... the new Slack
-      # adapter at least seems to not end up interpreting this as a
+      # provider at least seems to not end up interpreting this as a
       # "mention" when included in output.
       #
       # Perhaps adding this directly into the Cog.Chat.User struct

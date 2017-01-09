@@ -1,6 +1,6 @@
 defmodule Cog.Command.Service.PipelineMonitor do
   alias Cog.Command.Service
-  alias Cog.ETSWrapper
+  alias Cog.Util.ETSWrapper
   require Logger
 
   @doc """

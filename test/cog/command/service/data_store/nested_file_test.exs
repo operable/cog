@@ -1,8 +1,8 @@
-defmodule Cog.NestedFile.Test do
+defmodule Cog.Command.Service.DataStore.NestedFile.Test do
   use ExUnit.Case
-  alias Cog.NestedFile
+  alias Cog.Command.Service.DataStore.NestedFile
 
-  doctest Cog.NestedFile
+  doctest Cog.Command.Service.DataStore.NestedFile
 
   setup do
     base_paths = [

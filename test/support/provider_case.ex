@@ -30,10 +30,10 @@ defmodule Cog.Test.Support.ProviderCase do
           setup_all do
             case maybe_replace_chat_provider(unquote(provider)) do
               {:ok, original_provider} ->
-                reload_chat_adapter()
+                reload_chat_provider()
                 on_exit(fn ->
                   maybe_replace_chat_provider(original_provider)
-                  reload_chat_adapter()
+                  reload_chat_provider()
                 end)
               :no_change ->
                 :ok
@@ -93,7 +93,7 @@ defmodule Cog.Test.Support.ProviderCase do
   defp provider_for(other),
     do: raise "I don't know what implements the #{other} provider yet!"
 
-  def reload_chat_adapter() do
+  def reload_chat_provider() do
     case :erlang.whereis(Cog.Chat.Adapter) do
       :undefined ->
         Logger.error("Can't find Cog.Chat.Adapter process!")

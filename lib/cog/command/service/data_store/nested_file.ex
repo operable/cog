@@ -1,4 +1,4 @@
-defmodule Cog.NestedFile do
+defmodule Cog.Command.Service.DataStore.NestedFile do
   @moduledoc """
   Stores an arbitrary String on the filesystem of the Cog host in a file
   named by combining the provided key and extension. Files are written to

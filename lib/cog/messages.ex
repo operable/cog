@@ -1,8 +1,8 @@
 # These modules define the structure of our MQTT messages.
 
-defmodule Cog.Messages.AdapterRequest do
+defmodule Cog.Messages.ProviderRequest do
   @moduledoc """
-  Input to the executor; all adapters must generate one.
+  Input to the executor; all providers must generate one.
   """
   use Conduit
 
@@ -16,19 +16,19 @@ defmodule Cog.Messages.AdapterRequest do
   # pipelines.
   field :initial_context, :map, required: true
 
-  # Adapter-specific information about the user initiating the
+  # Provider-specific information about the user initiating the
   # request (e.g., Slack chat handle, internal Slack user ID, etc.)
   field :sender, Cog.Chat.User, required: true
 
-  # Adapter-specific information about the "room" the request was
+  # Provider-specific information about the "room" the request was
   # initiated from (e.g., Slack channel, HTTP request, etc.)
   field :room, Cog.Chat.Room, required: true
 
   # Message queue topic to send the reply to
   field :reply, :string, required: true
 
-  # Short name of adapter, e.g. "slack"
-  field :adapter, :string, required: true
+  # Short name of provider, e.g. "slack"
+  field :provider, :string, required: true
 
 end
 
@@ -64,16 +64,16 @@ defmodule Cog.Messages.Command do
   # Message queue topic to send the reply to
   field :reply_to, :string, required: true
 
-  # Adapter-specific information about the user initiating the
+  # Provider-specific information about the user initiating the
   # request (e.g., Slack chat handle, internal Slack user ID, etc.)
   #
-  # (see Cog.Messages.AdapterRequest.sender)
+  # (see Cog.Messages.ProviderRequest.sender)
   field :requestor, Cog.Chat.User, required: true
 
-  # Adapter-specific information about the "room" the request was
+  # Provider-specific information about the "room" the request was
   # initiated from (e.g., Slack channel, HTTP request, etc.)
   #
-  # (See Cog.Messages.AdapterRequest.room)
+  # (See Cog.Messages.ProviderRequest.room)
   field :room, Cog.Chat.Room, required: true
 
   # Token to access services (e.g. memory)
@@ -112,13 +112,13 @@ end
 
 defmodule Cog.Messages.SendMessage do
   @moduledoc """
-  Final response sent back to the adapter after all pipeline execution has finished
+  Final response sent back to the provider after all pipeline execution has finished
   """
   use Conduit
   # Final templated and formatted response
   field :response, :string, required: true
 
-  # Adapter-specific information about the "room" the response is
+  # Provider-specific information about the "room" the response is
   # targeted to. May or may not be the same as the initial source of
   # the request (e.g., multiple redirect destinations)
   field :room, Cog.Chat.Room, required: true

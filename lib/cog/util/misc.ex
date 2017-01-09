@@ -17,12 +17,12 @@ defmodule Cog.Util.Misc do
     do: "COG_INTERNAL"
 
   ########################################################################
-  # Adapter Resolution Functions
+  # Provider Resolution Functions
 
   @doc """
   Returns the name of the currently configured chat provider module, if found
   """
-  def chat_adapter_module do
+  def chat_provider_module do
     # TODO: really "chat provider name"
     config = Application.fetch_env!(:cog, Cog.Chat.Adapter)
     case Keyword.fetch(config, :chat) do

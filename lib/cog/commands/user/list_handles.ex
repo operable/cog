@@ -5,7 +5,7 @@ defmodule Cog.Commands.User.ListHandles do
 
   alias Cog.Repository.ChatHandles
 
-  @description "List all chat handles attached to users for the active chat adapter."
+  @description "List all chat handles attached to users for the active chat provider."
 
   @output_description "Returns the user with their attached handle."
 

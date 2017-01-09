@@ -61,9 +61,9 @@ defmodule Cog.V1.ChatHandleControllerTest do
     assert Repo.get_by(ChatHandle, id: id)
   end
 
-  test "fails if chat adapter for provider is not running", params do
+  test "fails if chat provider for provider is not running", params do
     chat_provider = "not_a_real_provider"
-    {:ok, chat} = Cog.Util.Misc.chat_adapter_module
+    {:ok, chat} = Cog.Util.Misc.chat_provider_module
     refute chat_provider == chat
 
     conn = api_request(params.authed,

@@ -6,12 +6,12 @@ defmodule Cog.Command.Service.DataStore do
   Keys may be fetched, replaced, and deleted.
 
   The JSON data is stored on the filesystem of the Cog host. See the
-  Cog.NestedFile module for more details.
+  Cog.Command.Service.DataStore.NestedFile module for more details.
   """
 
   use GenServer
 
-  alias Cog.NestedFile
+  alias Cog.Command.Service.DataStore.NestedFile
 
   defstruct [:base_path]
 

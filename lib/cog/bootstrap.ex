@@ -161,7 +161,7 @@ defmodule Cog.Bootstrap do
   defp maybe_bootstrap_chat_handle_from_env(_user, nil),
     do: Logger.info("No chat handle specified for bootstrap user; skipping")
   defp maybe_bootstrap_chat_handle_from_env(user, handle) do
-    {:ok, provider_name} = Cog.Util.Misc.chat_adapter_module()
+    {:ok, provider_name} = Cog.Util.Misc.chat_provider_module()
     case Cog.Repository.ChatHandles.set_handle(user, provider_name, handle) do
       {:ok, _} ->
         Logger.info("Associated bootstrap user with chat handle '#{handle}'")

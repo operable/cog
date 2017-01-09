@@ -83,8 +83,8 @@ defmodule Cog.Repository.ChatHandles do
   #
   # One side effect of how things are currently structured is that we
   # only allow handles to be created or edited if the currently
-  # running chat adapter is the one for the chat provider in
-  # question. That is, if you're running Cog with the Slack adapter,
+  # running chat provider is the one for the chat provider in
+  # question. That is, if you're running Cog with the Slack provider,
   # you can _only_ create or update Slack chat handles.
   defp chat_handle_params(provider_name, handle) do
 

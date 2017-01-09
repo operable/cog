@@ -6,30 +6,30 @@ defmodule Cog.AdapterCase do
 
 
 
-  defmacro __using__([adapter: adapter]) do
+  defmacro __using__([provider: provider]) do
 
-    adapter_helper = Module.concat([Cog, Adapters, String.capitalize(adapter), Helpers])
+    provider_helper = Module.concat([Cog, Providers, String.capitalize(provider), Helpers])
 
     quote do
       require Logger
       use ExUnit.Case, async: false
 
-      import unquote(adapter_helper)
+      import unquote(provider_helper)
       import unquote(__MODULE__)
       import Cog.Support.ModelUtilities
       import ExUnit.Assertions
-      import Cog.AdapterAssertions
+      import Cog.ProviderAssertions
 
       # Only restart the application if we're actually changing the
       # chat provider to something that it's not already configured
       # for.
       setup_all do
-        case maybe_replace_chat_provider(unquote(adapter)) do
+        case maybe_replace_chat_provider(unquote(provider)) do
           {:ok, original_provider} ->
-            reload_chat_adapter()
+            reload_chat_provider()
             on_exit(fn ->
               maybe_replace_chat_provider(original_provider)
-              reload_chat_adapter()
+              reload_chat_provider()
             end)
           :no_change ->
             :ok
@@ -88,7 +88,7 @@ defmodule Cog.AdapterCase do
   defp provider_for(other),
     do: raise "I don't know what implements the #{other} provider yet!"
 
-  def reload_chat_adapter() do
+  def reload_chat_provider() do
     case :erlang.whereis(Cog.Chat.Adapter) do
       :undefined ->
         Logger.error("Can't find Cog.Chat.Adapter process!")

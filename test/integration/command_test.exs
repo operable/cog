@@ -1,5 +1,5 @@
 defmodule Integration.CommandTest do
-  use Cog.AdapterCase, adapter: "test"
+  use Cog.AdapterCase, provider: "test"
 
   @moduletag integration: :general
   @moduletag :command
