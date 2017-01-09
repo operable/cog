@@ -187,9 +187,14 @@ defmodule Carrier.Messaging.Connection do
       topic ->
         case message.__struct__.encode(message) do
           {:ok, encoded} ->
-            case :emqttc.sync_publish(state.conn, topic, encoded, :qos1) do
-              {:ok, _} ->
-                {:reply, :ok, state}
+            case :snappy.compress(encoded) do
+              {:ok, compressed} ->
+                case :emqttc.sync_publish(state.conn, topic, compressed, :qos1) do
+                  {:ok, _} ->
+                    {:reply, :ok, state}
+                  error ->
+                    {:reply, error, state}
+                end
               error ->
                 {:reply, error, state}
             end
@@ -209,10 +214,15 @@ defmodule Carrier.Messaging.Connection do
           {:reply, :ok, state} ->
             # Wait for response
             receive do
-              {:publish, ^reply_endpoint, message} ->
-                {:reply, MqttReply.decode(message), state}
+              {:publish, ^reply_endpoint, compressed} ->
+                case :snappy.decompress(compressed) do
+                  {:ok, payload} ->
+                    {:reply, MqttReply.decode(payload), state}
+                  error ->
+                    {:reply, error, state}
+                end
             after timeout ->
-                {:reply, {:error, :call_timeout}, state}
+              {:reply, {:error, :call_timeout}, state}
             end
           error ->
             error
@@ -235,13 +245,20 @@ defmodule Carrier.Messaging.Connection do
     tracker = Tracker.del_subscriber(tracker, subscriber)
     {:noreply, drop_unused_topics(%{state | tracker: tracker})}
   end
-  def handle_info({:publish, topic, _}=message, state) do
+  def handle_info({:publish, topic, compressed}, state) do
     case Tracker.find_subscribers(state.tracker, topic) do
       [] ->
         {:noreply, state}
       subscribed ->
-        Enum.each(subscribed, &(Process.send(&1, message, [])))
-        {:noreply, state}
+        case :snappy.decompress(compressed) do
+          {:ok, payload} ->
+            message = {:publish, topic, payload}
+            Enum.each(subscribed, &(Process.send(&1, message, [])))
+            {:noreply, state}
+          error ->
+            Logger.error("Decompressing MQTT payload failed: #{inspect error}")
+            {:noreply, state}
+        end
     end
   end
   def handle_info(_msg, state) do
