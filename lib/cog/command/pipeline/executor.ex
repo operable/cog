@@ -523,7 +523,7 @@ defmodule Cog.Command.Pipeline.Executor do
     message = AuditMessage.render({:abort_pipeline, plan.parser_meta.full_command_name},
                                   state.request)
 
-    respond(state, :aborted, message)
+    respond(state, :abort, message)
     fail_pipeline(state, :aborted, message)
   end
 
