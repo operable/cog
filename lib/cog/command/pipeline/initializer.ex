@@ -46,6 +46,7 @@ defmodule Cog.Command.Pipeline.Initializer do
         # provider, too
         case check_history(payload, state) do
           {true, payload, state} ->
+            IO.inspect payload
             {:ok, _} = ExecutorSup.run(payload)
             {:noreply, state}
           {false, state} ->
