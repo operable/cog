@@ -5,6 +5,7 @@ defmodule Cog.Command.Pipeline.Destination do
                          provider: String.t,
                          room: %Cog.Chat.Room{},
                          classification: classification}
+  @type destination_map :: %{classification => Cog.Command.Pipeline.Destination.t}
   defstruct [raw: nil,
              provider: nil,
              room: nil,
@@ -19,6 +20,7 @@ defmodule Cog.Command.Pipeline.Destination do
   disposition classification, or return error tuples for each that
   were invalid.
   """
+  @spec process(String.t, Cog.Models.User.t, Cog.Chat.Room.t, String.t) :: {:ok, destination_map} | {:error, any}
   def process(raw_destinations, sender, origin_room, origin_provider) when is_binary(origin_provider) do
     result = raw_destinations
     |> Enum.map(&make_destination/1)

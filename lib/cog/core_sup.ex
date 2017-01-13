@@ -14,7 +14,8 @@ defmodule Cog.CoreSup do
                 supervisor(Cog.Endpoint, []),
                 supervisor(Cog.TriggerEndpoint, []),
                 supervisor(Cog.ServiceEndpoint, []),
-                supervisor(Cog.ChatSup, [])]
+                supervisor(Cog.ChatSup, []),
+                supervisor(Cog.PipelineCoreSup, [])]
     {:ok, {%{strategy: :one_for_one, intensity: 10, period: 60}, children}}
   end
 
