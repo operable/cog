@@ -18,16 +18,17 @@ defimpl Cog.Eval, for: Piper.Permissions.Ast.ContainExpr do
       {{_, nil}, context} ->
         {false, context}
       {{type, lhsv}, context} ->
-        lhsv = prepare(type, lhsv)
+        lhsv = prepare(lhsv)
         {rhsv, context} = Eval.value_of(rhs, context)
         intersects?(lhsv, rhsv, context, type)
     end
   end
 
-  defp prepare({:arg, _}, lhsv) do
-    for {arg, index} <- Enum.with_index(lhsv), do: {index, arg}
+  defp prepare(lhsv) when is_list(lhsv) do
+    for {arg, index} <- Enum.with_index(lhsv),
+      do: {index, arg}
   end
-  defp prepare({:option, _}, lhsv) do
+  defp prepare(lhsv) when is_map(lhsv) do
     Map.to_list(lhsv)
   end
 
@@ -69,6 +70,44 @@ defimpl Cog.Eval, for: Piper.Permissions.Ast.ContainExpr do
     intersects?(lhsv, t, context, {type, :all})
   end
 
+  defp intersects?([], _rhsv, context, {_, _, :all}) do
+    {true, context}
+  end
+  defp intersects?(_rhsv, [], context, {_, _, :all}) do
+    {false, context}
+  end
+  defp intersects?(_lhsv, [], context, {_, _, :any}) do
+    {false, context}
+  end
+  defp intersects?(lhsv, [rhs|t], context, {type, _, :any}) do
+    {rhsv, context} = Eval.value_of(rhs, context)
+    {context, updated} = Enum.reduce(lhsv, {context, []},
+      fn({key, value}, {context, acc}) ->
+        if expr_match?(value, rhsv) == true do
+          {Context.add_match(context, type, key), acc}
+        else
+          {context, acc ++ [{key, value}]}
+        end
+      end)
+    if updated == lhsv do
+      intersects?(lhsv, t, context, {type, :any})
+    else
+      {true, context}
+    end
+  end
+  defp intersects?(lhsv, [rhs|t], context, {type, _, :all}) do
+    {rhsv, context} = Eval.value_of(rhs, context)
+    {context, lhsv} = Enum.reduce(lhsv, {context, []},
+      fn({key, value}, {context, acc}) ->
+        if expr_match?(value, rhsv) == true do
+          {Context.add_match(context, type, key), acc}
+        else
+          {context, acc ++ [{key, value}]}
+        end
+      end)
+    intersects?(lhsv, t, context, {type, :all})
+  end
+
   defp member?(_lhsv, [], context) do
     {false, context}
   end
@@ -81,7 +120,7 @@ defimpl Cog.Eval, for: Piper.Permissions.Ast.ContainExpr do
         member?(lhs, t, context)
     end
   end
-  defp member?({{:option, name}, lhsv}=lhs, [rhs|t], context) do
+  defp member?({{:option, name, _match}, lhsv}=lhs, [rhs|t], context) do
     {rhsv, context} = Eval.value_of(rhs, context)
     case expr_match?(lhsv, rhsv) do
       true ->

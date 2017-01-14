@@ -237,4 +237,16 @@ when command is debug:opts with arg[0] in ["foo", "bar"] allow
     assert Eval.value_of(ast, context) == :nomatch
   end
 
+  test "aggregate in expr referencing an option value" do
+    {:ok, ast} = :piper_rule_parser.parse_rule("""
+    when command is debug:opts with all option[list] in ["foo", "bar"] allow
+    """)
+    context = make_context("debug:opts", [], %{"list" => ["foo"]})
+    assert Eval.value_of(ast, context) == {true, 1}
+    context = make_context("debug:opts", [], %{"list" => ["foo", "bar"]})
+    assert Eval.value_of(ast, context) == {true, 2}
+    context = make_context("debug:opts", [], %{"list" => ["foo", "bar", "baz"]})
+    assert Eval.value_of(ast, context) == :nomatch
+  end
+
 end
