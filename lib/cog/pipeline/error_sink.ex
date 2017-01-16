@@ -117,23 +117,24 @@ defmodule Cog.Pipeline.ErrorSink do
   defp send_to_owner(_), do: :ok
 
   defp prepare_error_context(signal, state) do
+    error_message = Errors.lookup(signal)
     %{"id" => state.request.id,
       "initiator" => sender_name(state.request),
       "started" => state.started,
       "pipeline_text" => state.request.text,
-      "error_message" => Errors.lookup(signal),
+      "error_message" => error_message,
       "planning_failure" => "",
-      "execution_failure" => ""}
+      "execution_failure" => error_message}
   end
 
   defp output_for(:chat, signal, context) do
     Evaluator.evaluate(signal.template, context)
   end
   defp output_for(:trigger, _signal, context) do
-    %{status: "error", pipeline_output: context["message"]}
+    %{status: "error", pipeline_output: %{error_message: context["error_message"]}}
   end
   defp output_for(:status_only, _signal, context) do
-    %{status: "error", pipeline_output: context["message"]}
+    %{status: "error", pipeline_output: %{error_message: context["error_message"]}}
   end
 
   defp sender_name(request) do

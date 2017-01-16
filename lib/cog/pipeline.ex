@@ -12,8 +12,8 @@ defmodule Cog.Pipeline do
   alias Cog.Messages.ProviderRequest
   alias Cog.Models.EctoJson
   alias Cog.Pipeline.PrepareError
-  alias Cog.Pipeline.{DataSignal, ExecutionStageSup, ErrorSinkSup, InitialContext,
-                      InitialContextSup, OutputSinkSup}
+  alias Cog.Pipeline.{DataSignal, DoneSignal, ExecutionStageSup, ErrorSinkSup,
+                      InitialContext, InitialContextSup, OutputSinkSup}
   alias Cog.Queries.User, as: UserQueries
   alias Cog.Repo
   alias Piper.Command.Ast
@@ -84,12 +84,20 @@ defmodule Cog.Pipeline do
   end
 
   def handle_call(:run, _from, state) do
-    with {:ok, user} <- fetch_user(state),
-         {:ok, parsed, destinations} <- parse(user, state),
-         {:ok, perms} <- PermissionsCache.fetch(user),
-         user_json <- EctoJson.render(user),
-      do: start_pipeline(parsed, destinations, user_json, perms, state),
-    else: (error -> start_error_pipeline(error, state))
+    state = %{state | started: DateTime.utc_now()}
+    case fetch_user(state) do
+      {:ok, user} ->
+        with {:ok, parsed, destinations} <- parse(user, state),
+             {:ok, perms} <- PermissionsCache.fetch(user),
+               user_json <- EctoJson.render(user) do
+          start_pipeline(parsed, destinations, user_json, perms, state)
+        else
+          {:error, {:parse_error, message}} -> start_error_pipeline({:error, :parse_error, message}, user, state)
+          error -> start_error_pipeline(error, user, state)
+        end
+      error ->
+        start_error_pipeline(error, nil, state)
+    end
   end
   def handle_call(_msg, _from, state) do
     {:reply, :ignored, state}
@@ -183,7 +191,6 @@ defmodule Cog.Pipeline do
   end
 
   defp start_pipeline(parsed, destinations, user, perms, state) do
-    state = %{state | started: DateTime.utc_now()}
     case prepare_initial_context(state) do
       {:ok, context} ->
         case InitialContextSup.create([context: context, pipeline: self(), request_id: state.request.id]) do
@@ -198,13 +205,13 @@ defmodule Cog.Pipeline do
               {:reply, :ok, %{state | stages: stages}}
             rescue
               e in PrepareError ->
-                start_error_pipeline({:error, Exception.message(e)}, state)
+                start_error_pipeline({:error, Exception.message(e)}, user, state)
             end
           error ->
-            start_error_pipeline(error, state)
+            start_error_pipeline(error, user, state)
         end
       error ->
-        start_error_pipeline(error, state)
+        start_error_pipeline(error, user, state)
     end
   end
 
@@ -247,7 +254,23 @@ defmodule Cog.Pipeline do
     end
   end
 
-  defp start_error_pipeline(error, state), do: {:reply, error, state}
+  defp start_error_pipeline(error, user, state) do
+    {:ok, initial_context} = InitialContextSup.create([context: [%DoneSignal{error: error, template: "error"}], pipeline: self(),
+                                                       request_id: state.request.id])
+    Process.monitor(initial_context)
+    sink_opts = [pipeline: self(), request: state.request, started: state.started,
+                 user: user, upstream: initial_context, policy: state.policy, owner: state.owner,
+                 conn: state.conn]
+    case ErrorSinkSup.create(sink_opts) do
+      {:ok, error_sink} ->
+        Process.monitor(error_sink)
+        initialization_event(user, state)
+        InitialContext.unlock(initial_context)
+        {:reply, :ok, %{state | stages: [initial_context, error_sink]}}
+      error ->
+        raise PrepareError, [id: state.request.id, error: error, action: :create_error_sink]
+    end
+  end
 
   ########################################################################
   # Context Manipulation Functions

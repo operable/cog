@@ -4,8 +4,7 @@ defmodule Cog.Pipeline.Errors do
   alias Piper.Permissions.Ast
 
 
-  def lookup(%DoneSignal{error: {:error, :bad_parse, msg}}) when is_binary(msg),
-    do: msg
+  def lookup(%DoneSignal{error: {:error, :parse_error, message}}) when is_binary(message), do: message
   def lookup(%DoneSignal{error: {:error, :bad_redirect, invalid}}),
     do: redirection_error_message(invalid)
   def lookup(%DoneSignal{error: {:error, :missing_key, var}}),
@@ -35,6 +34,12 @@ defmodule Cog.Pipeline.Errors do
     do: "The #{full_command_name} command timed out"
   def lookup(%DoneSignal{error: {:error, :template, template_name, provider, error}}) do
       "There was an error rendering the template '#{template_name}' for the provider '#{provider}': #{inspect error}"
+  end
+  def lookup(%DoneSignal{error: {:error, :unknown_error}}) do
+    "An unknown pipeline execution error occurred."
+  end
+  def lookup(%DoneSignal{error: {:error, reason}}) when is_binary(reason) do
+    reason
   end
 
   # `errors` is a keyword list of [reason: name] for all bad redirect

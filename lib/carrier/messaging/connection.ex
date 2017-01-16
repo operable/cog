@@ -265,6 +265,8 @@ defmodule Carrier.Messaging.Connection do
     {:noreply, state}
   end
 
+  def terminate(_reason, _state), do: :ok
+
   ########################################################################
 
   defp add_internal_credentials(opts) do

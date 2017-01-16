@@ -76,7 +76,7 @@ defmodule Cog.Pipeline.OutputSink do
 
   def handle_events(events, _from, state) do
     errors_present = Enum.any?(events, &(DoneSignal.done?(&1) and DoneSignal.error?(&1)))
-    filtered_events = Enum.filter(events, &want_signal?/1)
+    filtered_events = Enum.filter(events, &want_signal?/1) |> Enum.reduce([], &combine_events/2)
     state = state
             |> Map.update(:all_events, filtered_events, &(&1 ++ filtered_events))
             |> process_output(errors_present)
@@ -124,6 +124,16 @@ defmodule Cog.Pipeline.OutputSink do
     end
   end
 
+  defp combine_events(%DoneSignal{}=done, accum) do
+    accum ++ [done]
+  end
+  defp combine_events(%DataSignal{}=data, []), do: [data]
+  defp combine_events(%DataSignal{}=next_data, [%DataSignal{}=last_data]) do
+    [%{last_data | data: List.wrap(last_data.data) ++ List.wrap(next_data.data),
+       bundle_version_id: next_data.bundle_version_id, template: next_data.template,
+       invocation: next_data.invocation}]
+  end
+
   defp send_to_owner(%__MODULE__{all_events: events, policy: policy, owner: owner}=state) when policy in [:owner, :adapter_owner] do
     Process.send(owner, {:pipeline, state.request.id, {:output, events}}, [])
   end
@@ -142,7 +152,7 @@ defmodule Cog.Pipeline.OutputSink do
   defp early_exit_response(%DoneSignal{}=signal, state) do
     # Synthesize a DataSignal from a DoneSignal so we can render templates
     data_signal = %DataSignal{template: signal.template,
-                              data: %{},
+                              data: [],
                               bundle_version_id: "common"}
     destinations = Util.here_destination(state.request)
     Enum.each(destinations, fn({type, destinations}) ->

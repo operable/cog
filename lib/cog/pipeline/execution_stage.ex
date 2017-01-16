@@ -202,8 +202,8 @@ defmodule Cog.Pipeline.ExecutionStage do
             end
           {:error, :denied, rule, text} ->
             {[%DoneSignal{error: {:error, :denied, rule}, invocation: text, template: "error"}], state}
-          {:error, error, text} ->
-            {[%DoneSignal{error: error, invocation: text, template: "error"}], state}
+          error ->
+            {[%DoneSignal{error: error, invocation: "#{state.invocation}", template: "error"}], state}
         end
       error ->
         {[%DoneSignal{error: error}], state}
@@ -221,7 +221,8 @@ defmodule Cog.Pipeline.ExecutionStage do
                                  service_token: state.service_token, reply_to: state.topic}}
       else
         {:error, {:denied, rule}} -> {:error, :denied, rule, "#{state.invocation}"}
-        {:error, {:missing_key, key}} -> {:error, {:error, :missing_key, key}, "#{state.invocation}"}
+        {:error, {:missing_key, key}} -> {:error, :missing_key, key}
+        {:error, _reason}=error -> error
       end
     rescue
       e in BadValueError ->
@@ -240,7 +241,7 @@ defmodule Cog.Pipeline.ExecutionStage do
     case response.status do
       "ok" ->
         if response.body == nil do
-          {:ok, nil, state}
+          {[], state}
         else
           if is_list(response.body) do
             {Enum.reduce_while(response.body, [],
@@ -253,7 +254,7 @@ defmodule Cog.Pipeline.ExecutionStage do
         signals = [DataSignal.wrap(response.body, bundle_version_id, response.template), %DoneSignal{}]
         {signals, state}
       "error" ->
-        {[%DoneSignal{error: {:error, :unknown_error}}], state}
+        {[%DoneSignal{error: {:error, response.status_message || :unknown_error}}], state}
     end
   end
 
