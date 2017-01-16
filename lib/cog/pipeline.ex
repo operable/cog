@@ -111,7 +111,13 @@ defmodule Cog.Pipeline do
   # TODO Generate an error when a stage crashes
   def handle_info({:DOWN, _, _, stage, reason}, %__MODULE__{status: :running}=state) do
     if stage in state.stages do
-      Logger.error("Pipeline #{state.request.id} CRASHED! #{inspect reason}")
+      message = case reason do
+                  {_, stacktrace} ->
+                    "Pipeline #{state.request.id} crashed: #{inspect stacktrace, pretty: true}"
+                  _ ->
+                    "Pipeline #{state.request.id} crashed"
+                end
+      Logger.error(message)
       notify(self())
       {:noreply, %{state | status: :done}}
     else
