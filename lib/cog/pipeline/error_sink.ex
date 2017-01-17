@@ -77,11 +77,17 @@ defmodule Cog.Pipeline.ErrorSink do
   end
 
   def handle_info({:DOWN, _mref, _, pipeline, _}, %__MODULE__{pipeline: pipeline}=state) do
-    Logger.debug("Error sink for pipeline #{state.request.id} shutting down")
+    {:stop, :normal, state}
+  end
+  def handle_info({:pipeline_complete, pipeline}, %__MODULE__{pipeline: pipeline}=state) do
     {:stop, :normal, state}
   end
   def handle_info(_msg, state) do
     {:noreply, state}
+  end
+
+  def terminate(_reason, state) do
+    Logger.debug("Error sink for pipeline #{state.request.id} shutting down")
   end
 
   defp keep_signal?(%DoneSignal{}=signal), do: DoneSignal.error?(signal)

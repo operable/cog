@@ -144,14 +144,18 @@ defmodule Cog.Pipeline.ExecutionStage do
   end
 
   def handle_info({:DOWN, _mref, _, pipeline, _}, %__MODULE__{pipeline: pipeline}=state) do
-    Logger.debug("Execution stage for pipeline #{state.request_id} shutting down")
+    {:stop, :normal, state}
+  end
+  def handle_info({:pipeline_complete, pipeline}, %__MODULE__{pipeline: pipeline}=state) do
     {:stop, :normal, state}
   end
   def handle_info(_msg, state) do
     {:noreply, state}
   end
 
-  def terminate(_reason, _state), do: :ok
+  def terminate(_reason, state) do
+    Logger.debug("Execution stage #{state.index} for pipeline #{state.request_id} shutting down")
+  end
 
   defp process_events(%DoneSignal{}=done, _, state, accum) do
     {accum ++ [done], state}

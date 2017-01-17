@@ -84,11 +84,17 @@ defmodule Cog.Pipeline.OutputSink do
   end
 
   def handle_info({:DOWN, _mref, _, pipeline, _}, %__MODULE__{pipeline: pipeline}=state) do
-    Logger.debug("Output sink for pipeline #{state.request.id} shutting down")
+    {:stop, :normal, state}
+  end
+  def handle_info({:pipeline_complete, pipeline}, %__MODULE__{pipeline: pipeline}=state) do
     {:stop, :normal, state}
   end
   def handle_info(_msg, state) do
     {:noreply, state}
+  end
+
+  def terminate(_reason, state) do
+    Logger.debug("Output sink for pipeline #{state.request.id} shutting down")
   end
 
   defp want_signal?(%DataSignal{}), do: true

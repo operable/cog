@@ -73,12 +73,17 @@ defmodule Cog.Pipeline.InitialContext do
   end
 
   def handle_info({:DOWN, _mref, _, pipeline, _}, %__MODULE__{pipeline: pipeline}=state) do
-    Logger.debug("Initial context for pipeline #{state.request_id} shutting down")
+    {:stop, :normal, state}
+  end
+  def handle_info({:pipeline_complete, pipeline}, %__MODULE__{pipeline: pipeline}=state) do
     {:stop, :normal, state}
   end
   def handle_info(_msg, state) do
     {:noreply, state}
   end
 
-  def terminate(_reason, _state), do: :ok
+  def terminate(_reason, state) do
+    Logger.debug("Initial context for pipeline #{state.request_id} shutting down")
+  end
+
 end

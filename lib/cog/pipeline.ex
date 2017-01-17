@@ -3,7 +3,7 @@ defmodule Cog.Pipeline do
   @default_output_policy :adapter
   @default_command_timeout 60000
 
-  alias Carrier.Messaging.{Connection, ConnectionSup}
+  alias Carrier.Messaging.{ConnectionSup, Connection}
   alias Cog.Events.PipelineEvent
   alias Cog.Chat.Adapter, as: ChatAdapter
   alias Cog.Command.{CommandResolver, PermissionsCache}
@@ -61,25 +61,25 @@ defmodule Cog.Pipeline do
 
   def init([opts]) do
     try do
-       policy = Keyword.get(opts, :output_policy, @default_output_policy)
-       request = Keyword.fetch!(opts, :request) |> sanitize_request
-       owner = if policy in [:owner, :adapter_owner] do
-         Keyword.fetch!(opts, :owner)
-       else
-         nil
-       end
-       case ConnectionSup.connect() do
-         {:ok, conn} ->
-           {:ok, %__MODULE__{policy: policy, owner: owner,
-                             request: request, conn: conn,
-                             token: Tokens.new(), status: :running}}
-         error ->
-           Logger.error("Failed to connect pipeline #{request.id} to message bus: #{inspect error}")
-           {:stop, error}
-       end
-     rescue
-       e in KeyError ->
-         {:stop, {:missing_option, e.key}}
+      policy = Keyword.get(opts, :output_policy, @default_output_policy)
+      request = Keyword.fetch!(opts, :request) |> sanitize_request
+      owner = if policy in [:owner, :adapter_owner] do
+        Keyword.fetch!(opts, :owner)
+      else
+        nil
+      end
+      case ConnectionSup.connect() do
+        {:ok, conn} ->
+          {:ok, %__MODULE__{policy: policy, owner: owner,
+                            request: request, conn: conn,
+                            token: Tokens.new(), status: :running}}
+        error ->
+          Logger.error("Failed to connect pipeline #{request.id} to message bus: #{inspect error}")
+          {:stop, error}
+      end
+    rescue
+      e in KeyError ->
+        {:stop, {:missing_option, e.key}}
     end
   end
 
@@ -106,17 +106,24 @@ defmodule Cog.Pipeline do
   def handle_cast(:teardown, state) do
     duration = DateTime.to_unix(DateTime.utc_now, :milliseconds) - DateTime.to_unix(state.started, :milliseconds)
     Logger.info("Pipeline #{state.request.id} ran for #{duration} ms")
-    {:stop, :normal, %{state | status: :done}}
+    Enum.each(state.stages, &(Process.send(&1, {:pipeline_complete, self()}, [])))
+    {:noreply, %{state | status: :done}}
   end
   def handle_cast(_, state) do
     {:noreply, state}
   end
 
-  # Ignore monitor messages if the pipeline is done
-  def handle_info({:DOWN, _, _, _, _}, %__MODULE__{status: :done}=state) do
-    {:noreply, state}
+  # Close bus connection and exit after last stage exits
+  # This avoids closing the connection while one of the sinks is still using it
+  def handle_info({:DOWN, _, _, stage, _}, %__MODULE__{status: :done, stages: [stage]}=state) do
+    Logger.debug("Pipeline #{state.request.id} terminated")
+    Connection.disconnect(state.conn)
+    {:stop, :normal, %{state | stages: []}}
   end
-  # TODO Generate an error when a stage crashes
+  def handle_info({:DOWN, _, _, stage, _}, %__MODULE__{status: :done, stages: stages}=state) do
+    {:noreply, %{state | stages: List.delete(stages, stage)}}
+  end
+  # Change pipeline state to :done if a stage crashes
   def handle_info({:DOWN, _, _, stage, reason}, %__MODULE__{status: :running}=state) do
     if stage in state.stages do
       message = case reason do
@@ -127,14 +134,10 @@ defmodule Cog.Pipeline do
                 end
       Logger.error(message)
       notify(self())
-      {:noreply, %{state | status: :done}}
+      {:noreply, %{state | status: :done, stages: List.delete(state.stages, stage)}}
     else
       {:noreply, state}
     end
-  end
-
-  def terminate(_reason, state) do
-    Connection.disconnect(state.conn)
   end
 
   defp sanitize_request(%ProviderRequest{text: text}=request) do
@@ -199,6 +202,7 @@ defmodule Cog.Pipeline do
       {:ok, context} ->
         case InitialContextSup.create([context: context, pipeline: self(), request_id: state.request.id]) do
           {:ok, initial_context} ->
+            Process.monitor(initial_context)
             try do
               stages = parsed
                        |> Enum.with_index
