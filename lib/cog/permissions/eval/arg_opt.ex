@@ -14,11 +14,12 @@ defimpl Cog.Eval, for: [Piper.Permissions.Ast.Arg,
         {{{:arg, index}, Enum.at(context.args, index)}, context}
     end
   end
-  def value_of(%Ast.Option{name: name}, context) when name in [:any, :all] do
-    {{{:option, name}, context.options}, context}
+
+  def value_of(%Ast.Option{name: nil, match: match}, context) do
+    {{{:option, nil, match}, context.options}, context}
   end
-  def value_of(%Ast.Option{name: name}, context) when is_binary(name) do
-    {{{:option, name}, Map.get(context.options, name)}, context}
+  def value_of(%Ast.Option{name: name, match: match}, context) do
+    {{{:option, name, match}, Map.get(context.options, name)}, context}
   end
 
 end

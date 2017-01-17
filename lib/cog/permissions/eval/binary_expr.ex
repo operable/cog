@@ -23,16 +23,16 @@ defimpl Cog.Eval, for: Piper.Permissions.Ast.BinaryExpr do
         {false, context}
     end
   end
-  defp compare({{:option, type}, lhsv}, rhsv, comparator, context) when type in [:any, :all] do
-    cog_and_compare(:option, type, Map.to_list(lhsv), rhsv, comparator, context)
-  end
-  defp compare({{:option, name}, lhsv}, rhsv, comparator, context) do
+  defp compare({{:option, name, nil}, lhsv}, rhsv, comparator, context) do
     case comparator.(lhsv, rhsv) do
       true ->
         {true, Context.add_match(context, :option, name)}
       false ->
         {false, context}
     end
+  end
+  defp compare({{:option, _name, match}, lhsv}, rhsv, comparator, context) when match in [:any, :all] do
+    cog_and_compare(:option, match, Map.to_list(lhsv), rhsv, comparator, context)
   end
   defp compare(lhsv, rhsv, comparator, context) do
     {comparator.(lhsv, rhsv), context}
