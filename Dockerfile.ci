@@ -1,7 +1,7 @@
 FROM operable/elixir:1.3.4-r0
 
 # Greenbar-only compilation dependencies
-RUN apk -U add expat-dev gcc g++ libstdc++
+RUN apk -U add expat-dev gcc g++ libstdc++ postgresql-client
 
 COPY mix.exs mix.lock /code/
 COPY config/ /code/config/
