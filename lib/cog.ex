@@ -81,7 +81,7 @@ defmodule Cog do
           :dev ->
             Logger.warn("The database schema is at version #{have}, but the latest schema is #{want}. Allowing to continue in the development environment.")
           _ ->
-            raise RuntimeError, "The database schema is at version #{have}, but the latest schema is #{want}. Please perform a migration and restart Cog."
+            raise RuntimeError, "The database schema is at version #{have}, but the latest schema is #{want}. Please load the current schema and restart Cog."
         end
     end
   end

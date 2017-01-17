@@ -12,8 +12,8 @@ read proto user pass host port db <<<$(echo ${DATABASE_URL} | sed -e 's|^\(.*://
 echo "Waiting for Postgres to become available..."
 wait-for-it.sh -s -t 0 -h "${host}" -p "${port}" && true
 
-echo "Apply database migrations..."
-mix ecto.migrate --no-deps-check
+echo "Loading database structure..."
+mix ecto.load --no-deps-check
 
 if [[ -n "$COG_BOOTSTRAP_USERNAME" && -n "$COG_BOOTSTRAP_PASSWORD" ]]; then
   echo "Generating a cogctl profile..."

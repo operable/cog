@@ -127,7 +127,7 @@ defmodule Cog.Mixfile do
 
   defp aliases do
     ["cog.setup": ["deps.get", "ecto.setup"],
-     "ecto.setup": ["ecto.create", "ecto.migrate"],
+     "ecto.setup": ["ecto.create", "ecto.load"],
      "ecto.reset": ["ecto.drop", "ecto.setup"]]
   end
 end
