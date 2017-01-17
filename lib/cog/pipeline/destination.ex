@@ -35,6 +35,16 @@ defmodule Cog.Pipeline.Destination do
     end
   end
 
+  @doc """
+  Creates a list of destinations resolving to the request's originating
+  location.
+  """
+  @spec here(Cog.Messages.ProviderRequest.t) :: destination_map
+  def here(request) do
+    {:ok, dests} = process(["here"], request.sender, request.room, request.provider)
+    dests
+  end
+
   ########################################################################
 
   defp make_destination(raw),

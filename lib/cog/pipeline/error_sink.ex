@@ -3,12 +3,9 @@ defmodule Cog.Pipeline.ErrorSink do
   alias Experimental.GenStage
   alias Cog.Chat.Adapter, as: ChatAdapter
   alias Cog.Events.PipelineEvent
-  alias Cog.Pipeline.DoneSignal
-  alias Cog.Pipeline.Errors
   alias Cog.Pipeline
-  alias Cog.Pipeline.Util
+  alias Cog.Pipeline.{Destination, DoneSignal, Errors}
   alias Cog.Template.Evaluator
-
 
   @moduledoc ~s"""
   Specialized `GenStage` consumer to handle pipeline processing errors. When the
@@ -69,7 +66,7 @@ defmodule Cog.Pipeline.ErrorSink do
   end
 
   def handle_events(events, _from, state) do
-    events = Enum.filter(events, &keep_signal?/1)
+    events = Enum.filter(events, &DoneSignal.error?/1)
     state = state
             |> Map.update(:all_events, events, &(&1 ++ events))
             |> process_errors
@@ -90,20 +87,17 @@ defmodule Cog.Pipeline.ErrorSink do
     Logger.debug("Error sink for pipeline #{state.request.id} shutting down")
   end
 
-  defp keep_signal?(%DoneSignal{}=signal), do: DoneSignal.error?(signal)
-  defp keep_signal?(_), do: false
-
   defp process_errors(%__MODULE__{all_events: []}=state), do: state
   defp process_errors(state) do
     send_to_owner(state)
     state = if state.policy in [:adapter, :adapter_owner] do
-      dests = Util.here_destination(state.request)
+      dests = Destination.here(state.request)
       Enum.each(state.all_events, &(send_to_adapter(&1, dests, state)))
       %{state | all_events: []}
     else
       state
     end
-    Pipeline.notify(state.pipeline)
+    Pipeline.teardown(state.pipeline)
     state
   end
 

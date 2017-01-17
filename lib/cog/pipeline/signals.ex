@@ -3,6 +3,7 @@ defmodule Cog.Pipeline.DoneSignal do
 
   def error?(%__MODULE__{error: nil}), do: false
   def error?(%__MODULE__{}), do: true
+  def error?(_), do: false
 
   def done?(%__MODULE__{}), do: true
   def done?(_), do: false

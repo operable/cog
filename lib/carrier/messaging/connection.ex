@@ -141,9 +141,6 @@ defmodule Carrier.Messaging.Connection do
       # If we don't connect after a specified timeout, we just fail.
       receive do
         {:mqttc, ^conn, :connected} ->
-          # Detect when the connection owner has exited before the connection
-          # is fully setup and exit. Prevents long stack traces from polluting
-          # log output.
           {:ok, %__MODULE__{conn: conn,
                             owner: owner,
                             tracker: %Tracker{}}}
@@ -152,6 +149,9 @@ defmodule Carrier.Messaging.Connection do
           {:stop, :econnrefused}
       end
     rescue
+      # Detect when the connection owner has exited before the connection
+      # could link to it. Prevents long stack traces from polluting
+      # log output.
       e in ErlangError ->
         Logger.error("Linking to owner process failed: #{Exception.message(e)}")
       {:stop, :failed_owner_link}
@@ -267,8 +267,8 @@ defmodule Carrier.Messaging.Connection do
     {:noreply, state}
   end
 
-  def terminate(_reason, _state) do
-    Logger.debug("MQTT connection #{inspect self()} closed")
+  def terminate(reason, _state) do
+    Logger.debug("MQTT connection #{inspect self()} closed: #{inspect reason}")
   end
 
   ########################################################################

@@ -191,7 +191,7 @@ defmodule Cog.Pipeline.ExecutionStage do
         case signal_to_request(signal, state) do
           {:allowed, text, request} ->
             dispatch_event(text, request.cog_env, started, state)
-            case Connection.publish(state.conn, request, routed_by: RelaySelector.relay_topic(state.relay_selector, command_name)) do
+            case Connection.publish(state.conn, request, routed_by: RelaySelector.relay_topic!(state.relay_selector, command_name)) do
               :ok ->
                 receive do
                   {:publish, ^topic, message} ->

@@ -4,7 +4,7 @@ defmodule Cog.Pipeline do
   @default_command_timeout 60000
 
   alias Carrier.Messaging.{ConnectionSup, Connection}
-  alias Cog.Events.PipelineEvent
+  alias Cog.Events.{PipelineEvent, Util}
   alias Cog.Chat.Adapter, as: ChatAdapter
   alias Cog.Pipeline.Destination
   alias Cog.Command.Service.Tokens
@@ -54,7 +54,7 @@ defmodule Cog.Pipeline do
   @doc """
   Notifies pipeline when processing is finished
   """
-  def notify(pipeline) do
+  def teardown(pipeline) do
     GenServer.cast(pipeline, :teardown)
   end
 
@@ -91,8 +91,10 @@ defmodule Cog.Pipeline do
                user_json <- EctoJson.render(user) do
           start_pipeline(parsed, destinations, user_json, perms, state)
         else
-          {:error, {:parse_error, message}} -> start_error_pipeline({:error, :parse_error, message}, user, state)
-          error -> start_error_pipeline(error, user, state)
+          {:error, {:parse_error, message}} ->
+            start_error_pipeline({:error, :parse_error, message}, user, state)
+          error ->
+            start_error_pipeline(error, user, state)
         end
       {:error, :user_not_found}=error ->
         start_error_pipeline("unregistered-user", error, nil, state)
@@ -105,7 +107,7 @@ defmodule Cog.Pipeline do
   end
 
   def handle_cast(:teardown, state) do
-    duration = DateTime.to_unix(DateTime.utc_now, :milliseconds) - DateTime.to_unix(state.started, :milliseconds)
+    duration = Util.elapsed(state.started, DateTime.utc_now, :milliseconds)
     Logger.info("Pipeline #{state.request.id} ran for #{duration} ms")
     Enum.each(state.stages, &(Process.send(&1, {:pipeline_complete, self()}, [])))
     {:noreply, %{state | status: :done}}
@@ -134,7 +136,7 @@ defmodule Cog.Pipeline do
                     "Pipeline #{state.request.id} crashed"
                 end
       Logger.error(message)
-      notify(self())
+      teardown(self())
       {:noreply, %{state | status: :done, stages: List.delete(state.stages, stage)}}
     else
       {:noreply, state}

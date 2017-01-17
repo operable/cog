@@ -4,9 +4,7 @@ defmodule Cog.Pipeline.OutputSink do
   alias Cog.Chat.Adapter, as: ChatAdapter
   alias Cog.Events.PipelineEvent
   alias Cog.Pipeline
-  alias Cog.Pipeline.DataSignal
-  alias Cog.Pipeline.DoneSignal
-  alias Cog.Pipeline.Util
+  alias Cog.Pipeline.{Destination, DataSignal, DoneSignal, Evaluator}
   alias Cog.Template
   alias Cog.Template.Evaluator
 
@@ -113,7 +111,7 @@ defmodule Cog.Pipeline.OutputSink do
       early_exit_response(done, state)
     end
     success_event(state)
-    Pipeline.notify(state.pipeline)
+    Pipeline.teardown(state.pipeline)
     %{state | all_events: []}
   end
   def process_output(%__MODULE__{all_events: events, policy: policy}=state, _) do
@@ -123,7 +121,7 @@ defmodule Cog.Pipeline.OutputSink do
         Enum.each(events, &send_to_adapter(&1, state))
       end
       success_event(state)
-      Pipeline.notify(state.pipeline)
+      Pipeline.teardown(state.pipeline)
       %{state | all_events: []}
     else
       state
@@ -160,7 +158,7 @@ defmodule Cog.Pipeline.OutputSink do
     data_signal = %DataSignal{template: signal.template,
                               data: [],
                               bundle_version_id: "common"}
-    destinations = Util.here_destination(state.request)
+    destinations = Destination.here(state.request)
     Enum.each(destinations, fn({type, destinations}) ->
       output = output_for(type, data_signal, "Terminated early")
       Enum.each(destinations, &ChatAdapter.send(&1.provider, &1.room, output)) end)

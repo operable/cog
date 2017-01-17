@@ -43,9 +43,11 @@ defmodule Cog.Pipeline.RelaySelector do
   def relay(%__MODULE__{relay: relay}), do: relay
 
   @doc "Constructs a MQTT topic for the named command"
-  @spec relay_topic(RelaySelector.t, String.t) :: String.t
-  def relay_topic(%__MODULE__{relay: nil}, _command_name), do: ""
-  def relay_topic(%__MODULE__{}=selector, command_name) do
+  @spec relay_topic!(RelaySelector.t, String.t) :: String.t
+  def relay_topic!(%__MODULE__{relay: nil, bundle_name: name, bundle_version: version}, command_name) do
+    raise RuntimeError, message: "No relay selected for #{name}:#{command_name} v.#{version}. Forgot to call RelaySelector.select/1 first?"
+  end
+  def relay_topic!(%__MODULE__{}=selector, command_name) do
     "/bot/commands/#{selector.relay}/#{selector.bundle_name}/#{command_name}"
   end
 
