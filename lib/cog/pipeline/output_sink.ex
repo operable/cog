@@ -29,7 +29,7 @@ defmodule Cog.Pipeline.OutputSink do
   @type t :: %__MODULE__{
     all_events: [] | [DoneSignal.t],
     conn: Carrier.Messaging.Connection.t,
-    destinations: Cog.Command.Pipeline.Destination.destination_map,
+    destinations: Cog.Pipeline.Destination.destination_map,
     owner: pid,
     policy: Cog.Pipeline.output_policy,
     request: Cog.Messages.ProviderRequest.t,

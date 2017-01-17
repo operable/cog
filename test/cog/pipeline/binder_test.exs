@@ -1,7 +1,7 @@
-defmodule Cog.Command.Pipeline.Binder.Test do
+defmodule Cog.Pipeline.Binder.Test do
   use ExUnit.Case
 
-  alias Cog.Command.Pipeline.Binder
+  alias Cog.Pipeline.Binder
   alias Cog.Command.Pipeline.ParserMeta
   alias Piper.Command.Ast
 

@@ -6,7 +6,7 @@ defmodule Cog.Pipeline.ExecutionStage do
   alias Cog.Events.PipelineEvent
   alias Cog.Command.OptionParser
   alias Cog.Command.PermissionEnforcer
-  alias Cog.Command.Pipeline.Binder
+  alias Cog.Pipeline.Binder
   alias Cog.Messages.{Command, CommandResponse}
   alias Cog.Pipeline.DataSignal
   alias Cog.Pipeline.DoneSignal

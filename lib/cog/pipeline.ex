@@ -7,7 +7,7 @@ defmodule Cog.Pipeline do
   alias Cog.Events.PipelineEvent
   alias Cog.Chat.Adapter, as: ChatAdapter
   alias Cog.Command.{CommandResolver, PermissionsCache}
-  alias Cog.Command.Pipeline.Destination
+  alias Cog.Pipeline.Destination
   alias Cog.Command.Service.Tokens
   alias Cog.Messages.ProviderRequest
   alias Cog.Models.EctoJson

@@ -4,7 +4,7 @@ defmodule Cog.Command.Pipeline.Planner do
 
   alias Cog.Command.OptionParser
   alias Cog.Command.PermissionEnforcer
-  alias Cog.Command.Pipeline.Binder
+  alias Cog.Pipeline.Binder
   alias Cog.Command.Pipeline.Plan
   alias Piper.Command.Ast.Invocation
   alias Piper.Command.Ast.BadValueError

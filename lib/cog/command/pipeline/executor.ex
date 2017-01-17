@@ -6,7 +6,7 @@ defmodule Cog.Command.Pipeline.Executor do
   alias Cog.Chat.Adapter, as: ChatAdapter
   alias Cog.Command.CommandResolver
   alias Cog.Command.PermissionsCache
-  alias Cog.Command.Pipeline.Destination
+  alias Cog.Pipeline.Destination
   alias Cog.Command.Pipeline.Plan
   alias Cog.Command.Output
   alias Cog.Events.PipelineEvent

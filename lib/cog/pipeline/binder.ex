@@ -1,4 +1,4 @@
-defmodule Cog.Command.Pipeline.Binder do
+defmodule Cog.Pipeline.Binder do
   alias Piper.Common.Scope
   alias Piper.Common.Bindable
 

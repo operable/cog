@@ -2,7 +2,7 @@ defmodule Cog.ExecutorHelpers do
 
   require Logger
 
-  alias Cog.Command.Pipeline.Binder
+  alias Cog.Pipeline.Binder
   alias Cog.Command.Pipeline.ParserMeta
   alias Cog.Models.CommandOption
   alias Cog.Models.CommandOptionType

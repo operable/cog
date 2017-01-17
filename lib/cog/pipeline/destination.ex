@@ -1,11 +1,11 @@
-defmodule Cog.Command.Pipeline.Destination do
+defmodule Cog.Pipeline.Destination do
 
   @type classification :: :chat | :trigger | :status_only
   @type t :: %__MODULE__{raw: String.t,
                          provider: String.t,
                          room: %Cog.Chat.Room{},
                          classification: classification}
-  @type destination_map :: %{classification => Cog.Command.Pipeline.Destination.t}
+  @type destination_map :: %{classification => Cog.Pipeline.Destination.t}
   defstruct [raw: nil,
              provider: nil,
              room: nil,

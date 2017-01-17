@@ -1,6 +1,6 @@
-defmodule Cog.Command.Pipeline.DestinationTest do
+defmodule Cog.Pipeline.DestinationTest do
   use ExUnit.Case
-  alias Cog.Command.Pipeline.Destination
+  alias Cog.Pipeline.Destination
   alias Cog.Chat.Room
 
   test "'here' is resolved to current room" do
