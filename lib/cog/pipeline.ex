@@ -3,7 +3,7 @@ defmodule Cog.Pipeline do
   @default_output_policy :adapter
   @default_command_timeout 60000
 
-  alias Carrier.Messaging.ConnectionSup
+  alias Carrier.Messaging.{Connection, ConnectionSup}
   alias Cog.Events.PipelineEvent
   alias Cog.Chat.Adapter, as: ChatAdapter
   alias Cog.Command.{CommandResolver, PermissionsCache}
@@ -133,6 +133,10 @@ defmodule Cog.Pipeline do
     end
   end
 
+  def terminate(_reason, state) do
+    Connection.disconnect(state.conn)
+  end
+
   defp sanitize_request(%ProviderRequest{text: text}=request) do
     prefix = Application.get_env(:cog, :command_prefix, "!")
 
@@ -150,7 +154,7 @@ defmodule Cog.Pipeline do
   defp fetch_user(state) do
     # TODO: This should happen when we validate the request
     sender = state.request.sender.id
-    if ChatAdapter.is_chat_provider?(state.request.provider) do
+    if ChatAdapter.is_chat_provider?(state.conn, state.request.provider) do
       provider   = state.request.provider
 
       user = UserQueries.for_chat_provider_user_id(sender, provider)

@@ -24,8 +24,16 @@ defmodule Cog.Chat.Adapter do
     GenMqtt.call(@adapter_topic , "mention_name", %{provider: provider, handle: handle}, :infinity)
   end
 
+  def mention_name(conn, provider, handle) when is_binary(handle) do
+    GenMqtt.call(conn, @adapter_topic , "mention_name", %{provider: provider, handle: handle}, :infinity)
+  end
+
   def display_name(provider) do
     GenMqtt.call(@adapter_topic, "display_name", %{provider: provider}, :infinity)
+  end
+
+  def display_name(conn, provider) do
+    GenMqtt.call(conn, @adapter_topic, "display_name", %{provider: provider}, :infinity)
   end
 
   def lookup_user(provider, handle) when is_binary(handle) do

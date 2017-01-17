@@ -47,6 +47,7 @@ defmodule Cog.Command.Pipeline.Initializer do
         case check_history(payload, state) do
           {true, payload, state} ->
             {:ok, runner} = PipelineSup.create([request: payload, output_policy: :adapter])
+            :os.putenv('DIE', 'yes')
             Pipeline.run(runner)
             {:noreply, state}
           {false, state} ->
@@ -129,7 +130,7 @@ defmodule Cog.Command.Pipeline.Initializer do
   defp self_registration_success(user, request, state) do
     provider = request.provider
     handle = request.sender.handle
-    {:ok, mention_name} = Cog.Chat.Adapter.mention_name(provider, handle)
+    {:ok, mention_name} = Cog.Chat.Adapter.mention_name(state.mq_conn, provider, handle)
 
     context = %{"first_name" => request.sender.first_name,
                 "username" => user.username,
@@ -141,8 +142,8 @@ defmodule Cog.Command.Pipeline.Initializer do
   defp self_registration_failed(request, state) do
     provider = request.provider
     handle = request.sender.handle
-    {:ok, mention_name} = Cog.Chat.Adapter.mention_name(provider, handle)
-    {:ok, display_name} = Cog.Chat.Adapter.display_name(provider)
+    {:ok, mention_name} = Cog.Chat.Adapter.mention_name(state.mq_conn, provider, handle)
+    {:ok, display_name} = Cog.Chat.Adapter.display_name(state.mq_conn, provider)
 
     context = %{"mention_name" => mention_name,
                 "display_name" => display_name}
