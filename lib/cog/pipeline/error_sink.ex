@@ -123,14 +123,26 @@ defmodule Cog.Pipeline.ErrorSink do
   defp send_to_owner(_), do: :ok
 
   defp prepare_error_context(signal, state) do
-    error_message = Errors.lookup(signal)
-    %{"id" => state.request.id,
-      "initiator" => sender_name(state.request),
-      "started" => state.started,
-      "pipeline_text" => state.request.text,
-      "error_message" => error_message,
-      "planning_failure" => "",
-      "execution_failure" => error_message}
+    case signal.error do
+      {:error, :user_not_found} ->
+        handle   = state.request.sender.handle
+        creators = user_creator_handles(state)
+        {:ok, mention_name} = ChatAdapter.mention_name(state.conn, state.request.provider, handle)
+        {:ok, display_name} = ChatAdapter.display_name(state.conn, state.request.provider)
+        %{"handle" => handle,
+          "mention_name" => mention_name,
+          "display_name" => display_name,
+          "user_creators" => creators}
+      _ ->
+        error_message = Errors.lookup(signal)
+        %{"id" => state.request.id,
+          "initiator" => sender_name(state.request),
+          "started" => state.started,
+          "pipeline_text" => state.request.text,
+          "error_message" => error_message,
+          "planning_failure" => "",
+          "execution_failure" => error_message}
+    end
   end
 
   defp output_for(:chat, signal, context) do
@@ -159,4 +171,31 @@ defmodule Cog.Pipeline.ErrorSink do
 
   defp get_error_type({:error, type}), do: type
   defp get_error_type({:error, type, _}), do: type
+
+  # Returns a list of provider-appropriate "mention names" of all Cog
+  # users with registered handles for the provider that currently have
+  # the permissions required to create and manipulate new Cog user
+  # accounts.
+  #
+  # The intention is to create a list of people that can assist
+  # immediately in-chat when unregistered users attempt to interact
+  # with Cog. Not every Cog user with these permissions will
+  # necessarily have a chat handle registered for the chat provider
+  # being used (most notably, the bootstrap admin user).
+  defp user_creator_handles(state) do
+    provider = state.request.provider
+    "operable:manage_users"
+    |> Cog.Queries.Permission.from_full_name
+    |> Cog.Repo.one!
+    |> Cog.Queries.User.with_permission
+    |> Cog.Queries.User.for_chat_provider(provider)
+    |> Cog.Repo.all
+    |> Enum.flat_map(&(&1.chat_handles))
+    |> Enum.map(fn(h) ->
+      {:ok, mention} = ChatAdapter.mention_name(state.conn, provider, h.handle)
+      mention
+    end)
+    |> Enum.sort
+  end
+
 end

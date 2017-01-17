@@ -95,6 +95,8 @@ defmodule Cog.Pipeline do
           {:error, {:parse_error, message}} -> start_error_pipeline({:error, :parse_error, message}, user, state)
           error -> start_error_pipeline(error, user, state)
         end
+      {:error, :user_not_found}=error ->
+        start_error_pipeline("unregistered-user", error, nil, state)
       error ->
         start_error_pipeline(error, nil, state)
     end
@@ -262,8 +264,9 @@ defmodule Cog.Pipeline do
     end
   end
 
-  defp start_error_pipeline(error, user, state) do
-    {:ok, initial_context} = InitialContextSup.create([context: [%DoneSignal{error: error, template: "error"}], pipeline: self(),
+  defp start_error_pipeline(template \\ "error", error, user, state) do
+    done = %DoneSignal{error: error, template: template}
+    {:ok, initial_context} = InitialContextSup.create([context: [done], pipeline: self(),
                                                        request_id: state.request.id])
     Process.monitor(initial_context)
     sink_opts = [pipeline: self(), request: state.request, started: state.started,
@@ -272,7 +275,6 @@ defmodule Cog.Pipeline do
     case ErrorSinkSup.create(sink_opts) do
       {:ok, error_sink} ->
         Process.monitor(error_sink)
-        initialization_event(user, state)
         InitialContext.unlock(initial_context)
         {:reply, :ok, %{state | stages: [initial_context, error_sink]}}
       error ->
