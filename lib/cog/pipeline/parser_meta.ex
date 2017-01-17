@@ -1,4 +1,4 @@
-defmodule Cog.Command.Pipeline.ParserMeta do
+defmodule Cog.Pipeline.ParserMeta do
   @moduledoc """
   Metadata accumulated during command parsing that is of use in
   downstream processing.

@@ -1,8 +1,8 @@
-defmodule Cog.Command.CommandResolver.Test do
+defmodule Cog.Pipeline.CommandResolver.Test do
   use Cog.ModelCase
 
-  alias Cog.Command.CommandResolver
-  alias Cog.Command.Pipeline.ParserMeta
+  alias Cog.Pipeline.CommandResolver
+  alias Cog.Pipeline.ParserMeta
   alias Cog.Models.UserCommandAlias
   alias Cog.Models.SiteCommandAlias
 

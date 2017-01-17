@@ -175,7 +175,7 @@ defmodule Cog.V1.TriggerExecutionControllerTest do
     assert Cog.Models.User.has_permission(tokened_user, permission)
 
     # PURGE THE CACHE :(
-    Cog.Command.PermissionsCache.reset_cache
+    Cog.Pipeline.PermissionsCache.reset_cache
 
     # Now that the requestor has the permission, trigger execution succeeds
     {:ok, executor_snoop} = Snoop.incoming_executor_traffic

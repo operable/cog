@@ -3,7 +3,7 @@ defmodule Cog.ExecutorHelpers do
   require Logger
 
   alias Cog.Pipeline.Binder
-  alias Cog.Command.Pipeline.ParserMeta
+  alias Cog.Pipeline.ParserMeta
   alias Cog.Models.CommandOption
   alias Cog.Models.CommandOptionType
   alias Piper.Command.Parser

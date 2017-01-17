@@ -1,4 +1,4 @@
-defmodule Cog.Command.Pipeline.Initializer do
+defmodule Cog.Pipeline.Initializer do
   @moduledoc """
   Listens for pipeline requests, triggering the execution of those
   pipelines.
@@ -47,7 +47,6 @@ defmodule Cog.Command.Pipeline.Initializer do
         case check_history(payload, state) do
           {true, payload, state} ->
             {:ok, runner} = PipelineSup.create([request: payload, output_policy: :adapter])
-            :os.putenv('DIE', 'yes')
             Pipeline.run(runner)
             {:noreply, state}
           {false, state} ->

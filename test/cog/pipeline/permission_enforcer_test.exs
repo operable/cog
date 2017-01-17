@@ -1,12 +1,12 @@
-defmodule Cog.Command.PermissionEnforcerTest do
+defmodule Cog.Pipeline.PermissionEnforcerTest do
   use ExUnit.Case
 
   @empty_context %{}
   @no_options []
 
   import Cog.ExecutorHelpers, only: [bound_invocation: 3]
-  alias Cog.Command.OptionParser
-  alias Cog.Command.PermissionEnforcer
+  alias Cog.Pipeline.OptionParser
+  alias Cog.Pipeline.PermissionEnforcer
 
   test "passes when user has permission" do
     {:ok, command, options, args} = prepare("test:test",

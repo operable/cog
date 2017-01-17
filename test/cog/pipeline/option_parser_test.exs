@@ -1,8 +1,8 @@
-defmodule Cog.Command.OptionParserTest do
+defmodule Cog.Pipeline.OptionParserTest do
   use ExUnit.Case
 
   import Cog.ExecutorHelpers, only: [bound_invocation: 3]
-  alias Cog.Command.OptionParser
+  alias Cog.Pipeline.OptionParser
 
   # TODO: failure cases
   # TODO: missing bindings

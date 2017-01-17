@@ -1,4 +1,4 @@
-defmodule Cog.Command.PermissionsCache do
+defmodule Cog.Pipeline.PermissionsCache do
   defstruct [:ttl, :tref]
   use GenServer
   require Logger

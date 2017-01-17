@@ -11,7 +11,9 @@ defmodule Cog.PipelineCoreSup do
                 supervisor(Cog.Pipeline.ExecutionStageSup, []),
                 supervisor(Cog.Pipeline.ErrorSinkSup, []),
                 supervisor(Cog.Pipeline.OutputSinkSup, []),
-                supervisor(Cog.PipelineSup, [])]
+                supervisor(Cog.PipelineSup, []),
+                worker(Cog.Pipeline.PermissionsCache, []),
+                worker(Cog.Pipeline.Initializer, [])]
     {:ok, {%{strategy: :one_for_one, intensity: 10, period: 60}, children}}
   end
 

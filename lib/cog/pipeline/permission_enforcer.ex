@@ -1,7 +1,7 @@
-defmodule Cog.Command.PermissionEnforcer do
+defmodule Cog.Pipeline.PermissionEnforcer do
 
   alias Piper.Permissions.Parser
-  alias Cog.Command.Pipeline.ParserMeta
+  alias Cog.Pipeline.ParserMeta
   alias Cog.Permissions
 
   def check(%ParserMeta{}=meta, options, args, perms) do

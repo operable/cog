@@ -1,4 +1,4 @@
-defmodule Cog.Command.OptionParser do
+defmodule Cog.Pipeline.OptionParser do
   require Logger
   alias Cog.Models.CommandOption
   alias Piper.Command.Ast

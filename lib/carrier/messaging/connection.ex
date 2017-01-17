@@ -263,8 +263,7 @@ defmodule Carrier.Messaging.Connection do
         end
     end
   end
-  def handle_info(msg, state) do
-    IO.puts "#{inspect msg}"
+  def handle_info(_msg, state) do
     {:noreply, state}
   end
 

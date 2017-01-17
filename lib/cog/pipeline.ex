@@ -6,14 +6,13 @@ defmodule Cog.Pipeline do
   alias Carrier.Messaging.{ConnectionSup, Connection}
   alias Cog.Events.PipelineEvent
   alias Cog.Chat.Adapter, as: ChatAdapter
-  alias Cog.Command.{CommandResolver, PermissionsCache}
   alias Cog.Pipeline.Destination
   alias Cog.Command.Service.Tokens
   alias Cog.Messages.ProviderRequest
   alias Cog.Models.EctoJson
   alias Cog.Pipeline.PrepareError
-  alias Cog.Pipeline.{DataSignal, DoneSignal, ExecutionStageSup, ErrorSinkSup,
-                      InitialContext, InitialContextSup, OutputSinkSup}
+  alias Cog.Pipeline.{CommandResolver, DataSignal, DoneSignal, ExecutionStageSup, ErrorSinkSup,
+                      InitialContext, InitialContextSup, OutputSinkSup, PermissionsCache}
   alias Cog.Queries.User, as: UserQueries
   alias Cog.Repo
   alias Piper.Command.Ast
