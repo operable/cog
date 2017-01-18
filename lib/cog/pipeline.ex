@@ -201,26 +201,24 @@ defmodule Cog.Pipeline do
   end
 
   defp start_pipeline(parsed, destinations, user, perms, state) do
-    case prepare_initial_context(state) do
-      {:ok, context} ->
-        case InitialContextSup.create([context: context, pipeline: self(), request_id: state.request.id]) do
-          {:ok, initial_context} ->
-            Process.monitor(initial_context)
-            try do
-              stages = parsed
-                       |> Enum.with_index
-                       |> Enum.reduce([initial_context], &create_stage!(&1, &2, user, perms, state))
-                       |> create_sinks!(parsed, destinations, user, state)
-              initialization_event(user, state)
-              InitialContext.unlock(initial_context)
-              {:reply, :ok, %{state | stages: stages}}
-            rescue
-              e in PrepareError ->
-                start_error_pipeline({:error, Exception.message(e)}, user, state)
-            end
-          error ->
-            start_error_pipeline(error, user, state)
-        end
+    with {:ok, context} <- prepare_initial_context(state),
+         {:ok, initial_context} = InitialContextSup.create([context: context, pipeline: self(),
+                                                            request_id: state.request.id])
+    do
+      Process.monitor(initial_context)
+      try do
+        stages = parsed
+                 |> Enum.with_index
+                 |> Enum.reduce([initial_context], &create_stage!(&1, &2, user, perms, state))
+                 |> create_sinks!(parsed, destinations, user, state)
+        initialization_event(user, state)
+        InitialContext.unlock(initial_context)
+        {:reply, :ok, %{state | stages: stages}}
+      rescue
+        e in PrepareError ->
+          start_error_pipeline({:error, Exception.message(e)}, user, state)
+      end
+    else
       error ->
         start_error_pipeline(error, user, state)
     end
