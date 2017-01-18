@@ -2,8 +2,7 @@ defmodule Cog.Chat.Http.Provider do
   use GenServer
   use Cog.Chat.Provider
 
-  alias Carrier.Messaging.ConnectionSup
-  alias Carrier.Messaging.GenMqtt
+  alias Carrier.Messaging.{Connection, ConnectionSup}
   alias Cog.Chat.Http.Connector
   alias Cog.Chat.Message
   alias Cog.Chat.Room
@@ -12,7 +11,7 @@ defmodule Cog.Chat.Http.Provider do
 
   @provider_name "http"
 
-  defstruct [:mbus, :incoming]
+  defstruct [:mbus, :incoming_message_topic]
 
   def start_link(config),
     do: GenServer.start_link(__MODULE__, config, name: __MODULE__)
@@ -37,9 +36,9 @@ defmodule Cog.Chat.Http.Provider do
   # GenServer Implementation
 
   def init(config) do
-    incoming = Keyword.fetch!(config, :incoming_topic)
+    incoming_message = Keyword.fetch!(config, :incoming_message_topic)
     {:ok, mbus} = ConnectionSup.connect()
-    {:ok, %__MODULE__{incoming: incoming, mbus: mbus}}
+    {:ok, %__MODULE__{incoming_message_topic: incoming_message, mbus: mbus}}
   end
 
   def handle_cast({:pipeline, %Cog.Chat.User{}=requestor, id, initial_context, pipeline}, state) do
@@ -47,15 +46,15 @@ defmodule Cog.Chat.Http.Provider do
     # message, so for now we'll follow that convention for the HTTP
     # provider (we should probably just rely on the `is_dm` flag
     # instead of a name, though.)
-    GenMqtt.cast(state.mbus, state.incoming, "message", %Message{id: id,
-                                                                 room: %Room{id: id,
-                                                                             name: "direct",
-                                                                             provider: @provider_name,
-                                                                             is_dm: true},
-                                                                 user: requestor,
-                                                                 text: pipeline,
-                                                                 provider: @provider_name,
-                                                                 initial_context: initial_context})
+    Connection.publish(state.mbus, %Message{id: id,
+                                            room: %Room{id: id,
+                                                        name: "direct",
+                                                        provider: @provider_name,
+                                                        is_dm: true},
+                                            user: requestor,
+                                            text: pipeline,
+                                            provider: @provider_name,
+                                            initial_context: initial_context}, routed_by: state.incoming_message_topic)
     {:noreply, state}
   end
 end

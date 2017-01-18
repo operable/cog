@@ -4,6 +4,7 @@ defmodule Cog.Chat.HipChat.Connector do
 
   use GenServer
 
+  alias Cog.Chat.{Event, Message}
   alias Cog.Chat.HipChat.Users
   alias Cog.Chat.HipChat.Provider
   alias Cog.Chat.HipChat.Rooms
@@ -196,8 +197,8 @@ defmodule Cog.Chat.HipChat.Connector do
   end
 
   defp build_event(user, %Stanza.Presence{}=presence) do
-    {:chat_event, %{"presence" => presence_type(presence.show), "provider" => @provider_name, "type" => "presence_change",
-                    "user" => user}}
+    {:chat_event, %Event{type: "presence_change", value: presence_type(presence.show), user: user,
+                         provider: @provider_name}}
   end
 
   defp presence_type("xa"), do: "inactive"
@@ -242,9 +243,9 @@ defmodule Cog.Chat.HipChat.Connector do
               Logger.debug("Roster miss for #{inspect sender}")
               state
             {{:ok, user}, state} ->
-              GenServer.cast(state.provider, {:chat_message, %Cog.Chat.Message{id: Cog.Events.Util.unique_id,
-                                                                               room: room, user: user, text: body, provider: @provider_name,
-                                                                               bot_name: "@#{state.mention_name}", edited: false}})
+              GenServer.cast(state.provider, {:chat_message, %Message{id: Cog.Events.Util.unique_id,
+                                                                      room: room, user: user, text: body, provider: @provider_name,
+                                                                      bot_name: "@#{state.mention_name}", edited: false}})
               state
             error ->
               Logger.error("Failed to lookup sender of groupchat message: #{inspect error}")
@@ -267,9 +268,9 @@ defmodule Cog.Chat.HipChat.Connector do
                               is_dm: true,
                               name: "direct",
                               provider: @provider_name}
-        GenServer.cast(state.provider, {:chat_message, %Cog.Chat.Message{id: Cog.Events.Util.unique_id,
-                                                                         room: room, user: user, text: body, provider: @provider_name,
-                                                                         bot_name: "@#{state.mention_name}", edited: false}})
+        GenServer.cast(state.provider, {:chat_message, %Message{id: Cog.Events.Util.unique_id,
+                                                                room: room, user: user, text: body, provider: @provider_name,
+                                                                bot_name: "@#{state.mention_name}", edited: false}})
         state
     end
   end

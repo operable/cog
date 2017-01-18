@@ -12,15 +12,6 @@ defmodule Carrier.Messaging.TrackerTest do
       end end)
   end
 
-  test "adding reply endpoint" do
-    p1 = placeholder()
-    tracker = %Tracker{}
-    {tracker, reply_topic} = Tracker.add_reply_endpoint(tracker, p1)
-    assert reply_topic != nil
-    assert reply_topic != ""
-    assert Tracker.find_reply_subscriber(tracker, reply_topic) == p1
-  end
-
   test "adding subscription" do
     p1 = placeholder()
     tracker = %Tracker{}
@@ -80,8 +71,6 @@ defmodule Carrier.Messaging.TrackerTest do
               |> Tracker.add_subscription("quux", p1)
               |> Tracker.add_subscription("baz", p2)
               |> Tracker.add_subscription("quux", p2)
-    {tracker, _} = Tracker.add_reply_endpoint(tracker, p1)
-    {tracker, _} = Tracker.add_reply_endpoint(tracker, p2)
     tracker = Tracker.del_subscriber(tracker, p1)
     assert Tracker.find_subscribers(tracker, "quux") == [p2]
     assert Enum.count(tracker.monitors) == 1
@@ -94,7 +83,6 @@ defmodule Carrier.Messaging.TrackerTest do
     p2 = placeholder()
     tracker = %Tracker{}
     tracker = Tracker.add_subscription(tracker, "foo", p1)
-    {tracker, _} = Tracker.add_reply_endpoint(tracker, p1)
     {tracker, false} = Tracker.del_subscription(tracker, "foo", p2)
     refute Tracker.unused?(tracker)
     assert Tracker.find_subscribers(tracker, "foo") == [p1]
@@ -107,9 +95,9 @@ defmodule Carrier.Messaging.TrackerTest do
 
   test "unused? predicate functions" do
     p1 = placeholder()
-    {tracker, reply_endpoint} = %Tracker{}
-                   |> Tracker.add_subscription("foo/bar", p1)
-                   |> Tracker.add_reply_endpoint(p1)
+    tracker = %Tracker{}
+              |> Tracker.add_subscription("foo/bar", p1)
+              |> Tracker.add_subscription("baz/quux", p1)
     refute Tracker.unused?(tracker)
     {tracker1, _} = Tracker.del_subscription(tracker, "foo/bar", p1)
     assert tracker != tracker1
@@ -119,7 +107,7 @@ defmodule Carrier.Messaging.TrackerTest do
     assert Tracker.unused?(tracker2)
     {tracker3, unused_topics} = Tracker.get_and_reset_unused_topics(tracker2)
     assert tracker3 != tracker2
-    assert Enum.sort(unused_topics) == [reply_endpoint, "foo/bar"]
+    assert Enum.sort(unused_topics) == ["baz/quux", "foo/bar"]
   end
 
 end

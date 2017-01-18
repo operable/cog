@@ -2,7 +2,9 @@ defmodule Cog.Chat.Adapter do
 
   require Logger
 
-  use Carrier.Messaging.GenMqtt
+  use GenServer
+
+  alias Carrier.Messaging.{Connection, ConnectionSup}
   alias Cog.Util.CacheSup
   alias Cog.Util.Cache
   alias Cog.Messages.ProviderRequest
@@ -10,51 +12,29 @@ defmodule Cog.Chat.Adapter do
   alias Cog.Chat.Message
   alias Cog.Chat.User
 
-  @adapter_topic "bot/chat/adapter"
-  @incoming_topic "bot/chat/adapter/incoming"
+  @incoming_message_topic "bot/chat/adapter/incoming/message"
+  @incoming_event_topic "bot/chat/adapter/incoming/event"
   @cache_name :cog_chat_adapter_cache
 
-  defstruct [:providers, :cache]
+  defstruct [:conn, :providers, :cache]
 
   def start_link() do
-    GenMqtt.start_link(__MODULE__, [], name: __MODULE__)
+    GenServer.start_link(__MODULE__, [], name: __MODULE__)
   end
 
   def mention_name(provider, handle) when is_binary(handle) do
-    GenMqtt.call(@adapter_topic , "mention_name", %{provider: provider, handle: handle}, :infinity)
-  end
-
-  def mention_name(conn, provider, handle) when is_binary(handle) do
-    GenMqtt.call(conn, @adapter_topic , "mention_name", %{provider: provider, handle: handle}, :infinity)
+    GenServer.call(__MODULE__, {:mention_name, provider, handle}, :infinity)
   end
 
   def display_name(provider) do
-    GenMqtt.call(@adapter_topic, "display_name", %{provider: provider}, :infinity)
-  end
-
-  def display_name(conn, provider) do
-    GenMqtt.call(conn, @adapter_topic, "display_name", %{provider: provider}, :infinity)
+    GenServer.call(__MODULE__, {:display_name, provider}, :infinity)
   end
 
   def lookup_user(provider, handle) when is_binary(handle) do
     cache = get_cache
     case cache[{provider, :user, handle}] do
       nil ->
-        case GenMqtt.call(@adapter_topic, "lookup_user", %{provider: provider, handle: handle}, :infinity) do
-          {:ok, user} ->
-            User.from_map(user)
-          {:error, _}=error ->
-            error
-        end
-      {:ok, value} ->
-        User.from_map(value)
-    end
-  end
-  def lookup_user(conn, provider, handle) when is_binary(handle) do
-    cache = get_cache
-    case cache[{provider, :user, handle}] do
-      nil ->
-        case GenMqtt.call(conn, @adapter_topic, "lookup_user", %{provider: provider, handle: handle}, :infinity) do
+        case GenServer.call(__MODULE__, {:lookup_user, provider, handle}, :infinity) do
           {:ok, user} ->
             User.from_map(user)
           {:error, _}=error ->
@@ -79,7 +59,7 @@ defmodule Cog.Chat.Adapter do
     cache = get_cache
     case cache[{provider, :room, room_identifier}] do
       nil ->
-        case GenMqtt.call(@adapter_topic , "lookup_room", args, :infinity) do
+        case GenServer.call(__MODULE__ , {:lookup_room, args}, :infinity) do
           {:ok, room} ->
             Room.from_map(room)
           {:error, _}=error ->
@@ -91,140 +71,104 @@ defmodule Cog.Chat.Adapter do
   end
 
   def list_joined_rooms(provider) do
-    case GenMqtt.call(@adapter_topic, "list_joined_rooms", %{provider: provider}, :infinity) do
+    case GenServer.call(__MODULE__, {:list_joined_rooms, provider}, :infinity) do
       nil ->
         nil
       {:ok, rooms} ->
         {:ok, Enum.map(rooms, &Room.from_map!/1)}
     end
   end
-  def list_joined_rooms(conn, provider) do
-    case GenMqtt.call(conn, @adapter_topic, "list_joined_rooms", %{provider: provider}, :infinity) do
-      nil ->
-        nil
-      rooms ->
-        Enum.map(rooms, &Room.from_map/1)
-    end
-  end
-
 
   def join(provider, room) when is_binary(room) do
-    GenMqtt.call(@adapter_topic, "join", %{provider: provider, room: room}, :infinity)
-  end
-  def join(conn, provider, room) when is_binary(room) do
-    GenMqtt.call(conn, @adapter_topic, "join", %{provider: provider, room: room}, :infinity)
+    GenServer.call(__MODULE__, {:join, provider, room}, :infinity)
   end
 
   def leave(provider, room) when is_binary(room) do
-    GenMqtt.call(@adapter_topic, "leave", %{provider: provider, room: room}, :infinity)
+    GenServer.call(__MODULE__, {:leave, provider, room}, :infinity)
   end
-  def leave(conn, provider, room) when is_binary(room) do
-    GenMqtt.call(conn, @adapter_topic, "leave", %{provider: provider, room: room}, :infinity)
-  end
-
 
   def list_providers() do
-    GenMqtt.call(@adapter_topic, "list_providers", %{}, :infinity)
-  end
-  def list_providers(conn) do
-    GenMqtt.call(conn, @adapter_topic, "list_providers", %{}, :infinity)
+    GenServer.call(__MODULE__, :list_providers, :infinity)
   end
 
   def is_chat_provider?(name) do
-    {:ok, result} = GenMqtt.call(@adapter_topic, "is_chat_provider", %{name: name}, :infinity)
-    result
-  end
-  def is_chat_provider?(conn, name) do
-    {:ok, result} = GenMqtt.call(conn, @adapter_topic, "is_chat_provider", %{name: name}, :infinity)
+    {:ok, result} = GenServer.call(__MODULE__, {:is_chat_provider, name}, :infinity)
     result
   end
 
   def send(provider, target, message) do
     case prepare_target(target) do
       {:ok, target} ->
-        GenMqtt.cast(@adapter_topic, "send", %{provider: provider, target: target, message: message})
+        GenServer.cast(__MODULE__, {:send, provider, target, Poison.decode!(Poison.encode!(message), [keys: :string])})
       error ->
         Logger.error("#{inspect error}")
         error
     end
   end
-  def send(conn, provider, target, message) do
-    case prepare_target(target) do
-      {:ok, target} ->
-        GenMqtt.cast(conn, @adapter_topic, "send", %{provider: provider, target: target, message: message})
-      error ->
-        Logger.error("#{inspect error}")
-        error
-    end
-  end
-
 
   ##########
   # Internals start here
   ##########
 
-  def init(conn, _) do
-    Logger.info("Starting")
-    case Application.fetch_env(:cog, __MODULE__) do
-      :error ->
-        {:stop, :missing_chat_adapter_config}
-      {:ok, config} ->
-        case Keyword.get(config, :providers) do
-          nil ->
-            Logger.error("Chat provider not specified. You must specify one of 'COG_SLACK_ENABLED' or 'COG_HIPCHAT_ENABLED' env variables")
-            {:stop, :missing_chat_providers}
-          providers ->
-            # TODO: validate that these providers actually implement
-            # the proper behavior
-            finish_initialization(conn, providers)
+  def init(_) do
+    case ConnectionSup.connect() do
+      {:ok, conn} ->
+        Logger.info("Starting")
+        case Application.fetch_env(:cog, __MODULE__) do
+          :error ->
+            {:stop, :missing_chat_adapter_config}
+          {:ok, config} ->
+          case Keyword.get(config, :providers) do
+            nil ->
+              Logger.error("Chat provider not specified. You must specify one of 'COG_SLACK_ENABLED' or 'COG_HIPCHAT_ENABLED' env variables")
+              {:stop, :missing_chat_providers}
+            providers ->
+              # TODO: validate that these providers actually implement
+              # the proper behavior
+              finish_initialization(conn, providers)
+          end
         end
+      error ->
+        {:stop, error}
     end
   end
 
   # RPC calls
 
-  def handle_call(_conn, @adapter_topic, _sender, "lookup_room", %{"provider" => provider, "id" => id}, state) do
+  def handle_call({:lookup_room, %{provider: provider, id: id}}, _from, state) do
     {:reply, maybe_cache(with_provider(provider, state, :lookup_room, [id: id]), {provider, :room, id}, state), state}
   end
-  def handle_call(_conn, @adapter_topic, _sender, "lookup_room", %{"provider" => provider, "name" => name}, state) do
+  def handle_call({:lookup_room, %{provider: provider, name: name}}, _from, state) do
     {:reply, maybe_cache(with_provider(provider, state, :lookup_room, [name: name]), {provider, :room, name}, state), state}
   end
-  def handle_call(_conn, @adapter_topic, _sender, "lookup_user", %{"provider" => provider,
-                                                                   "handle" => handle}, state) do
+  def handle_call({:lookup_user, provider, handle}, _from, state) do
     {:reply, maybe_cache(with_provider(provider, state, :lookup_user, [handle]), {provider, :user, handle}, state), state}
   end
-  def handle_call(_conn, @adapter_topic, _sender, "list_joined_rooms", %{"provider" => provider}, state) do
+  def handle_call({:list_joined_rooms, provider}, _from, state) do
     {:reply, with_provider(provider, state, :list_joined_rooms, []), state}
   end
-  def handle_call(_conn, @adapter_topic, _sender, "join", %{"provider" => provider,
-                                                            "room" => room}, state) do
+  def handle_call({:join, provider, room}, _from, state) do
     {:reply, with_provider(provider, state, :join, [room]), state}
   end
-  def handle_call(_conn, @adapter_topic, _sender, "leave", %{"provider" => provider,
-                                                             "room" => room}, state) do
+  def handle_call({:leave, provider, room}, _from, state) do
     {:reply, with_provider(provider, state, :leave, [room]), state}
   end
-  def handle_call(_conn, @adapter_topic, _sender, "list_providers", %{}, state) do
+  def handle_call(:list_providers, _from, state) do
     {:reply, {:ok, %{providers: Enum.filter(Map.keys(state.providers), &(is_binary(&1)))}}, state}
   end
-  def handle_call(_conn, @adapter_topic, _sender, "is_chat_provider", %{"name" => name}, state) do
-    # TODO: EXTRACT THIS!!!
-    result =  name != "http"
-
-    {:reply, {:ok, result}, state}
+  def handle_call({:is_chat_provider, name}, _from, state) do
+    {:reply, {:ok, name != "http"}, state}
   end
-  def handle_call(_conn, @adapter_topic, _sender, "mention_name", %{"provider" => provider, "handle" => handle}, state) do
+  def handle_call({:mention_name, provider, handle}, _from, state) do
     {:reply, with_provider(provider, state, :mention_name, [handle]), state}
   end
-  def handle_call(_conn, @adapter_topic, _sender, "display_name", %{"provider" => provider}, state) do
+  def handle_call({:display_name, provider}, _from, state) do
     {:reply, with_provider(provider, state, :display_name, []), state}
   end
 
 
   # Non-blocking "cast" messages
-  def handle_cast(_conn, @adapter_topic, "send",  %{"target" => target,
-                                                    "message" => message,
-                                                    "provider" => provider}, state) do
+  def handle_cast({:send, provider, target, message}, state) do
     case with_provider(provider, state, :send_message, [target, message]) do
       :ok ->
         :ok
@@ -235,22 +179,23 @@ defmodule Cog.Chat.Adapter do
     end
     {:noreply, state}
   end
-  def handle_cast(_conn, @incoming_topic, "event", event, state) do
-    Logger.debug("Received chat event: #{inspect event}")
+
+  def handle_info({:publish, @incoming_event_topic, event}, state) do
+    Logger.debug("Received chat event: #{inspect Poison.decode!(event, [keys: :string])}")
     {:noreply, state}
   end
-  def handle_cast(conn, @incoming_topic, "message", message, state) do
-    state = case Message.from_map(message) do
+  def handle_info({:publish, @incoming_message_topic, message}, state) do
+    state = case Message.decode(message) do
               {:ok, message} ->
                 case is_pipeline?(message) do
                   {true, text} ->
-                    if message.edited == true do
-                      mention_name = with_provider(message.provider, state, :mention_name, [message.user.handle])
-                      send(conn, message.provider, message.room, "#{mention_name} Executing edited command '#{text}'")
-                    end
+                    # if message.edited == true do
+                    #   mention_name = with_provider(message.provider, state, :mention_name, [message.user.handle])
+                    #   send(conn, message.provider, message.room, "#{mention_name} Executing edited command '#{text}'")
+                    # end
                     request = %ProviderRequest{text: text, sender: message.user, room: message.room, reply: "", id: message.id,
                                               provider: message.provider, initial_context: message.initial_context || %{}}
-                    Connection.publish(conn, request, routed_by: "/bot/commands")
+                    Connection.publish(state.conn, request, routed_by: "/bot/commands")
                     state
                   false ->
                     state
@@ -263,11 +208,11 @@ defmodule Cog.Chat.Adapter do
   end
 
   defp finish_initialization(conn, providers) do
-    Connection.subscribe(conn, @adapter_topic)
-    Connection.subscribe(conn, @incoming_topic)
+    Connection.subscribe(conn, @incoming_message_topic)
+    Connection.subscribe(conn, @incoming_event_topic)
     case start_providers(providers, %{}) do
       {:ok, providers} ->
-        {:ok, %__MODULE__{providers: providers, cache: get_cache()}}
+        {:ok, %__MODULE__{conn: conn, providers: providers, cache: get_cache()}}
       error ->
         error
     end
@@ -279,7 +224,8 @@ defmodule Cog.Chat.Adapter do
       :error ->
         {:error, {:missing_provider_config, provider}}
       {:ok, config} ->
-        config = [{:incoming_topic, @incoming_topic}|config]
+        config = [{:incoming_message_topic, @incoming_message_topic},
+                  {:incoming_event_topic, @incoming_event_topic}|config]
         case provider.start_link(config) do
           {:ok, _} ->
             Logger.info("Chat provider '#{name}' (#{provider}) initialized.")

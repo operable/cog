@@ -5,11 +5,11 @@ defmodule Cog.Chat.HipChat.Provider do
   use GenServer
   use Cog.Chat.Provider
 
-  alias Carrier.Messaging.ConnectionSup
-  alias Carrier.Messaging.GenMqtt
+  alias Carrier.Messaging.{Connection, ConnectionSup}
   alias Cog.Chat.HipChat
 
-  defstruct [:token, :jabber_id, :jabber_password, :nickname, :mbus, :xmpp, :incoming]
+  defstruct [:token, :jabber_id, :jabber_password, :nickname, :mbus, :xmpp, :incoming_message_topic,
+             :incoming_event_topic]
 
   def display_name, do: "HipChat"
 
@@ -61,11 +61,13 @@ defmodule Cog.Chat.HipChat.Provider do
   end
 
   def init([config]) do
-    incoming = Keyword.fetch!(config, :incoming_topic)
+    incoming_message = Keyword.fetch!(config, :incoming_message_topic)
+    incoming_event = Keyword.fetch!(config, :incoming_event_topic)
     case HipChat.Connector.start_link(config) do
       {:ok, xmpp_conn} ->
         {:ok, mbus} = ConnectionSup.connect()
-        {:ok, %__MODULE__{incoming: incoming, mbus: mbus, xmpp: xmpp_conn}}
+        {:ok, %__MODULE__{incoming_message_topic: incoming_message, incoming_event_topic: incoming_event,
+                          mbus: mbus, xmpp: xmpp_conn}}
       error ->
         error
     end
@@ -76,11 +78,11 @@ defmodule Cog.Chat.HipChat.Provider do
   end
 
   def handle_cast({:chat_event, event}, state) do
-    GenMqtt.cast(state.mbus, state.incoming, "event", event)
+    Connection.publish(state.mbus, event, routed_by: state.incoming_event_topic)
     {:noreply, state}
   end
   def handle_cast({:chat_message, msg}, state) do
-    GenMqtt.cast(state.mbus, state.incoming, "message", msg)
+    Connection.publish(state.mbus, msg, routed_by: state.incoming_event_topic)
     {:noreply, state}
   end
 

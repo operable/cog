@@ -3,9 +3,6 @@ defmodule Carrier.Messaging.Connection do
   require Logger
 
   alias Carrier.Messaging.Tracker
-  alias Carrier.Messaging.Messages.MqttCall
-  alias Carrier.Messaging.Messages.MqttCast
-  alias Carrier.Messaging.Messages.MqttReply
 
   require Record
   Record.defrecord :hostent, Record.extract(:hostent, from_lib: "kernel/include/inet.hrl")
@@ -54,16 +51,6 @@ defmodule Carrier.Messaging.Connection do
   end
 
   @doc """
-  Creates a GenMqtt-style reply endpoint and subscribes `subscriber` to the topic
-
-  `subscriber` defaults to the caller's pid
-  """
-  @spec create_reply_endpoint(conn::connection(), subscriber::pid()) :: {:ok, String.t} | {:error, atom()}
-  def create_reply_endpoint(conn, subscriber \\ self()) do
-    GenServer.call(conn, {:create_reply_endpoint, subscriber}, :infinity)
-  end
-
-  @doc """
   Creates a subscription to a given topic for `subscriber`
 
   `subscriber` defaults to caller's pid
@@ -92,24 +79,6 @@ defmodule Carrier.Messaging.Connection do
   @spec publish(conn::connection(), message::Map.t, opts::publish_opts()) :: :ok | {:error, atom()}
   def publish(conn, message, opts) do
     GenServer.call(conn, {:publish, message, opts}, :infinity)
-  end
-
-  @doc """
-  Sends a GenMqtt call message and waits for reply
-  """
-  @spec call(conn::connection(), topic::String.t, endpoint::String.t, message::Map.t, opts::call_opts()) :: Map.t | {:error, atom()}
-  def call(conn, topic, endpoint, message, opts \\ []) do
-    subscriber = Keyword.get(opts, :subscriber, self())
-    timeout = Keyword.get(opts, :timeout, @default_call_timeout)
-    GenServer.call(conn, {:call, topic, endpoint, message, subscriber, timeout}, :infinity)
-  end
-
-  @doc """
-  Sends a GenMqtt cast message
-  """
-  @spec cast(conn::connection(), topic::String.t, endpoint::String.t, message::Map.t) :: :ok | {:error, atom()}
-  def cast(conn, topic, endpoint, message) do
-    GenServer.call(conn, {:cast, topic, endpoint, message}, :infinity)
   end
 
   @doc """
@@ -159,13 +128,6 @@ defmodule Carrier.Messaging.Connection do
 
   end
 
-  def handle_call({:create_reply_endpoint, subscriber}, _from, %__MODULE__{tracker: tracker}=state) do
-    {tracker, topic} = Tracker.add_reply_endpoint(tracker, subscriber)
-    unless Enum.member?(:emqttc.topics(state.conn), {topic, :qos1}) do
-      :emqttc.sync_subscribe(state.conn, topic, :qos1)
-    end
-    {:reply, {:ok, topic}, %{state | tracker: tracker}}
-  end
   def handle_call({:subscribe, topic, subscriber}, _from, %__MODULE__{tracker: tracker}=state) do
     tracker = Tracker.add_subscription(tracker, topic, subscriber)
     unless Enum.member?(:emqttc.topics(state.conn), {topic, :qos1}) do
@@ -204,36 +166,6 @@ defmodule Carrier.Messaging.Connection do
             {:reply, error, state}
         end
     end
-  end
-  def handle_call({:call, topic, endpoint, payload, subscriber, timeout}, from, state) do
-    case Tracker.get_reply_endpoint(state.tracker, subscriber) do
-      nil ->
-        {:reply, {:error, :no_reply_endpoint}, state}
-      reply_endpoint ->
-        flush_pending(reply_endpoint)
-        message = %MqttCall{sender: reply_endpoint, endpoint: endpoint, payload: payload}
-        case handle_call({:publish, message, routed_by: topic}, from, state) do
-          {:reply, :ok, state} ->
-            # Wait for response
-            receive do
-              {:publish, ^reply_endpoint, compressed} ->
-                case :snappy.decompress(compressed) do
-                  {:ok, payload} ->
-                    {:reply, MqttReply.decode(payload), state}
-                  error ->
-                    {:reply, error, state}
-                end
-            after timeout ->
-              {:reply, {:error, :call_timeout}, state}
-            end
-          error ->
-            error
-        end
-    end
-  end
-  def handle_call({:cast, topic, endpoint, payload}, from, state) do
-    message = %MqttCast{endpoint: endpoint, payload: payload}
-    handle_call({:publish, message, routed_by: topic}, from, state)
   end
   def handle_call(:disconnect, _from, state) do
     unless state.owner == nil do
@@ -324,17 +256,6 @@ defmodule Carrier.Messaging.Connection do
         [{:verify, :verify_none}|ssl_opts]
       end
       [{:ssl, ssl_opts}|opts]
-    end
-  end
-
-  # Receive and drop and pending sent messages
-  # on a topic
-  defp flush_pending(topic) do
-    receive do
-      {:publish, ^topic, _} ->
-        flush_pending(topic)
-    after 0 ->
-        :ok
     end
   end
 

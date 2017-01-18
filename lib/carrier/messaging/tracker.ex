@@ -1,25 +1,6 @@
 defmodule Carrier.Messaging.Tracker do
 
-  defstruct [reply_endpoints: %{}, subscriptions: %{}, monitors: %{}, unused_topics: []]
-
-  @spec add_reply_endpoint(Tracker.t, pid()) :: {Tracker.t, String.t}
-  def add_reply_endpoint(%__MODULE__{reply_endpoints: reps}=tracker, subscriber) do
-    case Map.get(reps, subscriber) do
-      nil ->
-        topic = make_reply_endpoint_topic()
-        reps = reps
-        |> Map.put(subscriber, topic)
-        |> Map.put(topic, subscriber)
-        {maybe_monitor_subscriber(%{tracker | reply_endpoints: reps}, subscriber), topic}
-      topic ->
-        {tracker, topic}
-    end
-  end
-
-  @spec get_reply_endpoint(Tracker.t, pid()) :: String.t | nil
-  def get_reply_endpoint(%__MODULE__{reply_endpoints: reps}, subscriber) do
-    Map.get(reps, subscriber)
-  end
+  defstruct [subscriptions: %{}, monitors: %{}, unused_topics: []]
 
   @spec add_subscription(Tracker.t, String.t, pid()) :: Tracker.t
   def add_subscription(%__MODULE__{subscriptions: subs}=tracker, topic, subscriber) do
@@ -46,11 +27,6 @@ defmodule Carrier.Messaging.Tracker do
     end
   end
 
-  @spec find_reply_subscriber(Tracker.t, String.t) :: pid() | nil
-  def find_reply_subscriber(%__MODULE__{reply_endpoints: reps}, topic) do
-    Map.get(reps, topic)
-  end
-
   @spec find_subscribers(Tracker.t, String.t) :: [] | [pid()]
   def find_subscribers(%__MODULE__{subscriptions: subs}, topic) do
     Enum.reduce(subs, [], &(find_matching_subscriptions(&1, topic, &2)))
@@ -59,24 +35,18 @@ defmodule Carrier.Messaging.Tracker do
   @spec del_subscriber(Tracker.t, pid()) :: Tracker.t
   def del_subscriber(tracker, subscriber) do
     tracker
-    |> del_reply_endpoint(subscriber)
     |> del_all_subscriptions(subscriber)
     |> unmonitor_subscriber(subscriber)
   end
 
   @spec unused?(Tracker.t) :: boolean()
-  def unused?(%__MODULE__{reply_endpoints: reps, subscriptions: subs, monitors: monitors}) do
-    Enum.empty?(reps) and Enum.empty?(subs) and Enum.empty?(monitors)
+  def unused?(%__MODULE__{subscriptions: subs, monitors: monitors}) do
+    Enum.empty?(subs) and Enum.empty?(monitors)
   end
 
   @spec get_and_reset_unused_topics(Tracker.t) :: {Tracker.t, [String.t]}
   def get_and_reset_unused_topics(tracker) do
     {%{tracker | unused_topics: []}, tracker.unused_topics}
-  end
-
-  defp make_reply_endpoint_topic() do
-    id = UUID.uuid4(:hex)
-    "carrier/call/reply/#{id}"
   end
 
   defp find_matching_subscriptions({_, {matcher, subscribed}}, topic, accum) do
@@ -136,24 +106,11 @@ defmodule Carrier.Messaging.Tracker do
   end
 
   defp has_subscriptions?(tracker, subscriber) do
-    Map.has_key?(tracker.reply_endpoints, subscriber) or
-      Enum.any?(tracker.subscriptions, &(has_subscription?(&1, subscriber)))
+    Enum.any?(tracker.subscriptions, &(has_subscription?(&1, subscriber)))
   end
 
   defp has_subscription?({_, {_, subscribed}}, subscriber) do
     Enum.member?(subscribed, subscriber)
-  end
-
-  defp del_reply_endpoint(%__MODULE__{reply_endpoints: reps, unused_topics: ut}=tracker, subscriber) do
-    case Map.get(reps, subscriber) do
-      nil ->
-        tracker
-      rep ->
-        reps = reps
-        |> Map.delete(rep)
-        |> Map.delete(subscriber)
-        %{tracker | reply_endpoints: reps, unused_topics: Enum.uniq([rep|ut])}
-    end
   end
 
   defp del_all_subscriptions(%__MODULE__{subscriptions: subs}=tracker, subscriber) do

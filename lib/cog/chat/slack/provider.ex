@@ -5,12 +5,11 @@ defmodule Cog.Chat.Slack.Provider do
   use GenServer
   use Cog.Chat.Provider
 
-  alias Carrier.Messaging.ConnectionSup
-  alias Carrier.Messaging.GenMqtt
+  alias Carrier.Messaging.{Connection, ConnectionSup}
   alias Cog.Chat.Slack.Connector
   alias Greenbar.Renderers.SlackRenderer
 
-  defstruct [:token, :incoming, :connector, :mbus]
+  defstruct [:token, :incoming_message_topic, :incoming_event_topic, :connector, :mbus]
 
   def display_name, do: "Slack"
 
@@ -69,11 +68,12 @@ defmodule Cog.Chat.Slack.Provider do
       """)
       {:stop, :bad_slack_token}
     else
-      incoming = Keyword.fetch!(config, :incoming_topic)
-
+      incoming_message = Keyword.fetch!(config, :incoming_message_topic)
+      incoming_event = Keyword.fetch!(config, :incoming_event_topic)
       {:ok, mbus} = ConnectionSup.connect()
       {:ok, pid} = Connector.start_link(token)
-      {:ok, %__MODULE__{token: token, incoming: incoming, connector: pid, mbus: mbus}}
+      {:ok, %__MODULE__{token: token, incoming_message_topic: incoming_message,
+                        incoming_event_topic: incoming_event, connector: pid, mbus: mbus}}
     end
   end
 
@@ -128,12 +128,12 @@ defmodule Cog.Chat.Slack.Provider do
     end
   end
 
-  def handle_cast({:chat_event, event}, %__MODULE__{mbus: conn, incoming: incoming}=state) do
-    GenMqtt.cast(conn, incoming, "event", event)
+  def handle_cast({:chat_event, event}, state) do
+    Connection.publish(state.mbus, event, routed_by: state.incoming_event_topic)
     {:noreply, state}
   end
-  def handle_cast({:chat_message, msg}, %__MODULE__{mbus: conn, incoming: incoming}=state) do
-    GenMqtt.cast(conn, incoming, "message", msg)
+  def handle_cast({:chat_message, msg}, state) do
+    Connection.publish(state.mbus, msg, routed_by: state.incoming_message_topic)
     {:noreply, state}
   end
 

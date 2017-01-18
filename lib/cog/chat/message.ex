@@ -12,3 +12,14 @@ defmodule Cog.Chat.Message do
   field :bot_name, :string, required: false
 
 end
+
+defmodule Cog.Chat.Event do
+
+  use Conduit
+
+  field :type, :string, required: true
+  field :user, [object: Cog.Chat.User], required: true
+  field :value, :string, required: true
+  field :provider, :string, required: true
+
+end

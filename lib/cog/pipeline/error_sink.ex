@@ -108,7 +108,7 @@ defmodule Cog.Pipeline.ErrorSink do
     context = prepare_error_context(signal, state)
     failure_event(signal.error, context["error_message"], state)
     output = output_for(type, signal, context)
-    Enum.each(targets, &ChatAdapter.send(state.conn, &1.provider, &1.room, output))
+    Enum.each(targets, &ChatAdapter.send(&1.provider, &1.room, output))
   end
 
   defp send_to_owner(%__MODULE__{all_events: events, policy: policy, owner: owner}=state) when policy in [:owner, :adapter_owner] do
@@ -121,8 +121,8 @@ defmodule Cog.Pipeline.ErrorSink do
       {:error, :user_not_found} ->
         handle   = state.request.sender.handle
         creators = user_creator_handles(state)
-        {:ok, mention_name} = ChatAdapter.mention_name(state.conn, state.request.provider, handle)
-        {:ok, display_name} = ChatAdapter.display_name(state.conn, state.request.provider)
+        {:ok, mention_name} = ChatAdapter.mention_name(state.request.provider, handle)
+        {:ok, display_name} = ChatAdapter.display_name(state.request.provider)
         %{"handle" => handle,
           "mention_name" => mention_name,
           "display_name" => display_name,
@@ -187,7 +187,7 @@ defmodule Cog.Pipeline.ErrorSink do
     |> Cog.Repo.all
     |> Enum.flat_map(&(&1.chat_handles))
     |> Enum.map(fn(h) ->
-      {:ok, mention} = ChatAdapter.mention_name(state.conn, provider, h.handle)
+      {:ok, mention} = ChatAdapter.mention_name(provider, h.handle)
       mention
     end)
     |> Enum.sort

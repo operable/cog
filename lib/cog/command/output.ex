@@ -17,7 +17,7 @@ defmodule Cog.Command.Output do
   itself is sent instead.
   """
 
-  def send(common_template, message_data, room, provider, connection) do
+  def send(common_template, message_data, room, provider) do
     directives = Evaluator.evaluate(common_template, message_data)
     payload = if Adapter.is_chat_provider?(provider) do
       directives
@@ -25,7 +25,7 @@ defmodule Cog.Command.Output do
       message_data
     end
 
-    Adapter.send(connection, provider, room, payload)
+    Adapter.send(provider, room, payload)
   end
 
   def format_error({:parse_error, msg}) when is_binary(msg),

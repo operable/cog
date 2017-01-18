@@ -160,8 +160,8 @@ defmodule Cog.Pipeline do
   defp fetch_user(state) do
     # TODO: This should happen when we validate the request
     sender = state.request.sender.id
-    if ChatAdapter.is_chat_provider?(state.conn, state.request.provider) do
-      provider   = state.request.provider
+    if ChatAdapter.is_chat_provider?(state.request.provider) do
+      provider = state.request.provider
 
       user = UserQueries.for_chat_provider_user_id(sender, provider)
       |> Repo.one

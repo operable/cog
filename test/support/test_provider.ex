@@ -13,7 +13,7 @@ defmodule Cog.Chat.Test.Provider do
 
   def init(config) do
     {:ok, conn} = Carrier.Messaging.ConnectionSup.connect()
-    incoming = Keyword.fetch!(config, :incoming_topic)
+    incoming = Keyword.fetch!(config, :incoming_message_topic)
     {:ok, %__MODULE__{conn: conn, incoming: incoming}}
   end
 
@@ -21,39 +21,39 @@ defmodule Cog.Chat.Test.Provider do
   # Provider API
 
   def lookup_user("updated-user"=handle) do
-    %Cog.Chat.User{id: "U024BE7LK",
-                   first_name: handle,
-                   last_name: handle,
-                   handle: handle,
-                   provider: @provider_name,
-                   email: handle}
+    {:ok, %Cog.Chat.User{id: "U024BE7LK",
+                         first_name: handle,
+                         last_name: handle,
+                         handle: handle,
+                         provider: @provider_name,
+                         email: handle}}
   end
   def lookup_user(handle) do
-    %Cog.Chat.User{id: handle,
-                   first_name: handle,
-                   last_name: handle,
-                   handle: handle,
-                   provider: @provider_name,
-                   email: handle}
+    {:ok, %Cog.Chat.User{id: handle,
+                         first_name: handle,
+                         last_name: handle,
+                         handle: handle,
+                         provider: @provider_name,
+                         email: handle}}
   end
 
   def lookup_room({:id, "user1"}) do
-    %Cog.Chat.Room{id: "user1_dm",
-                   name: "user1",
-                   provider: @provider_name,
-                   is_dm: true}
+    {:ok, %Cog.Chat.Room{id: "user1_dm",
+                         name: "user1",
+                         provider: @provider_name,
+                         is_dm: true}}
   end
   def lookup_room({:id, id}) do
-    %Cog.Chat.Room{id: id,
-                   name: id,
-                   provider: @provider_name,
-                   is_dm: false}
+    {:ok, %Cog.Chat.Room{id: id,
+                         name: id,
+                         provider: @provider_name,
+                         is_dm: false}}
   end
   def lookup_room({:name, name}) do
-    %Cog.Chat.Room{id: name,
-                   name: name,
-                   provider: @provider_name,
-                   is_dm: false}
+    {:ok, %Cog.Chat.Room{id: name,
+                         name: name,
+                         provider: @provider_name,
+                         is_dm: false}}
   end
 
   def list_joined_rooms() do
@@ -81,28 +81,26 @@ defmodule Cog.Chat.Test.Provider do
                           name: here_id,
                           provider: @provider_name,
                           is_dm: false}
-
-    Carrier.Messaging.GenMqtt.cast(state.conn,
-                                   state.incoming,
-                                   "message",
-                                   %{id: Cog.Events.Util.unique_id,
-                                     room: room,
-                                     user: %Cog.Chat.User{
-                                       id: user.username, # chat ids in
-                                       # tests are the same as the
-                                       # handle, which are the same as
-                                       # the username
-                                       provider: @provider_name,
-                                       first_name: user.first_name,
-                                       last_name: user.last_name,
-                                       handle: user.username # I think
-                                       # this relies on provider module
-                                       # shenanigans, though
-                                     },
-                                     type: "message",
-                                     text: message,
-                                     provider: @provider_name,
-                                     bot_name: "@bot"})
+    Carrier.Messaging.Connection.publish(state.conn,
+      %{id: Cog.Events.Util.unique_id,
+        room: room,
+        user: %Cog.Chat.User{
+          id: user.username, # chat ids in
+          # tests are the same as the
+          # handle, which are the same as
+          # the username
+          provider: @provider_name,
+          first_name: user.first_name,
+          last_name: user.last_name,
+          handle: user.username # I think
+          # this relies on provider module
+          # shenanigans, though
+        },
+        type: "message",
+        text: message,
+        provider: @provider_name,
+        bot_name: "@bot"},
+      routed_by: state.incoming)
     {:noreply, state}
   end
   def handle_call({:send_message, _target, _message}, _from, state) do

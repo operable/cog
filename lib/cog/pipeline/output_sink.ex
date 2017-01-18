@@ -118,7 +118,7 @@ defmodule Cog.Pipeline.OutputSink do
     if DoneSignal.done?(List.last(events)) do
       send_to_owner(state)
       if policy in [:adapter, :adapter_owner] do
-        Enum.each(events, &send_to_adapter(&1, state))
+        Enum.each(events, &(send_to_adapter(&1, state)))
       end
       success_event(state)
       Pipeline.teardown(state.pipeline)
@@ -143,14 +143,14 @@ defmodule Cog.Pipeline.OutputSink do
   end
   defp send_to_owner(_state), do: :ok
 
-  defp send_to_adapter(%DoneSignal{}, state), do: state
+  defp send_to_adapter(%DoneSignal{}, _state), do: :ok
   defp send_to_adapter(%DataSignal{}=signal, state) do
-    Enum.each(state.destinations, &(send_to_adapter(&1, signal, state)))
+    Enum.each(state.destinations, &(do_adapter_send(&1, signal)))
   end
 
-  defp send_to_adapter({type, targets}, signal, state) do
+  defp do_adapter_send({type, targets}, signal) do
     output = output_for(type, signal, nil)
-    Enum.each(targets, &ChatAdapter.send(state.conn, &1.provider, &1.room, output))
+    Enum.each(targets, &ChatAdapter.send(&1.provider, &1.room, output))
   end
 
   defp early_exit_response(%DoneSignal{}=signal, state) do

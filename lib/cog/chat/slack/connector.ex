@@ -2,7 +2,7 @@ defmodule Cog.Chat.Slack.Connector do
   require Logger
   use Slack
 
-  alias Cog.Chat.Message
+  alias Cog.Chat.{Event, Message}
   alias Cog.Chat.Room
   alias Cog.Chat.Slack.Formatter
   alias Cog.Chat.Slack.Provider
@@ -270,7 +270,7 @@ defmodule Cog.Chat.Slack.Connector do
     else
       case lookup_user(user, state.users, by: :id) do
         {:ok, user} ->
-          {:chat_event, %{type: "presence_change", user: user, presence: presence, provider: "slack"}}
+          {:chat_event, %Event{type: "presence_change", user: user, value: presence, provider: @provider_name}}
         {:error, :not_found} ->
           :ignore
       end

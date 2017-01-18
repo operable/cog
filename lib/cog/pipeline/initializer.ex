@@ -12,6 +12,7 @@ defmodule Cog.Pipeline.Initializer do
 
   alias Carrier.Messaging.ConnectionSup
   alias Carrier.Messaging.Connection
+  alias Cog.Chat.Adapter, as: ChatAdapter
   alias Cog.Command.Output
   alias Cog.{PipelineSup, Pipeline}
   alias Cog.Repository.Users
@@ -40,7 +41,7 @@ defmodule Cog.Pipeline.Initializer do
     #
     # TODO: should only do this if the provider is a chat provider
     self_register_flag = Application.get_env(:cog, :self_registration, false) and payload.provider != "http"
-    case self_register_user(payload, self_register_flag, state) do
+    case self_register_user(payload, self_register_flag) do
       :ok ->
         # TODO: should only do history check if the provider is a chat
         # provider, too
@@ -87,7 +88,7 @@ defmodule Cog.Pipeline.Initializer do
     end
   end
 
-  defp self_register_user(request, true, state) do
+  defp self_register_user(request, true) do
     sender = request.sender
     case Users.by_chat_handle(sender.handle, request.provider) do
       {:ok, _} ->
@@ -103,51 +104,51 @@ defmodule Cog.Pipeline.Initializer do
               {:ok, user} ->
                 case ChatHandles.set_handle(user, request.provider, sender.handle) do
                   {:ok, _} ->
-                    self_registration_success(user, request, state)
+                    self_registration_success(user, request)
                     :ok
                   error ->
                     Logger.error("Failed to auto-register user '#{sender.handle}': #{inspect error}")
-                    self_registration_failed(request, state)
+                    self_registration_failed(request)
                     :error
                 end
               error ->
                 Logger.error("Failed to auto-register user '#{sender.handle}': #{inspect error}")
-                self_registration_failed(request, state)
+                self_registration_failed(request)
                 :error
             end
           _ ->
             Logger.error("Failed to auto-register user '#{sender.handle}'. No suitable username was found.")
-            self_registration_failed(request, state)
+            self_registration_failed(request)
             :error
         end
     end
   end
-  defp self_register_user(_, _, _) do
+  defp self_register_user(_, _) do
     :ok
   end
 
-  defp self_registration_success(user, request, state) do
+  defp self_registration_success(user, request) do
     provider = request.provider
     handle = request.sender.handle
-    {:ok, mention_name} = Cog.Chat.Adapter.mention_name(state.mq_conn, provider, handle)
+    {:ok, mention_name} = ChatAdapter.mention_name(provider, handle)
 
     context = %{"first_name" => request.sender.first_name,
                 "username" => user.username,
                 "mention_name" => mention_name}
     Output.send("self-registration-success", context,
-                request.room, request.provider, state.mq_conn)
+                request.room, request.provider)
   end
 
-  defp self_registration_failed(request, state) do
+  defp self_registration_failed(request) do
     provider = request.provider
     handle = request.sender.handle
-    {:ok, mention_name} = Cog.Chat.Adapter.mention_name(state.mq_conn, provider, handle)
-    {:ok, display_name} = Cog.Chat.Adapter.display_name(state.mq_conn, provider)
+    {:ok, mention_name} = ChatAdapter.mention_name(provider, handle)
+    {:ok, display_name} = ChatAdapter.display_name(provider)
 
     context = %{"mention_name" => mention_name,
                 "display_name" => display_name}
     Output.send("self-registration-failed", context,
-                request.room, request.provider, state.mq_conn)
+                request.room, request.provider)
   end
 
   defp find_available_username(username) do
