@@ -156,9 +156,17 @@ defmodule Cog.Snoop do
   defp render_directive(%{"name" => "attachment", "children" => children}) do
       Enum.map(children, &render_directive/1)
   end
+  defp render_directive(%{"name" => "unordered_list", "children" => children}) do
+    Enum.map_join(children, &(render_list_item(&1, :unordered)))
+  end
   # Let's make it a little easier to diagnose failing tests
   defp render_directive(d) do
     raise RuntimeError, message: "Unknown render directive: #{inspect d, pretty: true}"
+  end
+
+  defp render_list_item(%{"name" => "list_item", "children" => children}, :unordered) do
+    rendered = Enum.map(children, &render_directive/1)
+    ["\n* "|rendered]
   end
 
   ########################################################################

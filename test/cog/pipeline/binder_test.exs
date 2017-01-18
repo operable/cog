@@ -1,8 +1,8 @@
-defmodule Cog.Command.Pipeline.Binder.Test do
+defmodule Cog.Pipeline.Binder.Test do
   use ExUnit.Case
 
-  alias Cog.Command.Pipeline.Binder
-  alias Cog.Command.Pipeline.ParserMeta
+  alias Cog.Pipeline.Binder
+  alias Cog.Pipeline.ParserMeta
   alias Piper.Command.Ast
 
   import Cog.ExecutorHelpers, only: [unbound_invocation: 1]

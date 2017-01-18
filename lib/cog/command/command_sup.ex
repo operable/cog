@@ -5,8 +5,7 @@ defmodule Cog.Command.CommandSup do
     do: Supervisor.start_link(__MODULE__, [], name: __MODULE__)
 
   def init(_) do
-    children = [supervisor(Cog.Command.Service.Supervisor, []),
-                supervisor(Cog.Command.PipelineSup, [])]
+    children = [supervisor(Cog.Command.Service.Supervisor, [])]
     supervise(children, strategy: :rest_for_one)
   end
 

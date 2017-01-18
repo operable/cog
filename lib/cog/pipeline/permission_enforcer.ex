@@ -1,10 +1,15 @@
-defmodule Cog.Command.PermissionInterpreter do
+defmodule Cog.Pipeline.PermissionEnforcer do
 
   alias Piper.Permissions.Parser
-  alias Cog.Command.Pipeline.ParserMeta
+  alias Cog.Pipeline.ParserMeta
   alias Cog.Permissions
 
   def check(%ParserMeta{}=meta, options, args, perms) do
+    do_check(Application.get_env(:cog, :access_rules, :enforcing), meta, options, args, perms)
+  end
+
+  defp do_check(:unenforcing, _, _, _, _), do: :allowed
+  defp do_check(:enforcing, %ParserMeta{}=meta, options, args, perms) do
     context = Permissions.Context.new(permissions: perms,
                                       command: meta.full_command_name,
                                       options: options,

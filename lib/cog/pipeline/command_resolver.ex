@@ -1,6 +1,6 @@
-defmodule Cog.Command.CommandResolver do
+defmodule Cog.Pipeline.CommandResolver do
 
-  alias Cog.Command.Pipeline.ParserMeta
+  alias Cog.Pipeline.ParserMeta
   alias Cog.Models.SiteCommandAlias
   alias Cog.Models.UserCommandAlias
   alias Cog.Queries
@@ -72,12 +72,12 @@ defmodule Cog.Command.CommandResolver do
             {:not_in_bundle, bundle_name}
           result ->
             {:ok, rules} = Rules.rules_for_command(result.command)
-            Cog.Command.Pipeline.ParserMeta.new(result.command.bundle.name,
-                                                result.command.name,
-                                                result.bundle_version.version,
-                                                result.bundle_version.id,
-                                                result.options,
-                                                rules)
+            ParserMeta.new(result.command.bundle.name,
+                           result.command.name,
+                           result.bundle_version.version,
+                           result.bundle_version.id,
+                           result.options,
+                           rules)
         end
     end
   end

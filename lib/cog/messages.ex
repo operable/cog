@@ -37,6 +37,8 @@ defmodule Cog.Messages.Command do
   Input for a single command execution. This is what is sent to a Relay
   for processing.
   """
+
+  alias Cog.ServiceEndpoint
   use Conduit
 
   # Unique identifier for the individual command invocation
@@ -84,6 +86,18 @@ defmodule Cog.Messages.Command do
 
   # Information about the Cog user invoking the command
   field :user, :map, required: true
+
+  @doc "Creates a new Command from an invocation, options, and args"
+  defmacro create(invocation, options, args) do
+    quote bind_quoted: [invocation: invocation, options: options, args: args] do
+      %Cog.Messages.Command{command: invocation.meta.full_command_name,
+                            options: options,
+                            args: args,
+                            invocation_id: invocation.id,
+                            services_root: ServiceEndpoint.url()}
+    end
+  end
+
 end
 
 defmodule Cog.Messages.CommandResponse do

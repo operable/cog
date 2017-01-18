@@ -122,39 +122,41 @@ defmodule Carrier.Messaging.Connection do
 
 
   def init([owner, opts]) do
-    connect_timeout = Keyword.get(opts, :connect_timeout, @default_connect_timeout)
-    {:ok, conn} = :emqttc.start_link(opts)
+    try do
+      Process.link(owner)
+      Logger.debug("MQTT connection #{inspect self()} started")
+      connect_timeout = Keyword.get(opts, :connect_timeout, @default_connect_timeout)
+      {:ok, conn} = :emqttc.start_link(opts)
 
-    # `emqttc:start_link/1` returns a message bus client process, but it
-    # hasn't yet established a network connection to the message bus. By
-    # ensuring that we only return after the process is actually connected,
-    # we can simplify startup of processes that require a message bus
-    # connection.
-    #
-    # It also means that those clients don't have to know details about
-    # emqttc (like the structure of the "connected" message), so fewer
-    # implementation details about our choice of message bus don't leak out.
-    #
-    # If we don't connect after a specified timeout, we just fail.
-    receive do
-      {:mqttc, ^conn, :connected} ->
-        # Detect when the connection owner has exited before the connection
-        # is fully setup and exit. Prevents long stack traces from polluting
-        # log output.
-        try do
-          Process.link(owner)
-        rescue
-          e in ErlangError ->
-            Logger.error("Linking to owner process failed: #{Exception.message(e)}")
-            {:stop, :failed_owner_link}
-        end
-        {:ok, %__MODULE__{conn: conn,
-                          owner: owner,
-                          tracker: %Tracker{}}}
-    after connect_timeout ->
-        Logger.info("Connection not established")
-        {:stop, :econnrefused}
+      # `emqttc:start_link/1` returns a message bus client process, but it
+      # hasn't yet established a network connection to the message bus. By
+      # ensuring that we only return after the process is actually connected,
+      # we can simplify startup of processes that require a message bus
+      # connection.
+      #
+      # It also means that those clients don't have to know details about
+      # emqttc (like the structure of the "connected" message), so fewer
+      # implementation details about our choice of message bus don't leak out.
+      #
+      # If we don't connect after a specified timeout, we just fail.
+      receive do
+        {:mqttc, ^conn, :connected} ->
+          {:ok, %__MODULE__{conn: conn,
+                            owner: owner,
+                            tracker: %Tracker{}}}
+      after connect_timeout ->
+          Logger.info("Connection not established")
+          {:stop, :econnrefused}
+      end
+    rescue
+      # Detect when the connection owner has exited before the connection
+      # could link to it. Prevents long stack traces from polluting
+      # log output.
+      e in ErlangError ->
+        Logger.error("Linking to owner process failed: #{Exception.message(e)}")
+      {:stop, :failed_owner_link}
     end
+
   end
 
   def handle_call({:create_reply_endpoint, subscriber}, _from, %__MODULE__{tracker: tracker}=state) do
@@ -263,6 +265,10 @@ defmodule Carrier.Messaging.Connection do
   end
   def handle_info(_msg, state) do
     {:noreply, state}
+  end
+
+  def terminate(reason, _state) do
+    Logger.debug("MQTT connection #{inspect self()} closed: #{inspect reason}")
   end
 
   ########################################################################

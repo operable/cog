@@ -1,10 +1,11 @@
-defmodule Cog.Command.Pipeline.Destination do
+defmodule Cog.Pipeline.Destination do
 
   @type classification :: :chat | :trigger | :status_only
   @type t :: %__MODULE__{raw: String.t,
                          provider: String.t,
                          room: %Cog.Chat.Room{},
                          classification: classification}
+  @type destination_map :: %{classification => Cog.Pipeline.Destination.t}
   defstruct [raw: nil,
              provider: nil,
              room: nil,
@@ -19,6 +20,7 @@ defmodule Cog.Command.Pipeline.Destination do
   disposition classification, or return error tuples for each that
   were invalid.
   """
+  @spec process(String.t, Cog.Models.User.t, Cog.Chat.Room.t, String.t) :: {:ok, destination_map} | {:error, any}
   def process(raw_destinations, sender, origin_room, origin_provider) when is_binary(origin_provider) do
     result = raw_destinations
     |> Enum.map(&make_destination/1)
@@ -31,6 +33,16 @@ defmodule Cog.Command.Pipeline.Destination do
       {:error, _}=error ->
         error
     end
+  end
+
+  @doc """
+  Creates a list of destinations resolving to the request's originating
+  location.
+  """
+  @spec here(Cog.Messages.ProviderRequest.t) :: destination_map
+  def here(request) do
+    {:ok, dests} = process(["here"], request.sender, request.room, request.provider)
+    dests
   end
 
   ########################################################################

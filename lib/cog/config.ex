@@ -1,5 +1,8 @@
 defmodule Cog.Config do
 
+  @type interval_type :: :ms | :sec | :min | :hour | :day | :week
+  @type typed_interval :: {integer, interval_type}
+
   @doc """
   Token lifetime configuration, converted into seconds. This is how
   long after creation time a token is considered valid.

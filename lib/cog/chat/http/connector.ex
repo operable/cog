@@ -41,7 +41,7 @@ defmodule Cog.Chat.Http.Connector do
         {:reply, :ok, Map.delete(state, room_id)}
       :error ->
         Logger.warn("Handling a finish_request call for unknown request `#{room_id}`")
-        {:reply, :error, state}
+        {:reply, {:error, :unknown_request}, state}
     end
   end
 

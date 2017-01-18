@@ -6,10 +6,10 @@ defmodule Cog.Events.Util do
   @typedoc "Unique correlation ID"
   @type correlation_id :: String.t
 
-  @doc "Microseconds between `start_time` and `current_time`."
-  def elapsed(start_time, current_time) do
-    DateTime.to_unix(current_time, :microseconds) -
-    DateTime.to_unix(start_time, :microseconds)
+  @doc "Difference between `start_time` and `current_time`. Defaults to microseconds."
+  def elapsed(start_time, current_time, units \\ :microseconds) do
+    DateTime.to_unix(current_time, units) -
+    DateTime.to_unix(start_time, units)
   end
 
   @doc """

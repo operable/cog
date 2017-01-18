@@ -1,11 +1,11 @@
-defmodule Cog.Command.OptionInterpreter do
+defmodule Cog.Pipeline.OptionParser do
   require Logger
   alias Cog.Models.CommandOption
   alias Piper.Command.Ast
 
   @truthy_values ["true", "t", "y", "yes", "on"]
 
-  def initialize(%Ast.Invocation{args: args, meta: parser_meta}=invocation) do
+  def parse(%Ast.Invocation{args: args, meta: parser_meta}=invocation) do
     defs = Enum.reduce(parser_meta.options, %{}, &prepare_option/2)
     with({:ok, options, args} <- interpret(defs, args, [], %{}),
          :ok <- check_required_options(defs, options)) do

@@ -1,8 +1,8 @@
-defmodule Cog.Command.OptionInterpreter.Test do
+defmodule Cog.Pipeline.OptionParserTest do
   use ExUnit.Case
 
   import Cog.ExecutorHelpers, only: [bound_invocation: 3]
-  alias Cog.Command.OptionInterpreter
+  alias Cog.Pipeline.OptionParser
 
   # TODO: failure cases
   # TODO: missing bindings
@@ -325,7 +325,7 @@ defmodule Cog.Command.OptionInterpreter.Test do
   defp options_and_args(invocation_text, context, command_spec \\ []) do
     invocation_text
     |> bound_invocation(context, command_spec)
-    |> OptionInterpreter.initialize
+    |> OptionParser.parse
   end
 
   defp assert_options_and_args(options_args, expected_options, expected_args \\ [])

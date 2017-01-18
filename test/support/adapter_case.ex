@@ -42,7 +42,7 @@ defmodule Cog.AdapterCase do
         Ecto.Adapters.SQL.Sandbox.mode(Repo, {:shared, self()})
 
         bootstrap
-        Cog.Command.PermissionsCache.reset_cache
+        Cog.Pipeline.PermissionsCache.reset_cache
 
         :ok
       end
