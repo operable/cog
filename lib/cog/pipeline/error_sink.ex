@@ -139,9 +139,10 @@ defmodule Cog.Pipeline.ErrorSink do
     end
   end
 
-  defp output_for(:chat, signal, context) do
-    Evaluator.evaluate(signal.template, context)
-  end
+  defp output_for(:chat, %DoneSignal{template: nil}, context),
+    do: Evaluator.evaluate("error-raw", context)
+  defp output_for(:chat, signal, context),
+    do: Evaluator.evaluate(signal.template, context)
   defp output_for(:trigger, _signal, context) do
     %{status: "error", pipeline_output: %{error_message: context["error_message"]}}
   end

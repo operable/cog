@@ -30,7 +30,7 @@ defmodule Cog.Pipeline.Errors do
   def lookup(%DoneSignal{error: {:error, :disabled_bundle, bundle_name}}) do
     "The #{bundle_name} bundle is currently disabled"
   end
-  def lookup(%DoneSignal{error: {:error, :timeout, full_command_name}}),
+  def lookup(%DoneSignal{error: {:error, :timeout}, invocation: full_command_name}),
     do: "The #{full_command_name} command timed out"
   def lookup(%DoneSignal{error: {:error, :template, template_name, provider, error}}) do
       "There was an error rendering the template '#{template_name}' for the provider '#{provider}': #{inspect error}"
@@ -39,7 +39,7 @@ defmodule Cog.Pipeline.Errors do
     "An unknown pipeline execution error occurred."
   end
   def lookup(%DoneSignal{error: {:error, reason}}) when is_binary(reason) do
-    reason
+    String.trim(reason)
   end
 
   # `errors` is a keyword list of [reason: name] for all bad redirect
