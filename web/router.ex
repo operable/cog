@@ -25,8 +25,8 @@ defmodule Cog.Router do
     resources "/v1/users/reset-password", V1.PasswordResetController, only: [:create, :update]
 
     resources "/v1/groups", V1.GroupController
-    get "/v1/groups/:id/users", V1.GroupMembershipController, :index
-    post "/v1/groups/:id/users", V1.GroupMembershipController, :manage_group_users
+    get "/v1/groups/:id/users", V1.GroupController, :show
+    post "/v1/groups/:id/users", V1.GroupController, :manage_group_users
 
     resources "/v1/roles", V1.RoleController
     post "/v1/groups/:id/roles", V1.RoleGrantController, :manage_group_roles

@@ -10,11 +10,10 @@ defmodule Cog.V1.RoleGrantController do
 
   plug :put_view, Cog.V1.RoleView
 
-  def manage_group_roles(conn, %{"roles" => role_spec}=params) do
-    result = params
-    |> Map.put("members", prep_role_spec(role_spec))
-    |> Map.delete("roles")
-    |> Groups.manage_membership()
+  def manage_group_roles(conn, %{"id" => id, "roles" => role_spec}) do
+    result = with {:ok, group} <- Groups.by_id(id) do
+      Groups.update(group, %{"roles" => prep_role_spec(role_spec)})
+    end
 
     case result do
       {:ok, group} ->
@@ -41,13 +40,14 @@ defmodule Cog.V1.RoleGrantController do
   # "add" or "remove", but cog-api sends "grant" or "revoke". We should
   # probably standardize on one or the other, but for now, and to avoid
   # breaking apps that call the api, we'll just support all 4 actions.
-  defp prep_role_spec(%{"grant" => roles}),
-    do: %{"roles" => %{"add" => roles}}
-  defp prep_role_spec(%{"revoke" => roles}),
-    do: %{"roles" => %{"remove" => roles}}
-  defp prep_role_spec(%{"add" => roles}),
-    do: %{"roles" => %{"add" => roles}}
-  defp prep_role_spec(%{"remove" => roles}),
-    do: %{"roles" => %{"remove" => roles}}
+  defp prep_role_spec(role_spec) do
+    adds = Map.get(role_spec, "add", [])
+    grants = Map.get(role_spec, "grant", [])
+    removes = Map.get(role_spec, "remove", [])
+    revokes = Map.get(role_spec, "revoke", [])
+
+    %{"add" => adds ++ grants,
+      "remove" => removes ++ revokes}
+  end
 
 end
