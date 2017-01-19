@@ -99,7 +99,7 @@ defmodule Cog.Chat.Adapter do
   def send(provider, target, message) do
     case prepare_target(target) do
       {:ok, target} ->
-        GenServer.cast(__MODULE__, {:send, provider, target, Poison.decode!(Poison.encode!(message), [keys: :string])})
+        GenServer.cast(__MODULE__, {:send, provider, target, message})
       error ->
         Logger.error("#{inspect error}")
         error

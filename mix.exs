@@ -64,7 +64,7 @@ defmodule Cog.Mixfile do
       {:conduit, github: "operable/conduit"},
       {:probe, github: "operable/probe"},
       {:spanner, github: "operable/spanner"},
-      {:greenbar, github: "operable/greenbar"},
+      {:greenbar, github: "operable/greenbar", branch: "kevsmith/string-keys"},
 
       # Used to model pipelines
       {:gen_stage, "~> 0.10.0"},
