@@ -26,6 +26,8 @@ defmodule Cog.Pipeline.Initializer do
   def start_link,
     do: GenServer.start_link(__MODULE__, [], name: __MODULE__)
 
+  def start_pipeline(message), do: GenServer.cast(__MODULE__, {:start_pipeline, message})
+
   def init(_) do
     previous_command_token = Application.get_env(:cog, :previous_command_token)
     {:ok, conn} = ConnectionSup.connect()
@@ -34,8 +36,19 @@ defmodule Cog.Pipeline.Initializer do
     {:ok, %__MODULE__{mq_conn: conn, previous_command_token: previous_command_token}}
   end
 
+  def handle_cast({:start_pipeline, message}, state) do
+    start_pipeline(message, state)
+  end
+  def handle_cast(_msg, state), do: {:noreply, state}
+
   def handle_info({:publish, "/bot/commands", message}, state) do
     payload = Cog.Messages.ProviderRequest.decode!(message)
+    start_pipeline(payload, state)
+  end
+  def handle_info(_, state),
+    do: {:noreply, state}
+
+  defp start_pipeline(payload, state) do
     # Only self register when the feature is enabled via config
     # and the incoming request is from Slack.
     #
@@ -57,9 +70,6 @@ defmodule Cog.Pipeline.Initializer do
         {:noreply, state}
     end
   end
-
-  def handle_info(_, state),
-    do: {:noreply, state}
 
   defp check_history(payload, state) do
     uid = payload.sender.id

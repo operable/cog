@@ -5,12 +5,13 @@ defmodule Cog.Chat.Adapter do
   use GenServer
 
   alias Carrier.Messaging.{Connection, ConnectionSup}
-  alias Cog.Util.CacheSup
-  alias Cog.Util.Cache
-  alias Cog.Messages.ProviderRequest
   alias Cog.Chat.Room
   alias Cog.Chat.Message
   alias Cog.Chat.User
+  alias Cog.Messages.ProviderRequest
+  alias Cog.Pipeline.Initializer
+  alias Cog.Util.CacheSup
+  alias Cog.Util.Cache
 
   @incoming_message_topic "bot/chat/adapter/incoming/message"
   @incoming_event_topic "bot/chat/adapter/incoming/event"
@@ -194,8 +195,8 @@ defmodule Cog.Chat.Adapter do
                     #   send(conn, message.provider, message.room, "#{mention_name} Executing edited command '#{text}'")
                     # end
                     request = %ProviderRequest{text: text, sender: message.user, room: message.room, reply: "", id: message.id,
-                                              provider: message.provider, initial_context: message.initial_context || %{}}
-                    Connection.publish(state.conn, request, routed_by: "/bot/commands")
+                                               provider: message.provider, initial_context: message.initial_context || %{}}
+                    Initializer.start_pipeline(request)
                     state
                   false ->
                     state
