@@ -16,11 +16,10 @@ defmodule Cog.V1.GroupController do
   def create(conn, %{"group" => group_params}) do
     case Groups.new(group_params) do
       {:ok, group} ->
-        new_group = Repo.preload(group, [:direct_user_members, :direct_group_members, :roles])
         conn
         |> put_status(:created)
         |> put_resp_header("location", group_path(conn, :show, group))
-        |> render("show.json", group: new_group)
+        |> render("show.json", group: group)
       {:error, changeset} ->
         conn
         |> put_status(:unprocessable_entity)

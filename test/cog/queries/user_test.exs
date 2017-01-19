@@ -53,32 +53,6 @@ defmodule Cog.Queries.User.Test do
     assert_has_permission(user, permission)
   end
 
-  test "user in group in a group with a directly-granted permission is found" do
-    user = user("test")
-    inner = group("inner")
-    outer = group("outer")
-    permission = permission("site:test")
-    Permittable.grant_to(outer, permission)
-    Groupable.add_to(user, inner)
-    Groupable.add_to(inner, outer)
-
-    assert_has_permission(user, permission)
-  end
-
-  test "user in group in a group with a role-granted permission is found" do
-    user = user("test")
-    role = role("role")
-    inner = group("inner")
-    outer = group("outer")
-    permission = permission("site:test")
-    Permittable.grant_to(role, permission)
-    Permittable.grant_to(outer, role)
-    Groupable.add_to(user, inner)
-    Groupable.add_to(inner, outer)
-
-    assert_has_permission(user, permission)
-  end
-
   test "ensure that multiple users can be found (i.e., all the preceding tests in one)" do
     permission = permission("site:test")
     role = role("role")
@@ -89,10 +63,6 @@ defmodule Cog.Queries.User.Test do
     Permittable.grant_to(gp, permission)
     gr = group("group-with-role")
     Permittable.grant_to(gr, role)
-    ggp = group("group-in-group-with-permission")
-    Groupable.add_to(ggp, gp)
-    ggr = group("group-in-group-with-role")
-    Groupable.add_to(ggr, gr)
 
     # Setup users
     up = user("user-with-permission")
@@ -103,12 +73,8 @@ defmodule Cog.Queries.User.Test do
     Groupable.add_to(ugp, gp)
     ugr = user("user-in-group-with-role")
     Groupable.add_to(ugr, gr)
-    uggp = user("user-in-group-in-group-with-permission")
-    Groupable.add_to(uggp, ggp)
-    uggr = user("user-in-group-in-group-with-role")
-    Groupable.add_to(uggr, ggr)
 
-    expected_usernames = [up, ur, ugp, ugr, uggp, uggr] |> ordered_usernames
+    expected_usernames = [up, ur, ugp, ugr] |> ordered_usernames
     actual_usernames = Cog.Queries.User.with_permission(permission) |> Repo.all |> ordered_usernames
 
     assert expected_usernames == actual_usernames
