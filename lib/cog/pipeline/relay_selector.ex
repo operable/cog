@@ -21,13 +21,13 @@ defmodule Cog.Pipeline.RelaySelector do
       {:ok, relay} ->
         selector = %{selector | relay: relay}
         {:ok, selector}
-      error ->
-      # Query DB to clarify error before reporting to the user
-      if Cog.Repository.Bundles.assigned_to_group?(name) do
-        error
-      else
-        {:error, {:no_relay_group, name}}
-      end
+      {:error, error} ->
+        # Query DB to clarify error before reporting to the user
+        if Cog.Repository.Bundles.assigned_to_group?(name) do
+          {:error, error, name}
+        else
+          {:error, :no_relay_group, name}
+        end
     end
   end
   def select(%__MODULE__{bundle_name: name, bundle_version: version, relay: relay}=selector) do
