@@ -2,7 +2,6 @@ defmodule Cog.Models.Group do
   use Cog.Model
   use Cog.Models.EctoJson
 
-  alias Cog.Models.GroupPermission
   alias Cog.Models.GroupRole
   alias Cog.Models.UserGroupMembership
 
@@ -13,9 +12,6 @@ defmodule Cog.Models.Group do
 
     has_many :user_membership, UserGroupMembership, foreign_key: :group_id
     has_many :direct_user_members, through: [:user_membership, :member]
-
-    has_many :permission_grants, GroupPermission
-    has_many :permissions, through: [:permission_grants, :permission]
 
     has_many :role_grants, GroupRole
     has_many :roles, through: [:role_grants, :role]
