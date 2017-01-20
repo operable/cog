@@ -19,7 +19,7 @@ defmodule Cog.Repository.Groups do
   alias Cog.Models.Role
   import Ecto.Query, only: [from: 2]
 
-  @preloads [[user_membership: [:member]], :direct_user_members, :direct_group_members, roles: [permissions: :bundle]]
+  @preloads [[user_membership: [:member]], :direct_user_members, :direct_group_members, :roles, :permissions]
 
   @doc """
   Creates a new user group given a map of attributes
@@ -116,36 +116,11 @@ defmodule Cog.Repository.Groups do
   Updates a user group
   """
   @spec update(%Group{}, Map.t) :: {:ok, %Group{}} | {:error, Ecto.Changeset.t}
+  def update(%Group{name: unquote(Cog.Util.Misc.admin_group)=name}, _),
+    do: {:error, {:protected_group, name}}
   def update(%Group{}=group, attrs) do
-    Repo.transaction(fn() ->
-      {user_spec, attrs} = Map.pop(attrs, "users", %{})
-      {role_spec, attrs} = Map.pop(attrs, "roles", %{})
-      member_spec = %{"members" => %{"users" => user_spec,
-                                     "roles" => role_spec}}
-
-      result = case manage_membership(group, member_spec) do
-        {:ok, updated} ->
-          updated
-        {:error, error} ->
-          Repo.rollback(error)
-      end
-
-      # If attrs are empty we can skip the update
-      # NOTE: Additionally this allows changes to the admin group to follow
-      # the same code path as other groups. Changes to the admin are caught
-      # at the model level and result in an error here.
-      if !Enum.empty?(attrs) do
-        case Group.changeset(group, attrs) |> Repo.update() do
-          {:ok, updated} ->
-            updated
-          {:error, error} ->
-            Repo.rollback(error)
-        end
-      else
-        result
-      end
-
-    end)
+    changeset = Group.changeset(group, attrs)
+    Repo.update(changeset)
   end
 
 

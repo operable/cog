@@ -10,10 +10,11 @@ defmodule Cog.V1.RoleGrantController do
 
   plug :put_view, Cog.V1.RoleView
 
-  def manage_group_roles(conn, %{"id" => id, "roles" => role_spec}) do
-    result = with {:ok, group} <- Groups.by_id(id) do
-      Groups.update(group, %{"roles" => prep_role_spec(role_spec)})
-    end
+  def manage_group_roles(conn, %{"roles" => role_spec}=params) do
+    result = params
+    |> Map.put("members", %{"roles" => prep_role_spec(role_spec)})
+    |> Map.delete("roles")
+    |> Groups.manage_membership()
 
     case result do
       {:ok, group} ->

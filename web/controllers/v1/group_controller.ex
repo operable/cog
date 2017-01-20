@@ -45,11 +45,6 @@ defmodule Cog.V1.GroupController do
     end
   end
 
-  def manage_group_users(conn, %{"users" => user_spec}=params) do
-    params = Map.put(params, "group", %{"users" => user_spec})
-    update(conn, params)
-  end
-
   def update(conn, %{"id" => id, "group" => group_params}) do
     results = with {:ok, group} <- Groups.by_id(id) do
       Groups.update(group, group_params)
@@ -66,18 +61,6 @@ defmodule Cog.V1.GroupController do
         conn
         |> put_status(:bad_request)
         |> json(%{errors: "Bad ID format"})
-      {:error, {:not_found, {key, names}}} ->
-        conn
-        |> put_status(:unprocessable_entity)
-        |> json(%{"errors" => %{"not_found" => %{key => names}}})
-      {:error, :cannot_remove_admin_user} ->
-        conn
-        |> put_status(:unprocessable_entity)
-        |> json(%{errors: "The admin user cannot be removed from the cog-admin group"})
-      {:error, {:permanent_role_grant, role_name, group_name}} ->
-        conn
-        |> put_status(:unprocessable_entity)
-        |> json(%{error: "Cannot remove '#{role_name}' role from '#{group_name}' group"})
       {:error, changeset} ->
         conn
         |> put_status(:unprocessable_entity)
