@@ -8,23 +8,6 @@ defmodule Cog.V1.GroupMembershipController do
 
   plug :put_view, Cog.V1.GroupView
 
-  def index(conn, %{"id" => id}) do
-    case Groups.by_id(id) do
-      {:ok, group} ->
-        conn
-        |> put_status(:ok)
-        |> render("show.json", group: group)
-      {:error, :not_found} ->
-        conn
-        |> put_status(:not_found)
-        |> json(%{errors: "Group not found"})
-      {:error, :bad_id} ->
-        conn
-        |> put_status(:bad_request)
-        |> json(%{errors: "Bad ID format"})
-    end
-  end
-
   def manage_group_users(conn, %{"users" => user_spec}=params) do
     result = params
     |> Map.put("members", %{"users" => user_spec})

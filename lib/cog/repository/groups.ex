@@ -215,7 +215,8 @@ defmodule Cog.Repository.Groups do
   #     [%User{username: "cog", ...}]
   #
   defp lookup_or_fail(member_spec, [kind, _operation]=path) do
-    names = get_in(member_spec, path) || []
+    names = get_in(member_spec, path)
+            |> List.wrap()
     case lookup_all(kind, names) do
       {:ok, structs} -> structs
       {:error, reason} ->

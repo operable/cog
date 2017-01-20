@@ -5,8 +5,7 @@ defmodule Cog.V1.GroupView do
     %{id: group.id,
       name: group.name,
       members: %{roles: render_roles(group.roles),
-                 users: render_users(group.direct_user_members),
-                 groups: render_groups(group.direct_group_members)}
+                 users: render_users(group.direct_user_members)}
     }
   end
 
@@ -43,13 +42,5 @@ defmodule Cog.V1.GroupView do
     end)
   end
   defp render_users(_), do: []
-
-  defp render_groups(groups) when is_list(groups) do
-    Enum.map(groups, fn(group) ->
-        %{id: group.id,
-          name: group.name}
-    end)
-  end
-  defp render_groups(_), do: []
 
 end

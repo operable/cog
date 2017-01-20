@@ -3,9 +3,11 @@ defmodule Cog.Repository.Roles do
   alias Cog.Repo
   alias Cog.Pipeline.PermissionsCache
 
-  def new(name) do
+  def new(name) when is_binary(name),
+    do: new(%{"name" => name})
+  def new(params) do
     new_role = %Role{}
-    |> Role.changeset(%{name: name})
+    |> Role.changeset(params)
     |> Repo.insert
 
     case new_role do
@@ -31,6 +33,12 @@ defmodule Cog.Repository.Roles do
     end
   end
 
+  @spec by_id!(String.t) :: %Role{} | :no_return
+  def by_id!(id) do
+    role = Repo.get!(Role, id)
+    preload(role)
+  end
+
   def grant(%Role{}=role, one_or_more_permissions) do
     permissions = List.wrap(one_or_more_permissions)
     Enum.each(permissions, &Permittable.grant_to(role, &1))
@@ -45,12 +53,9 @@ defmodule Cog.Repository.Roles do
     preload(role)
   end
 
-  # We don't (yet) have need of general update
-  def rename(%Role{name: unquote(Cog.Util.Misc.admin_role)=name}, _),
-    do: {:error, {:protected_role, name}}
-  def rename(%Role{}=role, new_name) do
+  def update(%Role{}=role, params) do
     case role
-    |> Role.changeset(%{name: new_name})
+    |> Role.changeset(params)
     |> Repo.update do
       {:ok, role} ->
         {:ok, preload(role)}
@@ -59,9 +64,14 @@ defmodule Cog.Repository.Roles do
     end
   end
 
+  def rename(%Role{name: unquote(Cog.Util.Misc.admin_role)=name}, _),
+    do: {:error, {:protected_role, name}}
+  def rename(%Role{}=role, new_name),
+    do: update(role, %{"name" => new_name})
+
   ########################################################################
 
   defp preload(role_or_roles),
-    do: Repo.preload(role_or_roles, [permissions: :bundle])
+    do: Repo.preload(role_or_roles, [permissions: :bundle, group_grants: :group])
 
 end
