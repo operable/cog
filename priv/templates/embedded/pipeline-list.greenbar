@@ -1,0 +1,5 @@
+|Id|User|Text|State|Cnt|Started|Run|
+|---|---|---|---|---|---|---|
+~each var=$results~
+|~$item.id~|~$item.user~|~$item.text~|~$item.state~|~$item.processed~|~$item.started~|~$item.elapsed~|
+~end~

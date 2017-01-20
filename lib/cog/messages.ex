@@ -41,6 +41,9 @@ defmodule Cog.Messages.Command do
   alias Cog.ServiceEndpoint
   use Conduit
 
+  # Unique identifier for the entire command pipeline
+  field :pipeline_id, :string, required: true
+
   # Unique identifier for the individual command invocation
   field :invocation_id, :string, required: true
 
@@ -88,12 +91,13 @@ defmodule Cog.Messages.Command do
   field :user, :map, required: true
 
   @doc "Creates a new Command from an invocation, options, and args"
-  defmacro create(invocation, options, args) do
-    quote bind_quoted: [invocation: invocation, options: options, args: args] do
+  defmacro create(pipeline_id, invocation, options, args) do
+    quote bind_quoted: [pipeline_id: pipeline_id, invocation: invocation, options: options, args: args] do
       %Cog.Messages.Command{command: invocation.meta.full_command_name,
                             options: options,
                             args: args,
                             invocation_id: invocation.id,
+                            pipeline_id: pipeline_id,
                             services_root: ServiceEndpoint.url()}
     end
   end

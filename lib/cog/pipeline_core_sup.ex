@@ -1,6 +1,7 @@
 defmodule Cog.PipelineCoreSup do
 
   use Supervisor
+  alias Cog.Pipeline.Tracker
 
   def start_link() do
     Supervisor.start_link(__MODULE__, [], name: __MODULE__)
@@ -14,6 +15,7 @@ defmodule Cog.PipelineCoreSup do
                 supervisor(Cog.PipelineSup, []),
                 worker(Cog.Pipeline.PermissionsCache, []),
                 worker(Cog.Pipeline.Initializer, [])]
+    Tracker.init()
     {:ok, {%{strategy: :one_for_one, intensity: 10, period: 60}, children}}
   end
 

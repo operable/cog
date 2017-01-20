@@ -12,7 +12,7 @@ defmodule Cog.Pipeline do
   alias Cog.Models.EctoJson
   alias Cog.Pipeline.PrepareError
   alias Cog.Pipeline.{CommandResolver, DataSignal, DoneSignal, ExecutionStageSup, ErrorSinkSup,
-                      InitialContext, InitialContextSup, OutputSinkSup, PermissionsCache}
+                      InitialContext, InitialContextSup, OutputSinkSup, PermissionsCache, Tracker}
   alias Cog.Queries.User, as: UserQueries
   alias Cog.Repo
   alias Piper.Command.Ast
@@ -119,6 +119,7 @@ defmodule Cog.Pipeline do
   # Close bus connection and exit after last stage exits
   # This avoids closing the connection while one of the sinks is still using it
   def handle_info({:DOWN, _, _, stage, _}, %__MODULE__{status: :done, stages: [stage]}=state) do
+    Tracker.finish_pipeline(state.request.id, DateTime.utc_now())
     Logger.debug("Pipeline #{state.request.id} terminated")
     Connection.disconnect(state.conn)
     {:stop, :normal, %{state | stages: []}}
@@ -212,6 +213,7 @@ defmodule Cog.Pipeline do
                  |> Enum.reduce([initial_context], &create_stage!(&1, &2, user, perms, state))
                  |> create_sinks!(parsed, destinations, user, state)
         initialization_event(user, state)
+        Tracker.start_pipeline(state.request.id, self(), state.request.text, user.username, state.started)
         InitialContext.unlock(initial_context)
         {:reply, :ok, %{state | stages: stages}}
       rescue
