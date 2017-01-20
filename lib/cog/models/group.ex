@@ -4,16 +4,12 @@ defmodule Cog.Models.Group do
 
   alias Cog.Models.GroupPermission
   alias Cog.Models.GroupRole
-  alias Cog.Models.GroupGroupMembership
   alias Cog.Models.UserGroupMembership
 
   alias Ecto.Changeset
 
   schema "groups" do
     field :name, :string
-
-    has_many :group_membership, GroupGroupMembership, foreign_key: :group_id
-    has_many :direct_group_members, through: [:group_membership, :member]
 
     has_many :user_membership, UserGroupMembership, foreign_key: :group_id
     has_many :direct_user_members, through: [:user_membership, :member]
@@ -77,43 +73,6 @@ defimpl Permittable, for: Cog.Models.Group do
     do: {:error, {:permanent_role_grant, role_name, group_name}}
   def revoke_from(group, permission_or_role),
     do: Cog.Models.JoinTable.dissociate(group, permission_or_role)
-
-end
-
-defimpl Groupable, for: Cog.Models.Group do
-
-  def add_to(group_member, group) do
-    try do
-      Cog.Models.JoinTable.associate(group_member, group)
-    rescue
-      error in [Postgrex.Error] ->
-        # Doing this whole nasty try/rescue deal here because Ecto
-        # doesn't have the kind of built-in constraints that we're
-        # using (trigger-thrown exceptions). We tried forking Ecto,
-        # but it and Postgrex don't make it easy to flexibly add this
-        # kind of support
-        #
-        # Instead of wading into that right now, blocking further
-        # progress on our own stuff, I'm just going to brute-force
-        # things and handle the exceptions directly.
-        #
-        # It's a little gross, in that it's here at the site of
-        # invocation, rather than bundled up with the changeset like
-        # it should be. However, it works, which is rather nice.
-        case error do
-          # Here, the `message` is what is returned by the
-          # `forbid_group_cycles` trigger function in the database. We
-          # match on that to ensure we're only getting our specific
-          # exception.
-          %Postgrex.Error{postgres: %{code: :raise_exception,
-                                       message: "group cycles are forbidden"}} ->
-            {:error, :forbidden_group_cycle}
-        end
-    end
-  end
-
-  def remove_from(group_member,group),
-    do: Cog.Models.JoinTable.dissociate(group_member, group)
 
 end
 

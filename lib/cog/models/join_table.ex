@@ -152,7 +152,6 @@ defmodule Cog.Models.JoinTable do
   defp table_name(%Rule{}, %Permission{}),   do: "rule_permissions"
 
   defp table_name(%User{}, %Group{}),        do: "user_group_membership"
-  defp table_name(%Group{}, %Group{}),       do: "group_group_membership"
 
   defp table_name(%Bundle{}, %RelayGroup{}), do: "relay_group_assignments"
   defp table_name(%Relay{}, %RelayGroup{}),  do: "relay_group_memberships"
