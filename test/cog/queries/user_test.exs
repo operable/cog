@@ -31,16 +31,6 @@ defmodule Cog.Queries.User.Test do
     assert_has_permission(user, permission)
   end
 
-  test "user in group with directly-granted permission is found" do
-    user = user("test")
-    group = group("group")
-    permission = permission("site:test")
-    Permittable.grant_to(group, permission)
-    Groupable.add_to(user, group)
-
-    assert_has_permission(user, permission)
-  end
-
   test "user in group with directly-granted role permission is found" do
     user = user("test")
     role = role("role")
@@ -59,8 +49,6 @@ defmodule Cog.Queries.User.Test do
     Permittable.grant_to(role, permission)
 
     # Setup groups
-    gp = group("group-with-permission")
-    Permittable.grant_to(gp, permission)
     gr = group("group-with-role")
     Permittable.grant_to(gr, role)
 
@@ -69,12 +57,10 @@ defmodule Cog.Queries.User.Test do
     Permittable.grant_to(up, permission)
     ur = user("user-with-role")
     Permittable.grant_to(ur, role)
-    ugp = user("user-in-group-with-permission")
-    Groupable.add_to(ugp, gp)
     ugr = user("user-in-group-with-role")
     Groupable.add_to(ugr, gr)
 
-    expected_usernames = [up, ur, ugp, ugr] |> ordered_usernames
+    expected_usernames = [up, ur, ugr] |> ordered_usernames
     actual_usernames = Cog.Queries.User.with_permission(permission) |> Repo.all |> ordered_usernames
 
     assert expected_usernames == actual_usernames
