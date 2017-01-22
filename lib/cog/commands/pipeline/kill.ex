@@ -3,8 +3,9 @@ defmodule Cog.Commands.Pipeline.Kill do
     bundle: Cog.Util.Misc.embedded_bundle,
     name: "pipeline-kill"
 
+  alias Cog.Commands.Pipeline.Util
   alias Cog.Pipeline
-  alias Cog.Pipeline.Tracker
+  alias Cog.Repository.PipelineHistory, as: HistoryRepo
 
   @description "Abort a running pipeline"
 
@@ -24,12 +25,16 @@ defmodule Cog.Commands.Pipeline.Kill do
   end
 
   defp kill_pipeline(id, killed) do
-    case Tracker.pipeline_pid(id) do
+    case HistoryRepo.by_short_id(id, "finished") do
       nil ->
         killed
-      pid ->
-        Pipeline.teardown(pid)
-        [id|killed]
+      entry ->
+        if Process.alive?(entry.pid) do
+          Pipeline.teardown(entry.pid)
+          [Util.short_id(entry.id)|killed]
+        else
+          killed
+        end
     end
   end
 

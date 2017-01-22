@@ -4,11 +4,12 @@ defmodule Cog.Pipeline.ExecutionStage do
   alias Carrier.Messaging.Connection
   alias Cog.Config
   alias Cog.Events.PipelineEvent
-  alias Cog.Pipeline.{Binder, OptionParser, PermissionEnforcer, Tracker}
+  alias Cog.Pipeline.{Binder, OptionParser, PermissionEnforcer}
   alias Cog.Messages.{Command, CommandResponse}
   alias Cog.Pipeline.DataSignal
   alias Cog.Pipeline.DoneSignal
   alias Cog.Pipeline.RelaySelector
+  alias Cog.Repository.PipelineHistory, as: HistoryRepo
   alias Piper.Command.Ast.BadValueError
 
   @moduledoc ~s"""
@@ -138,7 +139,7 @@ defmodule Cog.Pipeline.ExecutionStage do
   def handle_events(in_events, _from, state) do
     [current|rest] = in_events
     {out_events, state} = process_events(current, rest, state, [])
-    Tracker.update_pipeline(state.request_id, [count: Enum.count(in_events) - 1])
+    HistoryRepo.increment_count(state.request_id, Enum.count(in_events) - 1)
     {:noreply, out_events, state}
   end
 
@@ -194,15 +195,15 @@ defmodule Cog.Pipeline.ExecutionStage do
             dispatch_event(text, request.cog_env, started, state)
             case Connection.publish(state.conn, request, routed_by: RelaySelector.relay_topic!(state.relay_selector, command_name)) do
               :ok ->
-                Tracker.update_pipeline(state.request_id, [state: :waiting])
+                HistoryRepo.update_state(state.request_id, "waiting")
                 receive do
                   {:publish, ^topic, message} ->
-                    Tracker.update_pipeline(state.request_id, [state: :running])
+                    HistoryRepo.update_state(state.request_id, "running")
                     process_response(CommandResponse.decode!(message), state)
                   {:pipeline_complete, ^pipeline} ->
                     Process.exit(self(), :normal)
                 after timeout ->
-                    Tracker.update_pipeline(state.request_id, [state: :running])
+                    HistoryRepo.update_state(state.request_id, "running")
                     {[%DoneSignal{error: {:error, :timeout}, invocation: text, template: "error"}], state}
                 end
               error ->

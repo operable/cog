@@ -3,7 +3,10 @@ defmodule Cog.Commands.Pipeline.List do
     bundle: Cog.Util.Misc.embedded_bundle,
     name: "pipeline-list"
 
-  alias Cog.Pipeline.Tracker
+  alias Cog.Commands.Pipeline.Util
+  alias Cog.Models.PipelineHistory
+  alias Cog.Repository.PipelineHistory, as: HistoryRepo
+  alias Cog.Repository.Users, as: UserRepo
 
   @description "Display command pipeline statistics"
 
@@ -26,30 +29,40 @@ defmodule Cog.Commands.Pipeline.List do
     description: "Display pipelines with a run time of at least <runtime> milliseconds"
 
   def handle_message(%{options: opts, pipeline_id: pipeline_id} = req, state) do
-    results = case Map.get(opts, "user") do
-                nil ->
-                  Tracker.pipelines_by(user: req.requestor.handle)
-                "all" ->
-                  Tracker.all_pipelines()
-                user ->
-                  Tracker.pipelines_by(user: user)
-              end
-    {regex_error, text_regex} = parse_regex(opts)
-    if regex_error do
-      {:error, req.reply_to, {:error, "Bad regular expression"}, state}
-    else
-      updated = results
-              |> Enum.filter(&(String.starts_with?(pipeline_id, &1.id) == false))
+    case fetch_history(req, opts) do
+      {:error, reason} ->
+        {:error, req.reply_to, reason, state}
+      {:ok, results} ->
+        {regex_error, text_regex} = parse_regex(opts)
+        if regex_error do
+          {:error, req.reply_to, "Bad regular expression", state}
+        else
+          updated = results
+              |> Enum.filter(&(&1.id != pipeline_id))
               |> Enum.filter(&text_matches?(&1, text_regex, Map.get(opts, "invert")))
               |> Enum.filter(&runtime_in_bounds?(&1, Map.get(opts, "runtime")))
-              |> limit(Map.get(opts, "last"))
-      {:reply, req.reply_to, "pipeline-list", updated, state}
+              |> Enum.map(&Util.entry_to_map/1)
+              |> Enum.map(&format_text/1)
+          {:reply, req.reply_to, "pipeline-list", updated, state}
+        end
     end
   end
 
-  defp limit(results, nil), do: results
-  defp limit(results, count) do
-    Enum.slice(results, 0, count)
+  defp fetch_history(req, opts) do
+    case Map.get(opts, "user") do
+      nil ->
+        {:ok, app_user} = UserRepo.by_username(req.requestor.handle)
+        {:ok, HistoryRepo.history_for_user(app_user.id, Map.get(opts, "last", 20))}
+      "all" ->
+        {:ok, HistoryRepo.all_history(Map.get(opts, "last", 20))}
+      user ->
+        case UserRepo.by_username(user) do
+          {:ok, app_user} ->
+            {:ok, HistoryRepo.history_for_user(app_user.id, Map.get(opts, "last", 20))}
+          {:error, :not_found} ->
+            {:error, "User '#{user}' not found"}
+        end
+    end
   end
 
   defp text_matches?(_, nil, _), do: true
@@ -63,7 +76,7 @@ defmodule Cog.Commands.Pipeline.List do
 
   defp runtime_in_bounds?(_, nil), do: true
   defp runtime_in_bounds?(entry, min_rt) do
-    entry.elapsed >= min_rt
+    PipelineHistory.elapsed(entry) >= min_rt
   end
 
   defp parse_regex(opts) do
@@ -77,6 +90,14 @@ defmodule Cog.Commands.Pipeline.List do
           {:error, _} ->
             {true, nil}
         end
+    end
+  end
+
+  defp format_text(entry) do
+    if String.length(entry.text) > 15 do
+      %{entry | text: String.slice(entry.text, 0, 12) <>  "..."}
+    else
+      entry
     end
   end
 

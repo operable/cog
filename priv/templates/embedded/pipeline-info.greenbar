@@ -1,0 +1,11 @@
+~each var=$results~
+~attachment color="operableblue"~
+**Id:** ~$item.id~
+**Text:** `~$item.text~`
+**Count:** ~$item.processed~
+**Run:** ~$item.elapsed~ ms
+**State:** ~$item.state~
+**Started:** ~$item.started~
+**User:** ~$item.user~
+~end~
+~end~

@@ -12,8 +12,9 @@ defmodule Cog.Pipeline do
   alias Cog.Models.EctoJson
   alias Cog.Pipeline.PrepareError
   alias Cog.Pipeline.{CommandResolver, DataSignal, DoneSignal, ExecutionStageSup, ErrorSinkSup,
-                      InitialContext, InitialContextSup, OutputSinkSup, PermissionsCache, Tracker}
+                      InitialContext, InitialContextSup, OutputSinkSup, PermissionsCache}
   alias Cog.Queries.User, as: UserQueries
+  alias Cog.Repository.PipelineHistory, as: HistoryRepo
   alias Cog.Repo
   alias Piper.Command.Ast
   alias Piper.Command.Parser
@@ -106,6 +107,9 @@ defmodule Cog.Pipeline do
     {:reply, :ignored, state}
   end
 
+  def handle_cast(:teardown, %__MODULE__{status: :done}=state) do
+    {:noreply, state}
+  end
   def handle_cast(:teardown, state) do
     duration = Util.elapsed(state.started, DateTime.utc_now, :milliseconds)
     Logger.info("Pipeline #{state.request.id} ran for #{duration} ms")
@@ -119,7 +123,7 @@ defmodule Cog.Pipeline do
   # Close bus connection and exit after last stage exits
   # This avoids closing the connection while one of the sinks is still using it
   def handle_info({:DOWN, _, _, stage, _}, %__MODULE__{status: :done, stages: [stage]}=state) do
-    Tracker.finish_pipeline(state.request.id, DateTime.utc_now())
+    HistoryRepo.update_state(state.request.id, "finished")
     Logger.debug("Pipeline #{state.request.id} terminated")
     Connection.disconnect(state.conn)
     {:stop, :normal, %{state | stages: []}}
@@ -213,7 +217,12 @@ defmodule Cog.Pipeline do
                  |> Enum.reduce([initial_context], &create_stage!(&1, &2, user, perms, state))
                  |> create_sinks!(parsed, destinations, user, state)
         initialization_event(user, state)
-        Tracker.start_pipeline(state.request.id, self(), state.request.text, user.username, state.started)
+        HistoryRepo.new(%{id: state.request.id,
+                          pid: self(),
+                          user_id: user.id,
+                          count: 0,
+                          state: "running",
+                          text: state.request.text})
         InitialContext.unlock(initial_context)
         {:reply, :ok, %{state | stages: stages}}
       rescue
