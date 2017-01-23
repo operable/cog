@@ -34,7 +34,7 @@ defmodule Cog.V1.GroupMembershipController.Test do
     assert conn.halted
     assert conn.status == 403
 
-    assert [] == Repo.preload(group, :direct_user_members).direct_user_members
+    assert [] == Repo.preload(group, :users).users
   end
 
   test "fails if group doesn't exist", %{authed: requestor} do
@@ -54,7 +54,7 @@ defmodule Cog.V1.GroupMembershipController.Test do
 
     # user's got nothing yet!
     assert [] == Repo.preload(user, :direct_group_memberships).direct_group_memberships
-    assert [] == Repo.preload(group, :direct_user_members).direct_user_members
+    assert [] == Repo.preload(group, :users).users
 
     conn = api_request(requestor, :post, "/v1/groups/#{group.id}/users",
                        body: %{"users" => %{"add" => [user.username]}})
@@ -68,7 +68,7 @@ defmodule Cog.V1.GroupMembershipController.Test do
                                                        "email_address" => user.email_address}],
                                          "roles" => []}}} == json_response(conn, 200)
 
-    assert [user] == Repo.preload(group, :direct_user_members).direct_user_members
+    assert [user] == Repo.preload(group, :users).users
     assert [group] == Repo.preload(user, :direct_group_memberships).direct_group_memberships
   end
 
@@ -79,7 +79,7 @@ defmodule Cog.V1.GroupMembershipController.Test do
     [hal, data, robbie] = users = Enum.map(usernames, &user(&1))
 
     # group's got nothing yet!
-    assert [] == Repo.preload(group, :direct_user_members).direct_user_members
+    assert [] == Repo.preload(group, :users).users
 
     # Grant the permissions
     conn = api_request(requestor, :post, "/v1/groups/#{group.id}/users",
@@ -150,7 +150,7 @@ defmodule Cog.V1.GroupMembershipController.Test do
                                                       "i_dont_exist"]}})
     assert json_response(conn, 422) == %{"errors" => %{"not_found" => %{"users" => ["i_dont_exist"]}}}
 
-    assert [] == Repo.preload(group, :direct_user_members).direct_user_members
+    assert [] == Repo.preload(group, :users).users
   end
 
   test "adding a user works even when the user is already a member", %{authed: requestor} do
@@ -186,7 +186,7 @@ defmodule Cog.V1.GroupMembershipController.Test do
                           "members" => %{"users" => [],
                                          "roles" => []}}} == json_response(conn, 200)
 
-    assert [] == Repo.preload(group, :direct_user_members).direct_user_members
+    assert [] == Repo.preload(group, :users).users
   end
 
   test "remove multiple users at once", %{authed: requestor} do
@@ -245,7 +245,7 @@ defmodule Cog.V1.GroupMembershipController.Test do
 
     assert json_response(conn, 422) == %{"errors" => %{"not_found" => %{"users" => ["i_dont_exist"]}}}
 
-    assert [user] == Repo.preload(group, :direct_user_members).direct_user_members
+    assert [user] == Repo.preload(group, :users).users
   end
 
   test "removing a user works even when the user wasn't a member in the first place", %{authed: requestor} do

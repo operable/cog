@@ -29,7 +29,7 @@ defmodule Cog.Test.Commands.Group.Member.RemoveTest do
     do: [group: group("elves")]
 
   defp is_group_user?(%Cog.Models.Group{}=group, username) do
-    Enum.map(group.user_membership, &(&1.member.username))
+    Enum.map(group.users, &(&1.username))
     |> Enum.member?(username)
   end
   defp is_group_user?(%{members: members}, username) do

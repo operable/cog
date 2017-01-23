@@ -4,17 +4,16 @@ defmodule Cog.Models.Group do
 
   alias Cog.Models.GroupRole
   alias Cog.Models.UserGroupMembership
+  alias Cog.Models.User
+  alias Cog.Models.Role
 
   alias Ecto.Changeset
 
   schema "groups" do
     field :name, :string
 
-    has_many :user_membership, UserGroupMembership, foreign_key: :group_id
-    has_many :direct_user_members, through: [:user_membership, :member]
-
-    has_many :role_grants, GroupRole
-    has_many :roles, through: [:role_grants, :role]
+    many_to_many :users, User, join_through: UserGroupMembership, join_keys: [group_id: :id, member_id: :id]
+    many_to_many :roles, Role, join_through: GroupRole
   end
 
   @required_fields ~w(name)
@@ -74,15 +73,10 @@ end
 
 defimpl Poison.Encoder, for: Cog.Models.Group do
   def encode(struct, options) do
-    members = Enum.flat_map(struct.user_membership, fn
-      (%{member: member}) -> [member]
-      (_) -> []
-    end)
-
     map = struct
     |> Map.from_struct
     |> Map.take([:id, :name, :roles])
-    |> Map.put(:members, members)
+    |> Map.put(:members, struct.users)
 
     Poison.Encoder.Map.encode(map, options)
   end
