@@ -5,7 +5,7 @@ defmodule Cog.V1.GroupView do
     %{id: group.id,
       name: group.name,
       members: %{roles: render_roles(group.roles),
-                 users: render_users(group.direct_user_members)}
+                 users: render_users(group.users)}
     }
   end
 
@@ -21,7 +21,7 @@ defmodule Cog.V1.GroupView do
     %{id: group.id,
       name: group.name,
       roles: render_roles(group.roles),
-      members: render_users(group.direct_user_members)}
+      members: render_users(group.users)}
   end
 
   defp render_roles(roles) when is_list(roles) do

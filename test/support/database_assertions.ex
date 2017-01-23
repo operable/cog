@@ -95,8 +95,8 @@ defmodule DatabaseAssertions do
   end
 
   def assert_group_member_was_added(group, %Cog.Models.User{}=member) do
-    loaded = Repo.preload(group, :direct_user_members)
-    assert member in loaded.direct_user_members
+    loaded = Repo.preload(group, :users)
+    assert member in loaded.users
   end
   def assert_group_member_was_added(group, %Cog.Models.Group{}=member) do
     loaded = Repo.preload(group, :direct_group_members)
