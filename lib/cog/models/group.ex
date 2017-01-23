@@ -75,8 +75,7 @@ defimpl Poison.Encoder, for: Cog.Models.Group do
   def encode(struct, options) do
     map = struct
     |> Map.from_struct
-    |> Map.take([:id, :name, :roles])
-    |> Map.put(:members, struct.users)
+    |> Map.take([:id, :name, :roles, :users])
 
     Poison.Encoder.Map.encode(map, options)
   end
