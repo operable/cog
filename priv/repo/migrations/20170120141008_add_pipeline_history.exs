@@ -39,6 +39,7 @@ defmodule Cog.Repo.Migrations.AddPipelineHistory do
       add :text, :text, null: false
       add :count, :integer, null: false
       add :state, :text, null: false
+      add :room, :text, null: false
       add :started_at, :bigint, null: false
       add :finished_at, :bigint, null: true
 

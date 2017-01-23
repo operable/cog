@@ -222,7 +222,8 @@ defmodule Cog.Pipeline do
                           user_id: user.id,
                           count: 0,
                           state: "running",
-                          text: state.request.text})
+                          text: state.request.text,
+                          room: room_name(state.request.room)})
         InitialContext.unlock(initial_context)
         {:reply, :ok, %{state | stages: stages}}
       rescue
@@ -343,6 +344,14 @@ defmodule Cog.Pipeline do
   defp initialization_event(user, state) do
     PipelineEvent.initialized(state.request.id, state.started, state.request.text,
       state.request.provider, user.username, state.request.sender.handle) |> Probe.notify
+  end
+
+  defp room_name(room) do
+    if room.is_dm do
+      "DM"
+    else
+      room.name
+    end
   end
 
 end

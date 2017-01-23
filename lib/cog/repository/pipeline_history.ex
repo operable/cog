@@ -42,10 +42,10 @@ defmodule Cog.Repository.PipelineHistory do
     end
   end
 
-  def all_history(limit \\20) do
+  def all_history(limit \\ 20) do
     query = from ph in PipelineHistory,
             order_by: [desc: :started_at],
-            limit: ^limit,
+            limit: ^(limit + 1),
             preload: [:user]
     Repo.all(query)
   end
@@ -54,7 +54,7 @@ defmodule Cog.Repository.PipelineHistory do
     query = from ph in PipelineHistory,
             where: ph.user_id == ^user_id,
             order_by: [desc: :idx],
-            limit: ^limit,
+            limit: ^(limit + 1),
             preload: [:user]
     Repo.all(query)
   end

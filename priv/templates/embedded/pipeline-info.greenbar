@@ -2,10 +2,11 @@
 ~attachment color="operableblue"~
 **Id:** ~$item.id~
 **Text:** `~$item.text~`
-**Count:** ~$item.processed~
-**Run:** ~$item.elapsed~ ms
+**Time:** ~$item.time~ ms
+**User:** ~$item.user~
+**Room:** ~$item.room~
 **State:** ~$item.state~
 **Started:** ~$item.started~
-**User:** ~$item.user~
+**Processed:** ~$item.processed~
 ~end~
 ~end~
