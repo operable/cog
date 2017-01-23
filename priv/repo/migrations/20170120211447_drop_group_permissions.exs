@@ -132,16 +132,11 @@ defmodule Cog.Repo.Migrations.DropGroupPermissions do
     RETURNS SETOF groups.id%TYPE
     LANGUAGE SQL STABLE STRICT
     AS $$
-      WITH RECURSIVE
-      role_grants AS (
-        SELECT gr.group_id
-        FROM group_roles AS gr
-        JOIN role_permissions AS rp
-          USING (role_id)
-        WHERE rp.permission_id = p_permission
-      )
       SELECT group_id
-       FROM role_grants;
+      FROM group_roles
+      JOIN role_permissions AS rp
+        USING (role_id)
+      WHERE rp.permission_id = p_permission;
     $$;
   """
   end
