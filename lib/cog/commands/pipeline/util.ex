@@ -7,7 +7,7 @@ defmodule Cog.Commands.Pipeline.Util do
   def entry_to_map(entry) do
     %{id: short_id(entry.id),
       user: entry.user.username,
-      room: entry.room,
+      room: entry.room_name,
       text: entry.text,
       processed: entry.count,
       state: entry.state,

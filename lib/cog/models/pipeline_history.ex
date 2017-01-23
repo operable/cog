@@ -13,7 +13,9 @@ defmodule Cog.Models.PipelineHistory do
     field :idx, :integer, read_after_writes: true
     field :pid, ProcessId
     field :text, :string
-    field :room, :string
+    field :room_name, :string
+    field :room_id, :string
+    field :provider, :string
     field :count, :integer
     field :state, :string
     field :started_at, :integer
@@ -24,7 +26,7 @@ defmodule Cog.Models.PipelineHistory do
     timestamps
   end
 
-  @required_fields ~w(id text room count state user_id started_at)
+  @required_fields ~w(id text room_name room_id provider count state user_id started_at)
   @optional_fields ~w(pid finished_at)
 
   def changeset(model, params \\ :empty) do

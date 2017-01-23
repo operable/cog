@@ -15,7 +15,7 @@ defmodule Cog.Commands.Pipeline.List do
   rule "when command is #{Cog.Util.Misc.embedded_bundle}:pipeline-list allow"
 
   option "user", short: "u", type: "string", required: false,
-    description: "View pipelines for specified user"
+    description: "View pipelines for specified user. Use 'all' to view pipeline history for all users."
 
   option "last", short: "l", type: "int", required: false,
     description: "View <last> pipelines"
@@ -56,7 +56,7 @@ defmodule Cog.Commands.Pipeline.List do
                       |> Enum.map(&(format_entry(Util.entry_to_map(&1))))
            {:reply, req.reply_to, "pipeline-list", updated, state}
           else
-            {:error, req.reply_to, "Valid state names are: #{Enum.join(@valid_state_names, ", ")}"}
+            {:error, req.reply_to, "Valid state names are: #{Enum.join(@valid_state_names, ", ")}", state}
           end
         end
     end
@@ -66,13 +66,13 @@ defmodule Cog.Commands.Pipeline.List do
     case Map.get(opts, "user") do
       nil ->
         {:ok, app_user} = UserRepo.by_username(req.requestor.handle)
-        {:ok, HistoryRepo.history_for_user(app_user.id, Map.get(opts, "last", 20))}
+        {:ok, HistoryRepo.pipelines_for_user(app_user.id, Map.get(opts, "last", 20))}
       "all" ->
-        {:ok, HistoryRepo.all_history(Map.get(opts, "last", 20))}
+        {:ok, HistoryRepo.all_pipelines(Map.get(opts, "last", 20))}
       user ->
         case UserRepo.by_username(user) do
           {:ok, app_user} ->
-            {:ok, HistoryRepo.history_for_user(app_user.id, Map.get(opts, "last", 20))}
+            {:ok, HistoryRepo.pipelines_for_user(app_user.id, Map.get(opts, "last", 20))}
           {:error, :not_found} ->
             {:error, "User '#{user}' not found"}
         end
@@ -103,7 +103,7 @@ defmodule Cog.Commands.Pipeline.List do
   end
 
   defp room_matches?(_, nil), do: true
-  defp room_matches?(entry, room), do: entry.room == room
+  defp room_matches?(entry, room), do: entry.room_name == room
 
   defp state_matches?(_, nil), do: true
   defp state_matches?(entry, "F"), do: state_matches?(entry, "finished")

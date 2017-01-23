@@ -20,6 +20,8 @@ defmodule Cog.Chat.Adapter do
     GenMqtt.start_link(__MODULE__, [], name: __MODULE__)
   end
 
+  def incoming_topic(), do: @incoming_topic
+
   def mention_name(provider, handle) when is_binary(handle) do
     GenMqtt.call(@adapter_topic , "mention_name", %{provider: provider, handle: handle}, :infinity)
   end
@@ -261,6 +263,24 @@ defmodule Cog.Chat.Adapter do
             end
     {:noreply, state}
   end
+  def handle_cast(conn, @incoming_topic, "internal", message, state) do
+    state = case Message.from_map(message) do
+              {:ok, message} ->
+                if message.edited == true do
+                  mention_name = with_provider(message.provider, state, :mention_name, [message.user.handle])
+                  send(conn, message.provider, message.room, "#{mention_name} Executing edited command '#{message.text}'")
+                end
+                request = %ProviderRequest{text: message.text, sender: message.user, room: message.room, reply: "", id: message.id,
+                                           provider: message.provider, initial_context: message.initial_context || %{}}
+                Connection.publish(conn, request, routed_by: "/bot/commands")
+                state
+              error ->
+                Logger.error("Error decoding chat message: #{inspect error}   #{inspect message, pretty: true}")
+                state
+            end
+    {:noreply, state}
+  end
+
 
   defp finish_initialization(conn, providers) do
     Connection.subscribe(conn, @adapter_topic)

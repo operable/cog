@@ -42,7 +42,7 @@ defmodule Cog.Repository.PipelineHistory do
     end
   end
 
-  def all_history(limit \\ 20) do
+  def all_pipelines(limit \\ 20) do
     query = from ph in PipelineHistory,
             order_by: [desc: :started_at],
             limit: ^(limit + 1),
@@ -50,7 +50,7 @@ defmodule Cog.Repository.PipelineHistory do
     Repo.all(query)
   end
 
-  def history_for_user(user_id, limit \\ 20) do
+  def pipelines_for_user(user_id, limit \\ 20) do
     query = from ph in PipelineHistory,
             where: ph.user_id == ^user_id,
             order_by: [desc: :idx],
@@ -72,8 +72,49 @@ defmodule Cog.Repository.PipelineHistory do
     Repo.one(query)
   end
 
+  def history_for_user(user_id, hist_start, hist_end, limit \\ 20) do
+    query  = build_user_history_query(user_id, hist_start, hist_end, limit)
+    query = from q in query,
+            where: q.state == "finished"
+    Repo.all(query)
+  end
+
+  def history_entry(user_id, index) do
+    query = from ph in PipelineHistory,
+            where: ph.user_id == ^user_id and ph.idx == ^index
+    Repo.one(query)
+  end
+
   defp now_timestamp_ms() do
     DateTime.to_unix(DateTime.utc_now(), :milliseconds)
+  end
+
+  defp build_user_history_query(user_id, hist_start, hist_end, _limit) when hist_start != nil and hist_end != nil do
+    from ph in PipelineHistory,
+      where: ph.user_id == ^user_id and ph.idx >= ^hist_start and ph.idx <= ^hist_end,
+      order_by: [desc: :idx],
+      select: [ph.idx, ph.text]
+  end
+  defp build_user_history_query(user_id, hist_start, nil, limit) when hist_start != nil do
+    from ph in PipelineHistory,
+      where: ph.user_id == ^user_id and ph.idx >= ^hist_start,
+      order_by: [desc: :idx],
+      limit: ^(limit + 1),
+      select: [ph.idx, ph.text]
+  end
+  defp build_user_history_query(user_id, nil, hist_end, limit) when hist_end != nil do
+    from ph in PipelineHistory,
+      where: ph.user_id == ^user_id and ph.idx <= ^hist_end,
+      order_by: [desc: :idx],
+      limit: ^(limit + 1),
+      select: [ph.idx, ph.text]
+  end
+  defp build_user_history_query(user_id, nil, nil, limit) do
+    from ph in PipelineHistory,
+      where: ph.user_id == ^user_id,
+      order_by: [desc: :idx],
+      limit: ^(limit + 1),
+      select: [ph.idx, ph.text]
   end
 
 end

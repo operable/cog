@@ -223,7 +223,9 @@ defmodule Cog.Pipeline do
                           count: 0,
                           state: "running",
                           text: state.request.text,
-                          room: room_name(state.request.room)})
+                          provider: state.request.provider,
+                          room_name: room_name(state.request.room),
+                          room_id: room_id(state.request)})
         InitialContext.unlock(initial_context)
         {:reply, :ok, %{state | stages: stages}}
       rescue
@@ -351,6 +353,14 @@ defmodule Cog.Pipeline do
       "DM"
     else
       room.name
+    end
+  end
+
+  defp room_id(req) do
+    if req.room.is_dm do
+      req.sender.id
+    else
+      req.room.id
     end
   end
 
