@@ -18,16 +18,6 @@ defmodule GroupTest do
     assert(:ok = Groupable.add_to(user, group))
   end
 
-  test "permissions may be granted directly to groups", %{group: group, permission: permission} do
-    :ok = Permittable.grant_to(group, permission)
-    assert_permission_is_granted(group, permission)
-  end
-
-  test "granting a permission to a group is idempotent", %{group: group, permission: permission} do
-    :ok = Permittable.grant_to(group, permission)
-    assert(:ok = Permittable.grant_to(group, permission))
-  end
-
   test "roles may be granted directly to a group", %{group: group, role: role} do
     :ok = Permittable.grant_to(group, role)
     assert_role_was_granted(group, role)

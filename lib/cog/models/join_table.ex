@@ -147,7 +147,6 @@ defmodule Cog.Models.JoinTable do
   defp table_name(%User{}, %Permission{}),   do: "user_permissions"
   defp table_name(%User{}, %Role{}),         do: "user_roles"
   defp table_name(%Role{}, %Permission{}),   do: "role_permissions"
-  defp table_name(%Group{}, %Permission{}),  do: "group_permissions"
   defp table_name(%Group{}, %Role{}),        do: "group_roles"
   defp table_name(%Rule{}, %Permission{}),   do: "rule_permissions"
 
