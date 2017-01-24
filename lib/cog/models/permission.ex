@@ -2,7 +2,6 @@ defmodule Cog.Models.Permission do
   use Cog.Model
 
   alias Cog.Models.Bundle
-  alias Ecto.Changeset
 
   schema "permissions" do
     belongs_to :bundle, Bundle
@@ -47,8 +46,9 @@ defmodule Cog.Models.Permission do
 
   def changeset(model, params) do
     model
-    |> Changeset.cast(params, @required_fields, @optional_fields)
-    |> Changeset.unique_constraint(:name, name: "permissions_bundle_id_name_index")
+    |> cast(params, @required_fields, @optional_fields)
+    |> role_permissions_constraint
+    |> unique_constraint(:name, name: "permissions_bundle_id_name_index")
   end
 
   @doc """
@@ -70,4 +70,10 @@ defmodule Cog.Models.Permission do
     {bundle, name}
   end
 
+  defp role_permissions_constraint(changeset) do
+    foreign_key_constraint(changeset,
+                           :id,
+                           name: :role_permissions_permission_id_fkey,
+                           message: "cannot delete permission that has been granted to a role")
+  end
 end

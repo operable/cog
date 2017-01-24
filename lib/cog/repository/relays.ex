@@ -74,7 +74,8 @@ defmodule Cog.Repository.Relays do
   def delete(id) do
     try do
       with {:ok, relay} <- by_id(id),
-           {:ok, deleted_relay} <- Repo.delete(relay),
+           changeset <- Relay.changeset(relay, %{}),
+           {:ok, deleted_relay} <- Repo.delete(changeset),
            :ok <- Relays.drop_relay(relay),
              do: {:ok, deleted_relay}
     rescue

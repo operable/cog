@@ -1,5 +1,6 @@
 defmodule GroupTest do
   use Cog.ModelCase
+  alias Cog.Models.Group
 
   setup do
     {:ok, [user: user("cog"),
@@ -38,4 +39,17 @@ defmodule GroupTest do
     assert(:ok = Permittable.grant_to(group, role))
   end
 
+  test "deleting a group with roles granted", %{group: group, role: role} do
+    :ok = Permittable.grant_to(group, role)
+    changeset = Group.changeset(group, %{})
+    assert {:error, changeset} = Repo.delete(changeset)
+    assert [id: {"cannot delete group that has been granted roles", []}] = changeset.errors
+  end
+
+  test "deleting a group with members", %{group: group, user: user} do
+    :ok = Groupable.add_to(user, group)
+    changeset = Group.changeset(group, %{})
+    assert {:error, changeset} = Repo.delete(changeset)
+    assert [id: {"cannot delete group that has user members", []}] = changeset.errors
+  end
 end

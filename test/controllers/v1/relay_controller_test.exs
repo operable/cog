@@ -101,7 +101,7 @@ defmodule Cog.V1.RelayControllerTest do
   test "deleted relays are removed from the tracker", %{authed: requestor} do
     # We create a relay and add a bundle to it so we can query for it in
     # 'Cog.Relay.Relays'
-    {relay, bundle_version, _relay_group} = create_relay_bundle_and_group("deleted-relay", relay_opts: [enabled: true])
+    {relay, bundle_version, relay_group} = create_relay_bundle_and_group("deleted-relay", relay_opts: [enabled: true])
 
     # We shouldn't see any relays running our bundle yet, because the relay
     # has not yet announced it's presence.
@@ -117,6 +117,7 @@ defmodule Cog.V1.RelayControllerTest do
     assert Relays.relays_running(bundle_version.bundle.name, bundle_version.version) == [relay.id]
 
     # This should delete the relay
+    api_request(requestor, :post, "/v1/relay_groups/#{relay_group.id}/relays", body: %{"relays" => %{"remove" => [relay.id]}})
     conn = api_request(requestor, :delete, "/v1/relays/#{relay.id}")
 
     # Confirm that the api thinks the relay has been deleted

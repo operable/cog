@@ -46,6 +46,8 @@ defmodule Cog.Models.Role do
     model
     |> cast(params, @required_fields, @optional_fields)
     |> protect_admin_role
+    |> group_roles_constraint
+    |> role_permissions_constraint
     |> unique_constraint(:name)
   end
 
@@ -58,6 +60,19 @@ defmodule Cog.Models.Role do
     end
   end
 
+  defp group_roles_constraint(changeset) do
+    foreign_key_constraint(changeset,
+                           :id,
+                           name: :group_roles_role_id_fkey,
+                           message: "cannot delete role that has been granted to a group")
+  end
+
+  defp role_permissions_constraint(changeset) do
+    foreign_key_constraint(changeset,
+                           :id,
+                           name: :role_permissions_role_id_fkey,
+                           message: "cannot delete role that has been granted permissions")
+  end
 end
 
 defimpl Permittable, for: Cog.Models.Role do

@@ -20,13 +20,14 @@ defmodule Cog.Models.Relay do
   @required_fields ~w(name)
   @optional_fields ~w(id token enabled description)
 
-  def changeset(model, params \\ :empty) do
+  def changeset(model, params \\ %{}) do
     model
     |> Repo.preload(:groups)
     |> cast(params, @required_fields, @optional_fields)
     |> allow_user_defined_id_on_insert
     |> validate_presence_on_insert(:token)
     |> encode_token
+    |> relay_group_membership_constraint
     |> unique_constraint(:name)
   end
 
@@ -64,6 +65,12 @@ defmodule Cog.Models.Relay do
     end
   end
 
+  defp relay_group_membership_constraint(changeset) do
+    foreign_key_constraint(changeset,
+                           :id,
+                           name: :relay_group_memberships_relay_id_fkey,
+                           message: "cannot delete relay that is a member of a relay group")
+  end
 end
 
 defimpl Groupable, for: Cog.Models.Relay do

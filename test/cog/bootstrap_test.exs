@@ -1,10 +1,6 @@
 defmodule Cog.Bootstrap.Test do
   use Cog.ModelCase
-
-  alias Cog.Models.Bundle
-  alias Cog.Models.BundleVersion
-  alias Cog.Models.Group
-  alias Cog.Models.Role
+  alias Cog.Models.{Bundle, BundleVersion, Group, Role}
 
   @admin_user %{
     "username" => "test-admin",
@@ -18,8 +14,8 @@ defmodule Cog.Bootstrap.Test do
       {:ok, bootstrapped: false}
     else
       {:ok, admin_user} = Cog.Bootstrap.bootstrap(@admin_user)
-      admin_role = Cog.Repo.get_by!(Role, name: Cog.Util.Misc.admin_role)
-      admin_group = Cog.Repo.get_by!(Group, name: Cog.Util.Misc.admin_group)
+      admin_role = Repo.get_by!(Role, name: Cog.Util.Misc.admin_role)
+      admin_group = Repo.get_by!(Group, name: Cog.Util.Misc.admin_group)
       {:ok, admin: admin_user, admin_role: admin_role, admin_group: admin_group, bootstrapped: true}
     end
   end
@@ -78,25 +74,27 @@ defmodule Cog.Bootstrap.Test do
     refute Cog.Bootstrap.is_bootstrapped?
 
     Cog.Bootstrap.bootstrap(@admin_user)
-    assert Cog.Models.Group |> Cog.Repo.one! |> Map.get(:name) == Cog.Util.Misc.admin_group
+    assert Group |> Repo.one! |> Map.get(:name) == Cog.Util.Misc.admin_group
     assert Cog.Bootstrap.is_bootstrapped?
   end
 
   test "the admin group cannot be deleted" do
     try do
-      Cog.Models.Group |> Cog.Repo.delete_all
+      admin_group = Repo.get_by!(Group, name: Cog.Util.Misc.admin_group)
+      Repo.delete(admin_group)
     rescue
       exception ->
-        assert exception.postgres.message == "cannot modify admin group"
+        assert %Ecto.ConstraintError{constraint: "group_roles_group_id_fkey"} = exception
     end
   end
 
   test "the admin role cannot be deleted" do
     try do
-      Cog.Models.Role |> Cog.Repo.delete_all
+      admin_role = Repo.get_by!(Role, name: Cog.Util.Misc.admin_group)
+      Repo.delete(admin_role)
     rescue
       exception ->
-        assert exception.postgres.message == "cannot modify admin role"
+        assert %Ecto.ConstraintError{constraint: "group_roles_role_id_fkey"} = exception
     end
   end
 

@@ -55,6 +55,10 @@ defmodule Cog.V1.RelayController do
         conn
         |> put_status(:bad_request)
         |> json(%{errors: "Bad ID format"})
+      {:error, changeset} ->
+        conn
+        |> put_status(:unprocessable_entity)
+        |> render(Cog.ChangesetView, "error.json", changeset: changeset)
     end
   end
 
