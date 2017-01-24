@@ -116,7 +116,7 @@ defmodule Cog.Chat.Slack.Provider do
   end
   # Old template processing
   def handle_call({:send_message, target, message, metadata}, _from, %__MODULE__{connector: connector, token: token}=state) when is_binary(message) do
-    metadata = maybe_remove_thread_id(metadata, state.enable_threaded_response)
+    metadata = maybe_remove_thread_id(metadata, state.enable_threaded_response, target)
     result = Connector.call(connector, token, :send_message, %{target: target, message: message, metadata: metadata})
     case result["ok"] do
       true ->
@@ -128,7 +128,7 @@ defmodule Cog.Chat.Slack.Provider do
   # New template processing
   def handle_call({:send_message, target, message, metadata}, _from, %__MODULE__{connector: connector, token: token}=state) do
     {text, attachments} = SlackRenderer.render(message)
-    metadata = maybe_remove_thread_id(metadata, state.enable_threaded_response)
+    metadata = maybe_remove_thread_id(metadata, state.enable_threaded_response, target)
     result = Connector.call(connector, token, :send_message, %{target: target, message: text, metadata: metadata, attachments: attachments})
     case result["ok"] do
       true ->
@@ -147,8 +147,8 @@ defmodule Cog.Chat.Slack.Provider do
     {:noreply, state}
   end
 
-  defp maybe_remove_thread_id(metadata, true),
+  defp maybe_remove_thread_id(%Cog.Chat.MessageMetadata{originating_room_id: target_room_id} = metadata, true, target_room_id),
     do: metadata
-  defp maybe_remove_thread_id(metadata, _),
+  defp maybe_remove_thread_id(metadata, _disabled, _taget_room_id),
     do: %{metadata | thread_id: nil}
 end

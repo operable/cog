@@ -301,7 +301,7 @@ defmodule Cog.Chat.Slack.Connector do
         else
           {:chat_message, %Message{id: Cog.Events.Util.unique_id, room: room,
               user: user, text: text, provider: @provider_name,
-              metadata: %MessageMetadata{thread_id: ts},
+              metadata: %MessageMetadata{thread_id: ts, originating_room_id: room.id},
               bot_name: "@#{state.me.name}", edited: false}}
         end
     end
