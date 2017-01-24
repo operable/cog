@@ -6,7 +6,7 @@ defmodule Cog.Repository.Bundles do
   require Logger
 
   alias Cog.Repo
-  alias Cog.Models.{Bundle, BundleVersion, BundleDynamicConfig, CommandVersion, Rule, RelayGroupAssignment}
+  alias Cog.Models.{Bundle, BundleVersion, BundleDynamicConfig, CommandVersion, Rule, RelayGroupAssignment, RolePermission}
   alias Cog.Repository.Rules
   alias Cog.Queries
   alias Cog.Bundle.Warehouse
@@ -190,10 +190,16 @@ defmodule Cog.Repository.Bundles do
       end
     end
   end
-  def delete(%Bundle{}=b) do
-    case enabled_version(b) do
+  def delete(%Bundle{id: bundle_id}=bundle) do
+    case enabled_version(bundle) do
       nil ->
-        Repo.delete(b)
+        Repo.transaction(fn ->
+          Repo.delete_all(from rp in RolePermission,
+                          join: p in assoc(rp, :permission),
+                          join: b in assoc(p, :bundle),
+                          where: b.id == ^bundle_id)
+          Repo.delete(bundle)
+        end)
       %BundleVersion{version: version} ->
         {:error, {:enabled_version, version}}
     end

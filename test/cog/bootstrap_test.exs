@@ -100,7 +100,8 @@ defmodule Cog.Bootstrap.Test do
 
   test "the embedded bundle cannot be deleted" do
     try do
-      Cog.Models.Bundle |> Cog.Repo.delete_all
+      embedded = Repo.get_by!(Bundle, name: Cog.Util.Misc.embedded_bundle)
+      Cog.Repository.Bundles.delete(embedded)
     rescue
       exception ->
         assert exception.postgres.message == "cannot modify embedded bundle"
