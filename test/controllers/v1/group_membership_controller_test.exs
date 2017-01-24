@@ -287,4 +287,17 @@ defmodule Cog.V1.GroupMembershipController.Test do
                       "email_address" => bender.email_address}
 
   end
+
+  test "fails when removing the last user from the cog-admin group", %{authed: requestor} do
+    group = group("cog-admin")
+    user = user("admin")
+    Groupable.add_to(user, group)
+
+    conn = api_request(requestor, :post, "/v1/groups/#{group.id}/users",
+                       body: %{"users" => %{"remove" => [user.username]}})
+
+    assert json_response(conn, 422) == %{"errors" => "The cog-admin group must have at least one member"}
+
+    assert [user] == Repo.all(Ecto.assoc(group, :users))
+  end
 end
