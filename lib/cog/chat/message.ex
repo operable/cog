@@ -10,5 +10,6 @@ defmodule Cog.Chat.Message do
   field :edited, :bool, required: false
   field :initial_context, :map, required: false
   field :bot_name, :string, required: false
+  field :metadata, [object: Cog.Chat.MessageMetadata], required: false
 
 end

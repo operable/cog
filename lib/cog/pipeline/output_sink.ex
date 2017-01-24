@@ -150,7 +150,7 @@ defmodule Cog.Pipeline.OutputSink do
 
   defp send_to_adapter({type, targets}, signal, state) do
     output = output_for(type, signal, nil)
-    Enum.each(targets, &ChatAdapter.send(state.conn, &1.provider, &1.room, output))
+    Enum.each(targets, &ChatAdapter.send(state.conn, &1.provider, &1.room, output, state.request.metadata))
   end
 
   defp early_exit_response(%DoneSignal{}=signal, state) do
@@ -161,7 +161,8 @@ defmodule Cog.Pipeline.OutputSink do
     destinations = Destination.here(state.request)
     Enum.each(destinations, fn({type, destinations}) ->
       output = output_for(type, data_signal, "Terminated early")
-      Enum.each(destinations, &ChatAdapter.send(&1.provider, &1.room, output)) end)
+      Enum.each(destinations, &ChatAdapter.send(&1.provider, &1.room, output, state.request.metadata))
+    end)
   end
 
   defp output_for(:chat, %DataSignal{}=signal, _message) do

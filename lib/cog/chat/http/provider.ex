@@ -20,8 +20,8 @@ defmodule Cog.Chat.Http.Provider do
   ########################################################################
   # Provider Implementation
 
-  def send_message(room, response),
-    do: Connector.finish_request(room, response)
+  def send_message(room, response, metadata),
+    do: Connector.finish_request(room, response, metadata)
 
   def lookup_room(_room),
     do: {:error, :not_found}

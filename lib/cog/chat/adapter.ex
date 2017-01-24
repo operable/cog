@@ -141,19 +141,19 @@ defmodule Cog.Chat.Adapter do
     result
   end
 
-  def send(provider, target, message) do
+  def send(provider, target, message, metadata) do
     case prepare_target(target) do
       {:ok, target} ->
-        GenMqtt.cast(@adapter_topic, "send", %{provider: provider, target: target, message: message})
+        GenMqtt.cast(@adapter_topic, "send", %{provider: provider, target: target, message: message, metadata: metadata})
       error ->
         Logger.error("#{inspect error}")
         error
     end
   end
-  def send(conn, provider, target, message) do
+  def send(conn, provider, target, message, metadata) do
     case prepare_target(target) do
       {:ok, target} ->
-        GenMqtt.cast(conn, @adapter_topic, "send", %{provider: provider, target: target, message: message})
+        GenMqtt.cast(conn, @adapter_topic, "send", %{provider: provider, target: target, message: message, metadata: metadata})
       error ->
         Logger.error("#{inspect error}")
         error
@@ -226,8 +226,9 @@ defmodule Cog.Chat.Adapter do
   # Non-blocking "cast" messages
   def handle_cast(_conn, @adapter_topic, "send",  %{"target" => target,
                                                     "message" => message,
-                                                    "provider" => provider}, state) do
-    case with_provider(provider, state, :send_message, [target, message]) do
+                                                    "provider" => provider,
+                                                    "metadata" => metadata}, state) do
+    case with_provider(provider, state, :send_message, [target, message, metadata]) do
       :ok ->
         :ok
       {:error, :not_implemented} ->
@@ -250,8 +251,11 @@ defmodule Cog.Chat.Adapter do
                       mention_name = with_provider(message.provider, state, :mention_name, [message.user.handle])
                       send(conn, message.provider, message.room, "#{mention_name} Executing edited command '#{text}'")
                     end
-                    request = %ProviderRequest{text: text, sender: message.user, room: message.room, reply: "", id: message.id,
-                                              provider: message.provider, initial_context: message.initial_context || %{}}
+                    request = %ProviderRequest{
+                      text: text, sender: message.user, room: message.room,
+                      reply: "", id: message.id, provider: message.provider,
+                      metadata: message.metadata,
+                      initial_context: message.initial_context || %{}}
                     Connection.publish(conn, request, routed_by: "/bot/commands")
                     state
                   false ->

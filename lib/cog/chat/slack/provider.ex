@@ -55,8 +55,8 @@ defmodule Cog.Chat.Slack.Provider do
     GenServer.call(__MODULE__, {:leave, room}, :infinity)
   end
 
-  def send_message(target, message) do
-    GenServer.call(__MODULE__, {:send_message, target, message}, :infinity)
+  def send_message(target, message, metadata) do
+    GenServer.call(__MODULE__, {:send_message, target, message, metadata}, :infinity)
   end
 
   def init([config]) do
@@ -114,8 +114,8 @@ defmodule Cog.Chat.Slack.Provider do
     end
   end
   # Old template processing
-  def handle_call({:send_message, target, message}, _from, %__MODULE__{connector: connector, token: token}=state) when is_binary(message) do
-    result = Connector.call(connector, token, :send_message, %{target: target, message: message})
+  def handle_call({:send_message, target, message, metadata}, _from, %__MODULE__{connector: connector, token: token}=state) when is_binary(message) do
+    result = Connector.call(connector, token, :send_message, %{target: target, message: message, metadata: metadata})
     case result["ok"] do
       true ->
         {:reply, :ok, state}
@@ -124,9 +124,9 @@ defmodule Cog.Chat.Slack.Provider do
     end
   end
   # New template processing
-  def handle_call({:send_message, target, message}, _from, %__MODULE__{connector: connector, token: token}=state) do
+  def handle_call({:send_message, target, message, metadata}, _from, %__MODULE__{connector: connector, token: token}=state) do
     {text, attachments} = SlackRenderer.render(message)
-    result = Connector.call(connector, token, :send_message, %{target: target, message: text, attachments: attachments})
+    result = Connector.call(connector, token, :send_message, %{target: target, message: text, metadata: metadata, attachments: attachments})
     case result["ok"] do
       true ->
         {:reply, :ok, state}

@@ -5,6 +5,7 @@ defmodule Cog.Messages.ProviderRequest do
   Input to the executor; all providers must generate one.
   """
   use Conduit
+  require Cog.Chat.MessageMetadata
 
   # Unique request ID
   field :id, :string, required: true
@@ -30,6 +31,8 @@ defmodule Cog.Messages.ProviderRequest do
   # Short name of provider, e.g. "slack"
   field :provider, :string, required: true
 
+  # Extra data related to the incoming message, like the thread_id
+  field :metadata, [object: Cog.Chat.MessageMetadata], required: false
 end
 
 defmodule Cog.Messages.Command do
