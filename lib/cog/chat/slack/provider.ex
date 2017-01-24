@@ -10,7 +10,7 @@ defmodule Cog.Chat.Slack.Provider do
   alias Cog.Chat.Slack.Connector
   alias Greenbar.Renderers.SlackRenderer
 
-  defstruct [:token, :incoming, :connector, :mbus]
+  defstruct [:token, :incoming, :connector, :mbus, :enable_threaded_response]
 
   def display_name, do: "Slack"
 
@@ -70,9 +70,10 @@ defmodule Cog.Chat.Slack.Provider do
       {:stop, :bad_slack_token}
     else
       incoming = Keyword.fetch!(config, :incoming_topic)
+      enable_threaded_response = Keyword.get(config, :enable_threaded_response)
       with {:ok, mbus} <- ConnectionSup.connect(),
            {:ok, pid} <- Connector.start_link(token) do
-        {:ok, %__MODULE__{token: token, incoming: incoming, connector: pid, mbus: mbus}}
+        {:ok, %__MODULE__{token: token, incoming: incoming, connector: pid, mbus: mbus, enable_threaded_response: enable_threaded_response}}
       else
         {:error, reason}=error when is_binary(reason) ->
           Logger.error("Slack connection initialization failed: #{reason}")
@@ -115,6 +116,7 @@ defmodule Cog.Chat.Slack.Provider do
   end
   # Old template processing
   def handle_call({:send_message, target, message, metadata}, _from, %__MODULE__{connector: connector, token: token}=state) when is_binary(message) do
+    metadata = maybe_remove_thread_id(metadata, state.enable_threaded_response)
     result = Connector.call(connector, token, :send_message, %{target: target, message: message, metadata: metadata})
     case result["ok"] do
       true ->
@@ -126,6 +128,7 @@ defmodule Cog.Chat.Slack.Provider do
   # New template processing
   def handle_call({:send_message, target, message, metadata}, _from, %__MODULE__{connector: connector, token: token}=state) do
     {text, attachments} = SlackRenderer.render(message)
+    metadata = maybe_remove_thread_id(metadata, state.enable_threaded_response)
     result = Connector.call(connector, token, :send_message, %{target: target, message: text, metadata: metadata, attachments: attachments})
     case result["ok"] do
       true ->
@@ -144,4 +147,8 @@ defmodule Cog.Chat.Slack.Provider do
     {:noreply, state}
   end
 
+  defp maybe_remove_thread_id(metadata, true),
+    do: metadata
+  defp maybe_remove_thread_id(metadata, _),
+    do: %{metadata | thread_id: nil}
 end

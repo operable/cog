@@ -21,7 +21,7 @@ defmodule Cog.Chat.Provider do
 
   @callback leave(room :: String.t) :: :ok | {:error, term}
 
-  @callback send_message(target :: String.t, message :: String.t | List.t, metadata :: Map.t) :: :ok | {:ok, sent_message ::String.t} | {:error, term}
+  @callback send_message(target :: String.t, message :: String.t | List.t, metadata :: Cog.Chat.MessageMetadata.t) :: :ok | {:ok, sent_message ::String.t} | {:error, term}
 
   @callback mention_name(handle :: String.t) :: String.t
 

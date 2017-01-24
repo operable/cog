@@ -228,6 +228,13 @@ defmodule Cog.Chat.Adapter do
                                                     "message" => message,
                                                     "provider" => provider,
                                                     "metadata" => metadata}, state) do
+    metadata = case Cog.Chat.MessageMetadata.from_map(metadata) do
+      {:ok, metadata} ->
+        metadata
+      _error ->
+        %Cog.Chat.MessageMetadata{}
+    end
+
     case with_provider(provider, state, :send_message, [target, message, metadata]) do
       :ok ->
         :ok
@@ -236,6 +243,7 @@ defmodule Cog.Chat.Adapter do
       {:error, reason} ->
         Logger.error("Failed to send message to provider #{provider}: #{inspect reason, pretty: true}")
     end
+
     {:noreply, state}
   end
   def handle_cast(_conn, @incoming_topic, "event", event, state) do

@@ -36,8 +36,7 @@ config :cog, :embedded_bundle_version, "0.18.0"
 # Chat Adapters
 # ========================================================================
 
-config :cog, Cog.Chat.Http.Provider,
-  foo: "blah"
+config :cog, Cog.Chat.Http.Provider, []
 
 config :cog, Cog.Chat.Adapter,
   providers: provider_list(),

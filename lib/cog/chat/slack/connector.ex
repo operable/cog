@@ -363,7 +363,8 @@ defmodule Cog.Chat.Slack.Connector do
     end
   end
 
-  def maybe_include_thread_attributes(message, %MessageMetadata{thread_id: thread_id}),
+  def maybe_include_thread_attributes(message, %MessageMetadata{thread_id: thread_id})
+      when is_binary(thread_id),
     do: Map.merge(message, %{thread_ts: thread_id, reply_broadcast: true})
   def maybe_include_thread_attributes(message, _metadata),
     do: message
