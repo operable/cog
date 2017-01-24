@@ -136,8 +136,8 @@ defimpl Groupable, for: Cog.Models.User do
         case error do
           # Handle exception from protected_admin_group_memberships trigger
           %Postgrex.Error{postgres: %{code: :raise_exception,
-                                      message: "cannot remove admin user from cog-admin group"}} ->
-            {:error, :cannot_remove_admin_user}
+                                      message: "cannot remove last user from cog-admin group"}} ->
+            {:error, :cannot_remove_last_admin_user}
         end
     end
   end
