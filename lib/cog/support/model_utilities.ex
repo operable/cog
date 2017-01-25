@@ -137,8 +137,9 @@ defmodule Cog.Support.ModelUtilities do
   end
 
   @doc """
-  Grant a permission to an implementor of `Permittable`, and return
-  the implementor.
+  Grant a permission role and return the role. If a user is passed instead of
+  a role, a group and role is created. The user and role are added to the new
+  group. The role is granted the permission and the user is returned.
   """
   def with_permission(%User{username: username}=user, permission) do
     role = role("#{username}_role")
@@ -151,9 +152,9 @@ defmodule Cog.Support.ModelUtilities do
   def with_permission(grantee, permission_name) when is_binary(permission_name) do
     with_permission(grantee, permission(permission_name))
   end
-  def with_permission(grantee, %Permission{}=permission) do
-    :ok = Permittable.grant_to(grantee, permission)
-    grantee
+  def with_permission(%Role{}=role, %Permission{}=permission) do
+    :ok = Permittable.grant_to(role, permission)
+    role
   end
 
   @doc """

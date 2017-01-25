@@ -16,19 +16,16 @@ defmodule Cog.V1.UserControllerTest do
   @bad_uuid "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
 
   setup do
-    # Requests handled by the role controller require this permission
-    required_permission = permission("#{Cog.Util.Misc.embedded_bundle}:manage_users")
-
     # This user will be used to test the normal operation of the controller
     authed_user = user("cog")
     |> with_token
 
     # We add the user to a group and grant that group the appropriate permissions
+    role = role("monkey")
+           |> with_permission("#{Cog.Util.Misc.embedded_bundle}:manage_users")
     group = group("robots")
-    role = role("robot_role")
-    Groupable.add_to(authed_user, group)
-    Permittable.grant_to(group, role)
-    Permittable.grant_to(role, required_permission)
+            |> add_to_group(role)
+            |> add_to_group(authed_user)
 
     # This user will be used to verify that the above permission is
     # indeed required for requests
@@ -252,12 +249,10 @@ defmodule Cog.V1.UserControllerTest do
   end
 
   test "retrieving roles for each user", %{authed: requestor, unauthed: unauthed} do
+    {role, permission} = role_with_permission("take-over", "site:world")
     group = group("other_robots")
-    Groupable.add_to(unauthed, group)
-    role = role("take-over")
-    Permittable.grant_to(group, role)
-    permission = permission("site:world")
-    Permittable.grant_to(role, permission)
+            |> add_to_group(unauthed)
+            |> add_to_group(role)
 
     conn = api_request(requestor, :get, "/v1/users?username=#{unauthed.username}")
     user_json = json_response(conn, 200)
