@@ -4,13 +4,11 @@ defmodule Cog.Models.Role do
 
   alias Cog.Models.GroupRole
   alias Cog.Models.RolePermission
-  alias Cog.Models.UserRole
   alias Ecto.Changeset
 
   schema "roles" do
     field :name, :string
 
-    has_many :user_grants, UserRole
     has_many :group_grants, GroupRole
 
     has_many :permission_grants, RolePermission

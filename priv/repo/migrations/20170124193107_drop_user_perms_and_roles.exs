@@ -3,6 +3,7 @@ defmodule Cog.Repo.Migrations.DropUserPermsAndRoles do
 
   def change do
     drop table(:user_permissions)
+    drop table(:user_roles)
 
     execute """
     CREATE OR REPLACE FUNCTION user_has_permission(
@@ -14,22 +15,6 @@ defmodule Cog.Repo.Migrations.DropUserPermsAndRoles do
     DECLARE
       has_result uuid;
     BEGIN
-    -- The user might have a role, though; check that!
-    SELECT rp.permission_id
-      FROM role_permissions AS rp
-      JOIN user_roles AS ur
-        ON rp.role_id = ur.role_id
-     WHERE ur.user_id = p_user
-       AND rp.permission_id = p_perm
-      INTO has_result;
-
-    -- If that returned anything, we're done
-    IF has_result IS NOT NULL THEN
-      RETURN TRUE;
-    END IF;
-
-    -- The permission wasn't granted directly to the user, we need
-    -- to check the groups the user is in
     WITH all_groups AS (
       SELECT id FROM groups_for_user(p_user) AS g(id)
     ),
@@ -79,16 +64,6 @@ defmodule Cog.Repo.Migrations.DropUserPermsAndRoles do
         FROM groups_for_user(p_user)
       ),
       all_permissions as (
-
-      -- Retrieve all permissions granted to the user
-      -- via roles
-      SELECT rp.permission_id
-        FROM role_permissions as rp
-        JOIN user_roles as ur
-          ON rp.role_id = ur.role_id
-        WHERE ur.user_id = p_user
-      UNION DISTINCT
-
       -- Retrieve all permissions granted to the groups
       -- via roles
       SELECT rp.permission_id
@@ -114,14 +89,7 @@ defmodule Cog.Repo.Migrations.DropUserPermsAndRoles do
     RETURNS SETOF users.id%TYPE
     LANGUAGE SQL STABLE STRICT
     AS $$
-      WITH role_grants AS (
-        SELECT ur.user_id
-        FROM user_roles AS ur
-        JOIN role_permissions AS rp
-          USING(role_id)
-        WHERE rp.permission_id = p_permission
-      ),
-      all_groups AS (
+      WITH all_groups AS (
         SELECT group_id
         FROM groups_with_permission(p_permission) AS g(group_id)
       ),
@@ -131,8 +99,6 @@ defmodule Cog.Repo.Migrations.DropUserPermsAndRoles do
         JOIN all_groups AS ag
           USING(group_id)
       )
-      SELECT user_id FROM role_grants
-      UNION
       SELECT user_id FROM group_grants
       ;
     $$;

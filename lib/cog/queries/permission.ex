@@ -2,12 +2,9 @@ defmodule Cog.Queries.Permission do
 
   import Ecto.Query, only: [from: 2]
 
-  alias Cog.Models.Group
   alias Cog.Models.GroupRole
   alias Cog.Models.Permission
   alias Cog.Models.Role
-  alias Cog.Models.User
-  alias Cog.Models.UserRole
 
 
   def names do
@@ -40,28 +37,6 @@ defmodule Cog.Queries.Permission do
     where: r.name == ^rolename,
     select: gr,
     preload: [:group]
-  end
-
-  def from_user_roles(rolename) do
-    from ur in UserRole,
-    join: r in assoc(ur, :role),
-    where: r.name == ^rolename,
-    select: ur,
-    preload: [:user]
-  end
-
-  def directly_granted_to_user(user_id) do
-    from u in User,
-    join: p in assoc(u, :permissions),
-    where: u.id == ^user_id,
-    select: p
-  end
-
-  def directly_granted_to_group(group_id) do
-    from g in Group,
-    join: p in assoc(g, :permissions),
-    where: g.id == ^group_id,
-    select: p
   end
 
   def directly_granted_to_role(role_id) do
