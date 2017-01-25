@@ -5,7 +5,6 @@ defmodule Cog.Models.User do
   alias Cog.Passwords
   alias Cog.Models.Permission
   alias Cog.Models.UserGroupMembership
-  alias Cog.Models.UserPermission
   alias Cog.Models.UserRole
   alias Cog.Models.ChatHandle
 
@@ -21,9 +20,6 @@ defmodule Cog.Models.User do
 
     has_many :group_memberships, UserGroupMembership, foreign_key: :member_id
     has_many :direct_group_memberships, through: [:group_memberships, :group]
-
-    has_many :permission_grants, UserPermission
-    has_many :permissions, through: [:permission_grants, :permission]
 
     has_many :role_grants, UserRole
     has_many :roles, through: [:role_grants, :role]

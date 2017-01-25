@@ -140,6 +140,14 @@ defmodule Cog.Support.ModelUtilities do
   Grant a permission to an implementor of `Permittable`, and return
   the implementor.
   """
+  def with_permission(%User{username: username}=user, permission) do
+    role = role("#{username}_role")
+    group = group("#{username}_group")
+    :ok = Permittable.grant_to(group, role)
+    :ok = Groupable.add_to(user, group)
+    with_permission(role, permission)
+    user
+  end
   def with_permission(grantee, permission_name) when is_binary(permission_name) do
     with_permission(grantee, permission(permission_name))
   end

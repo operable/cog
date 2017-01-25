@@ -144,7 +144,6 @@ defmodule Cog.Models.JoinTable do
        Cog.UUID.uuid_to_bin(rhs.id)])
   end
 
-  defp table_name(%User{}, %Permission{}),   do: "user_permissions"
   defp table_name(%User{}, %Role{}),         do: "user_roles"
   defp table_name(%Role{}, %Permission{}),   do: "role_permissions"
   defp table_name(%Group{}, %Role{}),        do: "group_roles"
