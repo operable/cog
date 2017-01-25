@@ -228,10 +228,15 @@ defmodule Cog.Chat.Adapter do
                                                     "message" => message,
                                                     "provider" => provider,
                                                     "metadata" => metadata}, state) do
-    metadata = case Cog.Chat.MessageMetadata.from_map(metadata) do
-      {:ok, metadata} ->
-        metadata
-      _error ->
+    metadata = case metadata do
+      map when is_map(map) ->
+        case Cog.Chat.MessageMetadata.from_map(metadata) do
+          {:ok, metadata} ->
+            metadata
+          _error ->
+          %Cog.Chat.MessageMetadata{}
+        end
+      _ ->
         %Cog.Chat.MessageMetadata{}
     end
 
