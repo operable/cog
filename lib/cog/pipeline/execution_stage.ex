@@ -9,6 +9,7 @@ defmodule Cog.Pipeline.ExecutionStage do
   alias Cog.Pipeline.DataSignal
   alias Cog.Pipeline.DoneSignal
   alias Cog.Pipeline.RelaySelector
+  alias Cog.Repository.PipelineHistory, as: HistoryRepo
   alias Piper.Command.Ast.BadValueError
 
   @moduledoc ~s"""
@@ -138,6 +139,7 @@ defmodule Cog.Pipeline.ExecutionStage do
   def handle_events(in_events, _from, state) do
     [current|rest] = in_events
     {out_events, state} = process_events(current, rest, state, [])
+    HistoryRepo.increment_count(state.request_id, Enum.count(in_events) - 1)
     {:noreply, out_events, state}
   end
 
@@ -181,7 +183,7 @@ defmodule Cog.Pipeline.ExecutionStage do
     {signal, state}
   end
 
-  defp invoke_command(signal, %__MODULE__{timeout: timeout}=state) do
+  defp invoke_command(signal, %__MODULE__{timeout: timeout, pipeline: pipeline}=state) do
     started = DateTime.utc_now()
     topic = state.topic
     command_name = state.invocation.meta.command_name
@@ -193,10 +195,15 @@ defmodule Cog.Pipeline.ExecutionStage do
             dispatch_event(text, request.cog_env, started, state)
             case Connection.publish(state.conn, request, routed_by: RelaySelector.relay_topic!(state.relay_selector, command_name)) do
               :ok ->
+                HistoryRepo.update_state(state.request_id, "waiting")
                 receive do
                   {:publish, ^topic, message} ->
+                    HistoryRepo.update_state(state.request_id, "running")
                     process_response(CommandResponse.decode!(message), state)
+                  {:pipeline_complete, ^pipeline} ->
+                    Process.exit(self(), :normal)
                 after timeout ->
+                    HistoryRepo.update_state(state.request_id, "running")
                     {[%DoneSignal{error: {:error, :timeout}, invocation: text, template: "error"}], state}
                 end
               error ->
@@ -217,7 +224,7 @@ defmodule Cog.Pipeline.ExecutionStage do
       with {:ok, bound} <- Binder.bind(state.invocation, signal.data),
            {:ok, options, args} <- OptionParser.parse(bound),
              :allowed <- PermissionEnforcer.check(state.invocation.meta, options, args, state.permissions) do
-        request = Command.create(state.invocation, options, args)
+        request = Command.create(state.request_id, state.invocation, options, args)
         {:allowed, "#{bound}", %{request | invocation_step: signal.position, requestor: state.sender,
                                  cog_env: signal.data, user: state.user, room: state.room, reply_to: state.topic,
                                  service_token: state.service_token, reply_to: state.topic}}
@@ -256,7 +263,7 @@ defmodule Cog.Pipeline.ExecutionStage do
         signals = [DataSignal.wrap(response.body, bundle_version_id, response.template), %DoneSignal{}]
         {signals, state}
       "error" ->
-        {[%DoneSignal{error: {:error, response.status_message || :unknown_error}}], state}
+        {[%DoneSignal{error: {:error, response.status_message || :unknown_error}, template: response.template}], state}
     end
   end
 

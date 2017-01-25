@@ -1,0 +1,12 @@
+~each var=$results~
+~attachment color="operableblue"~
+**Id:** ~$item.id~
+**Text:** `~$item.text~`
+**Time:** ~$item.time~ ms
+**User:** ~$item.user~
+**Room:** ~$item.room~
+**State:** ~$item.state~
+**Started:** ~$item.started~
+**Processed:** ~$item.processed~
+~end~
+~end~

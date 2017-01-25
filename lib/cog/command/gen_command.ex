@@ -47,8 +47,12 @@ defmodule Cog.Command.GenCommand do
   @callback handle_message(Command.Request.t, callback_state())
             :: {:reply, message_bus_topic(), command_response(), callback_state()} |
                {:reply, message_bus_topic(), template(), command_response(), callback_state()} |
+               {:replace_invocation, Cog.Chat.Message.t, state} |
                {:error, message_bus_topic(), String.t, callback_state()} |
                {:noreply, callback_state()}
+
+  alias Cog.Chat.Adapter, as: ChatAdapter
+  alias Carrier.Messaging.GenMqtt
 
   @doc """
   Returns `true` if `module` implements the
@@ -189,6 +193,11 @@ defmodule Cog.Command.GenCommand do
         {:reply, reply_to, reply, cb_state} ->
           new_state = %{state | cb_state: cb_state}
           send_ok_reply(reply, reply_to, new_state)
+          {:noreply, new_state}
+        {:replace_invocation, message, cb_state} ->
+          new_state = %{state | cb_state: cb_state}
+          GenMqtt.cast(state.mq_conn, ChatAdapter.incoming_topic(), "internal", message)
+          send_ok_reply("ok", req.reply_to, new_state)
           {:noreply, new_state}
         {:error, reply_to, error_message, cb_state} ->
           new_state = %{state | cb_state: cb_state}

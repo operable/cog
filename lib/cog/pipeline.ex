@@ -14,6 +14,7 @@ defmodule Cog.Pipeline do
   alias Cog.Pipeline.{CommandResolver, DataSignal, DoneSignal, ExecutionStageSup, ErrorSinkSup,
                       InitialContext, InitialContextSup, OutputSinkSup, PermissionsCache}
   alias Cog.Queries.User, as: UserQueries
+  alias Cog.Repository.PipelineHistory, as: HistoryRepo
   alias Cog.Repo
   alias Piper.Command.Ast
   alias Piper.Command.Parser
@@ -106,6 +107,9 @@ defmodule Cog.Pipeline do
     {:reply, :ignored, state}
   end
 
+  def handle_cast(:teardown, %__MODULE__{status: :done}=state) do
+    {:noreply, state}
+  end
   def handle_cast(:teardown, state) do
     duration = Util.elapsed(state.started, DateTime.utc_now, :milliseconds)
     Logger.info("Pipeline #{state.request.id} ran for #{duration} ms")
@@ -119,6 +123,7 @@ defmodule Cog.Pipeline do
   # Close bus connection and exit after last stage exits
   # This avoids closing the connection while one of the sinks is still using it
   def handle_info({:DOWN, _, _, stage, _}, %__MODULE__{status: :done, stages: [stage]}=state) do
+    HistoryRepo.update_state(state.request.id, "finished")
     Logger.debug("Pipeline #{state.request.id} terminated")
     Connection.disconnect(state.conn)
     {:stop, :normal, %{state | stages: []}}
@@ -212,6 +217,15 @@ defmodule Cog.Pipeline do
                  |> Enum.reduce([initial_context], &create_stage!(&1, &2, user, perms, state))
                  |> create_sinks!(parsed, destinations, user, state)
         initialization_event(user, state)
+        HistoryRepo.new(%{id: state.request.id,
+                          pid: self(),
+                          user_id: user.id,
+                          count: 0,
+                          state: "running",
+                          text: state.request.text,
+                          provider: state.request.provider,
+                          room_name: room_name(state.request.room),
+                          room_id: room_id(state.request)})
         InitialContext.unlock(initial_context)
         {:reply, :ok, %{state | stages: stages}}
       rescue
@@ -332,6 +346,22 @@ defmodule Cog.Pipeline do
   defp initialization_event(user, state) do
     PipelineEvent.initialized(state.request.id, state.started, state.request.text,
       state.request.provider, user.username, state.request.sender.handle) |> Probe.notify
+  end
+
+  defp room_name(room) do
+    if room.is_dm do
+      "DM"
+    else
+      room.name
+    end
+  end
+
+  defp room_id(req) do
+    if req.room.is_dm do
+      req.sender.id
+    else
+      req.room.id
+    end
   end
 
 end

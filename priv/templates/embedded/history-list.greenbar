@@ -1,0 +1,5 @@
+|Index|Pipeline|
+|---|---|
+~each var=$results~
+|~$item.index~|~$item.text~|
+~end~
