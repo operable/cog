@@ -6,6 +6,7 @@ defmodule Cog.Models.User do
   alias Cog.Models.Permission
   alias Cog.Models.UserGroupMembership
   alias Cog.Models.ChatHandle
+  alias Cog.Models.Group
 
   schema "users" do
     field :username, :string
@@ -17,8 +18,7 @@ defmodule Cog.Models.User do
 
     has_many :chat_handles, ChatHandle
 
-    has_many :group_memberships, UserGroupMembership, foreign_key: :member_id
-    has_many :direct_group_memberships, through: [:group_memberships, :group]
+    many_to_many :group_memberships, Group, join_through: UserGroupMembership, join_keys: [member_id: :id, group_id: :id]
 
     has_many :tokens, Cog.Models.Token
 
