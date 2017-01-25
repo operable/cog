@@ -1,5 +1,44 @@
 #  Changelog
 
+## 1.0.0-beta.2
+
+### Enhancements
+
+* Add output documentation for commands [#1224](https://github.com/operable/cog/pull/1224)
+* "Git-style" embedded bundle commands [#1206](https://github.com/operable/cog/issues/1206),
+* Increase timestamp resolution for events [#1253](https://github.com/operable/cog/issues/1253)
+* Create a `trigger-update` template [#1241](https://github.com/operable/cog/issues/1241)
+* Drop Mustache support [#1261](https://github.com/operable/cog/pull/1261)
+* Modify event log format to be friendlier to log aggregators [#1255](https://github.com/operable/cog/issues/1255)
+* Explicitly refuse to run unsupported bundles [#1262](https://github.com/operable/cog/issues/1262)
+* Improve list templates and fix failing tests due to bugfixes [#1277](https://github.com/operable/cog/pull/1277)
+* Share MQTT connections between processes [#1287](https://github.com/operable/cog/pull/1287)
+* Add `info` command to display information about the currently running Cog [#1284](https://github.com/operable/cog/issues/1284)
+* Remove subcommand documentation from commands in bundle config [#1204](https://github.com/operable/cog/issues/1204)
+* Apply snappy compression to all message bus traffic [#874](https://github.com/operable/cog/issues/874)
+* Support "all" operator in rule clauses that refer to list types. [#1209](https://github.com/operable/cog/issues/1209)
+* Update to docker-compose v2 syntax [#1307](https://github.com/operable/cog/issues/1307)
+* Modernize pipeline execution [#1310](https://github.com/operable/cog/issues/1310)
+* Protect the last user in the cog-admin group [#1309](https://github.com/operable/cog/pull/1309)
+* Added pipeline management commands [#1320](https://github.com/operable/cog/pull/1320)
+
+### Bug Fixes
+* Interpolated strings cannot be part of a list-valued option [#1221](https://github.com/operable/cog/issues/1221)
+* Trigger list template incorrectly renders pipelines that are actually pipelines [#1239](https://github.com/operable/cog/issues/1239)
+* Aborting commands is confusing with triggers [#1243](https://github.com/operable/cog/issues/1243)
+* Users without last names cannot execute triggers! [#1245](https://github.com/operable/cog/issues/1245)
+* Trigger users need to have referential integrity [#1246](https://github.com/operable/cog/issues/1246)
+* Ignore bare `!` messages [#1187](https://github.com/operable/cog/issues/1187)
+* Aborting a command crashes the executor [#1296](https://github.com/operable/cog/issues/1296)
+* cogctl can generate broken profiles on startup [#1301](https://github.com/operable/cog/issues/1301)
+
+  Applies to the `.cogctl` file generated inside the `cog` Docker container.
+* Crash when executing a command assigned to a relay group with no running relays [#1314](https://github.com/operable/cog/issues/1314)
+* Connection failure crashes Slack provider [#1317](https://github.com/operable/cog/issues/1317)
+
+### Documentation
+* Cleaned up documentation for `docker compose` usage [#1273](https://github.com/operable/cog/pull/1273/)
+
 ## 1.0.0-beta.1
 
 ### Enhancements
