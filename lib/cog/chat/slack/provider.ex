@@ -70,10 +70,17 @@ defmodule Cog.Chat.Slack.Provider do
       {:stop, :bad_slack_token}
     else
       incoming = Keyword.fetch!(config, :incoming_topic)
-
-      {:ok, mbus} = ConnectionSup.connect()
-      {:ok, pid} = Connector.start_link(token)
-      {:ok, %__MODULE__{token: token, incoming: incoming, connector: pid, mbus: mbus}}
+      with {:ok, mbus} <- ConnectionSup.connect(),
+           {:ok, pid} <- Connector.start_link(token) do
+        {:ok, %__MODULE__{token: token, incoming: incoming, connector: pid, mbus: mbus}}
+      else
+        {:error, reason}=error when is_binary(reason) ->
+          Logger.error("Slack connection initialization failed: #{reason}")
+          {:stop, error}
+        error ->
+          Logger.error("Slack connection initialization failed: #{inspect error}")
+          {:stop, error}
+      end
     end
   end
 
