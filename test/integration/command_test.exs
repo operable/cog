@@ -102,9 +102,12 @@ defmodule Integration.CommandTest do
   end
 
   test "running commands in a pipeline", %{user: user} do
-    user
-    |> with_permission("operable:t-echo")
-    |> with_permission("operable:st-thorn")
+    role = role("testrole")
+           |> with_permission("operable:t-echo")
+           |> with_permission("operable:st-thorn")
+    group("testgroup")
+    |> add_to_group(role)
+    |> add_to_group(user)
 
     [response] = send_message(user, ~s(@bot: operable:t-echo "this is a test" | operable:st-thorn $body[0]))
 

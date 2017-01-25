@@ -53,7 +53,7 @@ defmodule Cog.V1.GroupMembershipController.Test do
     group = group("robots")
 
     # user's got nothing yet!
-    assert [] == Repo.preload(user, :direct_group_memberships).direct_group_memberships
+    assert [] == Repo.preload(user, :group_memberships).group_memberships
     assert [] == Repo.preload(group, :users).users
 
     conn = api_request(requestor, :post, "/v1/groups/#{group.id}/users",
@@ -69,7 +69,7 @@ defmodule Cog.V1.GroupMembershipController.Test do
                                          "roles" => []}}} == json_response(conn, 200)
 
     assert [user] == Repo.preload(group, :users).users
-    assert [group] == Repo.preload(user, :direct_group_memberships).direct_group_memberships
+    assert [group] == Repo.preload(user, :group_memberships).group_memberships
   end
 
   test "add multiple users at once", %{authed: requestor} do
@@ -111,7 +111,7 @@ defmodule Cog.V1.GroupMembershipController.Test do
 
     # Each user should also have this group membership reflected
     Enum.each(users, fn(u) ->
-      assert [group] == Repo.preload(u, :direct_group_memberships).direct_group_memberships
+      assert [group] == Repo.preload(u, :group_memberships).group_memberships
     end)
   end
 
@@ -207,7 +207,7 @@ defmodule Cog.V1.GroupMembershipController.Test do
 
     # Each user should also have this group membership reflected
     Enum.each(users, fn(u) ->
-      assert [] == Repo.preload(u, :direct_group_memberships).direct_group_memberships
+      assert [] == Repo.preload(u, :group_memberships).group_memberships
     end)
   end
 

@@ -12,15 +12,22 @@ defmodule Cog.V1.RelayGroupMembershipControllerTest do
     # This user will be used to test the normal operation of the controller
     authed_user = user("cog")
     |> with_token
-    |> with_permission("#{Cog.Util.Misc.embedded_bundle}:manage_relays")
-    |> with_permission("#{Cog.Util.Misc.embedded_bundle}:manage_commands")
+
+    # We add the user to a group and grant that group the appropriate permissions
+    role = role("monkey")
+           |> with_permission("#{Cog.Util.Misc.embedded_bundle}:manage_relays")
+           |> with_permission("#{Cog.Util.Misc.embedded_bundle}:manage_commands")
+    group = group("robots")
+            |> add_to_group(role)
+            |> add_to_group(authed_user)
 
     # This user will be used to verify that the above permission is
     # indeed required for requests
     unauthed_user = user("sadpanda") |> with_token
 
     {:ok, [authed: authed_user,
-           unauthed: unauthed_user]}
+           unauthed: unauthed_user,
+           group: group]}
   end
 
   test "shows chosen resource", %{authed: requestor} do

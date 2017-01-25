@@ -10,14 +10,24 @@ defmodule Cog.Repository.Users do
   alias Cog.Models.PasswordReset
   import Ecto.Query, only: [from: 2]
 
+  @preloads [chat_handles: [:chat_provider, :user],
+             group_memberships: [roles: [permissions: :bundle]]]
+
   @doc """
   Creates a new user given a map of attributes
   """
   @spec new(Map.t) :: {:ok, %User{}} | {:error, Ecto.Changeset.t}
   def new(attrs) do
-    %User{}
+    new_user = %User{}
     |> User.changeset(attrs)
     |> Repo.insert
+
+    case new_user do
+      {:ok, user} ->
+        {:ok, Repo.preload(user, @preloads)}
+      error ->
+        error
+    end
   end
 
   @doc """
@@ -25,7 +35,7 @@ defmodule Cog.Repository.Users do
   """
   @spec all :: [%User{}]
   def all,
-    do: Repo.all(User)
+    do: Repo.all(User) |> Repo.preload(@preloads)
 
   @doc """
   Retrieves all users with a username in usernames. If only some
@@ -33,7 +43,8 @@ defmodule Cog.Repository.Users do
   """
   @spec all_with_username([String.t]) :: {:ok, [%User{}]} | {:some, [%User{}], [String.t]} | {:error, :not_found}
   def all_with_username(usernames) do
-    case Repo.all(from u in User, where: u.username in ^usernames) do
+    case Repo.all(from u in User, where: u.username in ^usernames)
+         |> Repo.preload(@preloads) do
       users when is_list(users) ->
         if length(users) == length(usernames) do
           {:ok, users}
@@ -53,7 +64,7 @@ defmodule Cog.Repository.Users do
   def by_username(username) do
     case Repo.get_by(User, username: username) do
       %User{}=user ->
-        {:ok, user}
+        {:ok, Repo.preload(user, @preloads)}
       nil ->
         {:error, :not_found}
     end
@@ -66,7 +77,7 @@ defmodule Cog.Repository.Users do
   def by_email(email) do
     case Repo.get_by(User, email_address: email) do
       %User{}=user ->
-        {:ok, user}
+        {:ok, Repo.preload(user, @preloads)}
       nil ->
         {:error, :not_found}
     end
@@ -85,7 +96,7 @@ defmodule Cog.Repository.Users do
       nil ->
         {:error, :not_found}
       user ->
-        {:ok, user}
+        {:ok, Repo.preload(user, @preloads)}
     end
   end
 
@@ -106,7 +117,7 @@ defmodule Cog.Repository.Users do
     if Cog.UUID.is_uuid?(id) do
       case Repo.get(User, id) do
         %User{}=user ->
-          {:ok, user}
+          {:ok, Repo.preload(user, @preloads)}
         nil ->
           {:error, :not_found}
       end
@@ -131,7 +142,12 @@ defmodule Cog.Repository.Users do
   @spec update(%User{}, Map.t) :: {:ok, %User{}} | {:error, Ecto.Changeset.t}
   def update(%User{}=user, attrs) do
     changeset = User.changeset(user, attrs)
-    Repo.update(changeset)
+    case Repo.update(changeset) do
+      {:ok, user} ->
+        {:ok, Repo.preload(user, @preloads)}
+      error ->
+        error
+    end
   end
 
   @doc """

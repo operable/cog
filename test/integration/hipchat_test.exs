@@ -37,9 +37,12 @@ defmodule Integration.HipChatTest do
   end
 
   test "running commands in a pipeline", %{user: user, client: client} do
-    user
-    |> with_permission("operable:echo")
-    |> with_permission("operable:thorn")
+    role = role("testrole")
+           |> with_permission("operable:echo")
+           |> with_permission("operable:thorn")
+    group("testgroup")
+    |> add_to_group(role)
+    |> add_to_group(user)
 
     message = "@#{@bot}: seed '[{\"test\": \"blah\"}]' | echo $test"
     {:ok, reply} = ChatClient.chat_wait!(client, [room: @ci_room, message: message, reply_from: @bot_name, timeout: @timeout])

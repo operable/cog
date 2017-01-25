@@ -16,50 +16,63 @@ defmodule Cog.V1.UserControllerTest do
   @bad_uuid "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
 
   setup do
-    # Requests handled by the role controller require this permission
-    required_permission = permission("#{Cog.Util.Misc.embedded_bundle}:manage_users")
-
     # This user will be used to test the normal operation of the controller
     authed_user = user("cog")
     |> with_token
-    |> with_permission(required_permission)
+
+    # We add the user to a group and grant that group the appropriate permissions
+    role = role("monkey")
+           |> with_permission("#{Cog.Util.Misc.embedded_bundle}:manage_users")
+    group = group("robots")
+            |> add_to_group(role)
+            |> add_to_group(authed_user)
 
     # This user will be used to verify that the above permission is
     # indeed required for requests
     unauthed_user = user("sadpanda") |> with_token
 
     {:ok, [authed: authed_user,
-           unauthed: unauthed_user]}
+           unauthed: unauthed_user,
+           group: group]}
   end
 
   test "lists all entries on index", %{authed: requestor, unauthed: other} do
     conn = api_request(requestor, :get, "/v1/users")
     users_json = json_response(conn, 200)["users"]
-    assert [%{"id" => requestor.id,
+    auth_id = requestor.id
+    unauth_id = other.id
+    assert [%{"id" => ^auth_id,
               "first_name" => "Cog",
               "last_name" => "McCog",
               "email_address" => "cog@operable.io",
-              "groups" => [],
+              "groups" => [%{"name" => "robots"}],
               "chat_handles" => [],
               "username" => "cog"},
-            %{"id" => other.id,
+            %{"id" => ^unauth_id,
               "first_name" => "Sadpanda",
               "last_name" => "McSadpanda",
               "email_address" => "sadpanda@operable.io",
               "groups" => [],
               "chat_handles" => [],
-              "username" => "sadpanda"}] == users_json |> sort_by("username")
+              "username" => "sadpanda"}] = users_json |> sort_by("username")
   end
 
-  test "shows the authed user's resource", %{authed: requestor} do
+  test "shows the authed user's resource", %{authed: requestor, group: group} do
     conn = api_request(requestor, :get, "/v1/users/me")
-    assert %{"user" => %{"id" => requestor.id,
-                         "username" => requestor.username,
-                         "first_name" => requestor.first_name,
-                         "last_name" => requestor.last_name,
-                         "groups" => [],
+    id = requestor.id
+    username = requestor.username
+    first_name = requestor.first_name
+    last_name = requestor.last_name
+    group_name = group.name
+    email_address = requestor.email_address
+
+    assert %{"user" => %{"id" => ^id,
+                         "username" => ^username,
+                         "first_name" => ^first_name,
+                         "last_name" => ^last_name,
+                         "groups" => [%{"name" => ^group_name}],
                          "chat_handles" => [],
-                         "email_address" => requestor.email_address}} == json_response(conn, 200)
+                         "email_address" => ^email_address}} = json_response(conn, 200)
   end
 
   test "shows chosen resource", %{authed: requestor} do
@@ -187,9 +200,7 @@ defmodule Cog.V1.UserControllerTest do
     assert conn.status == 403
   end
 
-  test "retrieving groups for each user", %{authed: requestor} do
-    group = group("robots")
-    Groupable.add_to(requestor, group)
+  test "retrieving groups for each user", %{authed: requestor, group: group} do
     conn = api_request(requestor, :get, "/v1/users")
     users_json = json_response(conn, 200)["users"]
     [first | _] = users_json
@@ -199,10 +210,7 @@ defmodule Cog.V1.UserControllerTest do
     assert Map.fetch!(groups, "id") == group.id
   end
 
-  test "retrieving groups a specific user belongs in", %{authed: requestor} do
-    group = group("robots")
-    Groupable.add_to(requestor, group)
-
+  test "retrieving groups a specific user belongs in", %{authed: requestor, group: group} do
     conn = api_request(requestor, :get, "/v1/users/#{requestor.id}")
     user_json = json_response(conn, 200)["user"]
     assert length(user_json["groups"]) == 1
@@ -240,22 +248,20 @@ defmodule Cog.V1.UserControllerTest do
                          "last_name" => tester.last_name}
   end
 
-  test "retrieving roles for each user", %{authed: requestor} do
-    group = group("robots")
-    Groupable.add_to(requestor, group)
-    role = role("take-over")
-    Permittable.grant_to(group, role)
-    permission = permission("site:world")
-    Permittable.grant_to(role, permission)
+  test "retrieving roles for each user", %{authed: requestor, unauthed: unauthed} do
+    {role, permission} = role_with_permission("take-over", "site:world")
+    group = group("other_robots")
+            |> add_to_group(unauthed)
+            |> add_to_group(role)
 
-    conn = api_request(requestor, :get, "/v1/users?username=#{requestor.username}")
+    conn = api_request(requestor, :get, "/v1/users?username=#{unauthed.username}")
     user_json = json_response(conn, 200)
 
-    assert %{"id" => requestor.id,
-             "email_address" => requestor.email_address,
-             "username" => requestor.username,
-             "first_name" => requestor.first_name,
-             "last_name" => requestor.last_name,
+    assert %{"id" => unauthed.id,
+             "email_address" => unauthed.email_address,
+             "username" => unauthed.username,
+             "first_name" => unauthed.first_name,
+             "last_name" => unauthed.last_name,
              "groups" => [%{"id" => group.id,
                             "name" => group.name,
                             "roles" => [%{"id" => role.id,

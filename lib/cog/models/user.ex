@@ -5,9 +5,8 @@ defmodule Cog.Models.User do
   alias Cog.Passwords
   alias Cog.Models.Permission
   alias Cog.Models.UserGroupMembership
-  alias Cog.Models.UserPermission
-  alias Cog.Models.UserRole
   alias Cog.Models.ChatHandle
+  alias Cog.Models.Group
 
   schema "users" do
     field :username, :string
@@ -19,14 +18,7 @@ defmodule Cog.Models.User do
 
     has_many :chat_handles, ChatHandle
 
-    has_many :group_memberships, UserGroupMembership, foreign_key: :member_id
-    has_many :direct_group_memberships, through: [:group_memberships, :group]
-
-    has_many :permission_grants, UserPermission
-    has_many :permissions, through: [:permission_grants, :permission]
-
-    has_many :role_grants, UserRole
-    has_many :roles, through: [:role_grants, :role]
+    many_to_many :group_memberships, Group, join_through: UserGroupMembership, join_keys: [member_id: :id, group_id: :id]
 
     has_many :tokens, Cog.Models.Token
 
@@ -109,17 +101,6 @@ defmodule Cog.Models.User do
         changeset
     end
   end
-
-end
-
-defimpl Permittable, for: Cog.Models.User do
-  alias Cog.Models.JoinTable
-
-  def grant_to(user, permission_or_role),
-    do: JoinTable.associate(user, permission_or_role)
-
-  def revoke_from(user, permission_or_role),
-    do: JoinTable.dissociate(user, permission_or_role)
 
 end
 

@@ -6,9 +6,13 @@ defmodule Cog.Plug.Authorization.Test do
   setup do
     user = user("cog")
     no_perm_user = user("noperm")
+    group = group("authgroup")
+    role = role("authrole")
     granted = permission("#{Cog.Util.Misc.embedded_bundle}:manage_users")
     ungranted = permission("#{Cog.Util.Misc.embedded_bundle}:manage_groups")
-    :ok = Permittable.grant_to(user, granted)
+    :ok = Permittable.grant_to(role, granted)
+    :ok = Permittable.grant_to(group, role)
+    :ok = Groupable.add_to(user, group)
     {:ok, [user: user,
            no_perm_user: no_perm_user,
            granted: granted,

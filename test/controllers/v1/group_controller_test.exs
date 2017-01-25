@@ -28,7 +28,7 @@ defmodule Cog.V1.GroupControllerTest do
 
   test "lists all entries on index", %{authed: user} do
     conn = api_request(user, :get, "/v1/groups")
-    assert json_response(conn, 200)["groups"] == []
+    assert [%{"name" => "cog_group"}] = json_response(conn, 200)["groups"]
   end
 
   test "shows chosen resource", %{authed: user} do

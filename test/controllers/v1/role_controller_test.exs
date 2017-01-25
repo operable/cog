@@ -7,49 +7,44 @@ defmodule Cog.V1.RoleController.Test do
   @bad_uuid "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
 
   setup do
-    # Requests handled by the role controller require this permission
-    required_permission = permission("#{Cog.Util.Misc.embedded_bundle}:manage_roles")
-
     # This user will be used to test the normal operation of the controller
     authed_user = user("cog")
     |> with_token
-    |> with_permission(required_permission)
+
+    # We add the user to a group and grant that group the appropriate permissions
+    role = role("monkey")
+           |> with_permission("#{Cog.Util.Misc.embedded_bundle}:manage_roles")
+    group = group("robots")
+            |> add_to_group(role)
+            |> add_to_group(authed_user)
 
     # This user will be used to verify that the above permission is
     # indeed required for requests
     unauthed_user = user("sadpanda") |> with_token
 
     {:ok, [authed: authed_user,
-           unauthed: unauthed_user]}
-  end
-
-  test "index returns empty list when no roles exist", %{authed: user} do
-    conn = api_request(user, :get, "/v1/roles")
-    assert [] = json_response(conn, 200)["roles"]
+           unauthed: unauthed_user,
+           group: group,
+           role: role]}
   end
 
   test "index returns single role when only one exists", %{authed: user} do
-    role = role("monkey")
     conn = api_request(user, :get, "/v1/roles")
-    assert %{"roles" => [%{"id" => role.id,
-                           "name" => "monkey",
-                           "permissions" => [],
-                           "groups" => []}]} == json_response(conn, 200)
+    assert %{"roles" => [%{"name" => "monkey",
+                           "permissions" => [%{"name" => "manage_roles"}],
+                           "groups" => [%{"name" => "robots"}]}]} = json_response(conn, 200)
   end
 
   test "index returns multiple roles when multiple exist", %{authed: user} do
-    first = role("first")
-    second = role("second")
+    role("second")
 
     conn = api_request(user, :get, "/v1/roles")
-    assert [%{"id" => first.id,
-              "name" => "first",
+    assert [%{"name" => "monkey",
+              "permissions" => [%{"name" => "manage_roles"}],
+              "groups" => [%{"name" => "robots"}]},
+            %{"name" => "second",
               "permissions" => [],
-              "groups" => []},
-            %{"id" => second.id,
-              "name" => "second",
-              "permissions" => [],
-              "groups" => []}] == json_response(conn, 200)["roles"] |> sort_by("name")
+              "groups" => []}] = json_response(conn, 200)["roles"] |> sort_by("name")
   end
 
   test "create works on the happy path", %{authed: user} do
@@ -179,7 +174,7 @@ defmodule Cog.V1.RoleController.Test do
   end
 
   test "retrieving groups for each role", %{authed: user} do
-    group = group("robots")
+    group = group("autobots")
     role = role("take-over")
     Permittable.grant_to(group, role)
     permission = permission("site:world")

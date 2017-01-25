@@ -11,26 +11,6 @@ defmodule UserTest do
            permission: permission("test:creation")]}
   end
 
-  test "permissions may be granted directly to users", %{user: user, permission: permission} do
-    :ok = Permittable.grant_to(user, permission)
-    assert_permission_is_granted(user, permission)
-  end
-
-  test "granting a permission to a user is idempotent", %{user: user, permission: permission} do
-    :ok = Permittable.grant_to(user, permission)
-    assert(:ok = Permittable.grant_to(user, permission))
-  end
-
-  test "roles may be granted directly to a user", %{user: user, role: role} do
-    :ok = Permittable.grant_to(user, role)
-    assert_role_was_granted(user, role)
-  end
-
-  test "granting a role to a user is idempotent", %{user: user, role: role} do
-    :ok = Permittable.grant_to(user, role)
-    assert(:ok = Permittable.grant_to(user, role))
-  end
-
   @valid_attrs %{username: "alien_killer", first_name: "Ripley", last_name: "Alien",
                  email_address: "ripley@cog.test", password: "xenomorph"}
   @invalid_attrs %{}
