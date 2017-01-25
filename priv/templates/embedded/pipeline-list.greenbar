@@ -1,5 +1,10 @@
+~if cond=$results[0].pipeline_count == 0~
+No pipelines found.
+~end~
+~if cond=$results[0].pipeline_count > 0~
 |Id|Text|User|Room|State|Processed|Started|Time|
 |---|---|---|---|---|---|---|---|
-~each var=$results~
+~each var=$results[0].pipelines~
 |~$item.id~|~$item.text~|~$item.user~|~$item.room~|~$item.state~|~$item.processed~|~$item.started~|~$item.time~|
+~end~
 ~end~

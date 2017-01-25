@@ -54,7 +54,8 @@ defmodule Cog.Commands.Pipeline.List do
                                        room_matches?(&1, room) and
                                        state_matches?(&1, state_name))
                       |> Enum.map(&(format_entry(Util.entry_to_map(&1))))
-           {:reply, req.reply_to, "pipeline-list", updated, state}
+           results = %{pipeline_count: length(updated), pipelines: updated}
+           {:reply, req.reply_to, "pipeline-list", results, state}
           else
             {:error, req.reply_to, "Valid state names are: #{Enum.join(@valid_state_names, ", ")}", state}
           end

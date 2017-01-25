@@ -44,6 +44,7 @@ defmodule Cog.Repository.PipelineHistory do
 
   def all_pipelines(limit \\ 20) do
     query = from ph in PipelineHistory,
+            where: ph.state != "finished",
             order_by: [desc: :started_at],
             limit: ^(limit + 1),
             preload: [:user]
@@ -52,7 +53,7 @@ defmodule Cog.Repository.PipelineHistory do
 
   def pipelines_for_user(user_id, limit \\ 20) do
     query = from ph in PipelineHistory,
-            where: ph.user_id == ^user_id,
+            where: ph.user_id == ^user_id and ph.state != "finished",
             order_by: [desc: :idx],
             limit: ^(limit + 1),
             preload: [:user]
