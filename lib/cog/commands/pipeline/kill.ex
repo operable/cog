@@ -15,12 +15,15 @@ defmodule Cog.Commands.Pipeline.Kill do
   rule "when command is #{Cog.Util.Misc.embedded_bundle}:pipeline-kill allow"
 
   def handle_message(%{args: ids} = req, state) do
-    killed = Enum.reduce(ids, [], &kill_pipeline/2) |> Enum.join(",")
-    results = if killed == "" do
-      %{"killed" => "none"}
-    else
-      %{"killed" => killed}
-    end
+    killed = Enum.reduce(ids, [], &kill_pipeline/2)
+    killed_text = case killed do
+                    [] ->
+                      "none"
+                    _ ->
+                      Enum.join(killed, ",")
+                  end
+    results = %{killed: killed,
+                killed_text: killed_text}
     {:reply, req.reply_to, "pipeline-kill", results, state}
   end
 

@@ -1,1 +1,1 @@
-Pipelines killed: ~$results[0].killed~
+Pipelines killed: ~$results[0].killed_text~
