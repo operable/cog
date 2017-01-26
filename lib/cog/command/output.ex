@@ -25,7 +25,7 @@ defmodule Cog.Command.Output do
       message_data
     end
 
-    Adapter.send(connection, provider, room, payload)
+    Adapter.send(connection, provider, room, payload, %Cog.Chat.MessageMetadata{})
   end
 
   def format_error({:parse_error, msg}) when is_binary(msg),

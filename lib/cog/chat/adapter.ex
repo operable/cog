@@ -262,7 +262,7 @@ defmodule Cog.Chat.Adapter do
                   {true, text} ->
                     if message.edited == true do
                       mention_name = with_provider(message.provider, state, :mention_name, [message.user.handle])
-                      send(conn, message.provider, message.room, "#{mention_name} Executing edited command '#{text}'")
+                      send(conn, message.provider, message.room, "#{mention_name} Executing edited command '#{text}'", %Cog.Chat.MessageMetadata{})
                     end
                     request = %ProviderRequest{
                       text: text, sender: message.user, room: message.room,
@@ -285,7 +285,7 @@ defmodule Cog.Chat.Adapter do
               {:ok, message} ->
                 if message.edited == true do
                   mention_name = with_provider(message.provider, state, :mention_name, [message.user.handle])
-                  send(conn, message.provider, message.room, "#{mention_name} Executing edited command '#{message.text}'")
+                  send(conn, message.provider, message.room, "#{mention_name} Executing edited command '#{message.text}'", %Cog.Chat.MessageMetadata{})
                 end
                 request = %ProviderRequest{text: message.text, sender: message.user, room: message.room, reply: "", id: message.id,
                                            provider: message.provider, initial_context: message.initial_context || %{}}
