@@ -8,7 +8,8 @@ defmodule UserTest do
     user = user("cog")
     {:ok, [user: user,
            role: role("create"),
-           permission: permission("test:creation")]}
+           permission: permission("test:creation"),
+           group: group("test_group")]}
   end
 
   @valid_attrs %{username: "alien_killer", first_name: "Ripley", last_name: "Alien",
@@ -87,6 +88,13 @@ defmodule UserTest do
 
     assert old_digest != updated.password_digest
     assert String.starts_with?(updated.password_digest, "$2")
+  end
+
+  test "deleting a user belonging to a group", %{user: user, group: group} do
+    :ok = Groupable.add_to(user, group)
+    changeset = User.changeset(user, %{})
+    assert {:error, changeset} = Repo.delete(changeset)
+    assert [id: {"cannot delete user that is a member of a group", []}] = changeset.errors
   end
 
   @doc """

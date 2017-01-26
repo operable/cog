@@ -44,6 +44,8 @@ defmodule Cog.Models.Group do
     model
     |> cast(params, @required_fields, @optional_fields)
     |> protect_admin_group
+    |> group_roles_constraint
+    |> user_group_membership_constraint
     |> unique_constraint(:name, name: :groups_name_index)
   end
 
@@ -56,6 +58,19 @@ defmodule Cog.Models.Group do
     end
   end
 
+  defp group_roles_constraint(changeset) do
+    foreign_key_constraint(changeset,
+                           :id,
+                           name: :group_roles_group_id_fkey,
+                           message: "cannot delete group that has been granted roles")
+  end
+
+  defp user_group_membership_constraint(changeset) do
+    foreign_key_constraint(changeset,
+                           :id,
+                           name: :user_group_membership_group_id_fkey,
+                           message: "cannot delete group that has user members")
+  end
 end
 
 defimpl Permittable, for: Cog.Models.Group do

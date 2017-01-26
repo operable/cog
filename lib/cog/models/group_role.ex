@@ -14,6 +14,6 @@ defmodule Cog.Models.GroupRole do
   def changeset(model, params) do
     model
     |> cast(params, @required_fields)
-    |> unique_constraint(:role_grant , name: "group_roles_group_id_role_id_index")
+    |> unique_constraint(:role_grant, name: "group_roles_group_id_role_id_index")
   end
 end

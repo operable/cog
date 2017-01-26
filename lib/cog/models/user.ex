@@ -72,6 +72,7 @@ defmodule Cog.Models.User do
     |> cast(params, @required_fields, @optional_fields)
     |> validate_presence_on_insert(:password)
     |> encode_password
+    |> user_group_membership_constraint
     |> unique_constraint(:username)
   end
 
@@ -102,6 +103,12 @@ defmodule Cog.Models.User do
     end
   end
 
+  defp user_group_membership_constraint(changeset) do
+    foreign_key_constraint(changeset,
+                           :id,
+                           name: :user_group_membership_member_id_fkey,
+                           message: "cannot delete user that is a member of a group")
+  end
 end
 
 defimpl Groupable, for: Cog.Models.User do

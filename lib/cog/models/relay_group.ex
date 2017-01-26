@@ -25,9 +25,24 @@ defmodule Cog.Models.RelayGroup do
     model
     |> Repo.preload([:bundles, :relays])
     |> cast(params, @required_fields, @optional_fields)
+    |> relay_group_assignment_constraint
+    |> relay_group_membership_constraint
     |> unique_constraint(:name)
   end
 
+  defp relay_group_assignment_constraint(changeset) do
+    foreign_key_constraint(changeset,
+                           :id,
+                           name: :relay_group_assignments_group_id_fkey,
+                           message: "cannot delete relay group that has bundles assigned")
+  end
+
+  defp relay_group_membership_constraint(changeset) do
+    foreign_key_constraint(changeset,
+                           :id,
+                           name: :relay_group_memberships_group_id_fkey,
+                           message: "cannot delete relay group that has relay members")
+  end
 end
 
 defimpl Groupable, for: Cog.Models.RelayGroups do
