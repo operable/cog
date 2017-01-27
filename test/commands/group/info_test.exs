@@ -11,6 +11,8 @@ defmodule Cog.Test.Commands.Group.InfoTest do
       new_req(args: ["info_group"])
       |> send_req(Info)
 
-    assert(%{name: "info_group"} = response)
+    assert(%{name: "info_group",
+             roles: [],
+             members: []} = response)
   end
 end
