@@ -91,11 +91,10 @@ end
 # Currently we have one scheme for the chat command and another for the api.
 defimpl Poison.Encoder, for: Cog.Models.Group do
   def encode(struct, options) do
-    map = struct
+    struct
     |> Map.from_struct
     |> Map.take([:id, :name, :roles])
     |> Map.put(:members, struct.users)
-
-    Poison.Encoder.Map.encode(map, options)
+    |> Poison.Encoder.Map.encode(options)
   end
 end
