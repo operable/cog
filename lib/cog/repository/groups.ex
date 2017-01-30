@@ -105,7 +105,9 @@ defmodule Cog.Repository.Groups do
   @spec delete(%Group{}) :: {:ok, %Group{}} | {:error, Ecto.Changeset.t} | {:error, Atom.t}
   def delete(%Group{}=group) do
     try do
-      Repo.delete(group)
+      group
+      |> Group.changeset(:delete)
+      |> Repo.delete
     rescue
       Ecto.StaleModelError ->
         {:error, :not_found}
