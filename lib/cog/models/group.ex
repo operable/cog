@@ -26,7 +26,7 @@ defmodule Cog.Models.Group do
   If no params are provided, an invalid changeset is returned
   with no validation performed.
   """
-  def changeset(model), do: changeset(model, :empty)
+  def changeset(model), do: changeset(model, %{})
 
   @doc """
   Creates a changeset based on the `model` to validate a delete
@@ -35,6 +35,8 @@ defmodule Cog.Models.Group do
   def changeset(model, :delete) do
     %{Changeset.change(model) | action: :delete}
     |> protect_admin_group
+    |> group_roles_constraint
+    |> user_group_membership_constraint
   end
 
   @doc """
