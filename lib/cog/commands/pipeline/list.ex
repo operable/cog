@@ -66,8 +66,7 @@ defmodule Cog.Commands.Pipeline.List do
   defp fetch_history(req, opts) do
     case Map.get(opts, "user") do
       nil ->
-        {:ok, app_user} = UserRepo.by_username(req.requestor.handle)
-        {:ok, HistoryRepo.pipelines_for_user(app_user.id, Map.get(opts, "last", 20))}
+        {:ok, HistoryRepo.pipelines_for_user(req.user["id"], Map.get(opts, "last", 20))}
       "all" ->
         {:ok, HistoryRepo.all_pipelines(Map.get(opts, "last", 20))}
       user ->
