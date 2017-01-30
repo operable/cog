@@ -86,12 +86,15 @@ defimpl Permittable, for: Cog.Models.Group do
 
 end
 
+# As far as I can tell this is only being used with the group chat command
+# TODO: We need to consolidate how we present group data to the end user.
+# Currently we have one scheme for the chat command and another for the api.
 defimpl Poison.Encoder, for: Cog.Models.Group do
   def encode(struct, options) do
-    map = struct
+    struct
     |> Map.from_struct
-    |> Map.take([:id, :name, :roles, :users])
-
-    Poison.Encoder.Map.encode(map, options)
+    |> Map.take([:id, :name, :roles])
+    |> Map.put(:members, struct.users)
+    |> Poison.Encoder.Map.encode(options)
   end
 end
