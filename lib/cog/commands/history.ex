@@ -35,25 +35,26 @@ defmodule Cog.Commands.History do
   end
 
   defp parse_args([]), do: {:ok, {nil, nil}}
-  defp parse_args([hist_start]) do
+  defp parse_args([hist_start]) when is_binary(hist_start) do
     case String.split(hist_start, "-") do
       [hist_start] ->
         with {:ok, parsed} <- parse_int(hist_start),
           do: {:ok, {parsed, nil}}
-      [hist_start, "-"] ->
-        with {:ok, parsed} <- parse_int(hist_start),
-          do: {:ok, parsed, nil}
-      ["-", hist_end] ->
+      ["", hist_end] ->
         with {:ok, parsed} <- parse_int(hist_end),
           do: {:ok, nil, parsed}
-      [hist_start, "-", hist_end] ->
+      [hist_start, ""] ->
+        with {:ok, parsed} <- parse_int(hist_start),
+          do: {:ok, {parsed, nil}}
+      [hist_start, hist_end] ->
         parse_args([hist_start, hist_end])
     end
   end
-  defp parse_args([hist_start, hist_end]) do
-    with {:ok, hist_start} <- parse_int(hist_start),
-         {:ok, hist_end} <- parse_int(hist_end),
-    do: {:ok, {hist_start, hist_end}}
+  defp parse_args([hist_start]) when hist_start >= 0 do
+    {:ok, {hist_start, nil}}
+  end
+  defp parse_args([hist_start, hist_end]) when hist_start >=0 and hist_end >= 0 do
+    {:ok, {hist_start, hist_end}}
   end
   defp parse_args([hist_start, "-"]) do
     parse_args([hist_start])
@@ -64,6 +65,9 @@ defmodule Cog.Commands.History do
   defp parse_args(["-", hist_end]) do
     with {:ok, hist_end} <- parse_int(hist_end),
       do: {:ok, {nil, hist_end}}
+  end
+  defp parse_args(args) do
+    {:error, "Invalid history index range args: #{inspect args}"}
   end
 
   defp parse_int(i) do
