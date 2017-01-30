@@ -4,7 +4,6 @@ defmodule Cog.Commands.History do
     name: "history"
 
   alias Cog.Repository.PipelineHistory, as: HistoryRepo
-  alias Cog.Repository.Users, as: UserRepo
 
   @description "View command history"
   @default_limit 20
@@ -32,8 +31,7 @@ defmodule Cog.Commands.History do
   end
 
   defp fetch_history(req, hist_start, hist_end, limit) do
-    {:ok, app_user} = UserRepo.by_username(req.requestor.handle)
-    HistoryRepo.history_for_user(app_user.id, hist_start, hist_end, limit)
+    HistoryRepo.history_for_user(req.user["id"], hist_start, hist_end, limit)
   end
 
   defp parse_args([]), do: {:ok, {nil, nil}}
