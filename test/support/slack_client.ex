@@ -229,12 +229,13 @@ defmodule Cog.Test.Support.SlackClient do
   end
 
   defp parse_message(%{attachments: [attachment|_], ts: ts}=message, state) do
-    make_message(attachment.text, ts, location(message, state))
+    make_message(attachment.text, ts, location(message, state), nil)
   end
   defp parse_message(%{text: text, ts: ts}=message, state) do
     make_message(resolve_references(text, state),
                  ts,
-                 location(message, state))
+                 location(message, state),
+                 message[:thread_ts])
   end
 
   # In a few places, we get Slack user IDs in our messages... it's
@@ -267,9 +268,9 @@ defmodule Cog.Test.Support.SlackClient do
   end
 
 
-  defp make_message(text, ts, locn) do
+  defp make_message(text, ts, locn, thread_ts) do
     [realtime, _] = String.split(ts, ".", parts: 2)
-    %{ts: ts, real_time: String.to_integer(realtime), text: text, location: locn}
+    %{ts: ts, real_time: String.to_integer(realtime), text: text, location: locn, thread_ts: thread_ts}
   end
 
   defp location(%{channel: %{is_im: true}}, _state) do
