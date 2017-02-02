@@ -10,7 +10,6 @@ defmodule Cog.Pipeline.DoneSignal do
 
 end
 
-
 defmodule Cog.Pipeline.DataSignal do
   defstruct [invocation: nil,
              template: nil,
@@ -26,5 +25,20 @@ defmodule Cog.Pipeline.DataSignal do
   def wrap(data, bundle_version_id, template) when is_map(data) do
     %__MODULE__{data: data, bundle_version_id: bundle_version_id, template: template}
   end
+
+end
+
+defmodule Cog.Pipeline.AbortSignal do
+  defstruct [message: nil,
+             cog_env: nil,
+             invocation: nil,
+             template: "abort"]
+
+  def wrap(invocation, cog_env, message) do
+    %__MODULE__{invocation: invocation, cog_env: cog_env, message: message}
+  end
+
+  def abort?(%__MODULE__{}), do: true
+  def abort?(_), do: false
 
 end

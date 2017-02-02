@@ -4,7 +4,7 @@ defmodule Cog.Pipeline.ErrorSink do
   alias Cog.Chat.Adapter, as: ChatAdapter
   alias Cog.Events.PipelineEvent
   alias Cog.Pipeline
-  alias Cog.Pipeline.{Destination, DoneSignal, Errors}
+  alias Cog.Pipeline.{Destination, AbortSignal, DoneSignal, Errors}
   alias Cog.Template.Evaluator
 
   @moduledoc ~s"""
@@ -66,10 +66,12 @@ defmodule Cog.Pipeline.ErrorSink do
   end
 
   def handle_events(events, _from, state) do
-    events = Enum.filter(events, &DoneSignal.error?/1)
+    events = Enum.filter(events, &want_signal?/1)
     state = state
             |> Map.update(:all_events, events, &(&1 ++ events))
             |> process_errors
+            |> process_aborts
+    Pipeline.teardown(state.pipeline)
     {:noreply, [], state}
   end
 
@@ -87,34 +89,65 @@ defmodule Cog.Pipeline.ErrorSink do
     Logger.debug("Error sink for pipeline #{state.request.id} shutting down")
   end
 
-  defp process_errors(%__MODULE__{all_events: []}=state), do: state
-  defp process_errors(state) do
-    send_to_owner(state)
-    state = if state.policy in [:adapter, :adapter_owner] do
+  defp want_signal?(%DoneSignal{}=signal), do: DoneSignal.error?(signal)
+  defp want_signal?(%AbortSignal{}), do: true
+  defp want_signal?(_), do: false
+
+  defp process_aborts(%__MODULE__{all_events: []}=state), do: state
+  defp process_aborts(state) do
+    aborts = Enum.filter(state.all_events, &AbortSignal.abort?/1)
+    send_to_owner(:aborts, aborts, state)
+    if state.policy in [:adapter, :adapter_owner] do
       dests = Destination.here(state.request)
-      Enum.each(state.all_events, &(send_to_adapter(&1, dests, state)))
-      %{state | all_events: []}
-    else
-      state
+      Enum.each(aborts, &send_abort_to_adapter(&1, dests, state))
     end
-    Pipeline.teardown(state.pipeline)
-    state
+    %{state | all_events: state.all_events -- aborts}
   end
 
-  defp send_to_adapter(%DoneSignal{}=signal, dests, state) do
-    Enum.each(dests, &(send_to_adapter(&1, signal, state)))
+  defp process_errors(%__MODULE__{all_events: []}=state), do: state
+  defp process_errors(state) do
+    errors = Enum.filter(state.all_events, &DoneSignal.error?/1)
+    send_to_owner(:errors, errors, state)
+    if state.policy in [:adapter, :adapter_owner] do
+      dests = Destination.here(state.request)
+      Enum.each(errors, &(send_error_to_adapter(&1, dests, state)))
+    end
+    %{state | all_events: state.all_events -- errors}
   end
-  defp send_to_adapter({type, targets}, signal, state) do
+
+  defp send_abort_to_adapter(%AbortSignal{}=signal, dests, state) do
+    Enum.each(dests, &send_abort_to_adapter(&1, signal, state))
+  end
+  defp send_abort_to_adapter({type, targets}, signal, state) do
+    context = prepare_abort_context(signal, state)
+    output = output_for(type, signal, context)
+    Enum.each(targets, &ChatAdapter.send(state.conn, &1.provider, &1.room, output))
+  end
+
+  defp prepare_abort_context(signal, state) do
+    %{"cog_env" => signal.cog_env,
+      "cog_env_text" => Poison.encode!(signal.cog_env, pretty: true),
+      "invocation" => "#{signal.invocation}",
+      "pipeline_id" => state.request.id,
+      "message" => signal.message}
+  end
+
+  defp send_error_to_adapter(%DoneSignal{}=signal, dests, state) do
+    Enum.each(dests, &(send_error_to_adapter(&1, signal, state)))
+  end
+  defp send_error_to_adapter({type, targets}, signal, state) do
     context = prepare_error_context(signal, state)
     failure_event(signal.error, context["error_message"], state)
     output = output_for(type, signal, context)
     Enum.each(targets, &ChatAdapter.send(state.conn, &1.provider, &1.room, output))
   end
 
-  defp send_to_owner(%__MODULE__{all_events: events, policy: policy, owner: owner}=state) when policy in [:owner, :adapter_owner] do
-    Process.send(owner, {:pipeline, state.request.id, {:error, events}}, [])
+  defp send_to_owner(type, events, %__MODULE__{policy: policy, owner: owner}=state) when policy in [:owner, :adapter_owner] do
+    if Enum.count(events) > 0 do
+      Process.send(owner, {:pipeline, state.request.id, {type, events}}, [])
+    end
   end
-  defp send_to_owner(_), do: :ok
+  defp send_to_owner(_, _, _), do: :ok
 
   defp prepare_error_context(signal, state) do
     case signal.error do

@@ -123,7 +123,12 @@ defmodule Cog.Pipeline do
   # Close bus connection and exit after last stage exits
   # This avoids closing the connection while one of the sinks is still using it
   def handle_info({:DOWN, _, _, stage, _}, %__MODULE__{status: :done, stages: [stage]}=state) do
-    HistoryRepo.update_state(state.request.id, "finished")
+    try do
+      HistoryRepo.update_state(state.request.id, "finished")
+    rescue
+      e in Postgrex.Error ->
+        Logger.error("Failed to update state for pipeline #{state.request.id}: #{Exception.message(e)}")
+    end
     Logger.debug("Pipeline #{state.request.id} terminated")
     Connection.disconnect(state.conn)
     {:stop, :normal, %{state | stages: []}}

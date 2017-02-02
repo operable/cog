@@ -1,0 +1,7 @@
+~attachment title=$message color="yellow"~
+
+**Command:** `~$invocation~`
+**Calling Environment:** `~$cog_env_text~`
+**Pipeline Id:** ~$pipeline_id~
+
+~end~
