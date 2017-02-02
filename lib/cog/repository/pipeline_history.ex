@@ -11,6 +11,19 @@ defmodule Cog.Repository.PipelineHistory do
 
   @allowed_states ["running", "waiting", "finished"]
 
+  @doc """
+  Updates any pipelines in "running" or "waiting" states to "finished". This is intended
+  to handle cases where Cog crashes (or similarly shuts down quickly) and leaves pipeline
+  history records in an inconsistent state. This function should only be called when Cog
+  is starting up.
+  """
+  def update_orphans() do
+    {count, _} = from(ph in PipelineHistory,
+                      where: ph.state != "finished",
+                      update: [set: [state: "finished"]]) |> Repo.update_all([])
+    count
+  end
+
   def new(attr) do
     attr = Map.put(attr, :started_at, now_timestamp_ms())
     cs = PipelineHistory.changeset(%PipelineHistory{}, attr)
