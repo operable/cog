@@ -63,7 +63,12 @@ defmodule Cog.Commands.History do
     {:ok, {hist_start, nil}}
   end
   defp parse_args([hist_start, hist_end]) when hist_start >=0 and hist_end >= 0 do
-    {:ok, {hist_start, hist_end}}
+    hist_range = if hist_start > hist_end do
+      {hist_end, hist_start}
+    else
+      {hist_start, hist_end}
+    end
+    {:ok, hist_range}
   end
   defp parse_args(args) do
     {:error, "Invalid history index range args: #{inspect args}"}

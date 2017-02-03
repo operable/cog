@@ -46,7 +46,7 @@ defmodule Cog.Repository.PipelineHistory do
     query = from ph in PipelineHistory,
             where: ph.state != "finished",
             order_by: [desc: :started_at],
-            limit: ^(limit + 1),
+            limit: ^limit,
             preload: [:user]
     Repo.all(query)
   end
@@ -54,8 +54,8 @@ defmodule Cog.Repository.PipelineHistory do
   def pipelines_for_user(user_id, limit \\ 20) do
     query = from ph in PipelineHistory,
             where: ph.user_id == ^user_id and ph.state != "finished",
-            order_by: [desc: :idx],
-            limit: ^(limit + 1),
+            order_by: [desc: :started_at],
+            limit: ^limit,
             preload: [:user]
     Repo.all(query)
   end
@@ -93,28 +93,28 @@ defmodule Cog.Repository.PipelineHistory do
   defp build_user_history_query(user_id, hist_start, hist_end, _limit) when hist_start != nil and hist_end != nil do
     from ph in PipelineHistory,
       where: ph.user_id == ^user_id and ph.idx >= ^hist_start and ph.idx <= ^hist_end,
-      order_by: [asc: :idx],
+      order_by: [desc: :idx],
       select: [ph.idx, ph.text]
   end
   defp build_user_history_query(user_id, hist_start, nil, limit) when hist_start != nil do
     from ph in PipelineHistory,
       where: ph.user_id == ^user_id and ph.idx >= ^hist_start,
-      order_by: [asc: :idx],
-      limit: ^(limit + 1),
+      order_by: [desc: :idx],
+      limit: ^limit,
       select: [ph.idx, ph.text]
   end
   defp build_user_history_query(user_id, nil, hist_end, limit) when hist_end != nil do
     from ph in PipelineHistory,
       where: ph.user_id == ^user_id and ph.idx <= ^hist_end,
       order_by: [desc: :idx],
-      limit: ^(limit + 1),
+      limit: ^limit,
       select: [ph.idx, ph.text]
   end
   defp build_user_history_query(user_id, nil, nil, limit) do
     from ph in PipelineHistory,
       where: ph.user_id == ^user_id,
       order_by: [desc: :idx],
-      limit: ^(limit + 1),
+      limit: ^limit,
       select: [ph.idx, ph.text]
   end
 
