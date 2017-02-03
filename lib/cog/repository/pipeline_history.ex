@@ -77,7 +77,6 @@ defmodule Cog.Repository.PipelineHistory do
     query  = build_user_history_query(user_id, hist_start, hist_end, limit)
     query = from q in query,
             where: q.state == "finished"
-    IO.inspect query
     Repo.all(query)
   end
 
