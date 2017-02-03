@@ -35,35 +35,43 @@ defmodule Cog.Commands.History do
   end
 
   defp parse_args([]), do: {:ok, {nil, nil}}
-  defp parse_args([hist_start]) do
-    case String.split(hist_start, "-") do
+  defp parse_args([hist_range]) when is_binary(hist_range) do
+    case String.split(hist_range, "-") do
       [hist_start] ->
         with {:ok, parsed} <- parse_int(hist_start),
           do: {:ok, {parsed, nil}}
-      [hist_start, "-"] ->
-        with {:ok, parsed} <- parse_int(hist_start),
-          do: {:ok, parsed, nil}
-      ["-", hist_end] ->
+      ["", hist_end] ->
         with {:ok, parsed} <- parse_int(hist_end),
           do: {:ok, nil, parsed}
-      [hist_start, "-", hist_end] ->
-        parse_args([hist_start, hist_end])
+      [hist_start, ""] ->
+        with {:ok, parsed} <- parse_int(hist_start),
+          do: {:ok, {parsed, nil}}
+      [hist_start, hist_end] ->
+        with {:ok, parsed_start} <- parse_int(hist_start),
+             {:ok, parsed_end} <- parse_int(hist_end) do
+          # Detect and fix reversed range so DB query still does
+          # the right thing
+          if parsed_start > parsed_end do
+            {:ok, {parsed_end, parsed_start}}
+          else
+            {:ok, {parsed_start, parsed_end}}
+          end
+        end
     end
   end
-  defp parse_args([hist_start, hist_end]) do
-    with {:ok, hist_start} <- parse_int(hist_start),
-         {:ok, hist_end} <- parse_int(hist_end),
-    do: {:ok, {hist_start, hist_end}}
+  defp parse_args([hist_start]) when hist_start >= 0 do
+    {:ok, {hist_start, nil}}
   end
-  defp parse_args([hist_start, "-"]) do
-    parse_args([hist_start])
+  defp parse_args([hist_start, hist_end]) when hist_start >=0 and hist_end >= 0 do
+    hist_range = if hist_start > hist_end do
+      {hist_end, hist_start}
+    else
+      {hist_start, hist_end}
+    end
+    {:ok, hist_range}
   end
-  defp parse_args([hist_start, "-", hist_end]) do
-    parse_args([hist_start, hist_end])
-  end
-  defp parse_args(["-", hist_end]) do
-    with {:ok, hist_end} <- parse_int(hist_end),
-      do: {:ok, {nil, hist_end}}
+  defp parse_args(args) do
+    {:error, "Invalid history index range args: #{inspect args}"}
   end
 
   defp parse_int(i) do
@@ -77,8 +85,8 @@ defmodule Cog.Commands.History do
 
   defp format_entries([]), do: []
   defp format_entries([entry]), do: format_entry(entry, 2)
-  defp format_entries([[max_idx, _]|_]=entries) do
-    max_width = String.length(Integer.to_string(max_idx))
+  defp format_entries(entries) do
+    max_width = find_max_width(entries)
     Enum.map(entries, &(format_entry(&1, max_width)))
   end
 
@@ -87,6 +95,16 @@ defmodule Cog.Commands.History do
     count = max_width - String.length(idx)
     %{index: String.pad_leading(idx, count, [" "]),
       text: String.replace(text, "|", "\\|")}
+  end
+
+  defp find_max_width(entries) do
+    [fidx, _] = List.first(entries)
+    [lidx, _] = List.last(entries)
+    if lidx > fidx do
+      String.length("#{lidx}")
+    else
+      String.length("#{fidx}")
+    end
   end
 
 end
