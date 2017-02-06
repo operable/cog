@@ -1,3 +1,6 @@
+# Currently only used to render Slack threads, but is intended to be used to
+# store information about the original message used in rendering and sending
+# the response.
 defmodule Cog.Chat.MessageMetadata do
   use Conduit
 
