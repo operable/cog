@@ -233,10 +233,12 @@ defmodule Cog.Chat.Adapter do
         case Cog.Chat.MessageMetadata.from_map(metadata) do
           {:ok, metadata} ->
             metadata
-          _error ->
-          %Cog.Chat.MessageMetadata{}
+          error ->
+            Logger.error("Failed to decode message metadata, continuing with an empty struct: #{inspect error}")
+            %Cog.Chat.MessageMetadata{}
         end
       _ ->
+        Logger.error("Expected message metadata to be a map, continuing with an empty struct.")
         %Cog.Chat.MessageMetadata{}
     end
 
