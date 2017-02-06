@@ -138,6 +138,15 @@ defmodule Cog.V1.RoleController.Test do
     assert %Ecto.NoResultsError{} = error
   end
 
+  test "delete fails when role still granted permissions", %{authed: user} do
+    role = role("admin")
+    permission = permission("site:world")
+    Permittable.grant_to(role, permission)
+    conn = api_request(user, :delete, "/v1/roles/#{role.id}")
+    body = json_response(conn, 422)
+    assert %{"id" => ["cannot delete role that has been granted permissions"]} = body["errors"]
+  end
+
   test "cannot list roles without permission", %{unauthed: user} do
     conn = api_request(user, :get, "/v1/roles")
     assert conn.halted

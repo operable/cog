@@ -21,7 +21,7 @@ defmodule Cog.Repository.Roles do
   def delete(%Role{name: unquote(Cog.Util.Misc.admin_role)=name}),
     do: {:error, {:protected_role, name}}
   def delete(%Role{}=role),
-    do: Repo.delete(role)
+    do: role |> Role.changeset(:delete) |> Repo.delete
 
   def all,
     do: Repo.all(Role) |> preload
