@@ -2,7 +2,7 @@ defmodule Cog.Chat.Slack.Connector do
   require Logger
   use Slack
 
-  alias Cog.Chat.Message
+  alias Cog.Chat.{Message, MessageMetadata}
   alias Cog.Chat.Room
   alias Cog.Chat.Slack.Formatter
   alias Cog.Chat.Slack.Provider
@@ -85,11 +85,11 @@ defmodule Cog.Chat.Slack.Connector do
     send(sender, {ref, result})
     :ok
   end
-  def handle_info({{ref, sender}, {:send_message, %{token: token, target: target}=args}}, _state) do
-    message = %{token: token, as_user: true}
+  def handle_info({{ref, sender}, {:send_message, %{token: token, target: target, metadata: metadata}=args}}, _state) do
+    message = %{token: token, as_user: true, link_names: 1}
               |> prepare_text(args)
               |> prepare_attachments(args)
-              |> Map.put(:link_names, 1)
+              |> maybe_include_thread_attributes(metadata)
     # Avoids Slack throttling
     jitter()
     result = Slack.Web.Chat.post_message(target, message)
@@ -278,7 +278,7 @@ defmodule Cog.Chat.Slack.Connector do
   end
   defp annotate(_, _), do: :ignore
 
-  defp annotate_message(%{channel: channel, user: userid, text: text}, state) do
+  defp annotate_message(%{channel: channel, user: userid, text: text, ts: ts}, state) do
     text = Formatter.unescape(text, state)
 
     case lookup_user(userid, state.users, by: :id) do
@@ -299,8 +299,9 @@ defmodule Cog.Chat.Slack.Connector do
           Logger.info("Failed looking up channel '#{channel}'.")
           :ignore
         else
-          {:chat_message, %Message{id: Cog.Events.Util.unique_id,
-              room: room, user: user, text: text, provider: @provider_name,
+          {:chat_message, %Message{id: Cog.Events.Util.unique_id, room: room,
+              user: user, text: text, provider: @provider_name,
+              metadata: %MessageMetadata{thread_id: ts, originating_room_id: room.id},
               bot_name: "@#{state.me.name}", edited: false}}
         end
     end
@@ -362,4 +363,9 @@ defmodule Cog.Chat.Slack.Connector do
     end
   end
 
+  def maybe_include_thread_attributes(message, %MessageMetadata{thread_id: thread_id})
+      when is_binary(thread_id),
+    do: Map.merge(message, %{thread_ts: thread_id, reply_broadcast: true})
+  def maybe_include_thread_attributes(message, _metadata),
+    do: message
 end

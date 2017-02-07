@@ -21,7 +21,7 @@ defmodule Cog.Chat.Provider do
 
   @callback leave(room :: String.t) :: :ok | {:error, term}
 
-  @callback send_message(target :: String.t, message :: String.t | List.t) :: :ok | {:ok, sent_message ::String.t} | {:error, term}
+  @callback send_message(target :: String.t, message :: String.t | List.t, metadata :: Cog.Chat.MessageMetadata.t) :: :ok | {:ok, sent_message ::String.t} | {:error, term}
 
   @callback mention_name(handle :: String.t) :: String.t
 
@@ -39,7 +39,7 @@ defmodule Cog.Chat.Provider do
       def list_joined_rooms, do: {:error, :not_implemented}
       def join(_room), do: {:error, :not_implemented}
       def leave(_room), do: {:error, :not_implemented}
-      def send_message(_target, _message), do: {:error, :not_implemented}
+      def send_message(_target, _message, _metadata), do: {:error, :not_implemented}
 
       # TODO: Need to look into how useful this is... the new Slack
       # provider at least seems to not end up interpreting this as a
@@ -58,7 +58,7 @@ defmodule Cog.Chat.Provider do
                       list_joined_rooms: 0,
                       join: 1,
                       leave: 1,
-                      send_message: 2,
+                      send_message: 3,
                       mention_name: 1,
                       display_name: 0]
     end

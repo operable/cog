@@ -47,8 +47,8 @@ defmodule Cog.Chat.HipChat.Provider do
     GenServer.call(__MODULE__, {:call_connector, :list_joined_rooms}, :infinity)
   end
 
-  def send_message(target, message) do
-    GenServer.call(__MODULE__, {:call_connector, {:send_message, target, message}}, :infinity)
+  def send_message(target, message, metadata) do
+    GenServer.call(__MODULE__, {:call_connector, {:send_message, target, message, metadata}}, :infinity)
   end
 
   def start_link(config) do

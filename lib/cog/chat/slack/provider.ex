@@ -10,7 +10,7 @@ defmodule Cog.Chat.Slack.Provider do
   alias Cog.Chat.Slack.Connector
   alias Greenbar.Renderers.SlackRenderer
 
-  defstruct [:token, :incoming, :connector, :mbus]
+  defstruct [:token, :incoming, :connector, :mbus, :enable_threaded_response]
 
   def display_name, do: "Slack"
 
@@ -55,8 +55,8 @@ defmodule Cog.Chat.Slack.Provider do
     GenServer.call(__MODULE__, {:leave, room}, :infinity)
   end
 
-  def send_message(target, message) do
-    GenServer.call(__MODULE__, {:send_message, target, message}, :infinity)
+  def send_message(target, message, metadata) do
+    GenServer.call(__MODULE__, {:send_message, target, message, metadata}, :infinity)
   end
 
   def init([config]) do
@@ -70,9 +70,10 @@ defmodule Cog.Chat.Slack.Provider do
       {:stop, :bad_slack_token}
     else
       incoming = Keyword.fetch!(config, :incoming_topic)
+      enable_threaded_response = Keyword.get(config, :enable_threaded_response)
       with {:ok, mbus} <- ConnectionSup.connect(),
            {:ok, pid} <- Connector.start_link(token) do
-        {:ok, %__MODULE__{token: token, incoming: incoming, connector: pid, mbus: mbus}}
+        {:ok, %__MODULE__{token: token, incoming: incoming, connector: pid, mbus: mbus, enable_threaded_response: enable_threaded_response}}
       else
         {:error, reason}=error when is_binary(reason) ->
           Logger.error("Slack connection initialization failed: #{reason}")
@@ -114,8 +115,9 @@ defmodule Cog.Chat.Slack.Provider do
     end
   end
   # Old template processing
-  def handle_call({:send_message, target, message}, _from, %__MODULE__{connector: connector, token: token}=state) when is_binary(message) do
-    result = Connector.call(connector, token, :send_message, %{target: target, message: message})
+  def handle_call({:send_message, target, message, metadata}, _from, %__MODULE__{connector: connector, token: token}=state) when is_binary(message) do
+    metadata = maybe_remove_thread_id(metadata, state.enable_threaded_response, target)
+    result = Connector.call(connector, token, :send_message, %{target: target, message: message, metadata: metadata})
     case result["ok"] do
       true ->
         {:reply, :ok, state}
@@ -124,9 +126,10 @@ defmodule Cog.Chat.Slack.Provider do
     end
   end
   # New template processing
-  def handle_call({:send_message, target, message}, _from, %__MODULE__{connector: connector, token: token}=state) do
+  def handle_call({:send_message, target, message, metadata}, _from, %__MODULE__{connector: connector, token: token}=state) do
     {text, attachments} = SlackRenderer.render(message)
-    result = Connector.call(connector, token, :send_message, %{target: target, message: text, attachments: attachments})
+    metadata = maybe_remove_thread_id(metadata, state.enable_threaded_response, target)
+    result = Connector.call(connector, token, :send_message, %{target: target, message: text, metadata: metadata, attachments: attachments})
     case result["ok"] do
       true ->
         {:reply, :ok, state}
@@ -144,4 +147,8 @@ defmodule Cog.Chat.Slack.Provider do
     {:noreply, state}
   end
 
+  defp maybe_remove_thread_id(%Cog.Chat.MessageMetadata{originating_room_id: target_room_id} = metadata, true, target_room_id),
+    do: metadata
+  defp maybe_remove_thread_id(metadata, _disabled, _taget_room_id),
+    do: %{metadata | thread_id: nil}
 end

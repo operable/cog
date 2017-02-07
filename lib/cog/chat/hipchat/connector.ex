@@ -128,7 +128,7 @@ defmodule Cog.Chat.HipChat.Connector do
   def handle_call(:list_joined_rooms, _from, state) do
     {:reply, {:ok, Rooms.all(state.rooms)}, state}
   end
-  def handle_call({:send_message, target, message}, _from, state) do
+  def handle_call({:send_message, target, message, _metadata}, _from, state) do
     send_output(state, target, HipChatRenderer.render(message))
   end
 

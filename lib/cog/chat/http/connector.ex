@@ -21,8 +21,8 @@ defmodule Cog.Chat.Http.Connector do
     end
   end
 
-  def finish_request(room, response),
-    do: GenServer.call(__MODULE__, {:finish_request, room, response})
+  def finish_request(room, response, metadata),
+    do: GenServer.call(__MODULE__, {:finish_request, room, response, metadata})
 
   ########################################################################
 
@@ -34,7 +34,7 @@ defmodule Cog.Chat.Http.Connector do
     GenServer.cast(Provider, {:pipeline, requestor, id, initial_context, pipeline})
     {:noreply, Map.put(state, id, from)}
   end
-  def handle_call({:finish_request, room_id, response}, _from, state) do
+  def handle_call({:finish_request, room_id, response, _metadata}, _from, state) do
     case Map.fetch(state, room_id) do
       {:ok, requestor} ->
         GenServer.reply(requestor, response)

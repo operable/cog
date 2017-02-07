@@ -6,7 +6,10 @@ defmodule Cog.Test.Support.ProviderCase do
 
   use ExUnit.CaseTemplate
 
-  using([provider: provider]) do
+  using(opts) do
+    provider = Keyword.fetch!(opts, :provider)
+    force = Keyword.get(opts, :force, false)
+
     case client_for_provider(provider) do
       nil ->
         raise RuntimeError, message: "Unknown chat provider #{provider}"
@@ -28,11 +31,11 @@ defmodule Cog.Test.Support.ProviderCase do
           # chat provider to something that it's not already configured
           # for.
           setup_all do
-            case maybe_replace_chat_provider(unquote(provider)) do
+            case maybe_replace_chat_provider(unquote(provider), unquote(force)) do
               {:ok, original_provider} ->
                 reload_chat_provider()
                 on_exit(fn ->
-                  maybe_replace_chat_provider(original_provider)
+                  maybe_replace_chat_provider(original_provider, unquote(force))
                   reload_chat_provider()
                 end)
               :no_change ->
@@ -63,13 +66,13 @@ defmodule Cog.Test.Support.ProviderCase do
   # we'll make no change to the application configuration and return
   # `:no_change`, indicating that we don't need to restart the
   # application.
-  def maybe_replace_chat_provider(string) when is_binary(string),
-    do: maybe_replace_chat_provider(String.to_existing_atom(string))
-  def maybe_replace_chat_provider(new_provider) do
+  def maybe_replace_chat_provider(string, force) when is_binary(string),
+    do: maybe_replace_chat_provider(String.to_existing_atom(string), force)
+  def maybe_replace_chat_provider(new_provider, force) do
     config = Application.get_env(:cog, Cog.Chat.Adapter)
     old_provider = Keyword.fetch!(config, :chat)
 
-    if old_provider == new_provider do
+    if old_provider == new_provider && !force do
       :no_change
     else
       providers = config

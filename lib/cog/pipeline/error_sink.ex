@@ -108,7 +108,7 @@ defmodule Cog.Pipeline.ErrorSink do
     context = prepare_error_context(signal, state)
     failure_event(signal.error, context["error_message"], state)
     output = output_for(type, signal, context)
-    Enum.each(targets, &ChatAdapter.send(state.conn, &1.provider, &1.room, output))
+    Enum.each(targets, &ChatAdapter.send(state.conn, &1.provider, &1.room, output, state.request.metadata))
   end
 
   defp send_to_owner(%__MODULE__{all_events: events, policy: policy, owner: owner}=state) when policy in [:owner, :adapter_owner] do
