@@ -48,7 +48,7 @@ defmodule Cog.V1.RoleController do
   end
 
   def delete(conn, %{"id" => id}) do
-    case Roles.by_id!(id) |> Roles.delete() do
+    case id |> Roles.by_id! |> Roles.delete do
       {:ok, _} ->
         send_resp(conn, :no_content, "")
       {:error, changed} ->

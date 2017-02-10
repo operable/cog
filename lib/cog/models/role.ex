@@ -25,7 +25,7 @@ defmodule Cog.Models.Role do
   If no params are provided, an invalid changeset is returned
   with no validation performed.
   """
-  def changeset(model), do: changeset(model, :empty)
+  def changeset(model, params \\ %{})
 
   @doc """
   Creates a changeset based on the `model` to validate a delete
@@ -34,7 +34,8 @@ defmodule Cog.Models.Role do
   def changeset(model, :delete) do
     %{Changeset.change(model) | action: :delete}
     |> protect_admin_role
-
+    |> group_roles_constraint
+    |> role_permissions_constraint
   end
 
   @doc """
