@@ -30,6 +30,7 @@ defmodule Cog.Command.Seed do
   def handle_message(%Command{args: [input]}=req, state) when not(is_binary(input)),
     do: {:error, req.reply_to, "Argument must be a string", state}
   def handle_message(%Command{args: [input]}=req, state) do
+    input = String.replace(input, ~r/\\\"/, "\"")
     case Poison.decode(input) do
       {:ok, value} when is_map(value) ->
         {:reply, req.reply_to, value, state}
@@ -41,7 +42,8 @@ defmodule Cog.Command.Seed do
         end
       {:ok, _} ->
         {:error, req.reply_to, "JSON must be a map or a list of maps", state}
-      {:error, _} ->
+      {:error, reason} ->
+        Logger.error("#{inspect reason}")
         {:error, req.reply_to, "Bad input! Please supply valid JSON", state}
     end
   end
