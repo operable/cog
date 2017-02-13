@@ -121,7 +121,7 @@ defmodule Cog.Pipeline.ErrorSink do
   defp send_abort_to_adapter({type, targets}, signal, state) do
     context = prepare_abort_context(signal, state)
     output = output_for(type, signal, context)
-    Enum.each(targets, &ChatAdapter.send(state.conn, &1.provider, &1.room, output))
+    Enum.each(targets, &ChatAdapter.send(state.conn, &1.provider, &1.room, output, state.request.metadata))
   end
 
   defp prepare_abort_context(signal, state) do
