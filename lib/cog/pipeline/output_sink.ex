@@ -99,6 +99,7 @@ defmodule Cog.Pipeline.OutputSink do
   defp want_signal?(%DoneSignal{}=done) do
     DoneSignal.error?(done) == false
   end
+  defp want_signal?(_), do: false
 
   def process_output(%__MODULE__{all_events: []}=state, _) do
     state

@@ -6,8 +6,7 @@ defmodule Cog.Pipeline.ExecutionStage do
   alias Cog.Events.PipelineEvent
   alias Cog.Pipeline.{Binder, OptionParser, PermissionEnforcer}
   alias Cog.Messages.{Command, CommandResponse}
-  alias Cog.Pipeline.DataSignal
-  alias Cog.Pipeline.DoneSignal
+  alias Cog.Pipeline.{AbortSignal, DataSignal, DoneSignal}
   alias Cog.Pipeline.RelaySelector
   alias Cog.Repository.PipelineHistory, as: HistoryRepo
   alias Piper.Command.Ast.BadValueError
@@ -160,10 +159,17 @@ defmodule Cog.Pipeline.ExecutionStage do
   defp process_events(%DoneSignal{}=done, _, state, accum) do
     {accum ++ [done], state}
   end
+  defp process_events(%AbortSignal{}=abort, _, state, accum) do
+    {accum ++ [abort], state}
+  end
   defp process_events(%DataSignal{}=current, [next|events], state, accum) do
     {current, state} = add_position(current, next, state)
-    {out_events, state} = invoke_command(current, state)
-    process_events(next, events, state, accum ++ Enum.reverse(out_events))
+    case invoke_command(current, state) do
+      {:cont, out_events, new_state} ->
+        process_events(next, events, new_state, accum ++ Enum.reverse(out_events))
+      {:halt, out_events, new_state} ->
+        {accum ++ Enum.reverse(out_events), new_state}
+    end
   end
 
   defp add_position(signal, %DoneSignal{}, %__MODULE__{stream_position: :init}=state) do
@@ -199,23 +205,23 @@ defmodule Cog.Pipeline.ExecutionStage do
                 receive do
                   {:publish, ^topic, message} ->
                     HistoryRepo.update_state(state.request_id, "running")
-                    process_response(CommandResponse.decode!(message), state)
+                    process_response(CommandResponse.decode!(message), signal, state)
                   {:pipeline_complete, ^pipeline} ->
                     Process.exit(self(), :normal)
                 after timeout ->
                     HistoryRepo.update_state(state.request_id, "running")
-                    {[%DoneSignal{error: {:error, :timeout}, invocation: text, template: "error"}], state}
+                    {:halt, [%DoneSignal{error: {:error, :timeout}, invocation: text, template: "error"}], state}
                 end
               error ->
-                {[%DoneSignal{error: error}], state}
+                {:halt, [%DoneSignal{error: error}], state}
             end
           {:error, :denied, rule, text} ->
-            {[%DoneSignal{error: {:error, :denied, rule}, invocation: text, template: "error"}], state}
+            {:halt, [%DoneSignal{error: {:error, :denied, rule}, invocation: text, template: "error"}], state}
           error ->
-            {[%DoneSignal{error: error, invocation: "#{state.invocation}", template: "error"}], state}
+            {:halt, [%DoneSignal{error: error, invocation: "#{state.invocation}", template: "error"}], state}
         end
       error ->
-        {[%DoneSignal{error: error}], state}
+        {:halt, [%DoneSignal{error: error}], state}
     end
   end
 
@@ -245,25 +251,25 @@ defmodule Cog.Pipeline.ExecutionStage do
     Probe.notify(event)
   end
 
-  defp process_response(response, state) do
+  defp process_response(response, signal, state) do
     bundle_version_id = state.invocation.meta.bundle_version_id
     case response.status do
       "ok" ->
         if response.body == nil do
-          {[], state}
+          {:cont, [], state}
         else
           if is_list(response.body) do
-            {Enum.reduce_while(response.body, [],
+            {:cont, Enum.reduce_while(response.body, [],
                   &(expand_output(bundle_version_id, response.template, &1, &2))), state}
           else
-            {[DataSignal.wrap(response.body, bundle_version_id, response.template)], state}
+            {:cont, [DataSignal.wrap(response.body, bundle_version_id, response.template)], state}
           end
         end
       "abort" ->
-        signals = [DataSignal.wrap(response.body, bundle_version_id, response.template), %DoneSignal{}]
-        {signals, state}
+        signals = [%DoneSignal{}, AbortSignal.wrap(state.invocation, signal.data, response.status_message)]
+        {:halt, signals, state}
       "error" ->
-        {[%DoneSignal{error: {:error, response.status_message || :unknown_error}, template: response.template}], state}
+        {:halt, [%DoneSignal{error: {:error, response.status_message || :unknown_error}, template: response.template}], state}
     end
   end
 

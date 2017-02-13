@@ -18,7 +18,7 @@ defmodule Cog do
     maybe_display_unenforcing_warning()
     children = [worker(Cog.BusDriver, [], shutdown: 1000),
                 supervisor(Carrier.Messaging.ConnectionSup, []),
-                worker(Cog.Repo, []),
+                supervisor(Cog.DBSup, []),
                 supervisor(Cog.CoreSup, [])]
 
     opts = [strategy: :one_for_one, name: Cog.Supervisor]

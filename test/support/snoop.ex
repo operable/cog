@@ -145,6 +145,8 @@ defmodule Cog.Snoop do
     do: text
   defp render_directive(%{"name" => "fixed_width_block", "text" => text}),
     do: text
+  defp render_directive(%{"name" => "bold", "text" => text}),
+    do: text
   # We can also get plain text (e.g., from `echo` output)
   defp render_directive(%{"name" => "text", "text" => text}),
     do: text

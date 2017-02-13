@@ -203,6 +203,10 @@ defmodule Cog.Command.GenCommand do
           new_state = %{state | cb_state: cb_state}
           send_error_reply(error_message, reply_to, new_state)
           {:noreply, new_state}
+        {:abort, reply_to, message, cb_state} ->
+          new_state = %{state | cb_state: cb_state}
+          send_abort_reply(message, reply_to, new_state)
+          {:noreply, new_state}
         {:noreply, cb_state} ->
           new_state = %{state | cb_state: cb_state}
           {:noreply, new_state}
@@ -213,6 +217,14 @@ defmodule Cog.Command.GenCommand do
         send_error_reply(message, req.reply_to, state)
         {:noreply, state}
     end
+  end
+
+  ########################################################################
+
+  defp send_abort_reply(message, reply_to, state) do
+    resp = %Cog.Messages.CommandResponse{status: "abort",
+                                         status_message: message}
+    Carrier.Messaging.Connection.publish(state.mq_conn, resp, routed_by: reply_to)
   end
 
   ########################################################################
