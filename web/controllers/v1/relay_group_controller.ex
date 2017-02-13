@@ -38,8 +38,14 @@ defmodule Cog.V1.RelayGroupController do
   end
 
   def delete(conn, %{"id" => id}) do
-    Repo.get!(RelayGroup, id) |> Repo.delete!
-    send_resp(conn, :no_content, "")
+    case RelayGroups.delete(id) do
+      {:ok, _} ->
+        send_resp(conn, :no_content, "")
+      {:error, changeset} ->
+        conn
+        |> put_status(:unprocessable_entity)
+        |> render(Cog.ChangesetView, "error.json", changeset: changeset)
+    end
   end
 
   def update(conn, %{"id" => id, "relay_group" => group_params}) do

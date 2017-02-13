@@ -21,7 +21,17 @@ defmodule Cog.Models.RelayGroup do
   @required_fields ~w(name)
   @optional_fields ~w(desc)
 
-  def changeset(model, params \\ :empty) do
+
+  def changeset(model),
+    do: changeset(model, %{})
+
+  def changeset(model, :delete) do
+    %{Ecto.Changeset.change(model) | action: :delete}
+    |> relay_group_assignment_constraint
+    |> relay_group_membership_constraint
+  end
+
+  def changeset(model, params) do
     model
     |> Repo.preload([:bundles, :relays])
     |> cast(params, @required_fields, @optional_fields)
