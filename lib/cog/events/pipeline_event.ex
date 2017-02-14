@@ -120,7 +120,7 @@ defmodule Cog.Events.PipelineEvent do
               %{pipeline_id: pipeline_id,
                 event: event,
                 elapsed_microseconds: elapsed_us,
-                timestamp: Calendar.ISO.to_string(now)})
+                timestamp: DateTime.to_iso8601(now)})
   end
 
 end
