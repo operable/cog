@@ -90,7 +90,9 @@ defmodule Cog.Repository.RelayGroups do
   @spec delete(String.t | %RelayGroup{}) :: {:ok, %RelayGroup{}} | {:error, Ecto.Changeset.t} | {:error, Atom.t}
   def delete(%RelayGroup{}=relay_group) do
     try do
-      Repo.delete(relay_group)
+      relay_group
+      |> RelayGroup.changeset(:delete)
+      |> Repo.delete
     rescue
       Ecto.StaleModelError ->
         {:error, :not_found}
