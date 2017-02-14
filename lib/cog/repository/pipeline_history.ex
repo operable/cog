@@ -87,9 +87,13 @@ defmodule Cog.Repository.PipelineHistory do
   end
 
   def history_for_user(user_id, hist_start, hist_end, limit \\ 20) do
-    query  = build_user_history_query(user_id, hist_start, hist_end, limit)
-    query = from q in query,
-            where: q.state == "finished"
+    query = from(ph in PipelineHistory,
+                 limit: ^limit,
+                 order_by: [desc: :idx],
+                 select: [ph.idx, ph.text],
+                 where: ph.user_id == ^user_id and ph.state == "finished")
+            |> history_where(hist_start, hist_end)
+
     Repo.all(query)
   end
 
@@ -103,32 +107,13 @@ defmodule Cog.Repository.PipelineHistory do
     DateTime.to_unix(DateTime.utc_now(), :milliseconds)
   end
 
-  defp build_user_history_query(user_id, hist_start, hist_end, _limit) when hist_start != nil and hist_end != nil do
-    from ph in PipelineHistory,
-      where: ph.user_id == ^user_id and ph.idx >= ^hist_start and ph.idx <= ^hist_end,
-      order_by: [desc: :idx],
-      select: [ph.idx, ph.text]
-  end
-  defp build_user_history_query(user_id, hist_start, nil, limit) when hist_start != nil do
-    from ph in PipelineHistory,
-      where: ph.user_id == ^user_id and ph.idx >= ^hist_start,
-      order_by: [desc: :idx],
-      limit: ^limit,
-      select: [ph.idx, ph.text]
-  end
-  defp build_user_history_query(user_id, nil, hist_end, limit) when hist_end != nil do
-    from ph in PipelineHistory,
-      where: ph.user_id == ^user_id and ph.idx <= ^hist_end,
-      order_by: [desc: :idx],
-      limit: ^limit,
-      select: [ph.idx, ph.text]
-  end
-  defp build_user_history_query(user_id, nil, nil, limit) do
-    from ph in PipelineHistory,
-      where: ph.user_id == ^user_id,
-      order_by: [desc: :idx],
-      limit: ^limit,
-      select: [ph.idx, ph.text]
-  end
+  defp history_where(query, nil, nil),
+    do: query
+  defp history_where(query, nil, hist_end),
+    do: from q in query, where: q.idx <= ^hist_end
+  defp history_where(query, hist_start, nil),
+    do: from q in query, where: q.idx >= ^hist_start
+  defp history_where(query, hist_start, hist_end),
+    do: from q in query, where: q.idx >= ^hist_start and q.idx <= ^hist_end
 
 end
