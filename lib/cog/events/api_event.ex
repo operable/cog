@@ -90,7 +90,7 @@ defmodule Cog.Events.ApiEvent do
                 http_method: conn.method,
                 path: conn.request_path,
                 event: event,
-                timestamp: Calendar.ISO.to_string(now),
+                timestamp: DateTime.to_iso8601(now),
                 elapsed_microseconds: elapsed_us})
   end
 
