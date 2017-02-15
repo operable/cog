@@ -193,4 +193,10 @@ defmodule Integration.CommandTest do
 
     assert response.body == ["do-something-dangerous --option= bar"]
   end
+
+  test "seed handles escaped double quotes", %{user: user} do
+    response = send_message(user, "@bot: seed \"[{\\\"key\\\": \\\"foo\\\"}, {\\\"foo\\\": 123}]\"")
+    assert response == [%{key: "foo"}, %{foo: 123}]
+  end
+
 end
