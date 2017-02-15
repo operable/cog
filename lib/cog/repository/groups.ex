@@ -19,7 +19,8 @@ defmodule Cog.Repository.Groups do
   alias Cog.Models.Role
   import Ecto.Query, only: [from: 2]
 
-  @preloads [:users, :roles]
+  @preloads [[users: from(u in User, order_by: u.username)],
+             [roles: from(r in Role, order_by: r.name)]]
 
   @doc """
   Creates a new user group given a map of attributes
