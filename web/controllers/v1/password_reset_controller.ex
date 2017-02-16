@@ -15,6 +15,11 @@ defmodule Cog.V1.PasswordResetController do
         # We don't want folks spamming this endpoint to find valid email
         # addresses.
         send_resp(conn, :no_content, "")
+      {:error, {:not_configured, error}} ->
+        Logger.warn("Email support has not been properly configured: #{inspect error}")
+        conn
+        |> put_status(:internal_server_error)
+        |> json(%{errors: ["Password resets have been disabled or are not properly configured."]})
       {:error, error} ->
         Logger.warn("Failed to generate password reset: #{inspect error}")
         send_resp(conn, :internal_server_error, "")
@@ -28,7 +33,7 @@ defmodule Cog.V1.PasswordResetController do
       {:error, :not_found} ->
         conn
         |> put_status(:not_found)
-        |> json(%{errors: "Invalid password reset token."})
+        |> json(%{errors: ["Invalid password reset token."]})
       {:error, changeset} ->
         conn
         |> put_status(:unprocessable_entity)

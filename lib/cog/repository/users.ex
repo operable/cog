@@ -165,10 +165,36 @@ defmodule Cog.Repository.Users do
       password_reset = PasswordReset.changeset(%PasswordReset{}, %{user_id: user_id})
       |> Repo.insert!
 
-      Cog.Email.reset_password(email_address, password_reset.id)
-      |> Cog.Mailer.deliver_later
+      try do
+        Cog.Email.reset_password(email_address, password_reset.id)
+        |> Cog.Mailer.deliver_later()
 
-      password_reset
+        password_reset
+      rescue
+        # Raised when bamboo is not properly configured
+        # We try to be helpful and give a more informative error message,
+        # but since we just get a generic ArgumentError back we include
+        # the original error just in case there is another issue.
+        error in ArgumentError ->
+          msg = """
+          SMTP may not be configured. You must set 'COG_SMTP_SERVER', \
+          'COG_SMTP_PORT', 'COG_SMTP_USERNAME', 'COG_SMTP_PASSWORD' and \
+          'COG_EMAIL_FROM' to enable email support. See the documentation \
+          for 'Configuring Password Resets' for more information.
+          Original error: #{inspect error}
+          """
+          Repo.rollback({:not_configured, msg})
+        # Raised when the from address is not set
+        Bamboo.EmptyFromAddressError ->
+          msg = """
+          You must set 'COG_EMAIL_FROM' to enable email support. \
+          See the documentation for 'Configuring Password Resets' \
+          for more information.
+          """
+          Repo.rollback({:not_configured, msg})
+        error ->
+          Repo.rollback(error)
+      end
     end)
   end
 
