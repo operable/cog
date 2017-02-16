@@ -52,6 +52,9 @@ cat <<EOF
 EOF
 done
 
+
+# TEMPORARILY disabled while we sort out cogctl build issues
+
 ########################################################################
 # "Real" Image build
 #
@@ -76,13 +79,13 @@ done
 # For now, we'll push this to `cog-testing`, instead of `cog`, even
 # though it's a "real" image. Once we start actually promoting
 # official images from CI, though, we can send it to `cog`.
-COG_IMAGE="operable/cog-testing:ci-build-${BUILDKITE_BUILD_NUMBER}-${BUILDKITE_COMMIT::8}"
+# COG_IMAGE="operable/cog-testing:ci-build-${BUILDKITE_BUILD_NUMBER}-${BUILDKITE_COMMIT::8}"
 
-cat <<EOF
+# cat <<EOF
 
-  - wait
+#   - wait
 
-  - command: .buildkite/scripts/build_and_push_docker_image.sh $COG_IMAGE
-    label: ":docker: Build Real Image"
+#   - command: .buildkite/scripts/build_and_push_docker_image.sh $COG_IMAGE
+#     label: ":docker: Build Real Image"
 
 EOF
