@@ -11,3 +11,6 @@ Mnesia*
 cover
 docker-compose.yml
 .env
+.git
+.gitignore
+.dockerignore
