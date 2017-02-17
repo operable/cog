@@ -64,6 +64,7 @@ defmodule Cog.Mixfile do
       {:conduit, github: "operable/conduit"},
       {:probe, github: "operable/probe"},
       {:spanner, github: "operable/spanner"},
+      {:piper, github: "operable/piper", branch: "kevsmith/variable-redirects", override: true},
       {:greenbar, github: "operable/greenbar"},
 
       # Used to model pipelines
