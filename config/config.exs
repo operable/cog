@@ -160,7 +160,7 @@ config :cog, Carrier.Messaging.Connection,
 # Web Endpoints
 
 config :cog, Cog.Endpoint,
-  http: [port: System.get_env("COG_API_PORT") || 4000],
+  http: [port: System.get_env("PORT") || System.get_env("COG_API_PORT") || 4000 ],
   url: gen_public_url_config(Cog.Endpoint),
   root: Path.dirname(__DIR__),
   debug_errors: false,
