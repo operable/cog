@@ -23,7 +23,7 @@ COPY . /home/operable/cog/
 RUN chown -R operable /home/operable
 
 RUN apk update -U && \
-    apk add expat-dev gcc g++ libstdc++ make && \
+    apk add expat-dev gcc g++ libstdc++ && \
     mix clean && mix deps.get && mix compile && \
     apk del gcc g++ && \
     rm -f /var/cache/apk/*
