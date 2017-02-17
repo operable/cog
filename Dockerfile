@@ -10,11 +10,9 @@ WORKDIR /home/operable/cog
 COPY . /home/operable/cog/
 RUN chown -R operable /home/operable
 
-RUN apk update -U && \
-    apk add expat-dev gcc g++ libstdc++ && \
-    mix clean && mix deps.get && mix compile && \
-    apk del gcc g++ && \
-    rm -f /var/cache/apk/*
+RUN apk --no-cache add expat-dev gcc g++ libstdc++ && \
+    mix deps.get && mix compile && \
+    apk del gcc g++
 
 # This should be in place in the build environment already
 COPY cogctl-for-docker-build /usr/local/bin/cogctl
