@@ -9,3 +9,5 @@ Mnesia.*
 /cover
 docker-compose.override.yml
 .env
+
+cogctl-for-docker-build

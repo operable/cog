@@ -18,24 +18,17 @@ RUN addgroup -g $OPERABLE_GID operable && \
     adduser -h /home/operable -D -u $OPERABLE_UID -G operable -s /bin/ash operable
 
 # Create directories and upload cog source
-RUN mkdir -p /home/operable/cog /home/operable/cogctl
+WORKDIR /home/operable/cog
 COPY . /home/operable/cog/
-RUN chown -R operable /home/operable && \
-    rm -f /home/operable/.dockerignore
+RUN chown -R operable /home/operable
 
-# We do this all in one huge RUN command to get the smallest
-# possible image.
-USER root
 RUN apk update -U && \
     apk add expat-dev gcc g++ libstdc++ make && \
-    # build cog and cogctl \
-    su operable - -c /home/operable/cog/scripts/docker-build && \
-    # install cogctl and delete source directory \
-    cp /home/operable/cogctl/cogctl /usr/local/bin/cogctl && \
-    rm -rf /home/operable/cogctl && \
-    # cleanup dependencies
+    mix clean && mix deps.get && mix compile && \
     apk del gcc g++ && \
     rm -f /var/cache/apk/*
 
+# This should be in place in the build environment already
+COPY cogctl-for-docker-build /usr/local/bin/cogctl
+
 USER operable
-WORKDIR /home/operable/cog
