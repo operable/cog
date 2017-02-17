@@ -13,7 +13,6 @@ reset-db:
 docker:
 	scripts/get_cogctl.sh
 	docker build \
-		   --build-arg MIX_ENV=prod \
 		   -t $(DOCKER_IMAGE) .
 
 .PHONY: docker

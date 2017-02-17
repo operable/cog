@@ -1,8 +1,6 @@
 FROM operable/elixir:1.3.4-r0
 
-# Select mix environment to use. We declare the MIX_ENV at build time
-ARG MIX_ENV
-ENV MIX_ENV ${MIX_ENV:-dev}
+ENV MIX_ENV prod
 
 # Setup Operable user. UID/GID default to 60000 but can be overriden.
 ARG OPERABLE_UID
