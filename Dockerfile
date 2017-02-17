@@ -4,9 +4,6 @@ FROM operable/elixir:1.3.4-r0
 ARG MIX_ENV
 ENV MIX_ENV ${MIX_ENV:-dev}
 
-# Install runtime dependencies & nice-to-have packages
-RUN apk update -U && apk add curl postgresql-client
-
 # Setup Operable user. UID/GID default to 60000 but can be overriden.
 ARG OPERABLE_UID
 ENV OPERABLE_UID ${OPERABLE_UID:-60000}
