@@ -32,3 +32,8 @@ RUN apk update -U && \
 COPY cogctl-for-docker-build /usr/local/bin/cogctl
 
 USER operable
+# TODO: For some reason, Hex needs to be present in the operable
+# user's home directory for Cog to run (specifically, for it to apply
+# the database migrations at startup). It complains of not being able
+# to build gen_stage, *even though it's already been built!*
+RUN mix local.hex --force

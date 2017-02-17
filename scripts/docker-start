@@ -17,9 +17,7 @@ mix ecto.migrate --no-deps-check
 
 if [[ -n "$COG_BOOTSTRAP_USERNAME" && -n "$COG_BOOTSTRAP_PASSWORD" ]]; then
   echo "Generating a cogctl profile..."
-  cogctl profiles create default \
-    --rest-user "${COG_BOOTSTRAP_USERNAME}" \
-    --rest-password "${COG_BOOTSTRAP_PASSWORD}"
+  cogctl profile create default http://localhost:4000 "${COG_BOOTSTRAP_USERNAME}" "${COG_BOOTSTRAP_PASSWORD}"
 fi
 
 echo "Launching Cog server..."
