@@ -7,8 +7,11 @@ RUN addgroup -g 60000 operable && \
 
 # Create directories and upload cog source
 WORKDIR /home/operable/cog
+# Really, we only need the cog directory to be owned by operable,
+# because (by default) that's where we write log files. None of the
+# actual scripts or library files need to be owned by operable.
+RUN chown -R operable /home/operable/cog
 COPY . /home/operable/cog/
-RUN chown -R operable /home/operable
 
 RUN apk --no-cache add expat-dev gcc g++ libstdc++ && \
     mix deps.get && mix compile && \
