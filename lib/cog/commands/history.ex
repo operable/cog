@@ -83,14 +83,10 @@ defmodule Cog.Commands.History do
     end
   end
 
-  defp ensure_positive_limit(limit) do
-    case limit < 0 do
-      true ->
-        {:error, "Limit must be a positive integer"}
-      false ->
-        {:ok, limit}
-    end
-  end
+  defp ensure_positive_limit(limit) when limit < 0,
+    do: {:error, "Limit must be a positive integer"}
+  defp ensure_positive_limit(limit),
+    do: {:ok, limit}
 
   defp format_entries([]), do: []
   defp format_entries(entries) do
