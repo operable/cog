@@ -16,8 +16,8 @@ defmodule Cog.Commands.History do
 
   def handle_message(%{options: opts, args: args}=req, state) do
     limit = Map.get(opts, "limit", @default_limit)
-    with {:ok, {hist_start, hist_end}} <- parse_args(args)
-      do
+    with {:ok, limit} <- ensure_positive_limit(limit),
+         {:ok, {hist_start, hist_end}} <- parse_args(args) do
         case fetch_history(req, hist_start, hist_end, limit) |> format_entries do
           [] ->
             {:reply, req.reply_to, "Empty command history.", state}
@@ -83,8 +83,12 @@ defmodule Cog.Commands.History do
     end
   end
 
+  defp ensure_positive_limit(limit) when limit < 0,
+    do: {:error, "Limit must be a positive integer"}
+  defp ensure_positive_limit(limit),
+    do: {:ok, limit}
+
   defp format_entries([]), do: []
-  defp format_entries([entry]), do: format_entry(entry, 2)
   defp format_entries(entries) do
     max_width = find_max_width(entries)
     Enum.map(entries, &(format_entry(&1, max_width)))
