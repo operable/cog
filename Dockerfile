@@ -14,7 +14,7 @@ RUN chown -R operable /home/operable/cog
 
 COPY mix.exs mix.lock /home/operable/cog/
 COPY config/ /home/operable/cog/config/
-RUN mix deps.get
+RUN mix deps.get --only=prod --no-archives-check
 
 # Compile all the dependencies. The additional packages installed here
 # are for Greenbar to build and run.
@@ -33,7 +33,7 @@ COPY priv/ /home/operable/cog/priv/
 COPY web/ /home/operable/cog/web/
 COPY lib/ /home/operable/cog/lib/
 
-RUN mix compile
+RUN mix compile --no-deps-check --no-archives-check
 
 COPY scripts/ /home/operable/cog/scripts/
 

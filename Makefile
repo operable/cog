@@ -12,8 +12,7 @@ reset-db:
 
 docker:
 	scripts/get_cogctl.sh
-	docker build \
-		   -t $(DOCKER_IMAGE) .
+	docker build  -t $(DOCKER_IMAGE) .
 
 .PHONY: docker
 
