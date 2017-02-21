@@ -84,7 +84,6 @@ defmodule Cog.Commands.History do
   end
 
   defp format_entries([]), do: []
-  defp format_entries([entry]), do: format_entry(entry, 2)
   defp format_entries(entries) do
     max_width = find_max_width(entries)
     Enum.map(entries, &(format_entry(&1, max_width)))
