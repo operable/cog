@@ -12,8 +12,10 @@ defmodule Cog.Repository.Services do
     # TODO: Eventually, we'll want to introspect the system for this
     # information. For now, though, this will be effectively duplicating
     # information contained in the service router.
-    [%{name: "memory",
-       version: "1.0.0"}]
+    [
+      %{name: "memory", version: "1.0.0"},
+      %{name: "chat", version: "1.0.0"}
+    ]
   end
 
   def deployed(name),
