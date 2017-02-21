@@ -1,32 +1,41 @@
 FROM operable/elixir:1.3.4-r0
 
-# Select mix environment to use. We declare the MIX_ENV at build time
-ARG MIX_ENV
-ENV MIX_ENV ${MIX_ENV:-dev}
+ENV MIX_ENV prod
 
-# Install runtime dependencies & nice-to-have packages
-RUN apk update -U && apk add curl postgresql-client
-
-# Setup Operable user. UID/GID default to 60000 but can be overriden.
-ARG OPERABLE_UID
-ENV OPERABLE_UID ${OPERABLE_UID:-60000}
-
-ARG OPERABLE_GID
-ENV OPERABLE_GID ${OPERABLE_UID:-60000}
-
-RUN addgroup -g $OPERABLE_GID operable && \
-    adduser -h /home/operable -D -u $OPERABLE_UID -G operable -s /bin/ash operable
+RUN addgroup -g 60000 operable && \
+    adduser -h /home/operable -D -u 60000 -G operable -s /bin/ash operable
 
 # Create directories and upload cog source
 WORKDIR /home/operable/cog
-COPY . /home/operable/cog/
-RUN chown -R operable /home/operable
+# Really, we only need the cog directory to be owned by operable,
+# because (by default) that's where we write log files. None of the
+# actual scripts or library files need to be owned by operable.
+RUN chown -R operable /home/operable/cog
 
-RUN apk update -U && \
-    apk add expat-dev gcc g++ libstdc++ make && \
-    mix clean && mix deps.get && mix compile && \
-    apk del gcc g++ && \
-    rm -f /var/cache/apk/*
+COPY mix.exs mix.lock /home/operable/cog/
+COPY config/ /home/operable/cog/config/
+RUN mix deps.get --only=prod --no-archives-check
+
+# Compile all the dependencies. The additional packages installed here
+# are for Greenbar to build and run.
+RUN apk --no-cache add \
+        --virtual .build_deps \
+        gcc \
+        g++ && \
+    apk --no-cache add \
+        expat-dev \
+        libstdc++ && \
+    mix deps.compile && \
+    apk del .build_deps
+
+COPY emqttd_plugins/ /home/operable/cog/emqttd_plugins/
+COPY priv/ /home/operable/cog/priv/
+COPY web/ /home/operable/cog/web/
+COPY lib/ /home/operable/cog/lib/
+
+RUN mix compile --no-deps-check --no-archives-check
+
+COPY scripts/ /home/operable/cog/scripts/
 
 # This should be in place in the build environment already
 COPY cogctl-for-docker-build /usr/local/bin/cogctl
