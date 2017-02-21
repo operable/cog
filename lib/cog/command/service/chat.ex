@@ -15,7 +15,7 @@ defmodule Cog.Command.Service.Chat do
     end
   end
 
-  defp build_target(provider, "chat://@" <> handle) do
+  defp build_target(provider, "@" <> handle) do
     case Adapter.lookup_user(provider, handle) do
       {:ok, %{id: user_id}} -> 
         {:ok, %{provider: provider, id: user_id, name: handle, is_dm: true}}
@@ -23,7 +23,7 @@ defmodule Cog.Command.Service.Chat do
         {:error, :unknown_handle}
     end
   end
-  defp build_target(provider, "chat://#" <> room) do
+  defp build_target(provider, "#" <> room) do
     case Adapter.lookup_room(provider, name: "##{room}") do
       {:ok, %{id: room_id}} -> 
         {:ok, %{provider: provider, id: room_id, name: room, is_dm: false}}
