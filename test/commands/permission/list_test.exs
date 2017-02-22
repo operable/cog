@@ -15,6 +15,7 @@ defmodule Cog.Test.Commands.Permission.ListTest do
             %{bundle: "operable", name: "manage_relays"},
             %{bundle: "operable", name: "manage_roles"},
             %{bundle: "operable", name: "manage_triggers"},
+            %{bundle: "operable", name: "manage_user_pipeline"},
             %{bundle: "operable", name: "manage_users"},
             %{bundle: "operable", name: "st-echo"},
             %{bundle: "operable", name: "st-thorn"}] = payload
