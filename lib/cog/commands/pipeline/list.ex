@@ -10,7 +10,10 @@ defmodule Cog.Commands.Pipeline.List do
   alias Cog.Repository.Permissions
   alias Cog.Models.User
 
-  @description "Display command pipeline statistics"
+  @description """
+  Display command pipeline statistics. Note: You can only list your own \
+  pipelines unless you have the operable:manage_user_pipeline permission.
+  """
   @valid_state_names ["R","W","F","running","waiting","finished"]
 
   # Allow any user to run ps
@@ -22,7 +25,11 @@ defmodule Cog.Commands.Pipeline.List do
   permission "manage_user_pipeline"
 
   option "user", short: "u", type: "string", required: false,
-    description: "View pipelines for specified user. Use 'all' to view pipeline history for all users."
+    description: """
+    View pipelines for specified user. Use 'all' to view pipeline history \
+    for all users. Note: You can only view pipelines for users other than \
+    yourself if you have the operable:manage_user_pipeline permission.
+    """
 
   option "last", short: "l", type: "int", required: false,
     description: "View <last> pipelines"

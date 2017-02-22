@@ -10,7 +10,10 @@ defmodule Cog.Commands.Pipeline.Kill do
   alias Cog.Models.User
   alias Cog.Repository.Permissions
 
-  @description "Abort a running pipeline"
+  @description """
+  Abort a running pipeline. Note: You can only abort other users pipelines \
+  if you have the operable:manage_user_pipeline permission.
+  """
 
   @arguments "id ..."
 

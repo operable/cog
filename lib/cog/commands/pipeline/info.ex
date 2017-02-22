@@ -10,7 +10,11 @@ defmodule Cog.Commands.Pipeline.Info do
   alias Cog.Models.User
   alias Cog.Repository.Permissions
 
-  @description "Display command pipeline details"
+  @description """
+  Display command pipeline details. Note: You can only view the details \
+  of other users pipelines if you have the operable:manage_user_pipeline \
+  permission.
+  """
 
   @arguments "id ..."
 
