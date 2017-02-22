@@ -17,6 +17,11 @@ defmodule Cog.Commands.Pipeline.Kill do
   # Allow any user to run ps
   rule "when command is #{Cog.Util.Misc.embedded_bundle}:pipeline-kill allow"
 
+  # We need to lock down who can manage a user's pipelines to the owning
+  # user and admins. We don't have a way to express that via rules currently
+  # so we have to handle it within the command.
+  permission "manage_user_pipeline"
+
   def handle_message(%{args: ids} = req, state) do
     killed = Enum.reduce(ids, [], kill_pipeline_fn(req))
     killed_text = case killed do

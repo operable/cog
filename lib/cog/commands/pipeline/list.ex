@@ -16,6 +16,9 @@ defmodule Cog.Commands.Pipeline.List do
   # Allow any user to run ps
   rule "when command is #{Cog.Util.Misc.embedded_bundle}:pipeline-list allow"
 
+  # We need to lock down who can manage a user's pipelines to the owning
+  # user and admins. We don't have a way to express that via rules currently
+  # so we have to handle it within the command.
   permission "manage_user_pipeline"
 
   option "user", short: "u", type: "string", required: false,

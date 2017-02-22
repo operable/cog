@@ -17,6 +17,9 @@ defmodule Cog.Commands.Pipeline.Info do
   # Allow any user to run info
   rule "when command is #{Cog.Util.Misc.embedded_bundle}:pipeline-info allow"
 
+  # We need to lock down who can manage a user's pipelines to the owning
+  # user and admins. We don't have a way to express that via rules currently
+  # so we have to handle it within the command.
   permission "manage_user_pipeline"
 
   def handle_message(%{args: ids} = req, state) do
