@@ -41,6 +41,7 @@ defmodule Cog.V1.PermissionControllerTest do
                      "manage_relays",
                      "manage_roles",
                      "manage_triggers",
+                     "manage_user_pipeline",
                      "manage_users",
                      "st-echo",
                      "st-thorn"]
