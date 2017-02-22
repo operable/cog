@@ -7,12 +7,16 @@ defmodule Cog.Commands.Pipeline.List do
   alias Cog.Models.PipelineHistory
   alias Cog.Repository.PipelineHistory, as: HistoryRepo
   alias Cog.Repository.Users, as: UserRepo
+  alias Cog.Repository.Permissions
+  alias Cog.Models.User
 
   @description "Display command pipeline statistics"
   @valid_state_names ["R","W","F","running","waiting","finished"]
 
   # Allow any user to run ps
   rule "when command is #{Cog.Util.Misc.embedded_bundle}:pipeline-list allow"
+
+  permission "manage_user_pipeline"
 
   option "user", short: "u", type: "string", required: false,
     description: "View pipelines for specified user. Use 'all' to view pipeline history for all users."
@@ -68,11 +72,32 @@ defmodule Cog.Commands.Pipeline.List do
       nil ->
         {:ok, HistoryRepo.pipelines_for_user(req.user["id"], Map.get(opts, "last", 20))}
       "all" ->
-        {:ok, HistoryRepo.all_pipelines(Map.get(opts, "last", 20))}
+        # Check that the user has permission to view all pipelines
+        perm = Permissions.by_name("operable:manage_user_pipeline")
+        {:ok, user} = UserRepo.by_username(req.user["username"])
+        if User.has_permission(user, perm) do
+          {:ok, HistoryRepo.all_pipelines(Map.get(opts, "last", 20))}
+        else
+          # Return an error if the user doesn't have the proper perms
+          {:error, "You must have the operable:manage_user_pipeline permission to view pipeline history for all users."}
+        end
       user ->
         case UserRepo.by_username(user) do
           {:ok, app_user} ->
-            {:ok, HistoryRepo.pipelines_for_user(app_user.id, Map.get(opts, "last", 20))}
+            # If a username is specified it must be the name of the requesting
+            # user, or the requesting user must have the manage_user_pipeline
+            # permission.
+            {:ok, req_user} = UserRepo.by_username(req.user["username"])
+            if app_user.id == req_user.id do
+              {:ok, HistoryRepo.pipelines_for_user(app_user.id, Map.get(opts, "last", 20))}
+            else
+              perm = Permissions.by_name("operable:manage_user_pipeline")
+              if User.has_permission(req_user, perm) do
+                {:ok, HistoryRepo.pipelines_for_user(app_user.id, Map.get(opts, "last", 20))}
+              else
+                {:error, "You must have the operable:manage_user_pipeline permission to view pipeline history for other users."}
+              end
+            end
           {:error, :not_found} ->
             {:error, "User '#{user}' not found"}
         end

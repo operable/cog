@@ -84,7 +84,9 @@ defmodule Cog.CommandCase do
       room: Keyword.get(opts, :room, %Cog.Chat.Room{}),
       service_token: Keyword.get(opts, :service_token, service_token()),
       services_root: Keyword.get(opts, :services_root, services_root()),
-      user: Keyword.get(opts, :user, %{})}
+      # Doing the poison encode dance here because thats what happens when the
+      # message is sent over the bus.
+      user: Poison.encode!(Keyword.get(opts, :user, %{})) |> Poison.decode!()}
   end
 
   def send_req(%Cog.Messages.Command{}=req, module) do
