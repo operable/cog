@@ -61,10 +61,10 @@ defmodule Cog.Mixfile do
     [
       # Operable Code
       ########################################################################
-      {:conduit, github: "operable/conduit"},
-      {:probe, github: "operable/probe"},
-      {:spanner, github: "operable/spanner"},
-      {:greenbar, github: "operable/greenbar"},
+      {:conduit, github: "operable/conduit", branch: "v1.0.0-beta.3"},
+      {:probe, github: "operable/probe", branch: "v1.0.0-beta.3"},
+      {:spanner, github: "operable/spanner", branch: "v1.0.0-beta.3"},
+      {:greenbar, github: "operable/greenbar", branch: "v1.0.0-beta.3"},
 
       # Used to model pipelines
       {:gen_stage, "~> 0.10.0"},
