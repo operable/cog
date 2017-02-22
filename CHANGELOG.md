@@ -1,5 +1,25 @@
 #  Changelog
 
+## 1.0.0-beta.3
+
+### Enhancements
+* Complete rewrite of cogctl in Python
+* Support Slack Thread responses [#1312](https://github.com/operable/cog/pull/1312)
+* Fail more gracefully when SMTP isn't configured properly [#1353](https://github.com/operable/cog/issues/1353)
+* Protect pipeline history and kill commands with permission checks [#1327](https://github.com/operable/cog/issues/1327)
+
+### Bug Fixes
+* operable:pipeline-list and operable:pipeline-history fail if chat username != cog username [#1334](https://github.com/operable/cog/issues/1334)
+* group command does not return associated users [#1332](https://github.com/operable/cog/issues/1332)
+* Parsing history index ranges fails [#1337](https://github.com/operable/cog/issues/1337)
+* Catch constraint errors on role delete [#1344](https://github.com/operable/cog/issues/1344)
+* Executor crashes when command aborts [#1340](https://github.com/operable/cog/issues/1340)
+* Apply constraints when deleting relay groups [#1349](https://github.com/operable/cog/issues/1349)
+* Event log timestamps are not valid ISO8601. [#1350](https://github.com/operable/cog/issues/1350)
+* Parsing escaped quotes in json fails in the `seed` command [#1323](https://github.com/operable/cog/issues/1323)
+* `history -l 1` crashes [#1364](https://github.com/operable/cog/issues/1364)
+* Gracefully handle failure when assigning a chat handle to more than one user [#1366](https://github.com/operable/cog/issues/1366)
+
 ## 1.0.0-beta.2
 
 ### Enhancements
