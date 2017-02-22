@@ -25,6 +25,9 @@ defmodule Cog.Models.ChatHandle do
 
     model
     |> cast(params, @required_fields, @optional_fields)
+    |> unique_constraint(:handle,
+                         name: :chat_handles_provider_id_handle_index,
+                         message: "Another user has claimed this chat handle")
   end
 
   # Normally we would use an `update_change` call for something like this. But,
