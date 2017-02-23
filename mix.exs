@@ -5,7 +5,7 @@ defmodule Cog.Mixfile do
 
   def project do
     [app: :cog,
-     version: "1.0.0-beta.4",
+     version: "1.0.0",
      elixir: "~> 1.3.2",
      erlc_paths: ["emqttd_plugins"],
      erlc_options: [:debug_info, :warnings_as_errors],
@@ -61,10 +61,10 @@ defmodule Cog.Mixfile do
     [
       # Operable Code
       ########################################################################
-      {:conduit, github: "operable/conduit"},
-      {:probe, github: "operable/probe"},
-      {:spanner, github: "operable/spanner"},
-      {:greenbar, github: "operable/greenbar"},
+      {:conduit, github: "operable/conduit", branch: "v1.0.0"},
+      {:probe, github: "operable/probe", branch: "v1.0.0"},
+      {:spanner, github: "operable/spanner", branch: "v1.0.0"},
+      {:greenbar, github: "operable/greenbar", branch: "v1.0.0"},
 
       # Used to model pipelines
       {:gen_stage, "~> 0.10.0"},
