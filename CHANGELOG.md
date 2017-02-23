@@ -1,5 +1,9 @@
 #  Changelog
 
+## 1.0
+
+* Same as 1.0.0-beta.3
+
 ## 1.0.0-beta.3
 
 ### Enhancements
