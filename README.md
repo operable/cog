@@ -8,8 +8,7 @@ Powerful access control means you can collaborate around even the most sensitive
 
 * [Installation Guide](https://cog-book.operable.io/#_installation_guide) - You want Cog, now go here to start installing it.
 * [Development Guide](https://github.com/operable/cog/blob/master/DEVELOP.md)
-* [Cog Book](https://cog-book.operable.io) - Our new book that includes the above mentioned Installation Guide and a chapter on Command Bundle Writing.
-* [Documentation](http://docs.operable.io) - All about Cog that isn't covered in the book, yet.
+* [Cog Book](https://cog-book.operable.io) - This is Cog's Documentation! Our new book that includes the above mentioned Installation Guide and a chapter on Command Bundle Writing.
 * [Bundle Warehouse](https://bundles.operable.io/) - Install one of these bundles on Cog and/or create your own command bundle and upload it here.
 
 ## Status
