@@ -1,7 +1,5 @@
 # Cog
 
-[![Build status](https://badge.buildkite.com/ce01baf77e07a728f3d80575254634c3d63d8a5eda69ba7fb3.svg?branch=master)](https://buildkite.com/operable/cog)
-
 Cog brings the power of the command line to the place you collaborate with your team all the time -- your chat window.
 
 Powerful access control means you can collaborate around even the most sensitive tasks with confidence. A focus on extensibility and adaptability means that you can respond quickly to the unexpected, without your team losing visibility.
