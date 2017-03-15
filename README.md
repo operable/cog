@@ -1,5 +1,7 @@
 # Cog
 
+[![Build Status](https://travis-ci.org/operable/cog.svg?branch=master)](https://travis-ci.org/operable/cog)
+
 Cog brings the power of the command line to the place you collaborate with your team all the time -- your chat window.
 
 Powerful access control means you can collaborate around even the most sensitive tasks with confidence. A focus on extensibility and adaptability means that you can respond quickly to the unexpected, without your team losing visibility.
