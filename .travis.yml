@@ -1,0 +1,11 @@
+sudo: required
+
+services:
+  - docker
+
+script:
+  - docker-compose -f docker-compose.ci.yml run test ./scripts/wait-for-it.sh postgres:5432 -s -t 30 -- make test-unit
+
+notifications:
+  slack:
+    secure: sJeFD1p/blE/uiVzvp5wzzrHh6EC8scJW8I4KUikC3xB7XNZtUDWjD4gR7r4WV6zbDmexkRI637GUO5I/0W7JiQdQPhVBfAdzNNf002HpNR1EhMpDA8uYXvZwiB8tRUMAQwuY4yMBzt7TxOCKlFnGG38Ucgq3Jd2rVUz18B5T6Xfd9nxcd6qrKNRX6mUtP9kIG0APwUjzD/J59olXELz5xZLPFqeQasVBbhkdWZ8hLGnoTLzv8hSfipA+yFxdtF9LNKOrdb/+QBVY6pfeR7Az7JgRxopA21SQj5ei+rpgtaMztqRB93sc+0tW+u8Lz3lP6NO+Ph4wPbErt2m8xqgmCg2KA+DCzX2fE7oeHeAd9KMZqqQBmARsZcv6dfW8Say/s9JXPL0gO2m/I24Do1WLxM0kYS+qfS1sha5RCzUopIGAN2FhB9jXW+7Z2np7x7j0WFveDWzEZdORqGegOo0pN9xUWsFXRwICoTV0yj3hxnsJq/Ogcpbfw82YwXV4EbPltqlDysynyL+o+itbTZkaJKDlPsq5nYI2F7hWqfgZaqYOa92BkbA2n1gZamyjlB30vug79t4+zW2mu3AcvX/lPoPrTLH1YRMnY6rnNPWrw8DbwjXpqXGMX1X6hII4OmhY8A+vTEDHdKf3dAf2dgY/cFD4FeCkg3+Z+dkZR3ecJk=
