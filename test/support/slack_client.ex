@@ -1,54 +1,61 @@
 defmodule Cog.Test.Support.SlackClientState do
+  @moduledoc """
+  Additional state to track for a `Cog.Test.Support.SlackClient`
+  process. Ideally, we'd add this data to the client's state directly,
+  but the Elixir-Slack library doesn't allow arbitrary data in its
+  state. If it did, then this module could go away.
+  """
+  def start_link(),
+    do: Agent.start_link(&fresh_state/0, name: __MODULE__)
 
-  def start_link() do
-    Agent.start_link(fn -> fresh_state end, name: __MODULE__)
-  end
+  @doc """
+  Record a timestamp for a message. The client should only process
+  messages that have a timestamp greater than this one.
+  """
+  def set_cutoff_ts(ts),
+    do: Agent.update(__MODULE__, &Map.put(&1, :cutoff_ts, ts))
 
-  def store_message(sender, message) do
+  @doc """
+  Retrieve the current "cutoff" timestamp. The client should only
+  process messages that have a timestamp greater than this one.
+  """
+  def get_cutoff_ts(),
+    do: Agent.get(__MODULE__, &Map.get(&1, :cutoff_ts))
+
+  @doc """
+  Record a test process as waiting for a response from Slack.
+
+  `reply_from`: a Slack user. Only messages sent from this user are
+                considered.
+  `caller`: a tuple consisting of a unique ref and the test process
+            waiting for a response.
+  """
+  def add_waiter(reply_from, {ref, pid}=caller)
+  when is_reference(ref) and is_pid(pid) do
     Agent.update(__MODULE__,
-      fn(state) ->
-        messages = state
-        |> Map.get(:messages)
-        |> Map.update(sender, [message],
-          fn(previous) ->
-            Enum.sort([message|previous], &by_ts/2)
-          end)
-        Map.put(state, :messages, messages)
-      end)
+                 &update_in(&1,
+                            [:waiters, reply_from],
+                            fn(nil) -> [caller]
+                              (list) -> [caller|list]
+                            end))
   end
 
-  def add_waiter(reply_from, caller) do
-    Agent.update(__MODULE__, fn(state) ->
-      updated = state
-      |> Map.fetch!(:waiters)
-      |> Map.update(reply_from, [caller], &([caller|&1]))
+  @doc """
+  Retrieve the list of test processes waiting for a response sent from
+  the Slack user `reply_from`.
 
-      Map.put(state, :waiters, updated)
-    end)
-  end
-
+  Returns nil if no one was waiting, but returns a list of waiters
+  otherwise. Note: returned waiters are removed from the state.
+  """
   def get_waiters(reply_from) do
-    Agent.get_and_update(__MODULE__, fn(state) ->
-      things = Map.fetch!(state, :waiters)
-      case Map.get(things, reply_from) do
-        nil ->
-          {nil, state}
-        callers ->
-          things = Map.delete(things, reply_from)
-          state = Map.put(state, :waiters, things)
-          {callers, state}
-      end
-    end)
+    Agent.get_and_update(__MODULE__,
+                         &get_and_update_in(&1,
+                                            [:waiters, reply_from],
+                                            fn(_) -> :pop end))
   end
 
-  def fresh_state() do
-    %{messages: %{},
-      waiters: %{}}
-  end
-
-  defp by_ts(first, second) do
-    first.ts > second.ts
-  end
+  defp fresh_state(),
+    do: %{waiters: %{}, cutoff_ts: 0}
 
 end
 
@@ -61,7 +68,7 @@ defmodule Cog.Test.Support.SlackClient do
 
   # Be a little more liberal with the timeouts to account for
   # potentially several Slack API calls.
-  @default_timeout (@api_wait_interval * 4) + 2_000
+  @default_timeout (@api_wait_interval * 6) + 2_000
 
   use Slack
 
@@ -112,93 +119,65 @@ defmodule Cog.Test.Support.SlackClient do
     end
   end
 
-  def initialize(client, room \\ nil) do
-    call(client, {:init, room})
-  end
+  def initialize(client),
+    do: call(client, :init)
 
   def chat_wait!(client, opts) do
     room = Keyword.fetch!(opts, :room)
     message = Keyword.fetch!(opts, :message)
     reply_from = Keyword.fetch!(opts, :reply_from)
-    edited = Keyword.get(opts, :edited)
     timeout = Keyword.get(opts, :timeout, @default_timeout)
-    call(client, {:chat_and_wait, room, message, reply_from, edited}, timeout)
+    call(client, {:chat_and_wait, room, message, reply_from}, timeout)
   end
 
-  def handle_message(%{subtype: "message_changed"}, _state) do
-    :ok
-  end
   def handle_message(%{type: "message"}=message, state) do
+    # Only deal with messages that aren't sent by the user.... Really,
+    # we only want to care about messages from the bot.
     if message.user != state.me.id do
-      msg = parse_message(message, state)
-      SlackClientState.store_message(message.user, msg)
-      case SlackClientState.get_waiters(message.user) do
-        nil ->
-          :ok
-        callers ->
-          reply = {:ok, msg}
-          Enum.each(callers, fn({ref, caller}) -> send(caller, {ref, reply}) end)
+      # The Elixir-Slack library converts Slack messages to atom-keyed
+      # maps instead of string-keyed ones :/
+      if String.to_float(message[:ts]) > SlackClientState.get_cutoff_ts() do
+        msg = parse_message(message, state)
+        waiters = SlackClientState.get_waiters(message.user)
+        if waiters do
+          Enum.each(waiters, fn({ref, caller}) ->
+            send(caller, {ref, {:ok, msg}})
+          end)
+        end
       end
     end
     :ok
   end
-  def handle_message(_message, _state) do
-    :ok
-  end
+  def handle_message(_message, _state),
+    do: :ok
 
-  def handle_info({{ref, sender}, {:init, room}}, state) do
+  def handle_info({{ref, sender}, :init}, state) do
     SlackClientState.start_link()
-    reply = if room != nil do
-      api_wait()
-      result = Slack.Web.Channels.join(room, %{token: state.token, as_user: true})
-      if result["ok"] == true do
-        :ok
-      else
-        {:error, result["error"]}
-      end
-    else
-      :ok
-    end
-    send(sender, {ref, reply})
+    send(sender, {ref, :ok})
     {:noreply, state}
   end
-  def handle_info({{ref, sender}=caller, {:chat_and_wait, room, message, reply_from, nil}}, state) do
+  def handle_info({{ref, sender}=caller, {:chat_and_wait, room, message, reply_from}}, state) do
     api_wait()
-    result = Slack.Web.Chat.post_message(room, %{as_user: true, text: message, token: state.token, parse: :full})
-    case result["ok"] do
-      false ->
-        send(sender, {ref, {:error, result["error"]}})
-        {:noreply, state}
-      true ->
-        user_id = find_user_id!(reply_from, state)
-        SlackClientState.add_waiter(user_id, caller)
-        {:noreply, state}
+    result = Slack.Web.Chat.post_message(room, %{as_user: true,
+                                                 text: message,
+                                                 token: state.token,
+                                                 parse: :full})
+    if result["ok"] do
+      result["ts"] # Yes, the keys are strings here
+      |> String.to_float
+      |> SlackClientState.set_cutoff_ts
+
+      user_id = find_user_id!(reply_from, state)
+      SlackClientState.add_waiter(user_id, caller)
+    else
+      send(sender, {ref, {:error, result["error"]}})
     end
-  end
-  def handle_info({{ref, sender}=caller, {:chat_and_wait, room, message, reply_from, edited}}, state) do
-    api_wait()
-    result = Slack.Web.Chat.post_message(room, %{as_user: true, text: message, token: state.token})
-    case result["ok"] do
-      false ->
-        send(sender, {ref, {:error, result["error"]}})
-        {:noreply, state}
-      true ->
-        api_wait()
-        result = Slack.Web.Chat.update(result["channel"], edited, result["ts"], %{token: state.token, as_user: true, parse: :full})
-        case result["ok"] do
-          false ->
-            send(sender, {ref, {:error, result["error"]}})
-            {:noreply, state}
-          true ->
-            user_id = find_user_id!(reply_from, state)
-            SlackClientState.add_waiter(user_id, caller)
-            {:noreply, state}
-        end
-    end
+
+    {:noreply, state}
   end
 
   defp call(sender, data, timeout \\ @default_timeout) do
-    ref = :erlang.make_ref()
+    ref = make_ref()
     message = {{ref, self()}, data}
     send(sender, message)
     receive do
@@ -266,7 +245,6 @@ defmodule Cog.Test.Support.SlackClient do
         replace(left <> replacement <> right, regex, replace_fun)
     end
   end
-
 
   defp make_message(text, ts, locn, thread_ts) do
     [realtime, _] = String.split(ts, ".", parts: 2)
