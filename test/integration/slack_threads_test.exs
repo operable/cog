@@ -22,22 +22,24 @@ defmodule Integration.SlackThreadsTest do
   @ci_room "ci_bot_testing"
 
   setup do
-    user = user(@user)
-    |> with_chat_handle_for("slack")
-
+    @user |> user |> with_chat_handle_for("slack")
     {:ok, client} = ChatClient.new()
-    {:ok, %{client: client, user: user}}
+    {:ok, %{client: client}}
   end
 
-  test "messages are threaded based on the original message", %{user: user, client: client} do
-    user |> with_permission("operable:echo")
-    {:ok, reply} = ChatClient.chat_wait!(client, [room: @ci_room, message: "@#{@bot} operable:echo test", reply_from: @bot])
+  test "messages are threaded based on the original message", %{client: client} do
+    {:ok, reply} = ChatClient.chat_wait!(
+      client, [room: @ci_room,
+               message: "@#{@bot}: operable:echo messages are threaded based on the original message",
+               reply_from: @bot])
     refute reply.thread_ts == nil
   end
 
-  test "messages redirected to another room or dm are not threaded", %{user: user, client: client} do
-    user |> with_permission("operable:echo")
-    {:ok, reply} = ChatClient.chat_wait!(client, [room: @ci_room, message: "@#{@bot} operable:echo test > #ci_bot_redirect_tests", reply_from: @bot])
+  test "messages redirected to another room or dm are not threaded", %{client: client} do
+    {:ok, reply} = ChatClient.chat_wait!(
+      client, [room: @ci_room,
+               message: "@#{@bot}: operable:echo messages redirected to another room or dm are not threaded > #ci_bot_redirect_tests",
+               reply_from: @bot])
     assert reply.thread_ts == nil
   end
 end

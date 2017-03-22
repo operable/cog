@@ -14,7 +14,7 @@ defmodule Integration.SlackRegistrationTest do
 
   @ci_room "ci_bot_testing"
 
-  setup do
+  setup_all do
     {:ok, client} = ChatClient.new()
     {:ok, %{client: client}}
   end

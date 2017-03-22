@@ -5,6 +5,7 @@ services:
 
 env:
   - TEST=unit
+  - TEST=slack
   - TEST=hipchat
 
 script:
