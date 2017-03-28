@@ -114,7 +114,6 @@ defmodule Cog.Mixfile do
 
       # Test and Development
       ########################################################################
-      {:credo, "~> 0.4", only: [:dev, :test]},
       {:earmark, "~> 1.0", only: :dev},
       {:ex_doc, "~> 0.13", only: :dev},
       {:excoveralls, "~> 0.5", only: :test},

@@ -1,6 +1,7 @@
 # Cog
 
 [![Build Status](https://travis-ci.org/operable/cog.svg?branch=master)](https://travis-ci.org/operable/cog)
+[![Ebert](https://ebertapp.io/github/operable/cog.svg)](https://ebertapp.io/github/operable/cog)
 
 Cog brings the power of the command line to the place you collaborate with your team all the time -- your chat window.
 
