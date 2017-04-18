@@ -1,3 +1,4 @@
+[![Stories in Ready](https://badge.waffle.io/operable/cog.png?label=ready&title=Ready)](https://waffle.io/operable/cog)
 # Cog
 
 [![Build Status](https://travis-ci.org/operable/cog.svg?branch=master)](https://travis-ci.org/operable/cog)
