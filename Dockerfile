@@ -1,19 +1,9 @@
 FROM armhf/alpine
 MAINTAINER Pablo Carranza <pcarranza@gmail.com>
 
-RUN apk --no-cache add \
-	erlang \
-        erlang-ssl \
-	erlang-crypto \
-	erlang-syntax-tools \
-	git \
-        elixir
-
 ENV MIX_ENV prod
 
-# RUN groupadd --gid 60000 operable
-# RUN useradd -d /home/operable -u 60000 -g operable -s /bin/ash operable
-
+# Add operable user and group
 RUN addgroup -g 60000 operable && \
     adduser -h /home/operable -D -u 60000 -G operable -s /bin/ash operable
 
@@ -28,8 +18,6 @@ RUN chown -R operable /home/operable/cog
 COPY mix.exs mix.lock /home/operable/cog/
 COPY config/ /home/operable/cog/config/
 
-RUN mix local.hex --force && mix local.rebar --force && mix deps.get --only=prod --no-archives-check
-
 # Compile all the dependencies. The additional packages installed here
 # are for Greenbar to build and run.
 RUN apk --no-cache add \
@@ -39,14 +27,20 @@ RUN apk --no-cache add \
     apk --no-cache add \
         expat-dev \
         libstdc++ \
-	openssl-dev
+        openssl-dev \
+        erlang \
+        erlang-dev \
+        erlang-ssl \
+        erlang-crypto \
+        erlang-syntax-tools \
+        erlang-parsetools \
+        make \
+        git \
+        elixir
 
-RUN apk --no-cache add \
-	make \
-	erlang-dev \
-	erlang-parsetools
-
-ENV DEBUG 1
+RUN mix local.hex --force && \
+        mix local.rebar --force && \
+        mix deps.get --only=prod --no-archives-check
 
 RUN mix deps.compile && \
     apk del .build_deps
