@@ -55,7 +55,7 @@ RUN mix compile --no-deps-check --no-archives-check
 COPY scripts/ /home/operable/cog/scripts/
 
 # This should be in place in the build environment already
-# COPY cogctl-for-docker-build /usr/local/bin/cogctl
+COPY cogctl-for-docker-build /usr/local/bin/cogctl
 
 USER operable
 RUN mix local.hex --force
