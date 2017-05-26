@@ -17,7 +17,7 @@ docker:
 .PHONY: docker
 
 test-prepare:
-	MIX_ENV=test mix ecto.migrate --no-deps-check
+	MIX_ENV=test mix ecto.load --no-deps-check
 
 test-unit: test-prepare
 	mix test --exclude=integration
