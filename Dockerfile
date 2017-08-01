@@ -41,6 +41,7 @@ COPY scripts/ /home/operable/cog/scripts/
 COPY cogctl-for-docker-build /usr/local/bin/cogctl
 
 USER operable
+ENTRYPOINT /home/operable/cog/scripts/docker-start
 # TODO: For some reason, Hex needs to be present in the operable
 # user's home directory for Cog to run (specifically, for it to apply
 # the database migrations at startup). It complains of not being able
