@@ -6,7 +6,9 @@ services:
 env:
   - TEST=unit
   - TEST=slack
-  - TEST=hipchat
+  # Temporarily disabling HipChat integration tests while we track
+  # down some connection issues.
+  # - TEST=hipchat
 
 script:
   - docker-compose -f docker-compose.ci.yml run test ./scripts/wait-for-it.sh postgres:5432 -s -t 30 -- make test-$TEST
