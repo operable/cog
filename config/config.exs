@@ -68,7 +68,7 @@ config :cog, Cog.Bundle.BundleSup,
   bundle_root: Path.join([File.cwd!, "bundles"])
 
 config :cog, Cog.Command.Pipeline,
-  interactive_timeout: {60, :sec},
+  interactive_timeout: {String.to_integer(System.get_env("COG_PIPELINE_TIMEOUT") || "60"), :sec},
   trigger_timeout: {300, :sec}
 
 config :cog, Cog.Command.Service,
