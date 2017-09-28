@@ -56,10 +56,8 @@ defmodule Cog.Pipeline.Errors do
     #{all_bad_redirects |> Enum.join(", ")}
     """
     not_a_member = errors
-    |> Enum.filter_map(
-      fn({k,_}) -> k == "not_a_member" end,
-      fn({_,v}) -> v end
-    )
+    |> Enum.filter(fn({k, _}) -> k == "not_a_member" end)
+    |> Enum.map(fn({_, v}) -> v end)
 
     not_a_member_message = unless Enum.empty?(not_a_member) do
     """

@@ -21,7 +21,7 @@ defmodule Cog.ConnCase do
       use Phoenix.ConnTest
 
       alias Cog.Repo
-      import Ecto.Model
+      import Ecto
       import Ecto.Query, only: [from: 2]
 
       import Cog.Router.Helpers

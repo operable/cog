@@ -15,7 +15,7 @@ defmodule Cog.Models.RelayGroup do
     has_many :bundle_assignment, RelayGroupAssignment, foreign_key: :group_id
     has_many :bundles, through: [:bundle_assignment, :bundle]
 
-    timestamps
+    timestamps()
   end
 
   @required_fields ~w(name)

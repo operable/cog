@@ -5,7 +5,7 @@ defmodule Cog.Models.Token do
   schema "tokens" do
     field :value, :string
     belongs_to :user, User
-    timestamps
+    timestamps()
   end
 
   @required_fields ~w(value)

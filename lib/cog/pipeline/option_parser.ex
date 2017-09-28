@@ -194,7 +194,8 @@ defmodule Cog.Pipeline.OptionParser do
 
   defp check_required_options(defs, opts) do
     required_set = defs
-                   |> Enum.filter_map(fn({_, optdef}) -> optdef.required end, fn({_, optdef}) -> optdef.name end)
+                   |> Enum.filter(fn({_, optdef}) -> optdef.required end)
+                   |> Enum.map(fn({_, optdef}) -> optdef.name end)
                    |> Enum.uniq
                    |> MapSet.new
     input_set = opts |> Map.keys |> MapSet.new
@@ -208,10 +209,9 @@ defmodule Cog.Pipeline.OptionParser do
     end
   end
 
-  defp error_msg(:no_value),
-    do: "No value supplied!"
+  defp error_msg(:no_value), do: "No value supplied!"
 
-  defp error_msg(:type_error, value, req_type),
-    do: "Type Error: `#{inspect value}` is not of type `#{req_type}`"
-
+  defp error_msg(:type_error, value, req_type) do
+    "Type Error: `#{inspect value}` is not of type `#{req_type}`"
+  end
 end

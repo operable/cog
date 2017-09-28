@@ -24,7 +24,7 @@ defmodule Cog.Models.User do
 
     has_many :triggers, Cog.Models.Trigger, foreign_key: :as_user, references: :username
 
-    timestamps
+    timestamps()
   end
 
   @required_fields ~w(username email_address)

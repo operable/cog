@@ -10,10 +10,7 @@ defmodule Cog.Config.Helpers do
   def data_dir do
     System.get_env("COG_DATA_DIR") || Path.expand(Path.join([Path.dirname(__ENV__.file), "..", "data"]))
   end
-
-  def data_dir(subdir) do
-    Path.join([data_dir, subdir])
-  end
+  def data_dir(subdir), do: Path.join([data_dir(), subdir])
 
   def ensure_integer(number) when is_nil(number), do: false
   def ensure_integer(number) when is_binary(number), do: String.to_integer(number)

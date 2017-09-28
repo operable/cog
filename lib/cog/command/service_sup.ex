@@ -11,7 +11,7 @@ defmodule Cog.Command.Service.Supervisor do
     token_monitor_table  = :ets.new(:token_monitor_table,  [:public])
     memory_table         = :ets.new(:memory_table,         [:public])
     memory_monitor_table = :ets.new(:memory_monitor_table, [:public])
-    data_path            = data_path
+    data_path            = data_path()
 
       Application.get_env(:cog, Cog.Command.Service, [])[:data_path]
 

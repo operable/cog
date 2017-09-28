@@ -14,7 +14,7 @@ defmodule Cog.Models.Relay do
     has_many :group_memberships, RelayGroupMembership, foreign_key: :relay_id
     has_many :groups, through: [:group_memberships, :group]
 
-    timestamps
+    timestamps()
   end
 
   @required_fields ~w(name)

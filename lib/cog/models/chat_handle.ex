@@ -11,7 +11,7 @@ defmodule Cog.Models.ChatHandle do
     belongs_to :user, User
     belongs_to :chat_provider, ChatProvider, foreign_key: :provider_id, type: :integer
 
-    timestamps
+    timestamps()
   end
 
   @required_fields ~w(handle user_id provider_id chat_provider_user_id)

@@ -14,7 +14,7 @@ defmodule Cog.Models.Command do
     has_many :versions, CommandVersion
     has_many :rules, Rule
 
-    timestamps
+    timestamps()
   end
 
   @required_fields ~w(name bundle_id)
@@ -29,7 +29,7 @@ defmodule Cog.Models.Command do
 
   Does _not_ insert anything into the database.
   """
-  def build_new(%Bundle{id: _}=bundle, params) do
+  def build_new(%Bundle{id: _} = bundle, params) do
     bundle
     |> Ecto.build_assoc(:commands)
     |> changeset(params)

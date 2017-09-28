@@ -4,7 +4,7 @@ defmodule Cog.Telemetry do
   @telemetry_url "https://telemetry.operable.io"
 
   def send_event(type) do
-    if telemetry_enabled do
+    if telemetry_enabled() do
       spawn fn ->
         case build_event(type) do
           {:ok, event_body} ->

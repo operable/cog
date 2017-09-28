@@ -8,7 +8,7 @@ defmodule Cog.Models.SiteCommandAlias do
     field :pipeline, :string
     field :visibility, :string, virtual: true, default: "site"
 
-    timestamps
+    timestamps()
   end
 
   @required_fields ~w(name pipeline)

@@ -17,7 +17,7 @@ defmodule Cog.Chat.HipChat.Connector do
   @provider_name "hipchat"
   @xmpp_timeout 5000
   @room_refresh_interval 5000
-  @heartbeat_interval 30000
+  @heartbeat_interval 30_000
 
   defstruct [:provider, :xmpp_conn, :hipchat_org, :api_token, :api_root, :conf_host, :me, :mention_name,
              :xmpp_name, :users, :rooms]
@@ -152,11 +152,11 @@ defmodule Cog.Chat.HipChat.Connector do
     end
     {:noreply, state}
   end
-  def handle_info({:stanza, %Stanza.Presence{}=presence}, state) do
+  def handle_info({:stanza, %Stanza.Presence{} = presence}, state) do
     {:ok, state} = handle_presence(state, presence)
     {:noreply, state}
   end
-  def handle_info({:stanza, %Stanza.Message{}=message}, state) do
+  def handle_info({:stanza, %Stanza.Message{} = message}, state) do
     state = case Util.classify_message(message) do
               {:invite, room_name} ->
                 Logger.info("Received an invite to MUC room '#{room_name}'")
@@ -195,7 +195,7 @@ defmodule Cog.Chat.HipChat.Connector do
     end
   end
 
-  defp build_event(user, %Stanza.Presence{}=presence) do
+  defp build_event(user, %Stanza.Presence{} = presence) do
     {:chat_event, %{"presence" => presence_type(presence.show), "provider" => @provider_name, "type" => "presence_change",
                     "user" => user}}
   end

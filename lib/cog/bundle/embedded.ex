@@ -23,7 +23,7 @@ defmodule Cog.Bundle.Embedded do
     # TODO: Should we consider additional ways to make the Cog bot appear as
     # a relay in a special relay group? That might reduce our
     # "special snowflake" code a bit more.
-    bundle_version = Repository.Bundles.maybe_upgrade_embedded_bundle!(embedded_bundle)
+    bundle_version = Repository.Bundles.maybe_upgrade_embedded_bundle!(embedded_bundle())
     :ok = Repository.Bundles.ensure_site_bundle
 
     announce_embedded_bundle(bundle_version)

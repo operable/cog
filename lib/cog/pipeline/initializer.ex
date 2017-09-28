@@ -62,7 +62,7 @@ defmodule Cog.Pipeline.Initializer do
 
   defp check_history(payload, state) do
     uid = payload.sender.id
-    text = String.strip(payload.text)
+    text = String.trim(payload.text)
     if text == state.previous_command_token do
       retrieve_last(uid, payload, state)
     else

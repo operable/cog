@@ -23,7 +23,7 @@ defmodule Cog.Models.CommandVersion do
 
     has_many :options, CommandOption
 
-    timestamps
+    timestamps()
   end
 
   @required_fields ~w(command_id bundle_version_id)

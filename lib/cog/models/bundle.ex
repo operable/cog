@@ -20,7 +20,7 @@ defmodule Cog.Models.Bundle do
     has_one :enabled_version_registration, EnabledBundleVersionRegistration
     has_one :enabled_version, through: [:enabled_version_registration, :bundle_version]
 
-    timestamps
+    timestamps()
   end
 
   @required_fields ~w(name)

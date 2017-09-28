@@ -18,7 +18,7 @@ defmodule Cog.Models.Rule do
    has_many :bundle_version_registration, Cog.Models.RuleBundleVersion
    has_many :bundle_versions, through: [:bundle_version_registration, :bundle_version]
 
-   timestamps
+   timestamps()
   end
 
   @required_fields ~w(parse_tree score)

@@ -30,7 +30,7 @@ defmodule Cog.Models.BundleVersion do
 
     has_one :enabled_version_registration, EnabledBundleVersionRegistration, foreign_key: :bundle_version_id
 
-    timestamps
+    timestamps()
   end
 
   @required_fields ~w(version config_file)

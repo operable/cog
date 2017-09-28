@@ -7,7 +7,7 @@ defmodule Cog.Models.Permission do
     belongs_to :bundle, Bundle
     field :name, :string
 
-    timestamps
+    timestamps()
   end
 
   @required_fields ~w(name)

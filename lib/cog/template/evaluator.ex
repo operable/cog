@@ -123,32 +123,28 @@ defmodule Cog.Template.Evaluator do
   # directives manually.
   defp raw_error_message_directives(original_template, original_error, fallback_template, fallback_error, data) do
     [text("Irony level exceeded: error evaluating '#{original_template}' and '#{fallback_template}' templates"),
-     newline,
+     newline(),
      text("The '#{original_template}' template processing failed with the following error:"),
      fixed_width(inspect(original_error)),
-     newline,
+     newline(),
      text("The '#{fallback_template}' template processing failed with the following error:"),
      fixed_width(inspect(fallback_error)),
-     newline,
+     newline(),
      text("The result of the pipeline was:"),
-     newline,
+     newline(),
      json(data)]
   end
 
   ########################################################################
   # Directive Helpers
 
-  defp text(text),
-    do: %{"name" => "text", "text" => text}
+  defp text(text), do: %{"name" => "text", "text" => text}
 
-  defp newline,
-    do: %{"name" => "newline"}
+  defp newline, do: %{"name" => "newline"}
 
-  defp fixed_width(text),
-    do: %{"name" => "fixed_width", "text" => text}
+  defp fixed_width(text), do: %{"name" => "fixed_width", "text" => text}
 
-  defp json(json),
-    do: fixed_width(Poison.encode!(json))
+  defp json(json), do: fixed_width(Poison.encode!(json))
 
   ########################################################################
 
@@ -159,5 +155,4 @@ defmodule Cog.Template.Evaluator do
     |> Engine.compile!(name, source)
     |> Engine.eval!(name, scope: data)
   end
-
 end
