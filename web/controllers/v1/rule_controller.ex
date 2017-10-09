@@ -66,7 +66,7 @@ defmodule Cog.V1.RuleController do
 
   def delete(conn, %{"id" => id}) do
     case Rules.rule(id) do
-      %Rule{}=rule ->
+      %Rule{} = rule ->
         Rules.delete_or_disable(rule)
         send_resp(conn, :no_content, "")
       nil ->

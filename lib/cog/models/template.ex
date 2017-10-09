@@ -10,7 +10,7 @@ defmodule Cog.Models.Template do
 
     belongs_to :bundle_version, BundleVersion
 
-    timestamps
+    timestamps()
   end
 
   @required_fields ~w(adapter name source)

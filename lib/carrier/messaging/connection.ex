@@ -159,21 +159,21 @@ defmodule Carrier.Messaging.Connection do
 
   end
 
-  def handle_call({:create_reply_endpoint, subscriber}, _from, %__MODULE__{tracker: tracker}=state) do
+  def handle_call({:create_reply_endpoint, subscriber}, _from, %__MODULE__{tracker: tracker} = state) do
     {tracker, topic} = Tracker.add_reply_endpoint(tracker, subscriber)
     unless Enum.member?(:emqttc.topics(state.conn), {topic, :qos1}) do
       :emqttc.sync_subscribe(state.conn, topic, :qos1)
     end
     {:reply, {:ok, topic}, %{state | tracker: tracker}}
   end
-  def handle_call({:subscribe, topic, subscriber}, _from, %__MODULE__{tracker: tracker}=state) do
+  def handle_call({:subscribe, topic, subscriber}, _from, %__MODULE__{tracker: tracker} = state) do
     tracker = Tracker.add_subscription(tracker, topic, subscriber)
     unless Enum.member?(:emqttc.topics(state.conn), {topic, :qos1}) do
       :emqttc.sync_subscribe(state.conn, topic, :qos1)
     end
     {:reply, {:ok, topic}, %{state | tracker: tracker}}
   end
-  def handle_call({:unsubscribe, topic, subscriber}, _from, %__MODULE__{tracker: tracker}=state) do
+  def handle_call({:unsubscribe, topic, subscriber}, _from, %__MODULE__{tracker: tracker} = state) do
     {tracker, deleted} = Tracker.del_subscription(tracker, topic, subscriber)
     state = if deleted do
       drop_unused_topics(%{state | tracker: tracker})
@@ -243,7 +243,7 @@ defmodule Carrier.Messaging.Connection do
     {:stop, :shutdown, :ok, state}
   end
 
-  def handle_info({:DOWN, _mref, :process, subscriber, _}, %__MODULE__{tracker: tracker}=state) do
+  def handle_info({:DOWN, _mref, :process, subscriber, _}, %__MODULE__{tracker: tracker} = state) do
     tracker = Tracker.del_subscriber(tracker, subscriber)
     {:noreply, drop_unused_topics(%{state | tracker: tracker})}
   end
@@ -286,7 +286,7 @@ defmodule Carrier.Messaging.Connection do
     log_level = Keyword.get(connect_opts, :log_level, @default_log_level)
     host = case is_binary(host) do
              true ->
-               {:ok, hostent} = :inet.gethostbyname(String.to_char_list(host))
+               {:ok, hostent} = :inet.gethostbyname(String.to_charlist(host))
                List.first(hostent(hostent, :h_addr_list))
              false ->
                host
@@ -338,7 +338,7 @@ defmodule Carrier.Messaging.Connection do
     end
   end
 
-  defp drop_unused_topics(%__MODULE__{tracker: tracker, conn: conn}=state) do
+  defp drop_unused_topics(%__MODULE__{tracker: tracker, conn: conn} = state) do
     {tracker, unused_topics} = Tracker.get_and_reset_unused_topics(tracker)
     Enum.each(unused_topics, &(:emqttc.unsubscribe(conn, &1)))
     %{state | tracker: tracker}

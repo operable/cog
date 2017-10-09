@@ -1,6 +1,6 @@
 defmodule Cog.BusDriver do
   @moduledoc """
-  BusDriver is responsible for configuring, starting, and stopping  Cog's embedded
+  BusDriver is responsible for configuring, starting, and stopping Cog's embedded
   message bus.
 
   ## Configuration

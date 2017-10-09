@@ -23,7 +23,7 @@ defmodule Cog.Models.PipelineHistory do
 
     belongs_to :user, User
 
-    timestamps
+    timestamps()
   end
 
   @required_fields ~w(id text room_name room_id provider count state user_id started_at)

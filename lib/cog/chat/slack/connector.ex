@@ -9,7 +9,7 @@ defmodule Cog.Chat.Slack.Connector do
   alias Cog.Chat.User
 
   @heartbeat_warn 250
-  @ping_interval 30000
+  @ping_interval 30_000
   @provider_name "slack"
 
   def call(connector, token, type, args \\ %{}) do
@@ -19,7 +19,7 @@ defmodule Cog.Chat.Slack.Connector do
     receive do
       {^ref, reply} ->
         reply
-    after 10000 ->
+    after 10_000 ->
         {:error, :timeout}
     end
   end
@@ -46,7 +46,7 @@ defmodule Cog.Chat.Slack.Connector do
   end
 
   def handle_info(:send_ping, state) do
-    msg = Poison.encode!(%{id: :erlang.rem(System.os_time(:seconds), 10000),
+    msg = Poison.encode!(%{id: :erlang.rem(System.os_time(:seconds), 10_000),
                            type: :ping,
                            ts: System.os_time(:milliseconds)})
     send_raw(msg, state)
@@ -85,7 +85,7 @@ defmodule Cog.Chat.Slack.Connector do
     send(sender, {ref, result})
     :ok
   end
-  def handle_info({{ref, sender}, {:send_message, %{token: token, target: target, metadata: metadata}=args}}, _state) do
+  def handle_info({{ref, sender}, {:send_message, %{token: token, target: target, metadata: metadata} = args}}, _state) do
     message = %{token: token, as_user: true, link_names: 1}
               |> prepare_text(args)
               |> prepare_attachments(args)
@@ -131,7 +131,7 @@ defmodule Cog.Chat.Slack.Connector do
         end
       :channel ->
         case lookup_room(name, joined_channels(state), by: :name) do
-          %Room{}=room -> {:ok, room}
+          %Room{} = room -> {:ok, room}
           _ -> {:error, :not_a_member}
         end
       :error ->
@@ -257,7 +257,7 @@ defmodule Cog.Chat.Slack.Connector do
     end
   end
 
-  defp annotate(%{type: "message", user: user}=message, state) do
+  defp annotate(%{type: "message", user: user} = message, state) do
     if user == state.me.id do
       :ignore
     else
@@ -347,7 +347,7 @@ defmodule Cog.Chat.Slack.Connector do
         message
       text ->
         text_size = :erlang.size(text)
-        unless text_size < 15000 do
+        unless text_size < 15_000 do
           Logger.info("WARNING: Large message (#{text_size} bytes) detected. Slack might truncate or drop it entirely.")
         end
         Map.put(message, :text, text)

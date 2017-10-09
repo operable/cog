@@ -533,10 +533,10 @@ defmodule Cog.Repository.Bundles do
         end
     end
 
-    case active_embedded_bundle_version do
+    case active_embedded_bundle_version() do
       nil ->
         upgrade_to_current.()
-      %BundleVersion{}=installed ->
+      %BundleVersion{} = installed ->
         case Version.compare(installed.version, version) do
           :lt ->
             upgrade_to_current.()
@@ -607,8 +607,7 @@ defmodule Cog.Repository.Bundles do
   that there is only one version of it, ever. This returns that one
   version on-demand.
   """
-  def site_bundle_version,
-    do: Repo.one!(site_bundle_version_query)
+  def site_bundle_version, do: Repo.one!(site_bundle_version_query())
 
   def is_site_version?(version) do
     (version.bundle.name == Cog.Util.Misc.site_namespace) and
@@ -619,7 +618,7 @@ defmodule Cog.Repository.Bundles do
   Called at system-startup to ensure the site bundle is appropriately set up.
   """
   def ensure_site_bundle do
-    case Repo.one(site_bundle_version_query) do
+    case Repo.one(site_bundle_version_query()) do
       nil ->
         {:ok, _} = __install(%{"name" => Cog.Util.Misc.site_namespace,
                                "version" => @permanent_site_bundle_version,

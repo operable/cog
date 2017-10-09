@@ -18,7 +18,7 @@ defmodule Cog.Web do
 
   def model do
     quote do
-      use Ecto.Model
+      use Ecto
 
       import Ecto.Changeset
       import Ecto.Query, only: [from: 1, from: 2]
@@ -30,7 +30,7 @@ defmodule Cog.Web do
       use Phoenix.Controller
 
       alias Cog.Repo
-      import Ecto.Model
+      import Ecto
       import Ecto.Query, only: [from: 1, from: 2]
 
       import Cog.Router.Helpers
@@ -62,7 +62,7 @@ defmodule Cog.Web do
       use Phoenix.Channel
 
       alias Cog.Repo
-      import Ecto.Model
+      import Ecto
       import Ecto.Query, only: [from: 1, from: 2]
     end
   end

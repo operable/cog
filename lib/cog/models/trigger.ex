@@ -15,7 +15,7 @@ defmodule Cog.Models.Trigger do
     # just as well.
     belongs_to :user, Cog.Models.User,  foreign_key: :as_user, references: :username, type: :string
 
-    timestamps
+    timestamps()
   end
 
   @required_fields ~w(name pipeline)

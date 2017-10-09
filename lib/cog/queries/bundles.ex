@@ -10,7 +10,7 @@ defmodule Cog.Queries.Bundles do
   end
 
   def for_id(id) do
-    all
+    all()
     |> where([b], b.id == ^id)
   end
 

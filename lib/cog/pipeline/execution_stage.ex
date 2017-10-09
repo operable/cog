@@ -233,7 +233,7 @@ defmodule Cog.Pipeline.ExecutionStage do
         request = Command.create(state.request_id, state.invocation, options, args)
         {:allowed, "#{bound}", %{request | invocation_step: signal.position, requestor: state.sender,
                                  cog_env: signal.data, user: state.user, room: state.room, reply_to: state.topic,
-                                 service_token: state.service_token, reply_to: state.topic}}
+                                 service_token: state.service_token}}
       else
         {:error, {:denied, rule}} -> {:error, :denied, rule, "#{state.invocation}"}
         {:error, {:missing_key, key}} -> {:error, :missing_key, key}

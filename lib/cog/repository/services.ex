@@ -16,7 +16,5 @@ defmodule Cog.Repository.Services do
        version: "1.0.0"}]
   end
 
-  def deployed(name),
-    do: Enum.find(all, &(&1[:name] == name))
-
+  def deployed(name), do: Enum.find(all(), &(&1[:name] == name))
 end

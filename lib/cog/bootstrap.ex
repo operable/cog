@@ -90,9 +90,9 @@ defmodule Cog.Bootstrap do
   back.
   """
   def maybe_bootstrap do
-    unless is_bootstrapped? do
+    unless is_bootstrapped?() do
       result = Repo.transaction fn ->
-        case bootstrap_from_env do
+        case bootstrap_from_env() do
           {:ok, user} ->
             relay_from_env(System.get_env)
             user
@@ -106,7 +106,7 @@ defmodule Cog.Bootstrap do
       # expediency, we pull this operation out of the above
       # transaction.
       case result do
-        {:ok, %User{}=user} ->
+        {:ok, %User{} = user} ->
           maybe_bootstrap_chat_handle_from_env(user, System.get_env("COG_BOOTSTRAP_CHAT_HANDLE"))
         _ ->
           :ok
@@ -120,7 +120,7 @@ defmodule Cog.Bootstrap do
     fields = ~w(username password email_address first_name last_name)
     vars =
       Enum.map(fields, fn(field) -> { field, System.get_env(bootstrap_var_for(field)) } end)
-      |> Enum.group_by(fn({_k,v}) -> if (v != nil), do: :found, else: :not_found end)
+      |> Enum.group_by(fn({_k, v}) -> if v != nil, do: :found, else: :not_found end)
 
     if vars[:found] do
       case vars[:not_found] do
@@ -133,7 +133,7 @@ defmodule Cog.Bootstrap do
         # like the user was attempting to bootstrap via environment we will
         # warn about the missing variables.
         missing ->
-          Enum.each(missing, fn({k,_v}) -> Logger.info("Skipping bootstrap: Missing value for #{bootstrap_var_for(k)}.") end)
+          Enum.each(missing, fn({k, _v}) -> Logger.info("Skipping bootstrap: Missing value for #{bootstrap_var_for(k)}.") end)
           false
       end
     end

@@ -12,8 +12,7 @@ defmodule Cog.Models.BundleDynamicConfig do
 
     belongs_to :bundle, Bundle, [foreign_key: :bundle_id]
 
-    timestamps
-
+    timestamps()
   end
 
   @required_fields ~w(bundle_id layer name config)

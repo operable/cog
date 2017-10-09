@@ -39,13 +39,13 @@ defmodule Cog.Chat.Adapter do
   end
 
   def lookup_user(provider, handle) when is_binary(handle) do
-    cache = get_cache
+    cache = get_cache()
     case cache[{provider, :user, handle}] do
       nil ->
         case GenMqtt.call(@adapter_topic, "lookup_user", %{provider: provider, handle: handle}, :infinity) do
           {:ok, user} ->
             User.from_map(user)
-          {:error, _}=error ->
+          {:error, _} = error ->
             error
         end
       {:ok, value} ->
@@ -53,13 +53,13 @@ defmodule Cog.Chat.Adapter do
     end
   end
   def lookup_user(conn, provider, handle) when is_binary(handle) do
-    cache = get_cache
+    cache = get_cache()
     case cache[{provider, :user, handle}] do
       nil ->
         case GenMqtt.call(conn, @adapter_topic, "lookup_user", %{provider: provider, handle: handle}, :infinity) do
           {:ok, user} ->
             User.from_map(user)
-          {:error, _}=error ->
+          {:error, _} = error ->
             error
         end
       {:ok, value} ->
@@ -78,13 +78,13 @@ defmodule Cog.Chat.Adapter do
   # either [id: id] or [name: name]
   defp do_lookup_room(provider, room_identifier) do
     args = Enum.into(room_identifier, %{provider: provider})
-    cache = get_cache
+    cache = get_cache()
     case cache[{provider, :room, room_identifier}] do
       nil ->
         case GenMqtt.call(@adapter_topic , "lookup_room", args, :infinity) do
           {:ok, room} ->
             Room.from_map(room)
-          {:error, _}=error ->
+          {:error, _} = error ->
             error
         end
       {:ok, value} ->
@@ -408,12 +408,12 @@ defmodule Cog.Chat.Adapter do
  end
 
  defp get_cache do
-   ttl = fetch_cache_ttl
+   ttl = fetch_cache_ttl()
    {:ok, cache} = CacheSup.get_or_create_cache(@cache_name, ttl)
    cache
  end
 
- defp maybe_cache({:ok, _}=value, key, state) do
+ defp maybe_cache({:ok, _} = value, key, state) do
    Cache.put(state.cache, key, value)
    value
  end

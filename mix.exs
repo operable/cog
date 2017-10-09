@@ -6,7 +6,7 @@ defmodule Cog.Mixfile do
   def project do
     [app: :cog,
      version: "1.1.0",
-     elixir: "~> 1.3.2",
+     elixir: "~> 1.5.1",
      erlc_paths: ["emqttd_plugins"],
      erlc_options: [:debug_info, :warnings_as_errors],
      elixirc_options: [warnings_as_errors: System.get_env("ALLOW_WARNINGS") == nil,
@@ -14,10 +14,10 @@ defmodule Cog.Mixfile do
      consolidate_protocols: Mix.env == :prod,
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
-     deps: deps,
+     deps: deps(),
      elixirc_paths: elixirc_paths(Mix.env),
      compilers: [:phoenix] ++ Mix.compilers,
-     aliases: aliases,
+     aliases: aliases(),
      test_coverage: [tool: ExCoveralls],
      preferred_cli_env: ["coveralls": :test,
                          "coveralls.html": :test,
@@ -26,7 +26,7 @@ defmodule Cog.Mixfile do
   end
 
   def application do
-    [applications: started_applications,
+    [applications: started_applications(),
      included_applications: [:emqttd, :slack, :romeo],
      mod: {Cog, []}]
   end
@@ -61,10 +61,10 @@ defmodule Cog.Mixfile do
     [
       # Operable Code
       ########################################################################
-      {:conduit, github: "operable/conduit"},
-      {:probe, github: "operable/probe"},
-      {:spanner, github: "operable/spanner"},
-      {:greenbar, github: "operable/greenbar"},
+      {:conduit, github: "davejlong/conduit", branch: "elixir-upgrades"},
+      {:probe, github: "davejlong/probe", branch: "elixir-upgrades"},
+      {:spanner, github: "davejlong/spanner", branch: "elixir-upgrades"},
+      {:greenbar, github: "davejlong/greenbar", branch: "elixir-upgrade"},
 
       # Used to model pipelines
       {:gen_stage, "~> 0.10.0"},
@@ -93,7 +93,7 @@ defmodule Cog.Mixfile do
       {:bamboo_smtp, "~> 1.2.0"},
       {:comeonin, "~> 2.5"},
       {:cowboy, "~> 1.0.4"},
-      {:ecto, "~> 2.0.2"},
+      {:ecto, "~> 2.1"},
       {:html_entities, "~> 0.3.0"},
       # Bamboo depends httpoison 0.9 but slack has the dep locked at
       # 0.8.3
@@ -102,8 +102,8 @@ defmodule Cog.Mixfile do
       {:phoenix, "~> 1.2"},
       {:phoenix_ecto, "~> 3.0"},
       {:phoenix_html, "~> 2.6"},
-      {:poison, "~> 2.0"},
-      {:postgrex, "~> 0.11.2"},
+      {:poison, "~> 3.1", override: true},
+      {:postgrex, "~> 0.13.0"},
       {:slack, github: "operable/Elixir-Slack"},
       {:uuid, "~> 1.1.5"},
       {:romeo, github: "operable/romeo", branch: "iq-bodies"},
@@ -118,7 +118,6 @@ defmodule Cog.Mixfile do
       {:earmark, "~> 1.0", only: :dev},
       {:ex_doc, "~> 0.13", only: :dev},
       {:excoveralls, "~> 0.5", only: :test},
-      {:mix_test_watch, "~> 0.2", only: [:dev, :test]},
       {:phoenix_live_reload, "~> 1.0", only: :dev},
       {:meck, "~> 0.8.4", only: [:dev, :test]}
     ]

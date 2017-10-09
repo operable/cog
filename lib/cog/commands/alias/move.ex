@@ -93,11 +93,11 @@ defmodule Cog.Commands.Alias.Move do
   end
 
   # Generates the changeset for the alias based on the alias type(site or user).
-  defp generate_changeset(user_id, %SiteCommandAlias{}=src, "user"),
+  defp generate_changeset(user_id, %SiteCommandAlias{} = src, "user"),
     do: {:ok, UserCommandAlias.changeset(%UserCommandAlias{}, %{name: src.name, pipeline: src.pipeline, user_id: user_id})}
   defp generate_changeset(_, %UserCommandAlias{}, "user"),
     do: {:error, :alias_in_user}
-  defp generate_changeset(_user_id, %UserCommandAlias{}=src, "site"),
+  defp generate_changeset(_user_id, %UserCommandAlias{} = src, "site"),
     do: {:ok, SiteCommandAlias.changeset(%SiteCommandAlias{}, %{name: src.name, pipeline: src.pipeline})}
   defp generate_changeset(_, %SiteCommandAlias{}, "site"),
     do: {:error, :alias_in_site}
@@ -106,9 +106,9 @@ defmodule Cog.Commands.Alias.Move do
   defp generate_changeset(_user, src, "site:" <> site_alias),
     do: {:ok, SiteCommandAlias.changeset(%SiteCommandAlias{}, %{name: site_alias, pipeline: src.pipeline})}
   # This bit is called when you just want to rename an alias but leave it in the current visibility
-  defp generate_changeset(user_id, %UserCommandAlias{}=user_alias, alias),
+  defp generate_changeset(user_id, %UserCommandAlias{} = user_alias, alias),
     do: generate_changeset(user_id, user_alias, "user:#{alias}")
-  defp generate_changeset(user_id, %SiteCommandAlias{}=site_alias, alias),
+  defp generate_changeset(user_id, %SiteCommandAlias{} = site_alias, alias),
     do: generate_changeset(user_id, site_alias, "site:#{alias}")
 
   # Inserts the changeset

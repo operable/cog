@@ -38,7 +38,7 @@ defmodule Cog.Command.Output do
     do: msg
   def format_error({:no_rule, current_invocation}),
     do: "No rules match the supplied invocation of '#{current_invocation}'. Check your args and options, then confirm that the proper rules are in place."
-  def format_error({:denied, {%Ast.Rule{}=rule, current_invocation}}) do
+  def format_error({:denied, {%Ast.Rule{} = rule, current_invocation}}) do
     perms = Enum.map(Ast.Rule.permissions_used(rule), &("'#{&1}'")) |> Enum.join(", ")
     "Sorry, you aren't allowed to execute '#{current_invocation}'.\nYou will need at least one of the following permissions to run this command: #{perms}."
   end
@@ -67,7 +67,7 @@ defmodule Cog.Command.Output do
   # typed by the user.
   defp redirection_error_message(errors) do
     all_bad_redirects = errors
-    |> Enum.map(fn({_,r}) -> r end)
+    |> Enum.map(fn({_, r}) -> r end)
 
     main_message = """
 
@@ -76,10 +76,8 @@ defmodule Cog.Command.Output do
     #{all_bad_redirects |> Enum.join(", ")}
     """
     not_a_member = errors
-    |> Enum.filter_map(
-      fn({k,_}) -> k == "not_a_member" end,
-      fn({_,v}) -> v end
-    )
+    |> Enum.filter(fn({k, _}) -> k == "not_a_member" end)
+    |> Enum.map(fn({_, v}) -> v end)
 
     not_a_member_message = unless Enum.empty?(not_a_member) do
     """

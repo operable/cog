@@ -11,20 +11,20 @@ defmodule Cog.Permissions.Context do
     %__MODULE__{permissions: permissions, command: command, options: options, args: args}
   end
 
-  def count_matches(%__MODULE__{}=context) do
-    Enum.sum(Dict.values(context.input_matches))
+  def count_matches(%__MODULE__{} = context) do
+    Enum.sum(Map.values(context.input_matches))
   end
 
   def reset_matches(context),
     do: %{context | input_matches: %{}}
 
-  def add_match(%__MODULE__{}=context, :arg, index) do
+  def add_match(%__MODULE__{} = context, :arg, index) do
     key = "arg#{index}"
-    matches = Dict.update(context.input_matches, key, 1, &(&1))
+    matches = Map.update(context.input_matches, key, 1, &(&1))
     %{context | input_matches: matches}
   end
-  def add_match(%__MODULE__{}=context, :option, name) do
-    matches = Dict.update(context.input_matches, name, 1, &(&1))
+  def add_match(%__MODULE__{} = context, :option, name) do
+    matches = Map.update(context.input_matches, name, 1, &(&1))
     %{context | input_matches: matches}
   end
   def add_match(context, _, _),

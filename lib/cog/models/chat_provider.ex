@@ -6,7 +6,7 @@ defmodule Cog.Models.ChatProvider do
   schema "chat_providers" do
     field :name, :string
     field :data, :map
-    timestamps
+    timestamps()
   end
 
   @required_fields ~w(name)

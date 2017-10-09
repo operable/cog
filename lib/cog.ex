@@ -35,7 +35,7 @@ defmodule Cog do
         #
         # Consider doing this in a process that runs after the Repo
         # comes up, but before anything else is done
-        :ok = verify_schema_migration!
+        :ok = verify_schema_migration!()
 
         # Bootstrap the administrative user and an optional relay if the
         # necessary environment variables are set and Cog is not already
@@ -73,7 +73,7 @@ defmodule Cog do
   end
 
   defp verify_schema_migration! do
-    case migration_status do
+    case migration_status() do
       :ok ->
         Logger.info("Database schema is up-to-date")
       {:error, have, want} ->

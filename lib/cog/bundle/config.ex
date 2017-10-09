@@ -65,8 +65,8 @@ defmodule Cog.Bundle.Config do
     permissions = modules
     |> only_commands
     |> Enum.map(&(GenCommand.Base.permissions(&1)))
-    |> Enum.map(&Enum.into(&1, HashSet.new))
-    |> Enum.reduce(HashSet.new, &Set.union/2)
+    |> Enum.map(&Enum.into(&1, MapSet.new))
+    |> Enum.reduce(MapSet.new, &MapSet.union/2)
     |> Enum.map(&namespace_permission(bundle_name, &1))
     |> Enum.sort
 

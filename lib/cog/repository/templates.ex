@@ -10,7 +10,7 @@ defmodule Cog.Repository.Templates do
     # Delete any old common templates that are no longer being used
     # (i.e., their template file was removed)
     template_names = Map.keys(templates)
-    Repo.delete_all(from t in common_templates,
+    Repo.delete_all(from t in common_templates(),
                     where: not(t.name in ^template_names))
 
     Enum.map(templates, fn({name, %{"body" => source}}) ->
@@ -74,6 +74,6 @@ defmodule Cog.Repository.Templates do
   end
 
   defp find_common_template(name),
-    do: Repo.one(from t in common_templates, where: t.name == ^name)
+    do: Repo.one(from t in common_templates(), where: t.name == ^name)
 
 end

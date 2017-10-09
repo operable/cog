@@ -9,7 +9,7 @@ defmodule Cog.Queries.Relay do
   end
 
   def for_id(id) do
-    all
+    all()
     |> where([r], r.id == ^id)
   end
 

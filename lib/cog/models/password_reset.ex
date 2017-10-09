@@ -5,7 +5,7 @@ defmodule Cog.Models.PasswordReset do
   schema "password_resets" do
     belongs_to :user, User
 
-    timestamps
+    timestamps()
   end
 
   @required_fields ~w(user_id)
