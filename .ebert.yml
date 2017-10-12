@@ -1,0 +1,14 @@
+styleguide: operable/linters
+engines:
+  credo:
+    enabled: true
+  fixme:
+    enabled: true
+  shellcheck:
+    enabled: true
+  remark-lint:
+    enabled: true
+exclude_paths:
+- config
+- priv/repo
+- test
