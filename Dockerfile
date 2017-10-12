@@ -1,12 +1,15 @@
-FROM operable/elixir:1.3.4-r0
+FROM armhf/alpine
+MAINTAINER Pablo Carranza <pcarranza@gmail.com>
 
 ENV MIX_ENV prod
 
+# Add operable user and group
 RUN addgroup -g 60000 operable && \
     adduser -h /home/operable -D -u 60000 -G operable -s /bin/ash operable
 
 # Create directories and upload cog source
 WORKDIR /home/operable/cog
+
 # Really, we only need the cog directory to be owned by operable,
 # because (by default) that's where we write log files. None of the
 # actual scripts or library files need to be owned by operable.
@@ -14,7 +17,6 @@ RUN chown -R operable /home/operable/cog
 
 COPY mix.exs mix.lock /home/operable/cog/
 COPY config/ /home/operable/cog/config/
-RUN mix deps.get --only=prod --no-archives-check
 
 # Compile all the dependencies. The additional packages installed here
 # are for Greenbar to build and run.
@@ -24,8 +26,23 @@ RUN apk --no-cache add \
         g++ && \
     apk --no-cache add \
         expat-dev \
-        libstdc++ && \
-    mix deps.compile && \
+        libstdc++ \
+        openssl-dev \
+        erlang \
+        erlang-dev \
+        erlang-ssl \
+        erlang-crypto \
+        erlang-syntax-tools \
+        erlang-parsetools \
+        make \
+        git \
+        elixir
+
+RUN mix local.hex --force && \
+        mix local.rebar --force && \
+        mix deps.get --only=prod --no-archives-check
+
+RUN mix deps.compile && \
     apk del .build_deps
 
 COPY emqttd_plugins/ /home/operable/cog/emqttd_plugins/
