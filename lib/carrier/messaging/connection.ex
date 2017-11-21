@@ -275,8 +275,11 @@ defmodule Carrier.Messaging.Connection do
 
   defp add_internal_credentials(opts) do
     opts
-    |> Keyword.put(:username, @internal_mq_username)
-    |> Keyword.put(:password, Application.fetch_env!(:cog, :message_queue_password))
+    |> Keyword.put(:username, "guest")
+    |> Keyword.put(:password, "guest")
+    # opts
+    # |> Keyword.put(:username, @internal_mq_username)
+    # |> Keyword.put(:password, Application.fetch_env!(:cog, :message_queue_password))
   end
 
   defp add_connect_config(opts) do

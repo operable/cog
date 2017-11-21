@@ -16,8 +16,7 @@ defmodule Cog do
     Application.put_env(:cog, :message_queue_password, gen_password(64))
 
     maybe_display_unenforcing_warning()
-    children = [worker(Cog.BusDriver, [], shutdown: 1000),
-                supervisor(Carrier.Messaging.ConnectionSup, []),
+    children = [supervisor(Carrier.Messaging.ConnectionSup, []),
                 supervisor(Cog.DBSup, []),
                 supervisor(Cog.CoreSup, [])]
 

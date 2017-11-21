@@ -46,6 +46,8 @@ services:
     environment:
       - POSTGRES_USER=cog
       - POSTGRES_PASSWORD=cog
+  rabbitmq:
+    image: operable/rabbitmq:3.6
   cog:
     extends:
       file: docker-compose.common.yml
