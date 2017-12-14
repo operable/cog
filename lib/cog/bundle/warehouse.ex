@@ -1,9 +1,9 @@
 defmodule Cog.Bundle.Warehouse do
-  @registry_url "https://warehouse.operable.io"
+  @registry_url "https://warehouse.cog.bot"
 
   def get_config(bundle, version) do
     headers = ["Accepts": "application/json"]
-    response = HTTPotion.get(@registry_url <> "/api/bundles/#{bundle}/#{version}", headers: headers)
+    response = HTTPotion.get(@registry_url <> "/api/bundles/#{bundle}/#{version}.json", headers: headers)
 
     case response do
       %HTTPotion.Response{status_code: 200, body: body} ->
