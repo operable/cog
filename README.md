@@ -18,7 +18,7 @@ Cog is production ready! :tada:
 
 ## More Links
 
-* [Cog Public Slack Community](http://slack.operable.io/)
+* [Cog Public Slack Community](https://join.slack.com/t/cogbot/shared_invite/enQtMzEzNTE0NzgyMDIzLTBjNjliMGE2YmVjNGRmYmRkOGNkODc2MDMwMzhhMjVjNjEwYzY4Njc5OWE3YjViYjFkMzI2MjliZTNkYzZkNTc)
 * [GitHub Issues](https://github.com/operable/cog/issues)
 * [How to Contribute](https://github.com/operable/cog/blob/master/CONTRIBUTING.md)
 * [Code of Conduct](https://github.com/operable/cog/blob/master/CODE_OF_CONDUCT.md)
