@@ -1,5 +1,6 @@
 tap 'operable/operable'
 brew 'erlang'
 brew 'postgresql'
+brew 'rabbitmq'
 brew 'elixir'
 brew 'goon'

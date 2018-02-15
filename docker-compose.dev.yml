@@ -47,13 +47,15 @@ services:
       - POSTGRES_USER=cog
       - POSTGRES_PASSWORD=cog
   rabbitmq:
-    image: operable/rabbitmq:3.6
+    image: rabbitmq:3.6
   cog:
     extends:
       file: docker-compose.common.yml
       service: common
     # image: operable/cog:latest
-    build: ./
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
     environment:
       - COG_MQTT_HOST=rabbitmq
       - COG_MQTT_PORT=1882
@@ -66,7 +68,7 @@ services:
       - 80:4000
       - 4001:4001
       - 4002:4002
-    entrypoint: /home/operable/cog/scripts/docker-start
+    # entrypoint: /home/operable/cog/scripts/docker-start
   relay:
     extends:
       file: docker-compose.common.yml

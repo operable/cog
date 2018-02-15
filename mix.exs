@@ -27,7 +27,7 @@ defmodule Cog.Mixfile do
 
   def application do
     [applications: started_applications,
-     included_applications: [:emqttd, :slack, :romeo],
+     included_applications: [:slack, :romeo],
      mod: {Cog, []}]
   end
 
@@ -72,7 +72,6 @@ defmodule Cog.Mixfile do
       # MQTT-related
       ########################################################################
       {:emqttc, github: "emqtt/emqttc", branch: "master"},
-      {:emqttd, github: "emqtt/emqttd", tag: "1.1.2"},
       {:esockd, github: "emqtt/esockd", ref: "e6c27801bb5331d064081ef6d6af291a2878038c", override: true},
       {:gen_logger, github: "emqtt/gen_logger", branch: "master", override: true},
       # Used by cowboy, emqttd, esockd... they don't seem to lock to a

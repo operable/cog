@@ -19,16 +19,16 @@ RUN mix deps.get --only=prod --no-archives-check
 # Compile all the dependencies. The additional packages installed here
 # are for Greenbar to build and run.
 RUN apk --no-cache add \
-        --virtual .build_deps \
-        gcc \
-        g++ && \
+    --virtual .build_deps \
+    gcc \
+    g++ && \
     apk --no-cache add \
-        expat-dev \
-        libstdc++ && \
+    expat-dev \
+    libstdc++ && \
     mix deps.compile && \
     apk del .build_deps
 
-COPY emqttd_plugins/ /home/operable/cog/emqttd_plugins/
+# COPY emqttd_plugins/ /home/operable/cog/emqttd_plugins/
 COPY priv/ /home/operable/cog/priv/
 COPY web/ /home/operable/cog/web/
 COPY lib/ /home/operable/cog/lib/

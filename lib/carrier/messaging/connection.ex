@@ -287,6 +287,7 @@ defmodule Carrier.Messaging.Connection do
     host = Keyword.fetch!(connect_opts, :host)
     port = Keyword.fetch!(connect_opts, :port)
     log_level = Keyword.get(connect_opts, :log_level, @default_log_level)
+    Logger.info("Connection to host: #{host}")
     host = case is_binary(host) do
              true ->
                {:ok, hostent} = :inet.gethostbyname(String.to_char_list(host))
