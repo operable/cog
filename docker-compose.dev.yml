@@ -1,0 +1,51 @@
+version: '2'
+services:
+  postgres:
+    image: postgres:9.5
+    environment:
+      - POSTGRES_USER=cog
+      - POSTGRES_PASSWORD=cog
+  cog:
+    build: .
+    environment:
+      - COG_API_URL_BASE=http://cog:4000
+      - COG_TRIGGER_URL_BASE=http://cog:4001
+      - COG_SERVICE_URL_BASE=http://cog:4002
+      - COG_MQTT_HOST=0.0.0.0
+      - DATABASE_URL=ecto://cog:cog@postgres:5432/cog
+      - COG_SLACK_ENABLED=1
+      - SLACK_API_TOKEN=${SLACK_API_TOKEN}
+      - COG_BOOTSTRAP_USERNAME=admin
+      - COG_BOOTSTRAP_PASSWORD=changeme
+      - COG_BOOTSTRAP_EMAIL_ADDRESS=cog@localhost
+      - COG_BOOTSTRAP_FIRST_NAME=Cog
+      - COG_BOOTSTRAP_LAST_NAME=Administrator
+      - COG_ALLOW_SELF_REGISTRATION=true
+      - RELAY_ID=00000000-0000-0000-0000-000000000000
+      - RELAY_COG_TOKEN=supersecret
+    depends_on:
+      - postgres
+    ports:
+      - 1883
+      - 4000:4000
+      - 4001:4001
+      - 4002:4002
+    entrypoint: /home/operable/cog/scripts/docker-start
+  relay:
+    image: operable/relay:latest
+    privileged: true
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - COG_API_URL_BASE=http://cog:4000
+      - COG_TRIGGER_URL_BASE=http://cog:4001
+      - COG_SERVICE_URL_BASE=http://cog:4002
+      - RELAY_COG_REFRESH_INTERVAL=30s
+      - RELAY_DOCKER_CLEAN_INTERVAL=1m
+      - RELAY_COG_HOST=cog
+      - RELAY_DYNAMIC_CONFIG_ROOT=/tmp/bundle_configs
+      - RELAY_ID=00000000-0000-0000-0000-000000000000
+      - RELAY_COG_TOKEN=supersecret
+    depends_on:
+      - cog
+    entrypoint: /usr/local/bin/relay
