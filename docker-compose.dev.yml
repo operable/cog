@@ -5,8 +5,12 @@ services:
     environment:
       - POSTGRES_USER=cog
       - POSTGRES_PASSWORD=cog
+    ports:
+      - 5432
   cog:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
     environment:
       - COG_API_URL_BASE=http://cog:4000
       - COG_TRIGGER_URL_BASE=http://cog:4001
@@ -30,7 +34,9 @@ services:
       - 4000:4000
       - 4001:4001
       - 4002:4002
-    entrypoint: /home/operable/cog/scripts/docker-start
+    command: /cog/scripts/docker-start
+    volumes:
+      - .:/cog
   relay:
     image: operable/relay:latest
     privileged: true
