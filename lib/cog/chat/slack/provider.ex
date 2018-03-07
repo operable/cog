@@ -72,7 +72,7 @@ defmodule Cog.Chat.Slack.Provider do
       incoming = Keyword.fetch!(config, :incoming_topic)
       enable_threaded_response = Keyword.get(config, :enable_threaded_response)
       with {:ok, mbus} <- ConnectionSup.connect(),
-           {:ok, pid} <- Connector.start_link(token) do
+           {:ok, pid} <- Slack.Bot.start_link(Connector, [], token) do
         {:ok, %__MODULE__{token: token, incoming: incoming, connector: pid, mbus: mbus, enable_threaded_response: enable_threaded_response}}
       else
         {:error, reason}=error when is_binary(reason) ->
