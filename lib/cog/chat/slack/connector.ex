@@ -24,35 +24,38 @@ defmodule Cog.Chat.Slack.Connector do
     end
   end
 
-  def handle_connect(state) do
+  def handle_connect(slack, state) do
     :timer.send_interval(@ping_interval, :send_ping)
-    Logger.info("Connected to Slack with handle '#{state.me.name}'.")
+    Logger.info("Connected to Slack with handle '#{slack.me.name}'.")
+    {:ok, state}
   end
 
-  def handle_message(%{type: "pong", ts: send_ts}, _state) do
+  def handle_event(%{type: "pong", ts: send_ts}, _slack, state) do
     elapsed = System.os_time(:milliseconds) - send_ts
     if elapsed > @heartbeat_warn do
       Logger.warn("Slow Slack connection detected. ping/pong took #{elapsed}ms.")
     end
+    {:ok, state}
   end
-  def handle_message(msg, state) do
-    case annotate(msg, state) do
+  def handle_event(msg, slack, state) do
+    case annotate(msg, slack) do
       :ignore ->
-        :ok
+        {:ok, state}
       msg ->
         GenServer.cast(Provider, msg)
-        :ok
+        {:ok, state}
     end
   end
 
-  def handle_info(:send_ping, state) do
+  def handle_info(:send_ping, slack, state) do
     msg = Poison.encode!(%{id: :erlang.rem(System.os_time(:seconds), 10000),
                            type: :ping,
                            ts: System.os_time(:milliseconds)})
-    send_raw(msg, state)
+    send_raw(msg, slack)
+    {:ok, state}
   end
-  def handle_info({{ref, sender}, {:join, %{token: token, room: room}}}, state) do
-    case lookup_room(room, state.channels, by: :name) do
+  def handle_info({{ref, sender}, {:join, %{token: token, room: room}}}, slack, state) do
+    case lookup_room(room, slack.channels, by: :name) do
       nil ->
         send(sender, {ref, {:error, :not_found}})
       room ->
@@ -60,10 +63,10 @@ defmodule Cog.Chat.Slack.Connector do
         jitter()
         send(sender, {ref, Slack.Web.Channels.join(room["id"], %{token: token})})
     end
-    :ok
+    {:ok, state}
   end
-  def handle_info({{ref, sender}, {:leave, %{token: token, room: room}}}, state) do
-    case lookup_room(room, state.channels, by: :name) do
+  def handle_info({{ref, sender}, {:leave, %{token: token, room: room}}}, slack, state) do
+    case lookup_room(room, slack.channels, by: :name) do
       nil ->
         send(sender, {ref, {:error, :not_found}})
       room ->
@@ -71,32 +74,32 @@ defmodule Cog.Chat.Slack.Connector do
         jitter()
         send(sender, {ref, Slack.Web.Channels.leave(room["id"], %{token: token})})
     end
-    :ok
+    {:ok, state}
   end
-  def handle_info({{ref, sender}, {:list_joined_rooms, _}}, state) do
-    rooms = state
+  def handle_info({{ref, sender}, {:list_joined_rooms, _}}, slack, state) do
+    rooms = slack
     |> joined_channels
     |> Enum.map(fn({_, room}) -> make_room(room) end)
     send(sender, {ref, rooms})
-    :ok
+    {:ok, state}
   end
-  def handle_info({{ref, sender}, {:lookup_user, %{handle: handle}}}, state) do
-    result = lookup_user(handle, state.users, by: :handle)
+  def handle_info({{ref, sender}, {:lookup_user, %{handle: handle}}}, slack, state) do
+    result = lookup_user(handle, slack.users, by: :handle)
     send(sender, {ref, result})
-    :ok
+    {:ok, state}
   end
-  def handle_info({{ref, sender}, {:send_message, %{token: token, target: target, metadata: metadata}=args}}, _state) do
+  def handle_info({{ref, sender}, {:send_message, %{token: token, target: target, metadata: metadata}=args}}, _slack, state) do
     message = %{token: token, as_user: true, link_names: 1}
               |> prepare_text(args)
               |> prepare_attachments(args)
               |> maybe_include_thread_attributes(metadata)
     # Avoids Slack throttling
     jitter()
-    result = Slack.Web.Chat.post_message(target, message)
+    result = Slack.Web.Chat.post_message(target, Map.get(message, :text), message)
     send(sender, {ref, result})
-    :ok
+    {:ok, state}
   end
-  def handle_info({{ref, sender}, {:lookup_room, %{id: id, token: token}}}, state) do
+  def handle_info({{ref, sender}, {:lookup_room, %{id: id, token: token}}}, slack, state) do
     result = case classify_id(id) do
                :user ->
                  # Avoids Slack throttling
@@ -104,11 +107,11 @@ defmodule Cog.Chat.Slack.Connector do
                    {:ok, room} ->
                      {:ok, room}
                    {:error, error} ->
-                     Logger.warn("Could not establish an IM with user #{Slack.Lookups.lookup_user_name(id, state)} (Slack ID: #{id}): #{inspect error}")
+                     Logger.warn("Could not establish an IM with user #{Slack.Lookups.lookup_user_name(id, slack)} (Slack ID: #{id}): #{inspect error}")
                      {:error, :user_not_found}
                  end
                :channel ->
-                 case lookup_room(id, joined_channels(state), by: :id) do
+                 case lookup_room(id, joined_channels(slack), by: :id) do
                    %Room{}=room -> {:ok, room}
                    _ -> {:error, :not_a_member}
                  end
@@ -117,20 +120,20 @@ defmodule Cog.Chat.Slack.Connector do
              end
 
     send(sender, {ref, result})
-    :ok
+    {:ok, state}
   end
-  def handle_info({{ref, sender}, {:lookup_room, %{name: name, token: token}}}, state) do
+  def handle_info({{ref, sender}, {:lookup_room, %{name: name, token: token}}}, slack, state) do
     result = case classify_name(name) do
       :user ->
-        case open_dm(Slack.Lookups.lookup_user_id(name, state), token) do
+        case open_dm(Slack.Lookups.lookup_user_id(name, slack), token) do
           {:ok, room} ->
             {:ok, room}
           {:error, error} ->
-            Logger.warn("Could not establish an IM with user #{name} (Slack ID: #{Slack.Lookups.lookup_user_id(name, state)}): #{inspect error}")
+            Logger.warn("Could not establish an IM with user #{name} (Slack ID: #{Slack.Lookups.lookup_user_id(name, slack)}): #{inspect error}")
             {:error, :user_not_found}
         end
       :channel ->
-        case lookup_room(name, joined_channels(state), by: :name) do
+        case lookup_room(name, joined_channels(slack), by: :name) do
           %Room{}=room -> {:ok, room}
           _ -> {:error, :not_a_member}
         end
@@ -139,11 +142,11 @@ defmodule Cog.Chat.Slack.Connector do
     end
 
     send(sender, {ref, result})
-    :ok
+    {:ok, state}
   end
-  def handle_info(message, _state) do
+  def handle_info(message, _slack, state) do
     Logger.warn("Unexpected INFO message received: #{inspect message}")
-    :ok
+    {:ok, state}
   end
 
   # Return map of ID => Slack channels for channels the bot is a member
