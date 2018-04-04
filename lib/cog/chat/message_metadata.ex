@@ -6,4 +6,5 @@ defmodule Cog.Chat.MessageMetadata do
 
   field :thread_id, :string, required: false
   field :originating_room_id, :string, required: false
+  field :reply_broadcast, :bool, required: false
 end

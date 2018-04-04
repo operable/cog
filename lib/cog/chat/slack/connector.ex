@@ -301,7 +301,7 @@ defmodule Cog.Chat.Slack.Connector do
         else
           {:chat_message, %Message{id: Cog.Events.Util.unique_id, room: room,
               user: user, text: text, provider: @provider_name,
-              metadata: %MessageMetadata{thread_id: ts, originating_room_id: room.id},
+              metadata: %MessageMetadata{thread_id: ts, originating_room_id: room.id, reply_broadcast: true},
               bot_name: "@#{state.me.name}", edited: false}}
         end
     end
@@ -363,9 +363,9 @@ defmodule Cog.Chat.Slack.Connector do
     end
   end
 
-  def maybe_include_thread_attributes(message, %MessageMetadata{thread_id: thread_id})
+  def maybe_include_thread_attributes(message, %MessageMetadata{thread_id: thread_id, reply_broadcast: broadcast})
       when is_binary(thread_id),
-    do: Map.merge(message, %{thread_ts: thread_id, reply_broadcast: true})
+    do: Map.merge(message, %{thread_ts: thread_id, reply_broadcast: broadcast})
   def maybe_include_thread_attributes(message, _metadata),
     do: message
 end
