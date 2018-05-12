@@ -28,6 +28,7 @@ defmodule Cog.Chat.Test.Provider do
                    provider: @provider_name,
                    email: handle}
   end
+  def lookup_user("fake_user"), do: {:error, :unknown_user}
   def lookup_user(handle) do
     %Cog.Chat.User{id: handle,
                    first_name: handle,
@@ -49,6 +50,7 @@ defmodule Cog.Chat.Test.Provider do
                    provider: @provider_name,
                    is_dm: false}
   end
+  def lookup_room({:name, "#fake_room"}), do: {:error, :unknown_room}
   def lookup_room({:name, name}) do
     %Cog.Chat.Room{id: name,
                    name: name,
