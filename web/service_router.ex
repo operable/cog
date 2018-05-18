@@ -17,5 +17,6 @@ defmodule Cog.ServiceRouter do
     put "/memory/1.0.0/:key", V1.MemoryServiceController, :update
     post "/memory/1.0.0/:key", V1.MemoryServiceController, :change
 
+    post "/chat/1.0.0/send_message", V1.ChatServiceController, :send_message
   end
 end
