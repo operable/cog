@@ -73,6 +73,7 @@ defmodule Cog.Test.Support.SlackClient do
   use Slack
 
   alias Cog.Test.Support.SlackClientState
+  require Logger
 
   def new() do
     # Remember; this isn't the bot, this is the *user*
@@ -82,7 +83,7 @@ defmodule Cog.Test.Support.SlackClient do
       token ->
         :timer.sleep(@api_wait_interval * 2)
         try do
-          {:ok, client} = start_link(token)
+          {:ok, client} = Slack.Bot.start_link(Cog.Test.Support.SlackClient, [], token)
           :ok = initialize(client)
           {:ok, client}
         rescue
@@ -109,7 +110,7 @@ defmodule Cog.Test.Support.SlackClient do
             Logger.warn("Error connecting to Slack RTM endpoint: #{inspect e, pretty: true}")
             Logger.warn("Sleeping for a minute (and some change) and retrying")
             :timer.sleep(70_000)
-            {:ok, client} = start_link(token)
+            {:ok, client} = Slack.Bot.start_link(Cog.Test.Support.SlackClient, [], token)
             :ok = initialize(client)
             {:ok, client}
           else
@@ -130,14 +131,14 @@ defmodule Cog.Test.Support.SlackClient do
     call(client, {:chat_and_wait, room, message, reply_from}, timeout)
   end
 
-  def handle_message(%{type: "message"}=message, state) do
+  def handle_event(%{type: "message"}=message, slack, state) do
     # Only deal with messages that aren't sent by the user.... Really,
     # we only want to care about messages from the bot.
-    if message.user != state.me.id do
+    if message.user != slack.me.id do
       # The Elixir-Slack library converts Slack messages to atom-keyed
       # maps instead of string-keyed ones :/
       if String.to_float(message[:ts]) > SlackClientState.get_cutoff_ts() do
-        msg = parse_message(message, state)
+        msg = parse_message(message, slack)
         waiters = SlackClientState.get_waiters(message.user)
         if waiters do
           Enum.each(waiters, fn({ref, caller}) ->
@@ -146,34 +147,34 @@ defmodule Cog.Test.Support.SlackClient do
         end
       end
     end
-    :ok
+    {:ok, state}
   end
-  def handle_message(_message, _state),
-    do: :ok
+  def handle_event(_message, _slack, state),
+    do: {:ok, state}
 
-  def handle_info({{ref, sender}, :init}, state) do
+  def handle_info({{ref, sender}, :init}, _slack, state) do
     SlackClientState.start_link()
     send(sender, {ref, :ok})
-    {:noreply, state}
+    {:ok, state}
   end
-  def handle_info({{ref, sender}=caller, {:chat_and_wait, room, message, reply_from}}, state) do
+  def handle_info({{ref, sender}=caller, {:chat_and_wait, room, message, reply_from}}, slack, state) do
     api_wait()
-    result = Slack.Web.Chat.post_message(room, %{as_user: true,
-                                                 text: message,
-                                                 token: state.token,
-                                                 parse: :full})
+    result = Slack.Web.Chat.post_message(room, message, %{as_user: true,
+                                                          text: message,
+                                                          token: slack.token,
+                                                          parse: :full})
     if result["ok"] do
       result["ts"] # Yes, the keys are strings here
       |> String.to_float
       |> SlackClientState.set_cutoff_ts
 
-      user_id = find_user_id!(reply_from, state)
+      user_id = find_user_id!(reply_from, slack)
       SlackClientState.add_waiter(user_id, caller)
     else
       send(sender, {ref, {:error, result["error"]}})
     end
 
-    {:noreply, state}
+    {:ok, state}
   end
 
   defp call(sender, data, timeout \\ @default_timeout) do
