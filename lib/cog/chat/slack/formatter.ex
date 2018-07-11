@@ -1,5 +1,5 @@
 defmodule Cog.Chat.Slack.Formatter do
-  @channel ~r/<\#(C.*)(\|(.*))?>/U
+  @channel ~r/<\#([CG].*)(\|(.*))?>/U
   @user    ~r/<\@(U.*)(\|(.*))?>/U
   @command ~r/<\!(.*)(\|(.*))?>/U
   @link    ~r/<(.*)(\|(.*))?>/U
