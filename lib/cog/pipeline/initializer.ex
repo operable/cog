@@ -89,7 +89,7 @@ defmodule Cog.Pipeline.Initializer do
 
   defp self_register_user(request, true, state) do
     sender = request.sender
-    case Users.by_chat_handle(sender.handle, request.provider) do
+    case Users.by_chat_id(sender.id, request.provider) do
       {:ok, _} ->
         :ok
       {:error, :not_found} ->

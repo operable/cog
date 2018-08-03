@@ -5,6 +5,7 @@ defmodule Cog.Chat.Slack.Connector do
   alias Cog.Chat.{Message, MessageMetadata}
   alias Cog.Chat.Room
   alias Cog.Chat.Slack.Formatter
+  alias Cog.Chat.Slack.Helpers
   alias Cog.Chat.Slack.Provider
   alias Cog.Chat.User
 
@@ -107,7 +108,7 @@ defmodule Cog.Chat.Slack.Connector do
                    {:ok, room} ->
                      {:ok, room}
                    {:error, error} ->
-                     Logger.warn("Could not establish an IM with user #{Slack.Lookups.lookup_user_name(id, slack)} (Slack ID: #{id}): #{inspect error}")
+                     Logger.warn("Could not establish an IM with user #{Helpers.lookup_user_name(id, slack)} (Slack ID: #{id}): #{inspect error}")
                      {:error, :user_not_found}
                  end
                :channel ->
@@ -182,7 +183,7 @@ defmodule Cog.Chat.Slack.Connector do
     end
   end
   defp lookup_user(value, users, [by: :handle]) do
-    case Map.values(users) |> Enum.find(&(&1.name == value)) do
+    case Map.values(users) |> Enum.find(&(Helpers.get_username(&1) == value)) do
       nil ->
         {:error, :not_found}
       user ->
@@ -251,10 +252,10 @@ defmodule Cog.Chat.Slack.Connector do
     else
       profile = user.profile
       %User{id: user.id,
-            first_name: Map.get(profile, :first_name, user.name),
-            last_name: Map.get(profile, :last_name, user.name),
-            handle: user.name,
-            mention_name: user.name,
+            first_name: Map.get(profile, :first_name, profile.display_name),
+            last_name: Map.get(profile, :last_name, profile.display_name),
+            handle: profile.display_name,
+            mention_name: profile.display_name,
             email: profile.email,
             provider: "slack"}
     end

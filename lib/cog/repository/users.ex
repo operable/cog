@@ -101,6 +101,24 @@ defmodule Cog.Repository.Users do
   end
 
   @doc """
+  Retrieves one user by chat id
+  """
+  @spec by_chat_id(String.t, String.t) :: {:ok, %User{}} | {:error, :not_found}
+  def by_chat_id(chat_id, provider_name) do
+    case Repo.one(from u in User,
+                  join: ch in ChatHandle, on: ch.user_id == u.id,
+                  join: cp in assoc(ch, :chat_provider),
+                  where: ch.chat_provider_user_id == ^chat_id,
+                  where: cp.name == ^provider_name) do
+      nil ->
+        {:error, :not_found}
+      user ->
+        {:ok, Repo.preload(user, @preloads)}
+    end
+  end
+
+
+  @doc """
   Determines if a given username has been registered
   """
   def is_username_available?(username) do
